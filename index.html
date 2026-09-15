@@ -10,8 +10,8 @@
         const GOOGLE_SHEET_CONTACTS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSw2YtYByfiPWXbRfqkzmZ6yzaZVfJHO0f9zAmCiLnwlMvVXCt9lv4AmQAz4_vSjzPy0APtl0hwYNmW/pub?gid=812608822&single=true&output=csv";
         const GOOGLE_SCRIPT_UNIFORM_API_URL = "https://script.google.com/macros/s/AKfycbwAdnLPVvTMIUGt538hM18pS_upBZt8FhKRTESjWXNonKFHOH5e59Vxi0hjDqYend-IHg/exec";
         
-        // 웹페이지 배포 버전 (보안 감사 로그 시스템 탑재 v2.0.0)
-        const APP_VERSION = "v2.0.0 · b260916";
+        // 웹페이지 배포 버전 (모바일 헤더 겹침 완벽 해결 v2.0.2)
+        const APP_VERSION = "v2.0.2 · b260916";
     </script>
 
     <meta charset="UTF-8">
@@ -45,7 +45,7 @@
             padding-bottom: 70px;
         }
 
-        /* 🔒 보안 잠금 오버레이 (블러 4px) */
+        /* 🔒 보안 잠금 오버레이 */
         #lockOverlay {
             position: fixed;
             inset: 0;
@@ -76,45 +76,40 @@
             to { opacity: 1; transform: scale(1); }
         }
 
+        /* ===================================================
+           헤더 레이아웃 (모바일 겹침 100% 원천 방지 Flex 3단 분리)
+           =================================================== */
         header {
             background-color: var(--kbo-blue);
             color: white;
-            padding: 24px 16px 20px;
-            text-align: center;
+            padding: 12px 14px 16px;
             border-bottom: 5px solid var(--kbo-red);
             box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
-        .header-title {
-            font-size: 26px;
-            font-weight: 900;
-            letter-spacing: -0.5px;
-            margin-bottom: 6px;
+        /* 1단: 상단 유틸리티 바 (좌: 타이머 + 화면잠금 / 우: 관리자 로그인 + 버전) */
+        .header-top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            min-height: 32px;
         }
 
-        .header-subtitle {
-            font-size: 13px;
-            color: #cbd5e1;
-            font-weight: 500;
-            letter-spacing: 0.5px;
-        }
-
-        /* 좌측 상단 타이머 및 잠금 버튼 */
-        .header-left-actions {
-            position: absolute;
-            top: 14px;
-            left: 14px;
+        .header-top-left {
             display: flex;
             align-items: center;
             gap: 6px;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
         }
 
         .session-timer-badge {
             background: rgba(255, 255, 255, 0.15);
             color: #ffffff;
-            padding: 5px 10px;
+            padding: 4px 8px;
             border-radius: 6px;
             font-size: 11px;
             font-weight: 700;
@@ -122,66 +117,49 @@
             align-items: center;
             gap: 4px;
             border: 1px solid rgba(255, 255, 255, 0.25);
-            height: 31px;
+            height: 30px;
+            white-space: nowrap;
         }
 
-        .header-actions {
-            position: absolute;
-            top: 14px;
-            right: 14px;
-            display: flex;
-            align-items: flex-start;
-            gap: 8px;
-            flex-wrap: wrap;
-            justify-content: flex-end;
-        }
-
-        .admin-btn-group {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 3px;
-        }
-
-        .app-version-tag {
-            font-size: 10px;
-            color: rgba(255, 255, 255, 0.45);
-            font-weight: 500;
-            letter-spacing: 0.3px;
-            padding-right: 2px;
-            user-select: none;
-        }
-
-        .btn-uniform-cta {
-            background: #f59e0b;
+        .btn-screen-lock {
+            background: #dc2626;
+            border: 1px solid #b91c1c;
             color: #ffffff;
-            border: 1px solid #d97706;
-            padding: 6px 13px;
-            border-radius: 6px;
-            font-size: 12px;
+            height: 30px;
+            font-size: 11px;
             font-weight: 800;
+            padding: 0 9px;
+            border-radius: 6px;
             cursor: pointer;
             transition: 0.2s;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            height: 31px;
+            gap: 3px;
+            white-space: nowrap;
         }
+        .btn-screen-lock:hover { background: #b91c1c; }
 
-        .btn-uniform-cta:hover { background: #d97706; }
+        .header-top-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 2px;
+        }
 
         .admin-toggle-btn {
             background: rgba(255,255,255,0.12);
             border: 1px solid rgba(255,255,255,0.25);
             color: #ffffff;
-            padding: 6px 12px;
+            padding: 0 10px;
             border-radius: 6px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 700;
             cursor: pointer;
             transition: 0.2s;
-            height: 31px;
+            height: 30px;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
         }
 
         .admin-toggle-btn:hover { background: rgba(255,255,255,0.25); }
@@ -191,12 +169,68 @@
             border-color: #fca5a5;
         }
 
+        .app-version-tag {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.45);
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            user-select: none;
+        }
+
+        /* 2단: 중앙 타이틀 (버튼과 완전히 독립된 단독 행으로 겹침 절대 불가) */
+        .header-center-title {
+            text-align: center;
+            padding: 2px 0;
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+            margin-bottom: 3px;
+        }
+
+        .header-subtitle {
+            font-size: 13px;
+            color: #cbd5e1;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+
+        /* 3단: 하단 주요 CTA 액션 (유니폼 주문 접수 버튼) */
+        .header-bottom-cta {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 2px;
+        }
+
+        .btn-uniform-cta {
+            background: #f59e0b;
+            color: #ffffff;
+            border: 1px solid #d97706;
+            padding: 0 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+            height: 34px;
+        }
+        .btn-uniform-cta:hover { background: #d97706; }
+
         .container {
             max-width: 1040px;
             margin: 20px auto 0;
             padding: 0 16px;
         }
 
+        /* 필터 컨트롤 카드 */
         .control-card {
             background: #ffffff;
             border: 1px solid var(--card-border);
@@ -289,6 +323,7 @@
             color: #ffffff;
         }
 
+        /* 관리자 안내 바 */
         .admin-bar {
             display: none;
             border-radius: 8px;
@@ -377,6 +412,7 @@
         }
         .btn-manage-pw:hover { background: #0369a1; }
 
+        /* 테이블 뷰 */
         .table-wrap {
             background: #ffffff;
             border-radius: 8px;
@@ -533,6 +569,7 @@
             vertical-align: middle;
         }
 
+        /* 프로야구 표준 4:5 카드 그리드 */
         .roster-grid {
             display: none;
             grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
@@ -669,6 +706,7 @@
             border: 1px solid #f1f5f9;
         }
 
+        /* 모달 공통 */
         .modal {
             display: none;
             position: fixed;
@@ -684,7 +722,7 @@
             background: #ffffff;
             width: 100%;
             max-width: 480px;
-            max-height: 73vh;
+            max-height: 75vh;
             display: flex;
             flex-direction: column;
             border-radius: 14px;
@@ -1082,7 +1120,6 @@
             font-size: 14px;
         }
 
-        /* 로그 모달 스타일 */
         .log-item-card {
             background: #ffffff;
             border: 1px solid #e2e8f0;
@@ -1112,12 +1149,16 @@
         .log-type-order   { background: #fef3c7; color: #92400e; }
         .log-type-photo   { background: #e0f2fe; color: #0369a1; }
 
+        /* 모바일 최적화 미디어 쿼리 */
         @media (max-width: 600px) {
-            header { padding: 22px 10px 18px; }
-            .header-title { font-size: 20px; margin-top: 10px; }
-            .header-left-actions { top: 10px; left: 10px; }
-            .header-actions { position: static; margin-top: 10px; justify-content: center; }
-            .admin-btn-group { align-items: center; }
+            header { padding: 10px 10px 14px; gap: 8px; }
+            .header-title { font-size: 21px; }
+            .header-subtitle { font-size: 12px; }
+            .session-timer-badge, .btn-screen-lock, .admin-toggle-btn {
+                font-size: 11px;
+                height: 28px;
+                padding: 0 7px;
+            }
             .control-top { flex-direction: column; align-items: stretch; }
             .control-right { justify-content: space-between; }
             .search-box input { width: 140px; }
@@ -1127,9 +1168,7 @@
 </head>
 <body>
 
-<!-- ===================================================
-     🔒 [세분화 보안 인증 팝업] (블러 4px)
-     =================================================== -->
+<!-- 🔒 보안 잠금 오버레이 -->
 <div id="lockOverlay">
     <div class="lock-card">
         <div style="font-size: 32px; margin-bottom: 8px;">⚾</div>
@@ -1146,24 +1185,33 @@
     </div>
 </div>
 
+<!-- ===================================================
+     상단 헤더 영역 (Flex 3단 분리 - 모바일 겹침 100% 방지)
+     =================================================== -->
 <header>
-    <!-- 좌측 상단 실시간 남은 시간 타이머 배지 및 화면 잠금 버튼 -->
-    <div class="header-left-actions">
-        <div id="sessionTimerBadge" class="session-timer-badge">
-            ⏱️ <span id="timerCountdown">--:--:--</span>
+    <!-- 1단: 좌측(타이머+화면잠금) / 우측(관리자 로그인+버전) -->
+    <div class="header-top-bar">
+        <div class="header-top-left">
+            <div id="sessionTimerBadge" class="session-timer-badge">
+                ⏱️ <span id="timerCountdown">--:--:--</span>
+            </div>
+            <button class="btn-screen-lock" onclick="lockScreenNow()" title="즉시 화면 잠금">🔒 화면 잠금</button>
         </div>
-        <button class="admin-toggle-btn" style="background: #dc2626; border-color: #b91c1c; height: 31px; font-size: 11px; padding: 0 10px;" onclick="lockScreenNow()" title="즉시 화면 잠금">🔒 화면 잠금</button>
+        <div class="header-top-right">
+            <button id="adminLoginBtn" class="admin-toggle-btn" onclick="openAdminModal()">🔒 관리자 로그인</button>
+            <span class="app-version-tag" id="appVersionDisplay">v2.0.2 · b260916</span>
+        </div>
     </div>
 
-    <div class="header-title">대연초 야구부 명단</div>
-    <div class="header-subtitle" id="rosterCountText">선수단 데이터를 불러오는 중...</div>
-    
-    <div class="header-actions">
+    <!-- 2단: 중앙 타이틀 (버튼과 완전히 분리된 단독 행) -->
+    <div class="header-center-title">
+        <div class="header-title">대연초 야구부 명단</div>
+        <div class="header-subtitle" id="rosterCountText">선수단 데이터를 불러오는 중...</div>
+    </div>
+
+    <!-- 3단: 하단 주요 CTA 액션 (유니폼 주문 접수 버튼) -->
+    <div class="header-bottom-cta" id="headerCtaBar">
         <button id="btnUniformCTA" class="btn-uniform-cta" style="display: none;" onclick="openUniformModal()">👕 유니폼 주문 접수</button>
-        <div class="admin-btn-group">
-            <button id="adminLoginBtn" class="admin-toggle-btn" onclick="openAdminModal()">🔒 관리자 로그인</button>
-            <span class="app-version-tag" id="appVersionDisplay">v2.0.0 · b260916</span>
-        </div>
     </div>
 </header>
 
@@ -1488,7 +1536,7 @@
     </div>
 </div>
 
-<!-- 7. 📜 개발자 전용 보안 활동 로그 모달 -->
+<!-- 7. 보안 활동 로그 모달 -->
 <div id="logsModal" class="modal">
     <div class="modal-content" style="max-width: 600px; width: 95%;">
         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
@@ -1510,7 +1558,7 @@
 
 <script>
     // ==========================================================
-    // 🛡️ 기기 식별 및 활동 로그 실시간 전송 엔진
+    // 🛡️ 기기 식별 및 활동 로그 전송 엔진
     // ==========================================================
     function getDeviceClientId() {
         let cid = localStorage.getItem('daeyeon_device_cid');
@@ -1550,7 +1598,7 @@
     }
 
     // ==========================================================
-    // 🔒 [세분화 보안 인증 및 실시간 카운트다운 엔진]
+    // 🔒 [보안 인증 및 실시간 카운트다운 타이머 엔진]
     // ==========================================================
     (function checkPageAuth() {
         const authExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1619,7 +1667,7 @@
 
     function verifyLockPassword() {
         const inputVal = document.getElementById('lockPasswordInput').value.trim();
-        const pws = getStoredPasswords(); // { super: '0000', sub: '1111', general: '2222' }
+        const pws = getStoredPasswords();
 
         const now = new Date();
         const yyyy = String(now.getFullYear());
@@ -1638,7 +1686,7 @@
             d + m + yy
         ];
 
-        // 1. 개발자 명령어 (정오까지 해제)
+        // 1. 개발자 당일 코드 (정오까지 해제)
         if (devCodes.includes(inputVal)) {
             let noonDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0);
             if (now.getTime() >= noonDate.getTime()) {
@@ -2342,7 +2390,7 @@
     }
 
     // ==========================================================
-    // 🚨 비상연락망 모달 로직 & 선수 본인 이름 표기
+    // 🚨 비상연락망 모달 로직
     // ==========================================================
     async function openEmergencyContactsModal() {
         document.getElementById('emergencyContactsModal').style.display = 'flex';
@@ -2757,7 +2805,7 @@
     }
 
     // ==========================================
-    // 📜 개발자 전용 보안 로그 모달
+    // 📜 보안 로그 모달
     // ==========================================
     async function openLogsModal() {
         if (currentRole !== 'dev') return;
