@@ -10,8 +10,8 @@
         const GOOGLE_SHEET_CONTACTS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSw2YtYByfiPWXbRfqkzmZ6yzaZVfJHO0f9zAmCiLnwlMvVXCt9lv4AmQAz4_vSjzPy0APtl0hwYNmW/pub?gid=812608822&single=true&output=csv";
         const GOOGLE_SCRIPT_UNIFORM_API_URL = "https://script.google.com/macros/s/AKfycbwAdnLPVvTMIUGt538hM18pS_upBZt8FhKRTESjWXNonKFHOH5e59Vxi0hjDqYend-IHg/exec";
         
-        // 웹페이지 배포 버전 (사진 삭제 버그 수정 v1.9.8)
-        const APP_VERSION = "v1.9.8 · b260915";
+        // 웹페이지 배포 버전 (보안 감사 로그 시스템 탑재 v2.0.0)
+        const APP_VERSION = "v2.0.0 · b260916";
     </script>
 
     <meta charset="UTF-8">
@@ -100,7 +100,7 @@
             letter-spacing: 0.5px;
         }
 
-        /* 좌측 상단 타이머 영역 */
+        /* 좌측 상단 타이머 및 잠금 버튼 */
         .header-left-actions {
             position: absolute;
             top: 14px;
@@ -1082,6 +1082,36 @@
             font-size: 14px;
         }
 
+        /* 로그 모달 스타일 */
+        .log-item-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 8px 10px;
+            margin-bottom: 6px;
+            font-size: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .log-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .log-type-tag {
+            font-weight: 800;
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .log-type-unlock  { background: #dcfce7; color: #166534; }
+        .log-type-lock    { background: #fee2e2; color: #991b1b; }
+        .log-type-admin   { background: #ede9fe; color: #5b21b6; }
+        .log-type-contact { background: #eff6ff; color: #1e40af; }
+        .log-type-order   { background: #fef3c7; color: #92400e; }
+        .log-type-photo   { background: #e0f2fe; color: #0369a1; }
+
         @media (max-width: 600px) {
             header { padding: 22px 10px 18px; }
             .header-title { font-size: 20px; margin-top: 10px; }
@@ -1117,7 +1147,7 @@
 </div>
 
 <header>
-    <!-- 좌측 상단 실시간 남은 시간 타이머 배지 및 화면 잠금 버튼 배치 -->
+    <!-- 좌측 상단 실시간 남은 시간 타이머 배지 및 화면 잠금 버튼 -->
     <div class="header-left-actions">
         <div id="sessionTimerBadge" class="session-timer-badge">
             ⏱️ <span id="timerCountdown">--:--:--</span>
@@ -1132,7 +1162,7 @@
         <button id="btnUniformCTA" class="btn-uniform-cta" style="display: none;" onclick="openUniformModal()">👕 유니폼 주문 접수</button>
         <div class="admin-btn-group">
             <button id="adminLoginBtn" class="admin-toggle-btn" onclick="openAdminModal()">🔒 관리자 로그인</button>
-            <span class="app-version-tag" id="appVersionDisplay">v1.9.8 · b260915</span>
+            <span class="app-version-tag" id="appVersionDisplay">v2.0.0 · b260916</span>
         </div>
     </div>
 </header>
@@ -1170,8 +1200,9 @@
             <button id="btnEmergencyContacts" class="btn-emergency-contact" onclick="openEmergencyContactsModal()">🚨 학부모 비상연락망</button>
             <button id="btnToggleUniform" class="btn-toggle-uniform" style="display: none;" onclick="toggleUniformFeature()">👕 접수기능: ON</button>
             <button id="btnViewOrders" class="btn-orders-view" style="display: none;" onclick="openOrdersSummaryModal()">📋 유니폼 접수 & 발주 집계</button>
+            <button id="btnViewLogs" class="btn-manage-pw" style="display: none; background: #4338ca;" onclick="openLogsModal()">📜 보안 활동 로그</button>
             <button id="btnManagePw" class="btn-manage-pw" style="display: none;" onclick="openPasswordManageModal()">🔑 비밀번호 관리</button>
-            <button id="btnSheetLink" class="btn-sheet-link" style="display: none;" onclick="window.open(GOOGLE_SHEET_EDIT_URL, '_blank')">📊 시트 편집창 열기</button>
+            <button id="btnSheetLink" class="btn-sheet-link" style="display: none;" onclick="window.open(GOOGLE_SHEET_EDIT_URL, '_blank')">📊 구글 시트 편집창 열기</button>
         </div>
     </div>
 
@@ -1209,9 +1240,9 @@
                 <label>관리자 비밀번호</label>
                 <input type="password" id="adminPw" placeholder="비밀번호 입력">
                 <span style="font-size: 11px; color: #64748b; line-height: 1.6; margin-top: 8px;">
-                    • <b>최고관리자</b>: 비상연락망 + 유니폼 발주 집계 + 사진 등록 + 유니폼 접수 ON/OFF<br>
-                    • <b>보조관리자</b>: 비공개 사진 및 체격 열람 + 시트 편집<br>
-                    • <b>일반관리자</b>: 선수 비공개 체격(키/몸무게/생년월일) 열람 전용
+                    • <b>최고관리자 (0000)</b>: 비상연락망 + 유니폼 발주 집계 + 사진 등록 + 유니폼 접수 ON/OFF<br>
+                    • <b>보조관리자 (1111)</b>: 비공개 사진 및 체격 열람 + 시트 편집<br>
+                    • <b>일반관리자 (2222)</b>: 선수 비공개 체격(키/몸무게/생년월일) 열람 전용
                 </span>
             </div>
         </div>
@@ -1457,7 +1488,67 @@
     </div>
 </div>
 
+<!-- 7. 📜 개발자 전용 보안 활동 로그 모달 -->
+<div id="logsModal" class="modal">
+    <div class="modal-content" style="max-width: 600px; width: 95%;">
+        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>📜 시스템 접속 및 활동 로그</span>
+            <button class="btn-quick-action" onclick="loadSecurityLogs()">🔄 새로고침</button>
+        </div>
+        <p style="font-size: 11px; color: #64748b; margin-bottom: 8px;">
+            구글 시트에 실시간 기록된 최근 100건의 기기별 접속, 잠금, 주문 등의 활동 내역입니다.
+        </p>
+        <div class="modal-scroll-body" id="logsListContent">
+            <div style="text-align: center; padding: 40px; color: #94a3b8;">로그 데이터를 불러오는 중...</div>
+        </div>
+        <div class="modal-btns" style="justify-content: space-between;">
+            <button class="btn-sheet-link" onclick="window.open(GOOGLE_SHEET_EDIT_URL, '_blank')">📊 시트 원본 열기</button>
+            <button class="btn-save" onclick="closeModal('logsModal')">닫기</button>
+        </div>
+    </div>
+</div>
+
 <script>
+    // ==========================================================
+    // 🛡️ 기기 식별 및 활동 로그 실시간 전송 엔진
+    // ==========================================================
+    function getDeviceClientId() {
+        let cid = localStorage.getItem('daeyeon_device_cid');
+        if (!cid) {
+            cid = 'DEV-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+            localStorage.setItem('daeyeon_device_cid', cid);
+        }
+        return cid;
+    }
+
+    function getDeviceInfo() {
+        const ua = navigator.userAgent;
+        let os = "기타";
+        if (/Android/i.test(ua)) os = "안드로이드";
+        else if (/iPhone|iPad|iPod/i.test(ua)) os = "아이폰/iOS";
+        else if (/Windows/i.test(ua)) os = "윈도우PC";
+        else if (/Macintosh|Mac OS/i.test(ua)) os = "맥(Mac)";
+        return os;
+    }
+
+    function sendActivityLog(eventType, role, details) {
+        if (!GOOGLE_SCRIPT_UNIFORM_API_URL || GOOGLE_SCRIPT_UNIFORM_API_URL.trim() === "") return;
+        const payload = {
+            action: "logActivity",
+            clientId: getDeviceClientId(),
+            eventType: eventType,
+            role: role || "-",
+            device: getDeviceInfo(),
+            details: details || "-"
+        };
+        fetch(GOOGLE_SCRIPT_UNIFORM_API_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload)
+        }).catch(err => console.warn("로그 전송 무시:", err));
+    }
+
     // ==========================================================
     // 🔒 [세분화 보안 인증 및 실시간 카운트다운 엔진]
     // ==========================================================
@@ -1493,6 +1584,7 @@
                 localStorage.removeItem('daeyeon_auth_expire');
                 badge.style.display = 'none';
                 clearInterval(window._sessionTimerInterval);
+                sendActivityLog("세션만료", "시스템", "자동 화면 잠금 실행됨");
                 const overlay = document.getElementById('lockOverlay');
                 if (overlay) overlay.style.display = 'flex';
                 alert('⏰ 세션 시간이 만료되어 화면이 잠겼습니다.');
@@ -1514,6 +1606,8 @@
         const badge = document.getElementById('sessionTimerBadge');
         if (badge) badge.style.display = 'none';
 
+        sendActivityLog("화면잠금", currentRole, "사용자가 직접 화면 잠금 버튼 클릭");
+
         const overlay = document.getElementById('lockOverlay');
         if (overlay) {
             overlay.style.display = 'flex';
@@ -1525,7 +1619,7 @@
 
     function verifyLockPassword() {
         const inputVal = document.getElementById('lockPasswordInput').value.trim();
-        const pws = getStoredPasswords();
+        const pws = getStoredPasswords(); // { super: '0000', sub: '1111', general: '2222' }
 
         const now = new Date();
         const yyyy = String(now.getFullYear());
@@ -1554,6 +1648,7 @@
             const overlay = document.getElementById('lockOverlay');
             if (overlay) overlay.style.display = 'none';
             startSessionCountdown();
+            sendActivityLog("잠금해제", "개발자", "정오까지 세션 해제");
             alert('🔓 개발자 인증 완료 (정오까지 유지됩니다)');
             document.getElementById('lockPasswordInput').value = '';
             return;
@@ -1566,6 +1661,7 @@
             const overlay = document.getElementById('lockOverlay');
             if (overlay) overlay.style.display = 'none';
             startSessionCountdown();
+            sendActivityLog("잠금해제", "최고관리자", "4시간 세션 해제");
             alert('🔓 최고관리자 인증 완료 (4시간 동안 유지됩니다)');
             document.getElementById('lockPasswordInput').value = '';
             return;
@@ -1578,6 +1674,7 @@
             const overlay = document.getElementById('lockOverlay');
             if (overlay) overlay.style.display = 'none';
             startSessionCountdown();
+            sendActivityLog("잠금해제", "보조관리자", "1시간 세션 해제");
             alert('🔓 보조관리자 인증 완료 (1시간 동안 유지됩니다)');
             document.getElementById('lockPasswordInput').value = '';
             return;
@@ -1590,6 +1687,7 @@
             const overlay = document.getElementById('lockOverlay');
             if (overlay) overlay.style.display = 'none';
             startSessionCountdown();
+            sendActivityLog("잠금해제", "일반관리자", "30분 세션 해제");
             alert('🔓 일반관리자 인증 완료 (30분 동안 유지됩니다)');
             document.getElementById('lockPasswordInput').value = '';
             return;
@@ -1602,11 +1700,13 @@
             const overlay = document.getElementById('lockOverlay');
             if (overlay) overlay.style.display = 'none';
             startSessionCountdown();
+            sendActivityLog("잠금해제", "일반열람", "10분 기본 해제");
             alert('🔓 보안 인증 완료 (10분 동안 유지됩니다)');
             document.getElementById('lockPasswordInput').value = '';
             return;
         }
 
+        sendActivityLog("인증실패", "미상", `잘못된 비밀번호 입력 시도: [${inputVal}]`);
         alert('❌ 비밀번호가 올바르지 않습니다.');
         document.getElementById('lockPasswordInput').value = '';
         document.getElementById('lockPasswordInput').focus();
@@ -1775,9 +1875,6 @@
         return p.no ? `data/photos/${p.no}.jpg` : defaultAvatar;
     }
 
-    // ==========================================================
-    // ★ 코칭스태프 직책 고정 및 선수 정렬 엔진
-    // ==========================================================
     function getStaffRank(p) {
         const grade = String(p.grade || '').trim();
         const pos = String(p.pos || '').trim();
@@ -2099,7 +2196,7 @@
     }
 
     // ==========================================
-    // 유니폼 주문 신청 모달 로직 (수량 표기 반영)
+    // 유니폼 주문 신청 모달 로직
     // ==========================================
     function openUniformModal() {
         if (!isUniformActive && !isSuperOrDev()) {
@@ -2232,6 +2329,7 @@
                 });
             }
 
+            sendActivityLog("주문접수", playerName, `${playerName} (${playerGrade}학년) 유니폼 주문 신청 완료`);
             alert(`✅ ${playerName} 선수의 유니폼 신청이 구글 시트에 정상 반영되었습니다!`);
             closeModal('uniformModal');
         } catch (err) {
@@ -2249,6 +2347,8 @@
     async function openEmergencyContactsModal() {
         document.getElementById('emergencyContactsModal').style.display = 'flex';
         const content = document.getElementById('contactsListContent');
+
+        sendActivityLog("열람", currentRole, "학부모 비상연락망 열람");
 
         const cached = localStorage.getItem('daeyeon_emergency_contacts');
         if (cached) {
@@ -2386,7 +2486,6 @@
                         </div>
                     ` : ''}
 
-                    <!-- 선수 본인의 이름으로 표기 (예: 📱 류태영) -->
                     ${sPhone ? `
                         <div class="contact-row" style="background:#eff6ff;">
                             <div class="contact-left-info">
@@ -2465,6 +2564,8 @@
             if (note) text += `\n  • 비고: ${note}`;
             text += `\n`;
         });
+
+        sendActivityLog("연락망복사", currentRole, `${gradeLabel} ${filtered.length}명 상세 연락처 복사`);
 
         navigator.clipboard.writeText(text.trim()).then(() => {
             alert(`📋 ${filtered.length}명의 학부모 상세 비상연락망이 복사되었습니다!\n카카오톡이나 메모장에 바로 붙여넣기 하세요.`);
@@ -2599,6 +2700,7 @@
             });
 
             savePhotoLocally(uploadTargetPlayer, dataUrl);
+            sendActivityLog("사진등록", currentRole, `${uploadTargetPlayer.name} 사진 등록/변경 완료`);
             alert(`✅ ${uploadTargetPlayer.name} 선수의 사진이 구글 드라이브에 등록되었습니다!`);
             closeModal('photoUploadModal');
             render();
@@ -2638,10 +2740,10 @@
             delete customPhotos[uploadTargetPlayer.name];
             localStorage.setItem('daeyeon_custom_photos', JSON.stringify(customPhotos));
 
-            // ★ [오류 해결] target.no -> uploadTargetPlayer.no 로 수정 완료
             const p = players.find(item => (uploadTargetPlayer.no && item.no === uploadTargetPlayer.no) || item.name === uploadTargetPlayer.name);
             if (p) p.photoLink = "";
 
+            sendActivityLog("사진삭제", currentRole, `${uploadTargetPlayer.name} 등록 사진 삭제 (기본 복원)`);
             alert(`✅ ${uploadTargetPlayer.name} 선수의 사진이 삭제되어 기본 이미지로 복원되었습니다.`);
             closeModal('photoUploadModal');
             render();
@@ -2655,11 +2757,63 @@
     }
 
     // ==========================================
+    // 📜 개발자 전용 보안 로그 모달
+    // ==========================================
+    async function openLogsModal() {
+        if (currentRole !== 'dev') return;
+        document.getElementById('logsModal').style.display = 'flex';
+        loadSecurityLogs();
+    }
+
+    async function loadSecurityLogs() {
+        const content = document.getElementById('logsListContent');
+        content.innerHTML = '<div style="text-align: center; padding: 40px; color: #64748b;">구글 시트에서 최신 활동 로그를 불러오는 중...</div>';
+
+        try {
+            const res = await fetch(GOOGLE_SCRIPT_UNIFORM_API_URL + "?action=getLogs&nocache=" + Date.now());
+            const json = await res.json();
+            if (!json || !json.logs || json.logs.length === 0) {
+                content.innerHTML = '<div style="text-align: center; padding: 40px; color: #94a3b8;">기록된 로그가 아직 없습니다.</div>';
+                return;
+            }
+
+            content.innerHTML = json.logs.map(log => {
+                let badgeClass = "log-type-unlock";
+                if (log.eventType.includes("잠금") || log.eventType.includes("만료")) badgeClass = "log-type-lock";
+                else if (log.eventType.includes("관리자")) badgeClass = "log-type-admin";
+                else if (log.eventType.includes("연락") || log.eventType.includes("열람")) badgeClass = "log-type-contact";
+                else if (log.eventType.includes("주문")) badgeClass = "log-type-order";
+                else if (log.eventType.includes("사진")) badgeClass = "log-type-photo";
+
+                return `
+                    <div class="log-item-card">
+                        <div class="log-header-row">
+                            <span class="log-type-tag ${badgeClass}">[${log.eventType}] ${log.role}</span>
+                            <span style="font-size: 11px; color: #94a3b8;">${log.date}</span>
+                        </div>
+                        <div style="font-size: 11px; color: #475569; display: flex; gap: 8px;">
+                            <span>🆔 <b>${log.clientId}</b></span>
+                            <span>📱 <b>${log.device}</b></span>
+                        </div>
+                        <div style="font-size: 12px; color: #0f172a; font-weight: 600; margin-top: 2px;">
+                            ${log.details}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } catch (err) {
+            console.error(err);
+            content.innerHTML = '<div style="text-align: center; padding: 40px; color: #dc2626;">로그를 불러오는데 실패했습니다: ' + err.message + '</div>';
+        }
+    }
+
+    // ==========================================
     // 관리자 로그인 & 비밀번호 모달
     // ==========================================
     function openAdminModal() {
         if (currentRole !== 'guest') {
             if (confirm('관리자 모드를 로그아웃 하시겠습니까?')) {
+                sendActivityLog("관리자로그아웃", currentRole, "관리자 로그아웃 실행");
                 currentRole = 'guest';
                 sessionStorage.removeItem('daeyeon_admin_role');
                 updateAdminUI();
@@ -2678,20 +2832,25 @@
         if (isDevPassword(pw)) {
             currentRole = 'dev';
             sessionStorage.setItem('daeyeon_admin_role', 'dev');
+            sendActivityLog("관리자로그인", "개발자", "마스터 개발자 로그인 성공");
             alert('⚡ [개발자 마스터 관리자]로 로그인되었습니다.');
         } else if (pw === pws.super) {
             currentRole = 'super';
             sessionStorage.setItem('daeyeon_admin_role', 'super');
+            sendActivityLog("관리자로그인", "최고관리자", "최고관리자(0000) 로그인 성공");
             alert('👑 최고관리자로 로그인되었습니다.');
         } else if (pw === pws.sub) {
             currentRole = 'sub';
             sessionStorage.setItem('daeyeon_admin_role', 'sub');
+            sendActivityLog("관리자로그인", "보조관리자", "보조관리자(1111) 로그인 성공");
             alert('🛠️ 보조관리자로 로그인되었습니다.');
         } else if (pw === pws.general) {
             currentRole = 'general';
             sessionStorage.setItem('daeyeon_admin_role', 'general');
+            sendActivityLog("관리자로그인", "일반관리자", "일반관리자(2222) 로그인 성공");
             alert('📋 일반관리자로 로그인되었습니다.');
         } else {
+            sendActivityLog("관리자로그인실패", "미상", `잘못된 관리자 비번 입력: [${pw}]`);
             alert('비밀번호가 올바르지 않습니다.');
             return;
         }
@@ -2708,6 +2867,7 @@
         const btnSheetLink = document.getElementById('btnSheetLink');
         const btnToggleUniform = document.getElementById('btnToggleUniform');
         const btnViewOrders = document.getElementById('btnViewOrders');
+        const btnViewLogs = document.getElementById('btnViewLogs');
         const btnManagePw = document.getElementById('btnManagePw');
         const btnEmergency = document.getElementById('btnEmergencyContacts');
 
@@ -2724,6 +2884,7 @@
             btnToggleUniform.textContent = isUniformActive ? '👕 접수기능: ON (접수중)' : '👕 접수기능: OFF (마감)';
             btnToggleUniform.style.background = isUniformActive ? '#15803d' : '#991b1b';
             btnViewOrders.style.display = 'inline-block';
+            if (btnViewLogs) btnViewLogs.style.display = 'inline-block';
             btnManagePw.style.display = 'inline-block';
             btnEmergency.style.display = 'inline-flex';
         } else if (currentRole === 'super') {
@@ -2737,6 +2898,7 @@
             btnToggleUniform.textContent = isUniformActive ? '👕 접수기능: ON (접수중)' : '👕 접수기능: OFF (마감)';
             btnToggleUniform.style.background = isUniformActive ? '#15803d' : '#991b1b';
             btnViewOrders.style.display = 'inline-block';
+            if (btnViewLogs) btnViewLogs.style.display = 'none';
             btnManagePw.style.display = 'inline-block';
             btnEmergency.style.display = 'inline-flex';
         } else if (currentRole === 'sub') {
@@ -2748,6 +2910,7 @@
             btnSheetLink.style.display = 'inline-flex';
             btnToggleUniform.style.display = 'none';
             btnViewOrders.style.display = 'none';
+            if (btnViewLogs) btnViewLogs.style.display = 'none';
             btnManagePw.style.display = 'none';
             btnEmergency.style.display = 'none';
         } else if (currentRole === 'general') {
@@ -2759,6 +2922,7 @@
             btnSheetLink.style.display = 'none';
             btnToggleUniform.style.display = 'none';
             btnViewOrders.style.display = 'none';
+            if (btnViewLogs) btnViewLogs.style.display = 'none';
             btnManagePw.style.display = 'none';
             btnEmergency.style.display = 'none';
         } else {
@@ -2767,6 +2931,7 @@
             adminBar.style.display = 'none';
             btnToggleUniform.style.display = 'none';
             btnViewOrders.style.display = 'none';
+            if (btnViewLogs) btnViewLogs.style.display = 'none';
             btnManagePw.style.display = 'none';
             btnEmergency.style.display = 'none';
         }
@@ -2838,6 +3003,7 @@
         if (newGen) { localStorage.setItem('daeyeon_pw_general', newGen); updatedMsg.push('일반관리자'); }
         if (updatedMsg.length === 0) { alert('변경된 항목이 없습니다.'); return; }
 
+        sendActivityLog("비밀번호변경", "최고관리자", `[${updatedMsg.join(', ')}] 비밀번호 변경됨`);
         alert(`✅ [${updatedMsg.join(', ')}] 비밀번호가 성공적으로 변경되었습니다.`);
         closeModal('passwordModal');
     }
@@ -2850,6 +3016,7 @@
         localStorage.setItem('daeyeon_pw_super', s);
         localStorage.setItem('daeyeon_pw_sub', sub);
         localStorage.setItem('daeyeon_pw_general', g);
+        sendActivityLog("비밀번호변경", "개발자", "모든 관리자 비밀번호 마스터 권한 일괄 변경");
         alert('⚡ 모든 관리자 비밀번호가 마스터 권한으로 즉시 변경 저장되었습니다.');
         closeModal('passwordModal');
     }
@@ -2859,6 +3026,7 @@
             localStorage.setItem('daeyeon_pw_super', '0000');
             localStorage.setItem('daeyeon_pw_sub', '1111');
             localStorage.setItem('daeyeon_pw_general', '2222');
+            sendActivityLog("비밀번호리셋", "개발자", "모든 관리자 비밀번호 기본값(0000/1111/2222) 리셋");
             alert('비밀번호가 초기값(최고:0000, 보조:1111, 일반:2222)으로 리셋되었습니다.');
             openPasswordManageModal();
         }
@@ -2868,6 +3036,7 @@
         if (!isSuperOrDev()) return;
         isUniformActive = !isUniformActive;
         localStorage.setItem('daeyeon_uniform_active', isUniformActive ? 'true' : 'false');
+        sendActivityLog("유니폼접수설정", currentRole, `유니폼 접수 상태 변경: [${isUniformActive ? 'ON' : 'OFF'}]`);
         alert(`유니폼 접수 기능이 [${isUniformActive ? 'ON (활성화)' : 'OFF (마감/비활성화)'}] 되었습니다.`);
         updateAdminUI();
         render();
