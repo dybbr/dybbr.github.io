@@ -10,8 +10,8 @@
         const GOOGLE_SHEET_CONTACTS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSw2YtYByfiPWXbRfqkzmZ6yzaZVfJHO0f9zAmCiLnwlMvVXCt9lv4AmQAz4_vSjzPy0APtl0hwYNmW/pub?gid=812608822&single=true&output=csv";
         const GOOGLE_SCRIPT_UNIFORM_API_URL = "https://script.google.com/macros/s/AKfycbwAdnLPVvTMIUGt538hM18pS_upBZt8FhKRTESjWXNonKFHOH5e59Vxi0hjDqYend-IHg/exec";
         
-        // 웹페이지 배포 버전 (모바일 헤더 겹침 완벽 해결 v2.0.2)
-        const APP_VERSION = "v2.0.2 · b260916";
+        // 웹페이지 배포 버전 (개발자 자정 세션 반영 v2.0.3)
+        const APP_VERSION = "v2.0.3 · b260916";
     </script>
 
     <meta charset="UTF-8">
@@ -177,7 +177,7 @@
             user-select: none;
         }
 
-        /* 2단: 중앙 타이틀 (버튼과 완전히 독립된 단독 행으로 겹침 절대 불가) */
+        /* 2단: 중앙 타이틀 (버튼과 완전히 분리된 단독 행으로 겹침 방지) */
         .header-center-title {
             text-align: center;
             padding: 2px 0;
@@ -1199,7 +1199,7 @@
         </div>
         <div class="header-top-right">
             <button id="adminLoginBtn" class="admin-toggle-btn" onclick="openAdminModal()">🔒 관리자 로그인</button>
-            <span class="app-version-tag" id="appVersionDisplay">v2.0.2 · b260916</span>
+            <span class="app-version-tag" id="appVersionDisplay">v2.0.3 · b260916</span>
         </div>
     </div>
 
@@ -1686,18 +1686,16 @@
             d + m + yy
         ];
 
-        // 1. 개발자 당일 코드 (정오까지 해제)
+        // 1. 개발자 당일 코드 (★ 오늘 밤 자정 24:00까지 해제)
         if (devCodes.includes(inputVal)) {
-            let noonDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0);
-            if (now.getTime() >= noonDate.getTime()) {
-                noonDate.setDate(noonDate.getDate() + 1);
-            }
-            localStorage.setItem('daeyeon_auth_expire', noonDate.getTime());
+            // 오늘 밤 자정 (내일 00시 00분 00초)
+            let midnightDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
+            localStorage.setItem('daeyeon_auth_expire', midnightDate.getTime());
             const overlay = document.getElementById('lockOverlay');
             if (overlay) overlay.style.display = 'none';
             startSessionCountdown();
-            sendActivityLog("잠금해제", "개발자", "정오까지 세션 해제");
-            alert('🔓 개발자 인증 완료 (정오까지 유지됩니다)');
+            sendActivityLog("잠금해제", "개발자", "오늘 자정까지 세션 해제");
+            alert('🔓 개발자 인증 완료 (오늘 밤 자정까지 유지됩니다)');
             document.getElementById('lockPasswordInput').value = '';
             return;
         }
