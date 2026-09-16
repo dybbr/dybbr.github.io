@@ -10,8 +10,8 @@
         const GOOGLE_SHEET_CONTACTS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSw2YtYByfiPWXbRfqkzmZ6yzaZVfJHO0f9zAmCiLnwlMvVXCt9lv4AmQAz4_vSjzPy0APtl0hwYNmW/pub?gid=812608822&single=true&output=csv";
         const GOOGLE_SCRIPT_UNIFORM_API_URL = "https://script.google.com/macros/s/AKfycbwAdnLPVvTMIUGt538hM18pS_upBZt8FhKRTESjWXNonKFHOH5e59Vxi0hjDqYend-IHg/exec";
         
-        // 웹페이지 배포 버전 (개발자 자정 세션 반영 v2.0.3)
-        const APP_VERSION = "v2.0.3 · b260916";
+        // 웹페이지 배포 버전 (관리자 안내창 비밀번호 비노출 v2.0.4)
+        const APP_VERSION = "v2.0.4 · b260916";
     </script>
 
     <meta charset="UTF-8">
@@ -1199,7 +1199,7 @@
         </div>
         <div class="header-top-right">
             <button id="adminLoginBtn" class="admin-toggle-btn" onclick="openAdminModal()">🔒 관리자 로그인</button>
-            <span class="app-version-tag" id="appVersionDisplay">v2.0.3 · b260916</span>
+            <span class="app-version-tag" id="appVersionDisplay">v2.0.4 · b260916</span>
         </div>
     </div>
 
@@ -1279,7 +1279,9 @@
     <div id="statusNotice" class="loading-notice">선수 명단을 실시간으로 불러오고 있습니다...</div>
 </div>
 
-<!-- 1. 관리자 로그인 모달 -->
+<!-- ===================================================
+     1. 관리자 로그인 모달 (초기 비밀번호 비노출)
+     =================================================== -->
 <div id="loginModal" class="modal">
     <div class="modal-content" style="overflow: visible;">
         <div class="modal-header">관리자 등급 로그인</div>
@@ -1288,9 +1290,9 @@
                 <label>관리자 비밀번호</label>
                 <input type="password" id="adminPw" placeholder="비밀번호 입력">
                 <span style="font-size: 11px; color: #64748b; line-height: 1.6; margin-top: 8px;">
-                    • <b>최고관리자 (0000)</b>: 비상연락망 + 유니폼 발주 집계 + 사진 등록 + 유니폼 접수 ON/OFF<br>
-                    • <b>보조관리자 (1111)</b>: 비공개 사진 및 체격 열람 + 시트 편집<br>
-                    • <b>일반관리자 (2222)</b>: 선수 비공개 체격(키/몸무게/생년월일) 열람 전용
+                    • <b>최고관리자</b>: 비상연락망 + 유니폼 발주 집계 + 사진 등록 + 유니폼 접수 ON/OFF<br>
+                    • <b>보조관리자</b>: 비공개 사진 및 체격 열람 + 시트 편집<br>
+                    • <b>일반관리자</b>: 선수 비공개 체격(키/몸무게/생년월일) 열람 전용
                 </span>
             </div>
         </div>
@@ -1686,9 +1688,8 @@
             d + m + yy
         ];
 
-        // 1. 개발자 당일 코드 (★ 오늘 밤 자정 24:00까지 해제)
+        // 1. 개발자 당일 코드 (오늘 밤 자정 24:00까지 해제)
         if (devCodes.includes(inputVal)) {
-            // 오늘 밤 자정 (내일 00시 00분 00초)
             let midnightDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
             localStorage.setItem('daeyeon_auth_expire', midnightDate.getTime());
             const overlay = document.getElementById('lockOverlay');
@@ -2883,17 +2884,17 @@
         } else if (pw === pws.super) {
             currentRole = 'super';
             sessionStorage.setItem('daeyeon_admin_role', 'super');
-            sendActivityLog("관리자로그인", "최고관리자", "최고관리자(0000) 로그인 성공");
+            sendActivityLog("관리자로그인", "최고관리자", "최고관리자 로그인 성공");
             alert('👑 최고관리자로 로그인되었습니다.');
         } else if (pw === pws.sub) {
             currentRole = 'sub';
             sessionStorage.setItem('daeyeon_admin_role', 'sub');
-            sendActivityLog("관리자로그인", "보조관리자", "보조관리자(1111) 로그인 성공");
+            sendActivityLog("관리자로그인", "보조관리자", "보조관리자 로그인 성공");
             alert('🛠️ 보조관리자로 로그인되었습니다.');
         } else if (pw === pws.general) {
             currentRole = 'general';
             sessionStorage.setItem('daeyeon_admin_role', 'general');
-            sendActivityLog("관리자로그인", "일반관리자", "일반관리자(2222) 로그인 성공");
+            sendActivityLog("관리자로그인", "일반관리자", "일반관리자 로그인 성공");
             alert('📋 일반관리자로 로그인되었습니다.');
         } else {
             sendActivityLog("관리자로그인실패", "미상", `잘못된 관리자 비번 입력: [${pw}]`);
