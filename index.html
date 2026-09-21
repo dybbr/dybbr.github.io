@@ -6,16 +6,16 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
 
-    <!-- 구글 연동 설정 (100% 실시간 gviz 직결 스트림) -->
+    <!-- 구글 연동 설정 (100% 실시간 export 직결 스트림: 데이터 타입 유실 방지) -->
     <script>
         const GOOGLE_SHEET_ID = "1ljpHkiJL_H1NN5rwTaQOL5QYeev32QvaBTKzxSPgNVA";
         const ROSTER_GID = "1653839889";
         const UNIFORM_GID = "1881893260";
         const CONTACTS_GID = "812608822";
         
-        // 캐시 지연 없는 100% 실시간 gviz CSV URL 생성기
+        // 캐시 지연 없는 100% 실시간 CSV URL 생성기
         function getRealtimeCsvUrl(gid) {
-            return `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&gid=${gid}&headers=1&tq=${encodeURIComponent('select *')}&_t=${Date.now()}`;
+            return `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/export?format=csv&gid=${gid}&_t=${Date.now()}`;
         }
         
         const GOOGLE_SHEET_EDIT_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/edit?gid=${ROSTER_GID}#gid=${ROSTER_GID}`;
@@ -24,7 +24,7 @@
         const GOOGLE_SCRIPT_UNIFORM_API_URL = "https://script.google.com/macros/s/AKfycbwAdnLPVvTMIUGt538hM18pS_upBZt8FhKRTESjWXNonKFHOH5e59Vxi0hjDqYend-IHg/exec";
         
         // 웹페이지 배포 버전
-        const APP_VERSION = "v2.1.3 · b260921";
+        const APP_VERSION = "v2.1.4 · b260921";
     </script>
 
     <meta charset="UTF-8">
@@ -1218,7 +1218,10 @@
             선수 명단 보호중. 비밀번호를 입력하세요.
         </div>
         <div style="margin-bottom: 12px;">
-            <input type="password" id="lockPasswordInput" placeholder="비밀번호 입력" style="width: 100%; padding: 10px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 16px; text-align: center; font-weight: 800; letter-spacing: 2px; outline: none;" onkeydown="if(event.key==='Enter') verifyLockPassword()">
+            <!-- ★ 엔터키 또는 스페이스바 누르면 즉시 잠금 해제 실행 ★ -->
+            <input type="password" id="lockPasswordInput" placeholder="비밀번호 입력" 
+                   style="width: 100%; padding: 10px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 16px; text-align: center; font-weight: 800; letter-spacing: 2px; outline: none;" 
+                   onkeydown="if(event.key==='Enter' || event.key===' ' || event.code==='Space') { event.preventDefault(); verifyLockPassword(); }">
         </div>
         <button onclick="verifyLockPassword()" style="width: 100%; background: var(--kbo-blue); color: white; border: none; padding: 10px; border-radius: 8px; font-size: 14px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 10px rgba(11,34,64,0.2);">
             🔐 잠금 해제
@@ -1322,7 +1325,9 @@
         <div class="modal-scroll-body">
             <div class="form-group">
                 <label>관리자 비밀번호</label>
-                <input type="password" id="adminPw" placeholder="비밀번호 입력">
+                <!-- ★ 엔터키 또는 스페이스바 누르면 즉시 로그인 실행 ★ -->
+                <input type="password" id="adminPw" placeholder="비밀번호 입력" 
+                       onkeydown="if(event.key==='Enter' || event.key===' ' || event.code==='Space') { event.preventDefault(); handleLogin(); }">
                 <span style="font-size: 11px; color: #64748b; line-height: 1.6; margin-top: 8px;">
                     • <b>최고관리자</b>: 비상연락망 + 유니폼 발주 집계 + 사진 등록 + 유니폼 접수 ON/OFF<br>
                     • <b>보조관리자</b>: 비공개 사진 및 체격 열람 + 시트 편집<br>
@@ -1636,7 +1641,7 @@
 
             const diff = parseInt(authExpire, 10) - Date.now();
             if (diff <= 0) {
-                // 🔒 세션 만료 시 관리자 권한 강제 초기화
+                // 세션 만료 시 관리자 권한 강제 초기화
                 localStorage.removeItem('daeyeon_auth_expire');
                 sessionStorage.removeItem('daeyeon_admin_role');
                 currentRole = 'guest';
@@ -1680,8 +1685,9 @@
         const overlay = document.getElementById('lockOverlay');
         if (overlay) {
             overlay.style.display = 'flex';
-            document.getElementById('lockPasswordInput').value = '';
-            document.getElementById('lockPasswordInput').focus();
+            const pwInput = document.getElementById('lockPasswordInput');
+            pwInput.value = '';
+            setTimeout(() => pwInput.focus(), 50);
         }
         alert('🔒 화면이 잠금 상태로 전환되었습니다.');
     }
@@ -1718,7 +1724,7 @@
             let midnightDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
             localStorage.setItem('daeyeon_auth_expire', midnightDate.getTime());
             
-            // ⚡ 개발자 마스터 권한 자동 획득
+            // 개발자 마스터 권한 자동 획득
             currentRole = 'dev';
             sessionStorage.setItem('daeyeon_admin_role', 'dev');
 
@@ -1729,7 +1735,7 @@
             const expireTime = Date.now() + (4 * 60 * 60 * 1000);
             localStorage.setItem('daeyeon_auth_expire', expireTime);
 
-            // 👑 최고관리자 권한 자동 획득
+            // 최고관리자 권한 자동 획득
             currentRole = 'super';
             sessionStorage.setItem('daeyeon_admin_role', 'super');
 
@@ -1740,7 +1746,7 @@
             const expireTime = Date.now() + (1 * 60 * 60 * 1000);
             localStorage.setItem('daeyeon_auth_expire', expireTime);
 
-            // 🛠️ 보조관리자 권한 자동 획득
+            // 보조관리자 권한 자동 획득
             currentRole = 'sub';
             sessionStorage.setItem('daeyeon_admin_role', 'sub');
 
@@ -1751,7 +1757,7 @@
             const expireTime = Date.now() + (30 * 60 * 1000);
             localStorage.setItem('daeyeon_auth_expire', expireTime);
 
-            // 📋 일반관리자 권한 자동 획득
+            // 일반관리자 권한 자동 획득
             currentRole = 'general';
             sessionStorage.setItem('daeyeon_admin_role', 'general');
 
@@ -1762,7 +1768,7 @@
             const expireTime = Date.now() + (10 * 60 * 1000);
             localStorage.setItem('daeyeon_auth_expire', expireTime);
 
-            // 👤 일반 열람자 게스트로 고정
+            // 일반 열람자 게스트로 고정
             currentRole = 'guest';
             sessionStorage.removeItem('daeyeon_admin_role');
 
@@ -1849,33 +1855,48 @@
         return `<span class="bt-tag bt-etc">${val}</span>`;
     }
 
+    // ★ 비공개(OFF) 설정 시 셀 값이 비어있어도 정확히 '비공개'로 표시되도록 완벽 보완 ★
     function formatBirth(p) {
-        if (!p.birth || p.birth === '-' || p.birth === '' || p.birth === '0') return '-';
+        const hasVal = p.birth && p.birth !== '-' && p.birth !== '0' && p.birth.trim() !== '';
         const bHidden = !!p.hideBirth;
-        if (currentRole === 'guest') return bHidden ? '<span class="text-private">비공개</span>' : p.birth;
-        const bBadge = (bHidden && (currentRole === 'super' || currentRole === 'sub' || currentRole === 'dev')) ? '<span class="admin-private-badge">비공개</span>' : '';
-        return `${p.birth}${bBadge}`;
+
+        if (bHidden) {
+            if (currentRole === 'guest') {
+                return '<span class="text-private">비공개</span>';
+            } else {
+                return hasVal 
+                    ? `${p.birth}<span class="admin-private-badge">비공개</span>` 
+                    : '<span class="admin-private-badge">비공개</span>';
+            }
+        }
+        return hasVal ? p.birth : '-';
     }
 
     function formatPhys(p) {
-        const h = p.height && p.height !== '0' && p.height !== '-' ? p.height : '';
-        const w = p.weight && p.weight !== '0' && p.weight !== '-' ? p.weight : '';
-        if (!h && !w) return '-';
+        const h = (p.height && p.height !== '0' && p.height !== '-' && p.height.trim() !== '') ? p.height : '';
+        const w = (p.weight && p.weight !== '0' && p.weight !== '-' && p.weight.trim() !== '') ? p.weight : '';
         const hHidden = !!p.hideHeight;
         const wHidden = !!p.hideWeight;
 
         if (currentRole === 'guest') {
             if (hHidden && wHidden) return '<span class="text-private">비공개</span>';
-            const hStr = h ? (hHidden ? '<span class="text-private">비공개</span>' : `${h}cm`) : '';
-            const wStr = w ? (wHidden ? '<span class="text-private">비공개</span>' : `${w}kg`) : '';
-            if (hStr && wStr) return `${hStr} / ${wStr}`;
-            return hStr || wStr || '-';
+            const hStr = hHidden ? '<span class="text-private">비공개</span>' : (h ? `${h}cm` : '-');
+            const wStr = wHidden ? '<span class="text-private">비공개</span>' : (w ? `${w}kg` : '-');
+            if (hStr === '-' && wStr === '-') return '-';
+            return `${hStr} / ${wStr}`;
         } else {
             const showBadge = (currentRole === 'super' || currentRole === 'sub' || currentRole === 'dev');
-            const hBadge = (hHidden && showBadge) ? '<span class="admin-private-badge">비공개</span>' : '';
-            const wBadge = (wHidden && showBadge) ? '<span class="admin-private-badge">비공개</span>' : '';
-            const hStr = h ? `${h}cm${hBadge}` : '';
-            const wStr = w ? `${w}kg${wBadge}` : '';
+            if (hHidden && wHidden && !h && !w) {
+                return showBadge ? '<span class="admin-private-badge">비공개</span>' : '<span class="text-private">비공개</span>';
+            }
+
+            let hStr = h ? `${h}cm` : (hHidden ? '' : '-');
+            if (hHidden && showBadge) hStr += '<span class="admin-private-badge">비공개</span>';
+
+            let wStr = w ? `${w}kg` : (wHidden ? '' : '-');
+            if (wHidden && showBadge) wStr += '<span class="admin-private-badge">비공개</span>';
+
+            if (!hStr && !wStr) return '<span class="admin-private-badge">비공개</span>';
             if (hStr && wStr) return `${hStr} / ${wStr}`;
             return hStr || wStr || '-';
         }
@@ -1955,7 +1976,6 @@
     function render() {
         const searchEl = document.getElementById('searchInput');
         const rawQuery = searchEl.value.trim().toLowerCase();
-        // 🔍 등번호 검색 유연화 ('7번', 'no.7' 등 처리)
         const query = rawQuery;
         const numberQuery = rawQuery.replace(/^(no\.?|번)\s*|\s*번$/gi, '').trim();
 
@@ -2367,7 +2387,6 @@
         const select = document.getElementById('ordPlayerSelect');
         select.innerHTML = '<option value="">-- 선수를 선택해 주세요 --</option>';
         
-        // 숨김(visible === false) 선수는 목록에서 제외
         players.filter(p => !isStaff(p.grade) && (isSuperOrDev() || p.visible !== false)).forEach(p => {
             const prefix = p.no ? `No.${p.no} ` : '';
             select.innerHTML += `<option value="${p.name}" data-no="${p.no}" data-grade="${p.grade}" data-h="${p.height||''}" data-w="${p.weight||''}">${prefix}${p.name} (${p.grade}학년)</option>`;
@@ -2939,7 +2958,7 @@
             delete customPhotos[uploadTargetPlayer.name];
             localStorage.setItem('daeyeon_custom_photos', JSON.stringify(customPhotos));
 
-            const p = players.find(item => (uploadTargetPlayer.no && item.no === uploadTargetPlayer.no) || item.name === target.name);
+            const p = players.find(item => (uploadTargetPlayer.no && item.no === uploadTargetPlayer.no) || item.name === uploadTargetPlayer.name);
             if (p) p.photoLink = "";
 
             sendActivityLog("사진삭제", currentRole, `${uploadTargetPlayer.name} 등록 사진 삭제 (기본 복원)`);
@@ -3004,7 +3023,7 @@
         }
     }
 
-    // 관리자 로그인 제어
+    // 관리자 로그인 제어 (모달 띄울 때 인풋창 자동 포커스 추가)
     function openAdminModal() {
         if (currentRole !== 'guest') {
             if (confirm('관리자 모드를 로그아웃 하시겠습니까?')) {
@@ -3015,8 +3034,10 @@
                 render();
             }
         } else {
-            document.getElementById('adminPw').value = '';
+            const pwInput = document.getElementById('adminPw');
+            pwInput.value = '';
             document.getElementById('loginModal').style.display = 'flex';
+            setTimeout(() => pwInput.focus(), 50);
         }
     }
 
@@ -3241,7 +3262,7 @@
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
     function isOff(val) { if (!val) return false; const v = String(val).toUpperCase().trim(); return v === 'OFF' || v === '비공개'; }
 
-    // ★ 실시간 시트 로더 (2D 배열 파서)
+    // ★ 실시간 시트 로더 (2D 배열 파서: export?format=csv 적용으로 데이터 강제 변환 버그 완벽 방지)
     async function loadGoogleSheetData() {
         try {
             if (savedSearchQuery) document.getElementById('searchInput').value = savedSearchQuery;
