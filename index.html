@@ -22,7 +22,7 @@
         const GOOGLE_SHEET_UNIFORM_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/edit?gid=${UNIFORM_GID}#gid=${UNIFORM_GID}`;
         const GOOGLE_SCRIPT_UNIFORM_API_URL = "https://script.google.com/macros/s/AKfycbwAdnLPVvTMIUGt538hM18pS_upBZt8FhKRTESjWXNonKFHOH5e59Vxi0hjDqYend-IHg/exec";
         
-        const APP_VERSION = "v2.3.6 · b260921";
+        const APP_VERSION = "v2.3.7 · b260921";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -706,7 +706,7 @@
             선수 명단 보호중. 등록된 휴대폰 번호 또는 관리자 비밀번호를 입력해 주세요.
         </div>
         
-        <!-- 최초 등록 시에만 나타나는 자녀 선수 이름 및 관계 선택 필드 -->
+        <!-- 최초 등록 시에만 나타나는 자녀 선수 이름 및 깔끔하게 정리된 관계 선택 필드 -->
         <div id="firstRegFields" style="display: none; margin-bottom: 16px; text-align: left;">
             <div class="lock-input-group">
                 <label>자녀 선수 이름 * (명단 대조 확인)</label>
@@ -714,11 +714,11 @@
             </div>
 
             <div class="lock-input-group">
-                <label>보호자 관계 선택 * (비상연락망 저장 위치)</label>
+                <label>보호자 관계 선택 *</label>
                 <select id="regRoleSelect" class="lock-select-input">
-                    <option value="아버님">👨 아버님 (비상연락망 [아버님] 열에 저장)</option>
-                    <option value="어머님">👩 어머님 (비상연락망 [어머님] 열에 저장)</option>
-                    <option value="기타">📞 기타 (비상연락망 [기타연락처] 열에 저장)</option>
+                    <option value="아버님">👨 아버님</option>
+                    <option value="어머님">👩 어머님</option>
+                    <option value="기타">📞 기타</option>
                 </select>
             </div>
         </div>
@@ -750,7 +750,7 @@
             <button class="btn-screen-lock" onclick="lockScreenNow()" title="즉시 화면 잠금 및 완전 로그아웃">🔒 화면 잠금</button>
         </div>
 
-        <!-- ★ 로그인한 학부모님 표시 뱃지 (잠금 버튼과 관리자 로그인 버튼 사이 중앙 배치) ★ -->
+        <!-- 로그인한 학부모님 표시 뱃지 (중앙 배치) -->
         <div class="header-top-center">
             <span id="userIdentityBadge" class="user-identity-badge" onclick="promptUserIdentity()" title="접속자 정보 변경"></span>
         </div>
@@ -1155,7 +1155,7 @@
         if (isFirstRegMode) {
             regFields.style.display = 'block';
             title.textContent = "📝 최초 학부모/선수 등록";
-            desc.textContent = "선수 이름과 보호자 관계를 선택해 주세요. [학부모 비상연락망] 시트에 정확히 저장됩니다.";
+            desc.textContent = "선수 이름과 보호자 관계를 선택해 주세요.";
             link.textContent = "이미 등록하셨나요? (기존 번호로 로그인)";
             input.placeholder = "휴대폰 번호 입력 (예: 01012345678)";
             btn.textContent = "💾 등록 및 입장하기";
@@ -1205,7 +1205,7 @@
             action: "logActivity",
             clientId: getDeviceClientId(),
             eventType: eventType,
-            role: (role || "-") + ` [${identityStr}]`,
+            role: (role || "-", ` [${identityStr}]`),
             device: getDeviceInfo(),
             details: details || "-"
         };
@@ -2362,6 +2362,7 @@
         render();
     }
 
+    // ★ [핵심] 일반 학부모 화면에서는 관리자 로그인 버튼을 숨기고, 관리자 로그인 시에만 노출
     function updateAdminUI() {
         const adminBar = document.getElementById('adminBar');
         const adminBtn = document.getElementById('adminLoginBtn');
@@ -2371,6 +2372,7 @@
         adminBar.className = 'admin-bar';
 
         if (currentRole === 'dev' || currentRole === 'super' || currentRole === 'sub' || currentRole === 'general') {
+            adminBtn.style.display = 'inline-flex'; // 관리자일 때만 버튼 노출
             adminBtn.textContent = '🔓 로그아웃';
             adminBtn.classList.add('logged-in');
             adminBar.style.display = 'flex';
@@ -2382,7 +2384,7 @@
             document.getElementById('btnManagePw').style.display = isSuperOrDev() ? 'inline-block' : 'none';
             document.getElementById('btnEmergencyContacts').style.display = isSuperOrDev() ? 'inline-flex' : 'none';
         } else {
-            // ★ 일반 학부모/사용자인 경우 우측 상단 관리자 로그인 버튼을 숨김 (오직 관리자 번호/비번 인증 시에만 노출)
+            // 일반 학부모/사용자 화면에서는 관리자 로그인 버튼을 완전히 숨김
             adminBtn.style.display = 'none';
             adminBar.style.display = 'none';
         }
@@ -2398,7 +2400,6 @@
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
     function isOff(val) { if (!val) return false; const v = String(val).toUpperCase().trim(); return v === 'OFF' || v === '비공개'; }
 
-    // 실시간 시트 로더
     async function loadGoogleSheetData() {
         try {
             if (savedSearchQuery) document.getElementById('searchInput').value = savedSearchQuery;
@@ -2474,7 +2475,6 @@
                 }
             });
 
-            // 비상연락망 데이터 사전 캐시 로드
             fetch(getRealtimeCsvUrl(CONTACTS_GID), { cache: 'no-store' }).then(r => r.text()).then(t => {
                 if (t && !t.trim().startsWith('<!DOCTYPE')) {
                     Papa.parse(t, { header: true, skipEmptyLines: 'greedy', complete: res => {
@@ -2489,7 +2489,6 @@
         }
     }
 
-    // 초기화 실행
     const activeAuthExpire = localStorage.getItem('daeyeon_auth_expire');
     if (activeAuthExpire && Date.now() < parseInt(activeAuthExpire, 10)) {
         startSessionCountdown();
