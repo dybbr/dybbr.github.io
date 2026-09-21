@@ -10,7 +10,7 @@
     <script>
         const GOOGLE_SHEET_ID = "1ljpHkiJL_H1NN5rwTaQOL5QYeev32QvaBTKzxSPgNVA";
         
-        // ★ 캐시 지연 0초 실시간 gviz CSV 주소 (시트 수정 즉시 1초 반영) ★
+        // 캐시 지연 0초 실시간 gviz CSV 주소 (시트 수정 즉시 반영)
         const GOOGLE_SHEET_GVIZ_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&gid=1653839889`;
         const GOOGLE_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSw2YtYByfiPWXbRfqkzmZ6yzaZVfJHO0f9zAmCiLnwlMvVXCt9lv4AmQAz4_vSjzPy0APtl0hwYNmW/pub?output=csv";
         
@@ -22,8 +22,8 @@
         const GOOGLE_SHEET_UNIFORM_URL = "https://docs.google.com/spreadsheets/d/1ljpHkiJL_H1NN5rwTaQOL5QYeev32QvaBTKzxSPgNVA/edit?gid=1881893260#gid=1881893260";
         const GOOGLE_SCRIPT_UNIFORM_API_URL = "https://script.google.com/macros/s/AKfycbwAdnLPVvTMIUGt538hM18pS_upBZt8FhKRTESjWXNonKFHOH5e59Vxi0hjDqYend-IHg/exec";
         
-        // 웹페이지 배포 버전 (캐시 제로 실시간 gviz 동기화 v2.0.6)
-        const APP_VERSION = "v2.0.6 · b260921";
+        // 웹페이지 배포 버전 (강제 필터 제거 및 시트 원본값 반영 v2.0.7)
+        const APP_VERSION = "v2.0.7 · b260921";
     </script>
 
     <meta charset="UTF-8">
@@ -99,7 +99,7 @@
         }
 
         /* ===================================================
-           헤더 레이아웃 (모바일 겹침 100% 원천 방지 Flex 3단 분리)
+           헤더 레이아웃 (모바일 겹침 원천 방지 Flex 3단 분리)
            =================================================== */
         header {
             background-color: var(--kbo-blue);
@@ -199,7 +199,7 @@
             user-select: none;
         }
 
-        /* 2단: 중앙 타이틀 (버튼과 완전히 분리된 단독 행으로 겹침 방지) */
+        /* 2단: 중앙 타이틀 */
         .header-center-title {
             text-align: center;
             padding: 2px 0;
@@ -1218,7 +1218,7 @@
         </div>
         <div class="header-top-right">
             <button id="adminLoginBtn" class="admin-toggle-btn" onclick="openAdminModal()">🔒 관리자 로그인</button>
-            <span class="app-version-tag" id="appVersionDisplay">v2.0.6 · b260921</span>
+            <span class="app-version-tag" id="appVersionDisplay">v2.0.7 · b260921</span>
         </div>
     </div>
 
@@ -1337,11 +1337,11 @@
                 </div>
                 <div style="flex: 1.2;">
                     <label style="font-size: 11px; font-weight: 700; color: #64748b;">키 (cm)</label>
-                    <input type="number" id="ordPlayerHeight" style="width: 100%;" placeholder="예: 153">
+                    <input type="text" id="ordPlayerHeight" style="width: 100%;" placeholder="예: 153">
                 </div>
                 <div style="flex: 1.2;">
                     <label style="font-size: 11px; font-weight: 700; color: #64748b;">몸무게 (kg)</label>
-                    <input type="number" id="ordPlayerWeight" style="width: 100%;" placeholder="예: 46">
+                    <input type="text" id="ordPlayerWeight" style="width: 100%;" placeholder="예: 46">
                 </div>
             </div>
 
@@ -1727,7 +1727,7 @@
             if (overlay) overlay.style.display = 'none';
             startSessionCountdown();
             document.getElementById('lockPasswordInput').value = '';
-            // ★ 잠금 해제와 동시에 최신 시트 데이터를 즉시 다시 불러옵니다! ★
+            // 잠금 해제와 동시에 최신 시트 데이터를 즉시 다시 불러옵니다!
             loadGoogleSheetData();
             return;
         }
@@ -1810,16 +1810,6 @@
         if (val.includes('좌투좌타') || val === '좌좌') return `<span class="bt-tag bt-ll">좌투좌타</span>`;
         if (val.includes('좌투우타') || val === '좌우') return `<span class="bt-tag bt-lr">좌투우타</span>`;
         return `<span class="bt-tag bt-etc">${val}</span>`;
-    }
-
-    // ★ [핵심] xxxx.xx.xx 및 0cm 더미 데이터 자동 제거 함수 ★
-    function cleanValue(val) {
-        if (!val) return '';
-        const s = String(val).trim();
-        if (!s || s === '-' || s.toLowerCase() === 'null' || s.toLowerCase() === 'undefined') return '';
-        if (/^[xX0\.\-\s]+$/.test(s)) return ''; // xxxx.xx.xx 나 0000.00.00 형태 완벽 제거
-        if (s === '0' || s === '0cm' || s === '0kg') return '';
-        return s;
     }
 
     function formatBirth(p) {
@@ -2400,7 +2390,6 @@
 
         try {
             let csvText = null;
-            // 1순위: 실시간 gviz 시도
             try {
                 const res = await fetch(GOOGLE_SHEET_CONTACTS_GVIZ_URL + '&nocache=' + Date.now(), { cache: 'no-store' });
                 if (res.ok) {
@@ -2409,7 +2398,6 @@
                 }
             } catch(e) {}
 
-            // 2순위: 백업 CSV
             if (!csvText) {
                 const csvRes = await fetch(GOOGLE_SHEET_CONTACTS_CSV_URL + '&nocache=' + Date.now(), { cache: 'no-store' });
                 csvText = await csvRes.text();
@@ -3101,7 +3089,7 @@
         return '';
     }
 
-    // ★ [핵심] 캐시를 100% 무력화하고 실시간 gviz를 우선 로드하는 엔진 ★
+    // 캐시를 무력화하고 실시간 gviz를 우선 로드하는 엔진 (강제 필터 제거 완료)
     async function loadGoogleSheetData() {
         try {
             if (savedSearchQuery) document.getElementById('searchInput').value = savedSearchQuery;
@@ -3114,14 +3102,14 @@
 
             let csvText = null;
             const fetchOptions = {
-                cache: 'no-store', // 브라우저 캐시 무시 강제
+                cache: 'no-store',
                 headers: {
                     'Cache-Control': 'no-cache, no-store, must-revalidate',
                     'Pragma': 'no-cache'
                 }
             };
 
-            // 1. 구글 서버 실시간 gviz 엔드포인트 시도 (캐시 0초)
+            // 1. 구글 서버 실시간 gviz 엔드포인트 시도
             try {
                 const gvizUrl = GOOGLE_SHEET_GVIZ_URL + '&nocache=' + Date.now();
                 const res = await fetch(gvizUrl, fetchOptions);
@@ -3157,10 +3145,10 @@
                         const parsedNo = parseInt(rawNo, 10);
                         const no = (!isNaN(parsedNo) && parsedNo > 0) ? parsedNo : 0;
 
-                        // xxxx.xx.xx 같은 더미 텍스트는 깨끗하게 공백 처리
-                        let birthRaw = cleanValue(row['생년월일']);
-                        let heightRaw = cleanValue(row['키']);
-                        let weightRaw = cleanValue(row['몸무게']);
+                        // 시트에 기록된 값 그대로 가감 없이 반영
+                        const birthRaw = (row['생년월일'] || '').trim();
+                        const heightRaw = (row['키'] || '').trim();
+                        const weightRaw = (row['몸무게'] || '').trim();
 
                         return {
                             id: idx + 1,
