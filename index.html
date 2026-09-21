@@ -22,7 +22,7 @@
         const GOOGLE_SHEET_UNIFORM_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/edit?gid=${UNIFORM_GID}#gid=${UNIFORM_GID}`;
         const GOOGLE_SCRIPT_UNIFORM_API_URL = "https://script.google.com/macros/s/AKfycbwAdnLPVvTMIUGt538hM18pS_upBZt8FhKRTESjWXNonKFHOH5e59Vxi0hjDqYend-IHg/exec";
         
-        const APP_VERSION = "v2.3.8 · b260921";
+        const APP_VERSION = "v2.3.9 · b260921";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -706,7 +706,7 @@
             선수 명단 보호중. 등록된 휴대폰 번호 또는 관리자 비밀번호를 입력해 주세요.
         </div>
         
-        <!-- 최초 등록 시에만 나타나는 자녀 선수 이름 및 관계 선택 필드 (불필요한 문구 제거) -->
+        <!-- 최초 등록 시에만 나타나는 자녀 선수 이름 및 관계 선택 필드 (간결한 문구 적용) -->
         <div id="firstRegFields" style="display: none; margin-bottom: 16px; text-align: left;">
             <div class="lock-input-group">
                 <label>자녀 선수 이름 * (명단 대조 확인)</label>
@@ -750,7 +750,7 @@
             <button class="btn-screen-lock" onclick="lockScreenNow()" title="즉시 화면 잠금 및 완전 로그아웃">🔒 화면 잠금</button>
         </div>
 
-        <!-- 로그인한 학부모님 표시 뱃지 (잠금 버튼과 관리자 로그인 버튼 사이 중앙 배치) -->
+        <!-- 로그인한 학부모님 표시 뱃지 (중앙 배치) -->
         <div class="header-top-center">
             <span id="userIdentityBadge" class="user-identity-badge" onclick="promptUserIdentity()" title="접속자 정보 변경"></span>
         </div>
@@ -990,7 +990,7 @@
     </div>
 </div>
 
-<!-- 4. 관리자 비밀번호 관리 모달 -->
+<!-- 4. 관리자 비밀번호 관리 모달 (복원 완료) -->
 <div id="passwordModal" class="modal">
     <div class="modal-content" style="max-width: 440px;">
         <div class="modal-header" id="pwModalTitle">🔑 관리자 비밀번호 설정</div>
@@ -2362,6 +2362,7 @@
         render();
     }
 
+    // ★ [복원] 관리자 로그인 버튼이 관리자 권한일 때만 확실히 보이도록 수정
     function updateAdminUI() {
         const adminBar = document.getElementById('adminBar');
         const adminBtn = document.getElementById('adminLoginBtn');
@@ -2371,7 +2372,7 @@
         adminBar.className = 'admin-bar';
 
         if (currentRole === 'dev' || currentRole === 'super' || currentRole === 'sub' || currentRole === 'general') {
-            adminBtn.style.display = 'inline-flex';
+            adminBtn.style.display = 'inline-flex'; // 관리자일 때만 노출
             adminBtn.textContent = '🔓 로그아웃';
             adminBtn.classList.add('logged-in');
             adminBar.style.display = 'flex';
@@ -2383,12 +2384,108 @@
             document.getElementById('btnManagePw').style.display = isSuperOrDev() ? 'inline-block' : 'none';
             document.getElementById('btnEmergencyContacts').style.display = isSuperOrDev() ? 'inline-flex' : 'none';
         } else {
+            // 일반 학부모/사용자 화면에서는 관리자 로그인 버튼을 완전히 숨김
             adminBtn.style.display = 'none';
             adminBar.style.display = 'none';
         }
     }
 
-    function openPasswordManageModal() { alert('비밀번호 관리 기능'); }
+    // ★ [복원] 관리자 비밀번호 변경 모달 기능 복구
+    function openPasswordManageModal() {
+        const body = document.getElementById('pwModalBody');
+        const btns = document.getElementById('pwModalBtns');
+        const title = document.getElementById('pwModalTitle');
+        const pws = getStoredPasswords();
+
+        if (currentRole === 'dev') {
+            title.textContent = '⚡ 개발자 마스터 비밀번호 제어';
+            body.innerHTML = `
+                <div style="background:#f3e8ff; border:1px solid #d8b4fe; border-radius:8px; padding:10px; font-size:12px; color:#581c87; margin-bottom:14px; line-height:1.5;">
+                    • <b>현재 최고관리자 비번:</b> <span style="color:#b91c1c; font-weight:800;">${pws.super}</span><br>
+                    • <b>현재 보조관리자 비번:</b> <span style="color:#1d4ed8; font-weight:800;">${pws.sub}</span><br>
+                    • <b>현재 일반관리자 비번:</b> <span style="color:#15803d; font-weight:800;">${pws.general}</span>
+                </div>
+                <div class="form-group"><label>최고관리자 새 비밀번호</label><input type="text" id="devNewSuperPw" value="${pws.super}"></div>
+                <div class="form-group"><label>보조관리자 새 비밀번호</label><input type="text" id="devNewSubPw" value="${pws.sub}"></div>
+                <div class="form-group"><label>일반관리자 새 비밀번호</label><input type="text" id="devNewGenPw" value="${pws.general}"></div>
+            `;
+            btns.innerHTML = `
+                <button class="btn-cancel" style="color:#b91c1c; border-color:#fecaca;" onclick="resetAllPasswordsToDefault()">기본값 리셋</button>
+                <button class="btn-cancel" onclick="closeModal('passwordModal')">취소</button>
+                <button class="btn-save" style="background:#7c3aed;" onclick="saveDevPasswords()">전체 저장</button>
+            `;
+        } else if (currentRole === 'super') {
+            title.textContent = '🔑 관리자 비밀번호 변경';
+            body.innerHTML = `
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-bottom:12px;">
+                    <div style="font-size:13px; font-weight:800; color:#0b2240; margin-bottom:8px;">👑 최고관리자 본인 비밀번호 변경</div>
+                    <div class="form-group"><label>현재 최고관리자 비밀번호 확인 *</label><input type="password" id="curSuperPw" placeholder="현재 비밀번호 입력"></div>
+                    <div class="form-group"><label>새 비밀번호 *</label><input type="password" id="newSuperPw" placeholder="변경할 새 비밀번호"></div>
+                    <div class="form-group"><label>새 비밀번호 확인 *</label><input type="password" id="newSuperPwConfirm" placeholder="변경할 새 비밀번호 재입력"></div>
+                </div>
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px;">
+                    <div style="font-size:13px; font-weight:800; color:#0b2240; margin-bottom:8px;">👥 하위 관리자 비밀번호 변경</div>
+                    <div class="form-group"><label>보조관리자 새 비밀번호</label><input type="text" id="newSubPw" placeholder="현재: 보안유지됨"></div>
+                    <div class="form-group"><label>일반관리자 새 비밀번호</label><input type="text" id="newGenPw" placeholder="현재: 보안유지됨"></div>
+                </div>
+            `;
+            btns.innerHTML = `
+                <button class="btn-cancel" onclick="closeModal('passwordModal')">취소</button>
+                <button class="btn-save" onclick="saveSuperPasswords()">변경사항 저장</button>
+            `;
+        }
+        document.getElementById('passwordModal').style.display = 'flex';
+    }
+
+    function saveSuperPasswords() {
+        const pws = getStoredPasswords();
+        const curSuper = document.getElementById('curSuperPw').value.trim();
+        const newSuper = document.getElementById('newSuperPw').value.trim();
+        const newSuperConfirm = document.getElementById('newSuperPwConfirm').value.trim();
+        const newSub = document.getElementById('newSubPw').value.trim();
+        const newGen = document.getElementById('newGenPw').value.trim();
+        let updatedMsg = [];
+
+        if (newSuper || curSuper) {
+            if (curSuper !== pws.super) { alert('현재 최고관리자 비밀번호가 일치하지 않습니다.'); return; }
+            if (!newSuper) { alert('새로운 최고관리자 비밀번호를 입력해 주세요.'); return; }
+            if (newSuper !== newSuperConfirm) { alert('새 비밀번호와 비밀번호 확인이 일치하지 않습니다.'); return; }
+            localStorage.setItem('daeyeon_pw_super', newSuper);
+            updatedMsg.push('최고관리자');
+        }
+        if (newSub) { localStorage.setItem('daeyeon_pw_sub', newSub); updatedMsg.push('보조관리자'); }
+        if (newGen) { localStorage.setItem('daeyeon_pw_general', newGen); updatedMsg.push('일반관리자'); }
+        if (updatedMsg.length === 0) { alert('변경된 항목이 없습니다.'); return; }
+
+        sendActivityLog("비밀번호변경", "최고관리자", `[${updatedMsg.join(', ')}] 비밀번호 변경됨`);
+        alert(`✅ [${updatedMsg.join(', ')}] 비밀번호가 성공적으로 변경되었습니다.`);
+        closeModal('passwordModal');
+    }
+
+    function saveDevPasswords() {
+        const s = document.getElementById('devNewSuperPw').value.trim();
+        const sub = document.getElementById('devNewSubPw').value.trim();
+        const g = document.getElementById('devNewGenPw').value.trim();
+        if (!s || !sub || !g) { alert('비밀번호를 공백으로 둘 수 없습니다.'); return; }
+        localStorage.setItem('daeyeon_pw_super', s);
+        localStorage.setItem('daeyeon_pw_sub', sub);
+        localStorage.setItem('daeyeon_pw_general', g);
+        sendActivityLog("비밀번호변경", "개발자", "모든 관리자 비밀번호 마스터 권한 일괄 변경");
+        alert('⚡ 모든 관리자 비밀번호가 마스터 권한으로 즉시 변경 저장되었습니다.');
+        closeModal('passwordModal');
+    }
+
+    function resetAllPasswordsToDefault() {
+        if (confirm('모든 관리자 비밀번호를 초기값(최고:0000, 보조:1111, 일반:2222)으로 리셋하시겠습니까?')) {
+            localStorage.setItem('daeyeon_pw_super', '0000');
+            localStorage.setItem('daeyeon_pw_sub', '1111');
+            localStorage.setItem('daeyeon_pw_general', '2222');
+            sendActivityLog("비밀번호리셋", "개발자", "모든 관리자 비밀번호 기본값(0000/1111/2222) 리셋");
+            alert('비밀번호가 초기값(최고:0000, 보조:1111, 일반:2222)으로 리셋되었습니다.');
+            openPasswordManageModal();
+        }
+    }
+
     function toggleUniformFeature() {
         isUniformActive = !isUniformActive;
         localStorage.setItem('daeyeon_uniform_active', isUniformActive ? 'true' : 'false');
