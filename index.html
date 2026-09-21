@@ -22,7 +22,7 @@
         const GOOGLE_SHEET_UNIFORM_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/edit?gid=${UNIFORM_GID}#gid=${UNIFORM_GID}`;
         const GOOGLE_SCRIPT_UNIFORM_API_URL = "https://script.google.com/macros/s/AKfycbwAdnLPVvTMIUGt538hM18pS_upBZt8FhKRTESjWXNonKFHOH5e59Vxi0hjDqYend-IHg/exec";
         
-        const APP_VERSION = "v2.3.5 · b260921";
+        const APP_VERSION = "v2.3.6 · b260921";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -264,7 +264,7 @@
             padding: 0 8px;
         }
 
-        /* ★ 로그인한 학부모님 표시 뱃지 (중앙 배치) ★ */
+        /* 로그인한 학부모님 표시 뱃지 (중앙 배치) */
         .user-identity-badge {
             background: rgba(5, 150, 105, 0.3);
             border: 1px solid rgba(5, 150, 105, 0.6);
@@ -691,7 +691,7 @@
             .lock-title { font-size: 18px; }
             .lock-desc { font-size: 12.5px; }
             .header-top-bar { gap: 4px; }
-            .user-identity-badge { font-size: 10.5px; padding: 3px 6px; max-width: 130px; overflow: hidden; text-overflow: ellipsis; }
+            .user-identity-badge { font-size: 10.5px; padding: 3px 6px; max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
         }
     </style>
 </head>
@@ -1130,6 +1130,9 @@
         const activeUser = getActiveUser();
         if (activeUser && activeUser.name) {
             badge.style.display = 'inline-flex';
+            badge.style.background = 'rgba(5, 150, 105, 0.3)';
+            badge.style.borderColor = 'rgba(5, 150, 105, 0.6)';
+            badge.style.color = '#34d399';
             badge.textContent = `👤 ${activeUser.name} (${activeUser.role || '보호자'})`;
         } else {
             badge.style.display = 'inline-flex';
@@ -2379,8 +2382,8 @@
             document.getElementById('btnManagePw').style.display = isSuperOrDev() ? 'inline-block' : 'none';
             document.getElementById('btnEmergencyContacts').style.display = isSuperOrDev() ? 'inline-flex' : 'none';
         } else {
-            adminBtn.textContent = '🔒 관리자 로그인';
-            adminBtn.classList.remove('logged-in');
+            // ★ 일반 학부모/사용자인 경우 우측 상단 관리자 로그인 버튼을 숨김 (오직 관리자 번호/비번 인증 시에만 노출)
+            adminBtn.style.display = 'none';
             adminBar.style.display = 'none';
         }
     }
@@ -2395,6 +2398,7 @@
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
     function isOff(val) { if (!val) return false; const v = String(val).toUpperCase().trim(); return v === 'OFF' || v === '비공개'; }
 
+    // 실시간 시트 로더
     async function loadGoogleSheetData() {
         try {
             if (savedSearchQuery) document.getElementById('searchInput').value = savedSearchQuery;
@@ -2470,6 +2474,7 @@
                 }
             });
 
+            // 비상연락망 데이터 사전 캐시 로드
             fetch(getRealtimeCsvUrl(CONTACTS_GID), { cache: 'no-store' }).then(r => r.text()).then(t => {
                 if (t && !t.trim().startsWith('<!DOCTYPE')) {
                     Papa.parse(t, { header: true, skipEmptyLines: 'greedy', complete: res => {
@@ -2484,6 +2489,7 @@
         }
     }
 
+    // 초기화 실행
     const activeAuthExpire = localStorage.getItem('daeyeon_auth_expire');
     if (activeAuthExpire && Date.now() < parseInt(activeAuthExpire, 10)) {
         startSessionCountdown();
