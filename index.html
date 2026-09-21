@@ -6,24 +6,24 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
 
-    <!-- 구글 연동 설정 (실시간 gviz 주소 + 백업 CSV + 유니폼 API) -->
+    <!-- 구글 연동 설정 (과거 캐시 주소 완전 삭제 & 100% 실시간 단일 스트림) -->
     <script>
         const GOOGLE_SHEET_ID = "1ljpHkiJL_H1NN5rwTaQOL5QYeev32QvaBTKzxSPgNVA";
+        const ROSTER_GID = "1653839889";
+        const CONTACTS_GID = "812608822";
         
-        // 캐시 지연 0초 실시간 gviz CSV 주소 (시트 수정 즉시 반영)
-        const GOOGLE_SHEET_GVIZ_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&gid=1653839889`;
-        const GOOGLE_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSw2YtYByfiPWXbRfqkzmZ6yzaZVfJHO0f9zAmCiLnwlMvVXCt9lv4AmQAz4_vSjzPy0APtl0hwYNmW/pub?output=csv";
-        
-        const GOOGLE_SHEET_CONTACTS_GVIZ_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&gid=812608822`;
-        const GOOGLE_SHEET_CONTACTS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSw2YtYByfiPWXbRfqkzmZ6yzaZVfJHO0f9zAmCiLnwlMvVXCt9lv4AmQAz4_vSjzPy0APtl0hwYNmW/pub?gid=812608822&single=true&output=csv";
+        // ★ 캐시 우회 쿼리가 적용된 100% 실시간 단일 CSV 생성기 (과거 캐시 pub 주소 완전 배제) ★
+        function getRealtimeCsvUrl(gid) {
+            return `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&gid=${gid}&tq=${encodeURIComponent('select *')}&_t=${Date.now()}`;
+        }
         
         const GOOGLE_SHEET_EDIT_URL = "https://docs.google.com/spreadsheets/d/1ljpHkiJL_H1NN5rwTaQOL5QYeev32QvaBTKzxSPgNVA/edit?gid=1653839889#gid=1653839889";
         const GOOGLE_SHEET_CONTACTS_URL = "https://docs.google.com/spreadsheets/d/1ljpHkiJL_H1NN5rwTaQOL5QYeev32QvaBTKzxSPgNVA/edit?gid=812608822#gid=812608822";
         const GOOGLE_SHEET_UNIFORM_URL = "https://docs.google.com/spreadsheets/d/1ljpHkiJL_H1NN5rwTaQOL5QYeev32QvaBTKzxSPgNVA/edit?gid=1881893260#gid=1881893260";
         const GOOGLE_SCRIPT_UNIFORM_API_URL = "https://script.google.com/macros/s/AKfycbwAdnLPVvTMIUGt538hM18pS_upBZt8FhKRTESjWXNonKFHOH5e59Vxi0hjDqYend-IHg/exec";
         
-        // 웹페이지 배포 버전 (강제 필터 제거 및 시트 원본값 반영 v2.0.7)
-        const APP_VERSION = "v2.0.7 · b260921";
+        // 웹페이지 배포 버전 (100% 실시간 단일 스트림 v2.0.8)
+        const APP_VERSION = "v2.0.8 · b260921";
     </script>
 
     <meta charset="UTF-8">
@@ -98,9 +98,7 @@
             to { opacity: 1; transform: scale(1); }
         }
 
-        /* ===================================================
-           헤더 레이아웃 (모바일 겹침 원천 방지 Flex 3단 분리)
-           =================================================== */
+        /* 헤더 레이아웃 (Flex 3단 분리) */
         header {
             background-color: var(--kbo-blue);
             color: white;
@@ -112,7 +110,6 @@
             gap: 8px;
         }
 
-        /* 1단: 상단 유틸리티 바 (좌: 타이머 + 화면잠금 / 우: 관리자 로그인 + 버전) */
         .header-top-bar {
             display: flex;
             justify-content: space-between;
@@ -199,7 +196,6 @@
             user-select: none;
         }
 
-        /* 2단: 중앙 타이틀 */
         .header-center-title {
             text-align: center;
             padding: 2px 0;
@@ -220,7 +216,6 @@
             letter-spacing: 0.3px;
         }
 
-        /* 3단: 하단 주요 CTA 액션 (유니폼 주문 접수 버튼) */
         .header-bottom-cta {
             display: flex;
             justify-content: center;
@@ -1171,7 +1166,6 @@
         .log-type-order   { background: #fef3c7; color: #92400e; }
         .log-type-photo   { background: #e0f2fe; color: #0369a1; }
 
-        /* 모바일 최적화 미디어 쿼리 */
         @media (max-width: 600px) {
             header { padding: 10px 10px 14px; gap: 8px; }
             .header-title { font-size: 21px; }
@@ -1218,7 +1212,7 @@
         </div>
         <div class="header-top-right">
             <button id="adminLoginBtn" class="admin-toggle-btn" onclick="openAdminModal()">🔒 관리자 로그인</button>
-            <span class="app-version-tag" id="appVersionDisplay">v2.0.7 · b260921</span>
+            <span class="app-version-tag" id="appVersionDisplay">v2.0.8 · b260921</span>
         </div>
     </div>
 
@@ -1727,7 +1721,7 @@
             if (overlay) overlay.style.display = 'none';
             startSessionCountdown();
             document.getElementById('lockPasswordInput').value = '';
-            // 잠금 해제와 동시에 최신 시트 데이터를 즉시 다시 불러옵니다!
+            // 잠금 해제와 동시에 100% 최신 실시간 시트 데이터 즉시 동기화
             loadGoogleSheetData();
             return;
         }
@@ -2370,7 +2364,7 @@
     }
 
     // ==========================================================
-    // 🚨 비상연락망 모달 로직
+    // 🚨 비상연락망 모달 로직 (실시간 gviz 단일 스트림)
     // ==========================================================
     async function openEmergencyContactsModal() {
         document.getElementById('emergencyContactsModal').style.display = 'flex';
@@ -2389,35 +2383,33 @@
         }
 
         try {
-            let csvText = null;
-            try {
-                const res = await fetch(GOOGLE_SHEET_CONTACTS_GVIZ_URL + '&nocache=' + Date.now(), { cache: 'no-store' });
-                if (res.ok) {
-                    const text = await res.text();
-                    if (text && !text.includes('<!DOCTYPE') && !text.includes('<html')) csvText = text;
+            const realtimeContactsUrl = getRealtimeCsvUrl(CONTACTS_GID);
+            const res = await fetch(realtimeContactsUrl, {
+                cache: 'no-store',
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache'
                 }
-            } catch(e) {}
+            });
 
-            if (!csvText) {
-                const csvRes = await fetch(GOOGLE_SHEET_CONTACTS_CSV_URL + '&nocache=' + Date.now(), { cache: 'no-store' });
-                csvText = await csvRes.text();
-            }
-
-            if (csvText && !csvText.trim().startsWith('<!DOCTYPE') && !csvText.trim().startsWith('<html')) {
-                Papa.parse(csvText, {
-                    header: true,
-                    skipEmptyLines: 'greedy',
-                    complete: function(results) {
-                        if (results.data && results.data.length > 0) {
-                            emergencyContactsData = results.data;
-                            localStorage.setItem('daeyeon_emergency_contacts', JSON.stringify(emergencyContactsData));
-                            renderEmergencyContacts();
+            if (res.ok) {
+                const csvText = await res.text();
+                if (csvText && !csvText.trim().startsWith('<!DOCTYPE') && !csvText.trim().startsWith('<html')) {
+                    Papa.parse(csvText, {
+                        header: true,
+                        skipEmptyLines: 'greedy',
+                        complete: function(results) {
+                            if (results.data && results.data.length > 0) {
+                                emergencyContactsData = results.data;
+                                localStorage.setItem('daeyeon_emergency_contacts', JSON.stringify(emergencyContactsData));
+                                renderEmergencyContacts();
+                            }
                         }
-                    }
-                });
+                    });
+                }
             }
         } catch(e) {
-            console.warn("비상연락망 CSV 조회 지연:", e);
+            console.warn("비상연락망 실시간 CSV 조회 지연:", e);
         }
     }
 
@@ -3089,7 +3081,7 @@
         return '';
     }
 
-    // 캐시를 무력화하고 실시간 gviz를 우선 로드하는 엔진 (강제 필터 제거 완료)
+    // ★ [100% 무결점 실시간 단일 로더 엔진] ★
     async function loadGoogleSheetData() {
         try {
             if (savedSearchQuery) document.getElementById('searchInput').value = savedSearchQuery;
@@ -3100,34 +3092,22 @@
 
             updateAdminUI();
 
-            let csvText = null;
-            const fetchOptions = {
+            const realtimeUrl = getRealtimeCsvUrl(ROSTER_GID);
+            const response = await fetch(realtimeUrl, {
                 cache: 'no-store',
                 headers: {
                     'Cache-Control': 'no-cache, no-store, must-revalidate',
                     'Pragma': 'no-cache'
                 }
-            };
+            });
 
-            // 1. 구글 서버 실시간 gviz 엔드포인트 시도
-            try {
-                const gvizUrl = GOOGLE_SHEET_GVIZ_URL + '&nocache=' + Date.now();
-                const res = await fetch(gvizUrl, fetchOptions);
-                if (res.ok) {
-                    const text = await res.text();
-                    if (text && !text.includes('<!DOCTYPE') && !text.includes('<html')) {
-                        csvText = text;
-                    }
-                }
-            } catch (e) {
-                console.warn("gviz 실시간 로드 지연, 일반 CSV로 대체:", e);
+            if (!response.ok) {
+                throw new Error("실시간 시트 응답 실패: " + response.status);
             }
 
-            // 2. 실패 시 백업 CSV 엔드포인트 사용
-            if (!csvText) {
-                const cacheUrl = GOOGLE_SHEET_CSV_URL + (GOOGLE_SHEET_CSV_URL.includes('?') ? '&' : '?') + 'nocache=' + Date.now();
-                const response = await fetch(cacheUrl, fetchOptions);
-                csvText = await response.text();
+            const csvText = await response.text();
+            if (csvText.includes('<!DOCTYPE') || csvText.includes('<html')) {
+                throw new Error("구글 시트 권한 필요 (시트 공유를 '링크가 있는 모든 사용자-뷰어'로 설정해 주세요)");
             }
 
             Papa.parse(csvText, {
@@ -3145,7 +3125,7 @@
                         const parsedNo = parseInt(rawNo, 10);
                         const no = (!isNaN(parsedNo) && parsedNo > 0) ? parsedNo : 0;
 
-                        // 시트에 기록된 값 그대로 가감 없이 반영
+                        // 시트에 기록된 값 그대로 반영 (시트에서 지우면 공백으로 즉시 반영)
                         const birthRaw = (row['생년월일'] || '').trim();
                         const heightRaw = (row['키'] || '').trim();
                         const weightRaw = (row['몸무게'] || '').trim();
@@ -3173,8 +3153,8 @@
                 }
             });
         } catch (error) {
-            console.error("데이터 로드 에러:", error);
-            document.getElementById('statusNotice').textContent = "구글 시트 데이터를 불러오는 데 실패했습니다.";
+            console.error("실시간 데이터 로드 에러:", error);
+            document.getElementById('statusNotice').textContent = "실시간 구글 시트 데이터를 불러오는 중입니다. (" + error.message + ")";
         }
     }
 
