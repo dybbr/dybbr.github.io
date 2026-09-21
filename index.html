@@ -6,24 +6,25 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
 
-    <!-- 구글 연동 설정 (실시간 gviz 단일 스트림 & headers=1 고정) -->
+    <!-- 구글 연동 설정 (100% 실시간 gviz 직결 스트림) -->
     <script>
         const GOOGLE_SHEET_ID = "1ljpHkiJL_H1NN5rwTaQOL5QYeev32QvaBTKzxSPgNVA";
         const ROSTER_GID = "1653839889";
+        const UNIFORM_GID = "1881893260";
         const CONTACTS_GID = "812608822";
         
-        // ★ headers=1 명시로 2번째 줄(사상일 감독님) 증발 방지 및 100% 실시간 반영 ★
+        // 캐시 지연 없는 100% 실시간 gviz CSV URL 생성기
         function getRealtimeCsvUrl(gid) {
             return `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&gid=${gid}&headers=1&tq=${encodeURIComponent('select *')}&_t=${Date.now()}`;
         }
         
-        const GOOGLE_SHEET_EDIT_URL = "https://docs.google.com/spreadsheets/d/1ljpHkiJL_H1NN5rwTaQOL5QYeev32QvaBTKzxSPgNVA/edit?gid=1653839889#gid=1653839889";
-        const GOOGLE_SHEET_CONTACTS_URL = "https://docs.google.com/spreadsheets/d/1ljpHkiJL_H1NN5rwTaQOL5QYeev32QvaBTKzxSPgNVA/edit?gid=812608822#gid=812608822";
-        const GOOGLE_SHEET_UNIFORM_URL = "https://docs.google.com/spreadsheets/d/1ljpHkiJL_H1NN5rwTaQOL5QYeev32QvaBTKzxSPgNVA/edit?gid=1881893260#gid=1881893260";
+        const GOOGLE_SHEET_EDIT_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/edit?gid=${ROSTER_GID}#gid=${ROSTER_GID}`;
+        const GOOGLE_SHEET_CONTACTS_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/edit?gid=${CONTACTS_GID}#gid=${CONTACTS_GID}`;
+        const GOOGLE_SHEET_UNIFORM_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/edit?gid=${UNIFORM_GID}#gid=${UNIFORM_GID}`;
         const GOOGLE_SCRIPT_UNIFORM_API_URL = "https://script.google.com/macros/s/AKfycbwAdnLPVvTMIUGt538hM18pS_upBZt8FhKRTESjWXNonKFHOH5e59Vxi0hjDqYend-IHg/exec";
         
-        // 웹페이지 배포 버전 (사상일 감독님 출력 복구 v2.0.9)
-        const APP_VERSION = "v2.0.9 · b260921";
+        // 웹페이지 배포 버전 (시트 변경 규격 정밀 동기화 v2.1.1)
+        const APP_VERSION = "v2.1.1 · b260921";
     </script>
 
     <meta charset="UTF-8">
@@ -248,6 +249,7 @@
             padding: 0 16px;
         }
 
+        /* 필터 컨트롤 카드 */
         .control-card {
             background: #ffffff;
             border: 1px solid var(--card-border);
@@ -1093,6 +1095,29 @@
         }
         .btn-sms:hover { background: #0369a1; }
 
+        .contact-car-box {
+            font-size: 11px;
+            color: #1e40af;
+            background: #eff6ff;
+            padding: 5px 8px;
+            border-radius: 6px;
+            margin-top: 4px;
+            border: 1px solid #bfdbfe;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .car-num-tag {
+            background: #ffffff;
+            border: 1px solid #93c5fd;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-weight: 800;
+            color: #1d4ed8;
+        }
+
         .contact-address-box {
             font-size: 11px;
             color: #475569;
@@ -1190,7 +1215,7 @@
         <div style="font-size: 32px; margin-bottom: 8px;">⚾</div>
         <h2 style="font-size: 18px; font-weight: 900; color: var(--kbo-blue); margin-bottom: 6px;">대연초 야구부 보안 인증</h2>
         <div class="lock-desc">
-            선수명단 보호중. 비밀번호를 입력하세요.
+            선수 명단 보호중. 비밀번호를 입력하세요.
         </div>
         <div style="margin-bottom: 12px;">
             <input type="password" id="lockPasswordInput" placeholder="비밀번호 입력" style="width: 100%; padding: 10px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 16px; text-align: center; font-weight: 800; letter-spacing: 2px; outline: none;" onkeydown="if(event.key==='Enter') verifyLockPassword()">
@@ -1212,7 +1237,7 @@
         </div>
         <div class="header-top-right">
             <button id="adminLoginBtn" class="admin-toggle-btn" onclick="openAdminModal()">🔒 관리자 로그인</button>
-            <span class="app-version-tag" id="appVersionDisplay">v2.0.9 · b260921</span>
+            <span class="app-version-tag" id="appVersionDisplay">v2.1.1 · b260921</span>
         </div>
     </div>
 
@@ -1437,7 +1462,7 @@
     </div>
 </div>
 
-<!-- 3. 유니폼 접수 & 발주 집계 모달 -->
+<!-- 3. 유니폼 접수 & 발주 집계 모달 (시트 데이터 100% 직결 파싱) -->
 <div id="ordersModal" class="modal">
     <div class="modal-content" style="max-width: 520px; width: 95%;">
         <div class="modal-header">📋 유니폼 주문 현황 & 발주 관리</div>
@@ -1490,12 +1515,12 @@
     </div>
 </div>
 
-<!-- 6. 학부모 비상연락망 모달 -->
+<!-- 6. 학부모 비상연락망 모달 (차량번호 1, 2 표시 탑재) -->
 <div id="emergencyContactsModal" class="modal">
     <div class="modal-content" style="max-width: 480px; width: 95%;">
         <div class="modal-header" id="contactsModalTitle">🚨 학부모 비상연락망</div>
         <div style="display: flex; gap: 6px; margin-bottom: 8px; flex-shrink: 0;">
-            <input type="text" id="contactSearchInput" placeholder="선수명 / 연락처 / 주소 검색" style="flex: 1; padding: 7px 10px; border: 1px solid var(--card-border); border-radius: 6px; font-size: 12px;" oninput="renderEmergencyContacts()">
+            <input type="text" id="contactSearchInput" placeholder="선수명 / 연락처 / 차량 / 주소 검색" style="flex: 1; padding: 7px 10px; border: 1px solid var(--card-border); border-radius: 6px; font-size: 12px;" oninput="renderEmergencyContacts()">
             <select id="contactGradeSelect" style="padding: 7px 8px; border: 1px solid var(--card-border); border-radius: 6px; font-size: 12px; font-weight: 700;" onchange="renderEmergencyContacts()">
                 <option value="all">전체</option>
                 <option value="6">6학년</option>
@@ -1795,7 +1820,7 @@
     }
 
     function formatBirth(p) {
-        if (!p.birth || p.birth === '-' || p.birth === '') return '-';
+        if (!p.birth || p.birth === '-' || p.birth === '' || p.birth === '0') return '-';
         const bHidden = !!p.hideBirth;
         if (currentRole === 'guest') return bHidden ? '<span class="text-private">비공개</span>' : p.birth;
         const bBadge = (bHidden && (currentRole === 'super' || currentRole === 'sub' || currentRole === 'dev')) ? '<span class="admin-private-badge">비공개</span>' : '';
@@ -1803,8 +1828,8 @@
     }
 
     function formatPhys(p) {
-        const h = p.height;
-        const w = p.weight;
+        const h = p.height && p.height !== '0' ? p.height : '';
+        const w = p.weight && p.weight !== '0' ? p.weight : '';
         if (!h && !w) return '-';
         const hHidden = !!p.hideHeight;
         const wHidden = !!p.hideWeight;
@@ -2038,26 +2063,84 @@
         }).join('');
     }
 
-    // ==========================================
-    // 유니폼 주문 현황 & 발주 집계 & 미신청자
-    // ==========================================
+    // ==========================================================
+    // 📋 유니폼 주문 현황 & 발주 집계 (시트 gviz 직결 파싱)
+    // ==========================================================
     async function openOrdersSummaryModal() {
         document.getElementById('ordersModal').style.display = 'flex';
         const content = document.getElementById('ordersListContent');
-        content.innerHTML = '<div style="text-align:center; padding:40px 10px; color:#64748b; font-size:13px;">시트에서 최신 접수 데이터를 불러오는 중...</div>';
+        content.innerHTML = '<div style="text-align:center; padding:40px 10px; color:#64748b; font-size:13px;">유니폼 의류 신청 시트에서 실시간 데이터를 불러오는 중...</div>';
 
-        if (GOOGLE_SCRIPT_UNIFORM_API_URL && GOOGLE_SCRIPT_UNIFORM_API_URL.trim() !== "") {
-            try {
-                const res = await fetch(GOOGLE_SCRIPT_UNIFORM_API_URL + '?nocache=' + Date.now(), { cache: 'no-store' });
-                const json = await res.json();
-                if (json && json.orders) {
-                    loadedOrdersData = json.orders;
-                    localStorage.setItem('daeyeon_uniform_orders', JSON.stringify(loadedOrdersData));
+        try {
+            const realtimeUniformUrl = getRealtimeCsvUrl(UNIFORM_GID);
+            const res = await fetch(realtimeUniformUrl, {
+                cache: 'no-store',
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache'
                 }
-            } catch(e) {
-                console.warn("실시간 조회 지연, 저장된 캐시 사용:", e);
-                loadedOrdersData = JSON.parse(localStorage.getItem('daeyeon_uniform_orders') || '[]');
+            });
+
+            if (res.ok) {
+                const csvText = await res.text();
+                if (csvText && !csvText.trim().startsWith('<!DOCTYPE') && !csvText.trim().startsWith('<html')) {
+                    Papa.parse(csvText, {
+                        header: true,
+                        skipEmptyLines: 'greedy',
+                        complete: function(results) {
+                            if (results.data && results.data.length > 0) {
+                                loadedOrdersData = results.data.map(row => {
+                                    const pNo = getColVal(row, '배번', '등번호');
+                                    const pName = getColVal(row, '선수이름', '이름');
+                                    const pGrade = getColVal(row, '학년', '구분');
+                                    const h = getColVal(row, '키');
+                                    const w = getColVal(row, '몸무게');
+                                    const reqDate = getColVal(row, '신청날짜');
+
+                                    const cap = getColVal(row, '모자');
+                                    const pWaist = getColVal(row, '바지 (허리)', '바지(허리)');
+                                    const pLen = getColVal(row, '바지 (기장)', '바지(기장)');
+                                    const top = getColVal(row, '유니폼상의');
+                                    const sumT = getColVal(row, '여름훈련티');
+                                    const winT = getColVal(row, '겨울훈련티');
+                                    const wind = getColVal(row, '바람막이');
+                                    const pull = getColVal(row, '풀오버');
+                                    const jump = getColVal(row, '겨울점퍼');
+
+                                    const items = {};
+                                    let hasAnyOrder = false;
+
+                                    if (cap && cap !== '-' && cap !== '0') { items['모자'] = cap; hasAnyOrder = true; }
+                                    if (pWaist && pWaist !== '-' && pWaist !== '0') { items['바지(허리)'] = pWaist + '인치'; hasAnyOrder = true; }
+                                    if (pLen && pLen !== '-' && pLen !== '0') { items['바지(기장)'] = pLen; hasAnyOrder = true; }
+                                    if (top && top !== '-' && top !== '0') { items['유니폼상의'] = top; hasAnyOrder = true; }
+                                    if (sumT && sumT !== '-' && sumT !== '0') { items['여름훈련티'] = sumT; hasAnyOrder = true; }
+                                    if (winT && winT !== '-' && winT !== '0') { items['겨울훈련티'] = winT; hasAnyOrder = true; }
+                                    if (wind && wind !== '-' && wind !== '0') { items['바람막이'] = wind; hasAnyOrder = true; }
+                                    if (pull && pull !== '-' && pull !== '0') { items['풀오버'] = pull; hasAnyOrder = true; }
+                                    if (jump && jump !== '-' && jump !== '0') { items['겨울점퍼'] = jump; hasAnyOrder = true; }
+
+                                    return {
+                                        playerNo: pNo || '-',
+                                        playerName: pName,
+                                        playerGrade: pGrade ? (pGrade.includes('학년') ? pGrade : pGrade + '학년') : '-',
+                                        height: (h && h !== '0') ? h + 'cm' : '-',
+                                        weight: (w && w !== '0') ? w + 'kg' : '-',
+                                        date: reqDate || '-',
+                                        items: items,
+                                        hasOrder: hasAnyOrder
+                                    };
+                                }).filter(item => item.playerName);
+
+                                localStorage.setItem('daeyeon_uniform_orders', JSON.stringify(loadedOrdersData));
+                            }
+                        }
+                    });
+                }
             }
+        } catch (e) {
+            console.warn("유니폼 시트 실시간 조회 지연:", e);
+            loadedOrdersData = JSON.parse(localStorage.getItem('daeyeon_uniform_orders') || '[]');
         }
 
         switchOrderModalTab(activeOrderModalTab);
@@ -2205,7 +2288,7 @@
         });
     }
 
-    // 유니폼 신청 폼 제어
+    // 유니폼 신청 팝업 모달
     function openUniformModal() {
         if (!isUniformActive && !isSuperOrDev()) {
             alert('현재는 유니폼 접수 기간이 아닙니다.');
@@ -2349,7 +2432,9 @@
         }
     }
 
-    // 🚨 비상연락망 모달 로직
+    // ==========================================================
+    // 🚨 학부모 비상연락망 모달 로직 (차량번호 1, 2 정밀 매핑)
+    // ==========================================================
     async function openEmergencyContactsModal() {
         document.getElementById('emergencyContactsModal').style.display = 'flex';
         const content = document.getElementById('contactsListContent');
@@ -2363,7 +2448,7 @@
                 renderEmergencyContacts();
             } catch(e) {}
         } else {
-            content.innerHTML = '<div style="text-align:center; padding:40px 10px; color:#64748b; font-size:13px;">비상연락망 시트에서 데이터를 불러오는 중...</div>';
+            content.innerHTML = '<div style="text-align:center; padding:40px 10px; color:#64748b; font-size:13px;">비상연락망 시트에서 실시간 데이터를 불러오는 중...</div>';
         }
 
         try {
@@ -2397,19 +2482,6 @@
         }
     }
 
-    function getVal(obj, ...keys) {
-        if (!obj) return '';
-        for (let k of keys) {
-            for (let prop in obj) {
-                if (prop.trim() === k || prop.toLowerCase().includes(k.toLowerCase())) {
-                    let v = String(obj[prop] || '').trim();
-                    if (v && v !== '-' && v !== '0') return v;
-                }
-            }
-        }
-        return '';
-    }
-
     function renderEmergencyContacts() {
         const query = document.getElementById('contactSearchInput') ? document.getElementById('contactSearchInput').value.trim().toLowerCase() : '';
         const selectedG = document.getElementById('contactGradeSelect') ? document.getElementById('contactGradeSelect').value : 'all';
@@ -2424,22 +2496,26 @@
         }
 
         const filtered = emergencyContactsData.filter(c => {
-            const name = getVal(c, '선수이름', '이름', '선수명');
-            const no = getVal(c, '배번', '등번호', '번호');
-            const grade = getVal(c, '학년', '구분');
-            const fPhone = getVal(c, '아버님', '아버지', '부 연락처');
-            const mPhone = getVal(c, '어머님', '어머니', '모 연락처');
-            const sPhone = getVal(c, '학생연락처', '선수연락처');
-            const address = getVal(c, '주소');
+            const name = getColVal(c, '선수이름', '이름', '선수명');
+            const no = getColVal(c, '배번', '등번호', '번호');
+            const grade = getColVal(c, '학년', '구분');
+            const fPhone = getColVal(c, '아버님', '아버지', '부 연락처');
+            const mPhone = getColVal(c, '어머님', '어머니', '모 연락처');
+            const sPhone = getColVal(c, '학생연락처', '선수연락처');
+            const car1 = getColVal(c, '차량번호 (학교주차장 출입등록)', '차량번호1', '차량번호');
+            const car2 = getColVal(c, '차량번호2');
+            const address = getColVal(c, '주소');
 
             if (!name) return false;
 
             let matchG = (selectedG === 'all') || (grade.includes(selectedG));
-            let matchQ = !query || name.toLowerCase().includes(query) || no.includes(query) || fPhone.includes(query) || mPhone.includes(query) || sPhone.includes(query) || address.toLowerCase().includes(query);
+            let matchQ = !query || name.toLowerCase().includes(query) || no.includes(query) || 
+                         fPhone.includes(query) || mPhone.includes(query) || sPhone.includes(query) || 
+                         car1.toLowerCase().includes(query) || car2.toLowerCase().includes(query) || address.toLowerCase().includes(query);
             return matchG && matchQ;
         }).sort((a, b) => {
-            const noA = parseInt(getVal(a, '배번', '등번호')) || 999;
-            const noB = parseInt(getVal(b, '배번', '등번호')) || 999;
+            const noA = parseInt(getColVal(a, '배번', '등번호')) || 999;
+            const noB = parseInt(getColVal(b, '배번', '등번호')) || 999;
             return noA - noB;
         });
 
@@ -2453,19 +2529,36 @@
         }
 
         content.innerHTML = filtered.map(c => {
-            const name = getVal(c, '선수이름', '이름', '선수명') || '선수 미지정';
-            const no = getVal(c, '배번', '등번호');
-            const grade = getVal(c, '학년', '구분');
-            const fPhone = getVal(c, '아버님', '아버지');
-            const mPhone = getVal(c, '어머님', '어머니');
-            const sPhone = getVal(c, '학생연락처', '선수연락처');
-            const address = getVal(c, '주소');
-            const note = getVal(c, '비고', '메모');
+            const name = getColVal(c, '선수이름', '이름', '선수명') || '선수 미지정';
+            const no = getColVal(c, '배번', '등번호');
+            const grade = getColVal(c, '학년', '구분');
+            const fPhone = getColVal(c, '아버님', '아버지');
+            const mPhone = getColVal(c, '어머님', '어머니');
+            const sPhone = getColVal(c, '학생연락처', '선수연락처');
+            
+            // 시트 헤더: 차량번호 (학교주차장 출입등록), 차량번호2
+            const car1 = getColVal(c, '차량번호 (학교주차장 출입등록)', '차량번호1', '차량번호');
+            const car2 = getColVal(c, '차량번호2');
+            
+            const address = getColVal(c, '주소');
+            const note = getColVal(c, '비고', '메모');
 
             const fRaw = fPhone.replace(/[^0-9]/g, '');
             const mRaw = mPhone.replace(/[^0-9]/g, '');
             const sRaw = sPhone.replace(/[^0-9]/g, '');
             const gradeText = grade ? (grade.includes('학년') ? grade : grade + '학년') : '';
+
+            // 차량번호 HTML 뱃지 생성
+            let carHtml = '';
+            if (car1 || car2) {
+                carHtml = `
+                    <div class="contact-car-box">
+                        <span>🚗 <b>등록차량:</b></span>
+                        ${car1 ? `<span class="car-num-tag">${car1}</span>` : ''}
+                        ${car2 ? `<span class="car-num-tag">${car2}</span>` : ''}
+                    </div>
+                `;
+            }
 
             return `
                 <div class="contact-card">
@@ -2513,6 +2606,8 @@
                         </div>
                     ` : ''}
 
+                    ${carHtml}
+
                     ${address ? `
                         <div class="contact-address-box">
                             🏠 <b>주소:</b> ${address}
@@ -2530,22 +2625,26 @@
         const selectedG = document.getElementById('contactGradeSelect') ? document.getElementById('contactGradeSelect').value : 'all';
 
         const filtered = emergencyContactsData.filter(c => {
-            const name = getVal(c, '선수이름', '이름', '선수명');
-            const no = getVal(c, '배번', '등번호', '번호');
-            const grade = getVal(c, '학년', '구분');
-            const fPhone = getVal(c, '아버님', '아버지', '부 연락처');
-            const mPhone = getVal(c, '어머님', '어머니', '모 연락처');
-            const sPhone = getVal(c, '학생연락처', '선수연락처');
-            const address = getVal(c, '주소');
+            const name = getColVal(c, '선수이름', '이름', '선수명');
+            const no = getColVal(c, '배번', '등번호', '번호');
+            const grade = getColVal(c, '학년', '구분');
+            const fPhone = getColVal(c, '아버님', '아버지', '부 연락처');
+            const mPhone = getColVal(c, '어머님', '어머니', '모 연락처');
+            const sPhone = getColVal(c, '학생연락처', '선수연락처');
+            const car1 = getColVal(c, '차량번호 (학교주차장 출입등록)', '차량번호1', '차량번호');
+            const car2 = getColVal(c, '차량번호2');
+            const address = getColVal(c, '주소');
 
             if (!name) return false;
 
             let matchG = (selectedG === 'all') || (grade.includes(selectedG));
-            let matchQ = !query || name.toLowerCase().includes(query) || no.includes(query) || fPhone.includes(query) || mPhone.includes(query) || sPhone.includes(query) || address.toLowerCase().includes(query);
+            let matchQ = !query || name.toLowerCase().includes(query) || no.includes(query) || 
+                         fPhone.includes(query) || mPhone.includes(query) || sPhone.includes(query) || 
+                         car1.toLowerCase().includes(query) || car2.toLowerCase().includes(query) || address.toLowerCase().includes(query);
             return matchG && matchQ;
         }).sort((a, b) => {
-            const noA = parseInt(getVal(a, '배번', '등번호')) || 999;
-            const noB = parseInt(getVal(b, '배번', '등번호')) || 999;
+            const noA = parseInt(getColVal(a, '배번', '등번호')) || 999;
+            const noB = parseInt(getColVal(b, '배번', '등번호')) || 999;
             return noA - noB;
         });
 
@@ -2558,14 +2657,16 @@
         let text = `[대연초 야구부 학부모 비상연락망]\n(대상: ${gradeLabel} ${filtered.length}명)\n`;
 
         filtered.forEach((c, idx) => {
-            const name = getVal(c, '선수이름', '이름', '선수명') || '선수 미지정';
-            const no = getVal(c, '배번', '등번호');
-            const grade = getVal(c, '학년', '구분');
-            const fPhone = getVal(c, '아버님', '아버지');
-            const mPhone = getVal(c, '어머님', '어머니');
-            const sPhone = getVal(c, '학생연락처', '선수연락처');
-            const address = getVal(c, '주소');
-            const note = getVal(c, '비고', '메모');
+            const name = getColVal(c, '선수이름', '이름', '선수명') || '선수 미지정';
+            const no = getColVal(c, '배번', '등번호');
+            const grade = getColVal(c, '학년', '구분');
+            const fPhone = getColVal(c, '아버님', '아버지');
+            const mPhone = getColVal(c, '어머님', '어머니');
+            const sPhone = getColVal(c, '학생연락처', '선수연락처');
+            const car1 = getColVal(c, '차량번호 (학교주차장 출입등록)', '차량번호1', '차량번호');
+            const car2 = getColVal(c, '차량번호2');
+            const address = getColVal(c, '주소');
+            const note = getColVal(c, '비고', '메모');
 
             const noText = no ? `No.${no} ` : '';
             const gradeText = grade ? ` (${grade.includes('학년') ? grade : grade + '학년'})` : '';
@@ -2574,6 +2675,7 @@
             if (fPhone) text += `\n  • 아버님: ${fPhone}`;
             if (mPhone) text += `\n  • 어머님: ${mPhone}`;
             if (sPhone) text += `\n  • ${name}: ${sPhone}`;
+            if (car1 || car2) text += `\n  • 차량: ${[car1, car2].filter(Boolean).join(' / ')}`;
             if (address) text += `\n  • 주소: ${address}`;
             if (note) text += `\n  • 비고: ${note}`;
             text += `\n`;
@@ -2582,7 +2684,7 @@
         sendActivityLog("연락망복사", currentRole, `${gradeLabel} ${filtered.length}명 상세 연락처 복사`);
 
         navigator.clipboard.writeText(text.trim()).then(() => {
-            alert(`📋 ${filtered.length}명의 학부모 상세 비상연락망이 복사되었습니다!\n카카오톡이나 메모장에 바로 붙여넣기 하세요.`);
+            alert(`📋 ${filtered.length}명의 학부모 상세 비상연락망(차량번호 포함)이 복사되었습니다!\n카카오톡이나 메모장에 바로 붙여넣기 하세요.`);
         });
     }
 
@@ -3069,7 +3171,7 @@
         return '';
     }
 
-    // ★ [100% 실시간 데이터 로드 엔진 - headers=1 로 사상일 감독님 완벽 복원] ★
+    // ★ [100% 실시간 데이터 로드 엔진: 변경된 열 헤더 완벽 매핑] ★
     async function loadGoogleSheetData() {
         try {
             if (savedSearchQuery) document.getElementById('searchInput').value = savedSearchQuery;
@@ -3103,26 +3205,29 @@
                 skipEmptyLines: true,
                 complete: function(results) {
                     players = results.data.map((row, idx) => {
-                        const name = getColVal(row, '이름', '성명', '선수명', '지도자명');
-                        const grade = getColVal(row, '구분', '학년', '직책');
-                        const pos = getColVal(row, '포지션', '역할', '직책') || '-';
-                        const bt = getColVal(row, '투타', '투/타') || '-';
-                        const birth = getColVal(row, '생년월일', '생일');
-                        const height = getColVal(row, '키', '신장');
-                        const weight = getColVal(row, '몸무게', '체중');
+                        // 변경된 컬럼 헤더에 대응
+                        const rawSeq = getColVal(row, '순번');
+                        const rawNo = getColVal(row, '등번호', '배번');
+                        const name = getColVal(row, '이름', '선수이름', '성명');
+                        const grade = getColVal(row, '구분', '학년');
+                        const pos = getColVal(row, '포지션') || '-';
+                        const bt = getColVal(row, '투타') || '-';
+                        const birth = getColVal(row, '생년월일');
+                        const height = getColVal(row, '키');
+                        const weight = getColVal(row, '몸무게');
                         
-                        const photoFlag = getColVal(row, '사진공개', '사진노출', '사진비공개', '사진ON/OFF');
-                        const birthFlag = getColVal(row, '생년월일공개', '생년월일노출', '생일공개', '생년월일비공개');
-                        const heightFlag = getColVal(row, '키공개', '키노출', '키비공개');
-                        const weightFlag = getColVal(row, '몸무게공개', '몸무게노출', '몸무게비공개');
-                        const drivePhotoLink = getColVal(row, '사진링크', '드라이브사진', '사진URL', '이미지링크');
+                        const photoFlag = getColVal(row, '사진공개');
+                        const birthFlag = getColVal(row, '생년월일공개');
+                        const heightFlag = getColVal(row, '키공개');
+                        const weightFlag = getColVal(row, '몸무게공개');
+                        const drivePhotoLink = getColVal(row, '사진링크');
 
-                        const rawNo = getColVal(row, '등번호', '배번', '번호');
                         const parsedNo = parseInt(rawNo, 10);
                         const no = (!isNaN(parsedNo) && parsedNo > 0) ? parsedNo : 0;
+                        const seq = parseInt(rawSeq, 10) || (idx + 1);
 
                         return {
-                            id: idx + 1,
+                            id: seq,
                             no: no,
                             name: name,
                             grade: grade,
