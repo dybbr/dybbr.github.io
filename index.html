@@ -6,15 +6,15 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
 
-    <!-- 구글 연동 설정 (과거 캐시 주소 완전 삭제 & 100% 실시간 단일 스트림) -->
+    <!-- 구글 연동 설정 (실시간 gviz 단일 스트림 & headers=1 고정) -->
     <script>
         const GOOGLE_SHEET_ID = "1ljpHkiJL_H1NN5rwTaQOL5QYeev32QvaBTKzxSPgNVA";
         const ROSTER_GID = "1653839889";
         const CONTACTS_GID = "812608822";
         
-        // ★ 캐시 우회 쿼리가 적용된 100% 실시간 단일 CSV 생성기 (과거 캐시 pub 주소 완전 배제) ★
+        // ★ headers=1 명시로 2번째 줄(사상일 감독님) 증발 방지 및 100% 실시간 반영 ★
         function getRealtimeCsvUrl(gid) {
-            return `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&gid=${gid}&tq=${encodeURIComponent('select *')}&_t=${Date.now()}`;
+            return `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&gid=${gid}&headers=1&tq=${encodeURIComponent('select *')}&_t=${Date.now()}`;
         }
         
         const GOOGLE_SHEET_EDIT_URL = "https://docs.google.com/spreadsheets/d/1ljpHkiJL_H1NN5rwTaQOL5QYeev32QvaBTKzxSPgNVA/edit?gid=1653839889#gid=1653839889";
@@ -22,8 +22,8 @@
         const GOOGLE_SHEET_UNIFORM_URL = "https://docs.google.com/spreadsheets/d/1ljpHkiJL_H1NN5rwTaQOL5QYeev32QvaBTKzxSPgNVA/edit?gid=1881893260#gid=1881893260";
         const GOOGLE_SCRIPT_UNIFORM_API_URL = "https://script.google.com/macros/s/AKfycbwAdnLPVvTMIUGt538hM18pS_upBZt8FhKRTESjWXNonKFHOH5e59Vxi0hjDqYend-IHg/exec";
         
-        // 웹페이지 배포 버전 (100% 실시간 단일 스트림 v2.0.8)
-        const APP_VERSION = "v2.0.8 · b260921";
+        // 웹페이지 배포 버전 (사상일 감독님 출력 복구 v2.0.9)
+        const APP_VERSION = "v2.0.9 · b260921";
     </script>
 
     <meta charset="UTF-8">
@@ -84,13 +84,14 @@
         }
 
         .lock-desc {
-            font-size: clamp(11px, 3.2vw, 13px);
+            font-size: clamp(11.5px, 3.4vw, 13px);
             color: #64748b;
             margin-bottom: 16px;
             line-height: 1.4;
-            letter-spacing: -0.4px;
+            letter-spacing: -0.3px;
             white-space: nowrap;
             word-break: keep-all;
+            font-weight: 600;
         }
 
         @keyframes fadeInScale {
@@ -98,7 +99,7 @@
             to { opacity: 1; transform: scale(1); }
         }
 
-        /* 헤더 레이아웃 (Flex 3단 분리) */
+        /* 헤더 레이아웃 */
         header {
             background-color: var(--kbo-blue);
             color: white;
@@ -247,7 +248,6 @@
             padding: 0 16px;
         }
 
-        /* 필터 컨트롤 카드 */
         .control-card {
             background: #ffffff;
             border: 1px solid var(--card-border);
@@ -586,7 +586,7 @@
             vertical-align: middle;
         }
 
-        /* 프로야구 표준 4:5 카드 그리드 */
+        /* 4:5 카드 그리드 */
         .roster-grid {
             display: none;
             grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
@@ -1190,7 +1190,7 @@
         <div style="font-size: 32px; margin-bottom: 8px;">⚾</div>
         <h2 style="font-size: 18px; font-weight: 900; color: var(--kbo-blue); margin-bottom: 6px;">대연초 야구부 보안 인증</h2>
         <div class="lock-desc">
-            선수 명단 보호를 위해 비밀번호를 입력해 주세요.
+            선수명단 보호중. 비밀번호를 입력하세요.
         </div>
         <div style="margin-bottom: 12px;">
             <input type="password" id="lockPasswordInput" placeholder="비밀번호 입력" style="width: 100%; padding: 10px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 16px; text-align: center; font-weight: 800; letter-spacing: 2px; outline: none;" onkeydown="if(event.key==='Enter') verifyLockPassword()">
@@ -1212,7 +1212,7 @@
         </div>
         <div class="header-top-right">
             <button id="adminLoginBtn" class="admin-toggle-btn" onclick="openAdminModal()">🔒 관리자 로그인</button>
-            <span class="app-version-tag" id="appVersionDisplay">v2.0.8 · b260921</span>
+            <span class="app-version-tag" id="appVersionDisplay">v2.0.9 · b260921</span>
         </div>
     </div>
 
@@ -1544,9 +1544,6 @@
 </div>
 
 <script>
-    // ==========================================================
-    // 🛡️ 기기 식별 및 활동 로그 전송 엔진
-    // ==========================================================
     function getDeviceClientId() {
         let cid = localStorage.getItem('daeyeon_device_cid');
         if (!cid) {
@@ -1584,9 +1581,7 @@
         }).catch(err => console.warn("로그 전송 무시:", err));
     }
 
-    // ==========================================================
-    // 🔒 [보안 인증 및 실시간 카운트다운 타이머 엔진]
-    // ==========================================================
+    // 🔒 보안 인증 & 타이머
     (function checkPageAuth() {
         const authExpire = localStorage.getItem('daeyeon_auth_expire');
         if (authExpire && Date.now() < parseInt(authExpire, 10)) {
@@ -1675,40 +1670,31 @@
 
         let unlocked = false;
 
-        // 1. 개발자 당일 코드 (오늘 밤 자정 24:00까지 해제)
         if (devCodes.includes(inputVal)) {
             let midnightDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
             localStorage.setItem('daeyeon_auth_expire', midnightDate.getTime());
             sendActivityLog("잠금해제", "개발자", "오늘 자정까지 세션 해제");
             alert('🔓 개발자 인증 완료 (오늘 밤 자정까지 유지됩니다)');
             unlocked = true;
-        }
-        // 2. 최고관리자 (4시간)
-        else if (inputVal === pws.super) {
+        } else if (inputVal === pws.super) {
             const expireTime = Date.now() + (4 * 60 * 60 * 1000);
             localStorage.setItem('daeyeon_auth_expire', expireTime);
             sendActivityLog("잠금해제", "최고관리자", "4시간 세션 해제");
             alert('🔓 최고관리자 인증 완료 (4시간 동안 유지됩니다)');
             unlocked = true;
-        }
-        // 3. 보조관리자 (1시간)
-        else if (inputVal === pws.sub) {
+        } else if (inputVal === pws.sub) {
             const expireTime = Date.now() + (1 * 60 * 60 * 1000);
             localStorage.setItem('daeyeon_auth_expire', expireTime);
             sendActivityLog("잠금해제", "보조관리자", "1시간 세션 해제");
             alert('🔓 보조관리자 인증 완료 (1시간 동안 유지됩니다)');
             unlocked = true;
-        }
-        // 4. 일반관리자 (30분)
-        else if (inputVal === pws.general) {
+        } else if (inputVal === pws.general) {
             const expireTime = Date.now() + (30 * 60 * 1000);
             localStorage.setItem('daeyeon_auth_expire', expireTime);
             sendActivityLog("잠금해제", "일반관리자", "30분 세션 해제");
             alert('🔓 일반관리자 인증 완료 (30분 동안 유지됩니다)');
             unlocked = true;
-        }
-        // 5. 기본 창립년도 '1922' (10분)
-        else if (inputVal === "1922") {
+        } else if (inputVal === "1922") {
             const expireTime = Date.now() + (10 * 60 * 1000);
             localStorage.setItem('daeyeon_auth_expire', expireTime);
             sendActivityLog("잠금해제", "일반열람", "10분 기본 해제");
@@ -1721,7 +1707,6 @@
             if (overlay) overlay.style.display = 'none';
             startSessionCountdown();
             document.getElementById('lockPasswordInput').value = '';
-            // 잠금 해제와 동시에 100% 최신 실시간 시트 데이터 즉시 동기화
             loadGoogleSheetData();
             return;
         }
@@ -1774,7 +1759,10 @@
         return (t === p1 || t === p2 || t === p3 || t === p4);
     }
 
-    function isStaff(grade) { return grade === '감독' || grade === '코치'; }
+    function isStaff(grade) { 
+        const g = String(grade || '').trim();
+        return g.includes('감독') || g.includes('코치') || g.includes('지도자');
+    }
     function isSuperOrDev() { return currentRole === 'super' || currentRole === 'dev'; }
 
     function getGradeBadge(grade) {
@@ -2217,9 +2205,7 @@
         });
     }
 
-    // ==========================================
-    // 유니폼 주문 신청 모달 로직
-    // ==========================================
+    // 유니폼 신청 폼 제어
     function openUniformModal() {
         if (!isUniformActive && !isSuperOrDev()) {
             alert('현재는 유니폼 접수 기간이 아닙니다.');
@@ -2363,9 +2349,7 @@
         }
     }
 
-    // ==========================================================
-    // 🚨 비상연락망 모달 로직 (실시간 gviz 단일 스트림)
-    // ==========================================================
+    // 🚨 비상연락망 모달 로직
     async function openEmergencyContactsModal() {
         document.getElementById('emergencyContactsModal').style.display = 'flex';
         const content = document.getElementById('contactsListContent');
@@ -2618,9 +2602,7 @@
         });
     }
 
-    // ==========================================
-    // 사진 모달 제어
-    // ==========================================
+    // 사진 등록/삭제 제어
     function openPhotoUploadModal(playerNo, playerName) {
         uploadTargetPlayer = { no: playerNo, name: playerName };
         uploadOptimizedBase64 = null;
@@ -2786,9 +2768,7 @@
         }
     }
 
-    // ==========================================
     // 📜 보안 로그 모달
-    // ==========================================
     async function openLogsModal() {
         if (currentRole !== 'dev') return;
         document.getElementById('logsModal').style.display = 'flex';
@@ -2837,9 +2817,7 @@
         }
     }
 
-    // ==========================================
-    // 관리자 로그인 & 비밀번호 모달
-    // ==========================================
+    // 관리자 로그인 제어
     function openAdminModal() {
         if (currentRole !== 'guest') {
             if (confirm('관리자 모드를 로그아웃 하시겠습니까?')) {
@@ -3074,14 +3052,24 @@
 
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
     function isOff(val) { if (!val) return false; const v = String(val).toUpperCase().trim(); return v === 'OFF' || v === '비공개'; }
+    
+    // 컬럼명 공백이나 유사어까지 포괄하는 안전한 추출 함수
     function getColVal(row, ...keys) {
+        if (!row) return '';
         for (let k of keys) {
-            if (row[k] !== undefined && row[k] !== null && String(row[k]).trim() !== '') return String(row[k]).trim();
+            if (row[k] !== undefined && row[k] !== null && String(row[k]).trim() !== '') {
+                return String(row[k]).trim();
+            }
+            for (let prop in row) {
+                if (prop.trim() === k && row[prop] !== undefined && row[prop] !== null && String(row[prop]).trim() !== '') {
+                    return String(row[prop]).trim();
+                }
+            }
         }
         return '';
     }
 
-    // ★ [100% 무결점 실시간 단일 로더 엔진] ★
+    // ★ [100% 실시간 데이터 로드 엔진 - headers=1 로 사상일 감독님 완벽 복원] ★
     async function loadGoogleSheetData() {
         try {
             if (savedSearchQuery) document.getElementById('searchInput').value = savedSearchQuery;
@@ -3115,32 +3103,35 @@
                 skipEmptyLines: true,
                 complete: function(results) {
                     players = results.data.map((row, idx) => {
+                        const name = getColVal(row, '이름', '성명', '선수명', '지도자명');
+                        const grade = getColVal(row, '구분', '학년', '직책');
+                        const pos = getColVal(row, '포지션', '역할', '직책') || '-';
+                        const bt = getColVal(row, '투타', '투/타') || '-';
+                        const birth = getColVal(row, '생년월일', '생일');
+                        const height = getColVal(row, '키', '신장');
+                        const weight = getColVal(row, '몸무게', '체중');
+                        
                         const photoFlag = getColVal(row, '사진공개', '사진노출', '사진비공개', '사진ON/OFF');
                         const birthFlag = getColVal(row, '생년월일공개', '생년월일노출', '생일공개', '생년월일비공개');
                         const heightFlag = getColVal(row, '키공개', '키노출', '키비공개');
                         const weightFlag = getColVal(row, '몸무게공개', '몸무게노출', '몸무게비공개');
                         const drivePhotoLink = getColVal(row, '사진링크', '드라이브사진', '사진URL', '이미지링크');
 
-                        const rawNo = String(row['등번호'] || '').trim();
+                        const rawNo = getColVal(row, '등번호', '배번', '번호');
                         const parsedNo = parseInt(rawNo, 10);
                         const no = (!isNaN(parsedNo) && parsedNo > 0) ? parsedNo : 0;
-
-                        // 시트에 기록된 값 그대로 반영 (시트에서 지우면 공백으로 즉시 반영)
-                        const birthRaw = (row['생년월일'] || '').trim();
-                        const heightRaw = (row['키'] || '').trim();
-                        const weightRaw = (row['몸무게'] || '').trim();
 
                         return {
                             id: idx + 1,
                             no: no,
-                            name: (row['이름'] || '').trim(),
-                            grade: (row['구분'] || '').trim(),
-                            pos: (row['포지션'] || '-').trim(),
-                            bt: (row['투타'] || '-').trim(),
-                            birth: birthRaw,
-                            height: heightRaw,
-                            weight: weightRaw,
-                            visible: String(row['노출여부'] || '').toUpperCase().trim() !== 'OFF',
+                            name: name,
+                            grade: grade,
+                            pos: pos,
+                            bt: bt,
+                            birth: birth,
+                            height: height,
+                            weight: weight,
+                            visible: String(getColVal(row, '노출여부') || '').toUpperCase().trim() !== 'OFF',
                             hidePhoto: isOff(photoFlag),
                             hideBirth: isOff(birthFlag),
                             hideHeight: isOff(heightFlag),
