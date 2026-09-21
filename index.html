@@ -22,7 +22,13 @@
         const GOOGLE_SHEET_UNIFORM_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/edit?gid=${UNIFORM_GID}#gid=${UNIFORM_GID}`;
         const GOOGLE_SCRIPT_UNIFORM_API_URL = "https://script.google.com/macros/s/AKfycbwAdnLPVvTMIUGt538hM18pS_upBZt8FhKRTESjWXNonKFHOH5e59Vxi0hjDqYend-IHg/exec";
         
-        const APP_VERSION = "v2.3.3 · b260921";
+        const APP_VERSION = "v2.3.4 · b260921";
+
+        // ★ [핵심] 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단 ★
+        const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
+        if (_savedExpire && Date.now() < parseInt(_savedExpire, 10)) {
+            document.documentElement.classList.add('is-authenticated');
+        }
     </script>
 
     <meta charset="UTF-8">
@@ -53,6 +59,11 @@
             background-color: var(--bg-gray);
             color: var(--text-title);
             padding-bottom: 70px;
+        }
+
+        /* 🔒 로그인 유지 중일 때 잠금창 숨김 */
+        html.is-authenticated #lockOverlay {
+            display: none !important;
         }
 
         /* 🔒 보안 잠금 및 최초 등록 오버레이 */
@@ -1049,7 +1060,8 @@
 <script>
     // ★★★ [1. 전역 변수 최상단 안전 선언: ReferenceError 원천 차단] ★★★
     let players = [];
-    let currentRole = sessionStorage.getItem('daeyeon_admin_role') || 'guest';
+    // 세션 유지: localStorage에 저장된 권한과 활성 사용자 정보 복원
+    let currentRole = localStorage.getItem('daeyeon_admin_role') || sessionStorage.getItem('daeyeon_admin_role') || 'guest';
     let selectedGrade = sessionStorage.getItem('daeyeon_selected_grade') || 'all';
     let currentView = localStorage.getItem('daeyeon_view_mode') || 'list';
     let savedSearchQuery = sessionStorage.getItem('daeyeon_search_query') || '';
@@ -1070,13 +1082,14 @@
         return cleaned;
     }
 
+    // ★ [핵심] 새로고침 시에도 유지되는 활성 유저 객체 복원
     function getActiveUser() {
         const authExpire = localStorage.getItem('daeyeon_auth_expire');
         if (!authExpire || Date.now() > parseInt(authExpire, 10)) {
             return null;
         }
         try {
-            return JSON.parse(sessionStorage.getItem('daeyeon_active_user') || 'null');
+            return JSON.parse(localStorage.getItem('daeyeon_active_user') || sessionStorage.getItem('daeyeon_active_user') || 'null');
         } catch(e) {
             return null;
         }
@@ -1207,11 +1220,15 @@
 
             const diff = parseInt(authExpire, 10) - Date.now();
             if (diff <= 0) {
+                // ★ 세션 만료 시 완전 로그아웃
                 localStorage.removeItem('daeyeon_auth_expire');
+                localStorage.removeItem('daeyeon_admin_role');
+                localStorage.removeItem('daeyeon_active_user');
                 sessionStorage.removeItem('daeyeon_admin_role');
                 sessionStorage.removeItem('daeyeon_active_user');
                 currentRole = 'guest';
 
+                document.documentElement.classList.remove('is-authenticated');
                 badge.style.display = 'none';
                 clearInterval(window._sessionTimerInterval);
                 updateAdminUI();
@@ -1235,12 +1252,18 @@
         }, 1000);
     }
 
+    // ★ [핵심] 화면 잠금 클릭 = 완전 로그아웃
     function lockScreenNow() {
         localStorage.removeItem('daeyeon_auth_expire');
+        localStorage.removeItem('daeyeon_admin_role');
+        localStorage.removeItem('daeyeon_active_user');
         sessionStorage.removeItem('daeyeon_admin_role');
         sessionStorage.removeItem('daeyeon_active_user');
+        
         const prevRole = currentRole;
         currentRole = 'guest';
+
+        document.documentElement.classList.remove('is-authenticated');
 
         if (window._sessionTimerInterval) clearInterval(window._sessionTimerInterval);
         const badge = document.getElementById('sessionTimerBadge');
@@ -1273,6 +1296,7 @@
         return [yyyy + mm + dd, dd + mm + yyyy, d + m + yyyy, yy + mm + dd, dd + mm + yy, d + m + yy];
     }
 
+    // 🔓 잠금 해제 및 등급별 세션 시간 부여 (새로고침 유지 지원)
     async function verifyLockPassword() {
         const inputVal = document.getElementById('lockPasswordInput').value.trim();
         const pws = getStoredPasswords();
@@ -1285,39 +1309,45 @@
             const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
             localStorage.setItem('daeyeon_auth_expire', midnight.getTime());
             currentRole = 'dev';
+            localStorage.setItem('daeyeon_admin_role', 'dev');
             sessionStorage.setItem('daeyeon_admin_role', 'dev');
-            sessionStorage.removeItem('daeyeon_active_user');
+            localStorage.removeItem('daeyeon_active_user');
             sendActivityLog("잠금해제", "개발자", "오늘 자정까지 개발자 마스터 세션 해제");
             alert('🔓 [개발자 모드] 인증 완료 (오늘 밤 자정까지 유지됩니다)');
             unlocked = true;
         } else if (inputVal === pws.super) {
             localStorage.setItem('daeyeon_auth_expire', Date.now() + (4 * 60 * 60 * 1000));
             currentRole = 'super';
+            localStorage.setItem('daeyeon_admin_role', 'super');
             sessionStorage.setItem('daeyeon_admin_role', 'super');
-            sessionStorage.removeItem('daeyeon_active_user');
+            localStorage.removeItem('daeyeon_active_user');
             sendActivityLog("잠금해제", "최고관리자", "최고관리자 4시간 세션 해제");
             alert('🔓 [최고관리자] 인증 완료 (4시간 동안 유지됩니다)');
             unlocked = true;
         } else if (inputVal === pws.sub) {
             localStorage.setItem('daeyeon_auth_expire', Date.now() + (2 * 60 * 60 * 1000));
             currentRole = 'sub';
+            localStorage.setItem('daeyeon_admin_role', 'sub');
             sessionStorage.setItem('daeyeon_admin_role', 'sub');
-            sessionStorage.removeItem('daeyeon_active_user');
+            localStorage.removeItem('daeyeon_active_user');
             sendActivityLog("잠금해제", "보조관리자", "보조관리자 2시간 세션 해제");
             alert('🔓 [보조관리자] 인증 완료 (2시간 동안 유지됩니다)');
             unlocked = true;
         } else if (inputVal === pws.general) {
             localStorage.setItem('daeyeon_auth_expire', Date.now() + (1 * 60 * 60 * 1000));
             currentRole = 'general';
+            localStorage.setItem('daeyeon_admin_role', 'general');
             sessionStorage.setItem('daeyeon_admin_role', 'general');
-            sessionStorage.removeItem('daeyeon_active_user');
+            localStorage.removeItem('daeyeon_active_user');
             sendActivityLog("잠금해제", "일반관리자", "일반관리자 1시간 세션 해제");
             alert('🔓 [일반관리자] 인증 완료 (1시간 동안 유지됩니다)');
             unlocked = true;
         } else if (inputVal === "1922") {
             localStorage.setItem('daeyeon_auth_expire', Date.now() + (10 * 60 * 1000));
             currentRole = 'guest';
+            localStorage.removeItem('daeyeon_admin_role');
             sessionStorage.removeItem('daeyeon_admin_role');
+            localStorage.removeItem('daeyeon_active_user');
             sessionStorage.removeItem('daeyeon_active_user');
             sendActivityLog("잠금해제", "일반열람", "1922 열람전용 10분 해제 (수정권한 없음)");
             alert('🔓 [일반 열람] 보안 인증 완료 (10분 동안 유지되며 수정 권한이 없습니다)');
@@ -1325,6 +1355,7 @@
         }
 
         if (unlocked) {
+            document.documentElement.classList.add('is-authenticated');
             const overlay = document.getElementById('lockOverlay');
             if (overlay) overlay.style.display = 'none';
             startSessionCountdown();
@@ -1381,6 +1412,7 @@
                 });
 
                 const userObj = { name: nameInput, role: roleSelect, phone: formattedPhone, rawPhone: cleanPhone };
+                localStorage.setItem('daeyeon_active_user', JSON.stringify(userObj));
                 sessionStorage.setItem('daeyeon_active_user', JSON.stringify(userObj));
                 localStorage.setItem('daeyeon_auth_expire', Date.now() + (60 * 60 * 1000));
                 currentRole = 'guest';
@@ -1388,6 +1420,7 @@
                 sendActivityLog("최초등록", roleSelect, `${nameInput} (${roleSelect}) 연락처 등록 완료 [${formattedPhone}]`);
 
                 alert(`🎉 인증 완료!\n${nameInput} 선수의 [${roleSelect}] 연락처로 비상연락망 시트에 저장되었습니다.\n(1시간 동안 유지되며, 내 자녀 정보 수정 권한이 부여됩니다.)`);
+                document.documentElement.classList.add('is-authenticated');
                 document.getElementById('lockOverlay').style.display = 'none';
                 startSessionCountdown();
                 updateUserIdentityBadge();
@@ -1422,6 +1455,7 @@
 
                 if (matchedRole) {
                     const userObj = { name: pName, role: matchedRole, phone: formatPhone(matchedPhone), rawPhone: matchedPhone };
+                    localStorage.setItem('daeyeon_active_user', JSON.stringify(userObj));
                     sessionStorage.setItem('daeyeon_active_user', JSON.stringify(userObj));
                     localStorage.setItem('daeyeon_auth_expire', Date.now() + (60 * 60 * 1000));
                     currentRole = 'guest';
@@ -1435,6 +1469,7 @@
         }
 
         if (unlocked) {
+            document.documentElement.classList.add('is-authenticated');
             const overlay = document.getElementById('lockOverlay');
             if (overlay) overlay.style.display = 'none';
             startSessionCountdown();
@@ -2294,8 +2329,11 @@
             if (confirm('관리자 모드를 로그아웃 하시겠습니까?')) {
                 sendActivityLog("관리자로그아웃", currentRole, "로그아웃");
                 currentRole = 'guest';
+                localStorage.removeItem('daeyeon_admin_role');
                 sessionStorage.removeItem('daeyeon_admin_role');
-                updateAdminUI(); render();
+                updateAdminUI(); 
+                updateUserIdentityBadge();
+                render();
             }
         } else {
             const pwInput = document.getElementById('adminPw');
@@ -2309,21 +2347,50 @@
         const pw = document.getElementById('adminPw').value.trim();
         const pws = getStoredPasswords();
         const devCodes = getDevCodes();
+        let loggedInRole = "";
 
-        if (devCodes.includes(pw)) { currentRole = 'dev'; sessionStorage.setItem('daeyeon_admin_role', 'dev'); alert('⚡ 개발자 모드'); }
-        else if (pw === pws.super) { currentRole = 'super'; sessionStorage.setItem('daeyeon_admin_role', 'super'); alert('👑 최고관리자'); }
-        else if (pw === pws.sub) { currentRole = 'sub'; sessionStorage.setItem('daeyeon_admin_role', 'sub'); alert('🛠️ 보조관리자'); }
-        else if (pw === pws.general) { currentRole = 'general'; sessionStorage.setItem('daeyeon_admin_role', 'general'); alert('📋 일반관리자'); }
-        else { alert('비밀번호가 틀렸습니다.'); return; }
+        if (devCodes.includes(pw)) {
+            const now = new Date();
+            const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
+            localStorage.setItem('daeyeon_auth_expire', midnight.getTime());
+            loggedInRole = 'dev';
+            alert('⚡ [개발자 모드] 로그인 완료 (오늘 밤 자정까지)');
+        } else if (pw === pws.super) {
+            localStorage.setItem('daeyeon_auth_expire', Date.now() + (4 * 60 * 60 * 1000));
+            loggedInRole = 'super';
+            alert('👑 [최고관리자] 로그인 완료 (4시간)');
+        } else if (pw === pws.sub) {
+            localStorage.setItem('daeyeon_auth_expire', Date.now() + (2 * 60 * 60 * 1000));
+            loggedInRole = 'sub';
+            alert('🛠️ [보조관리자] 로그인 완료 (2시간)');
+        } else if (pw === pws.general) {
+            localStorage.setItem('daeyeon_auth_expire', Date.now() + (1 * 60 * 60 * 1000));
+            loggedInRole = 'general';
+            alert('📋 [일반관리자] 로그인 완료 (1시간)');
+        } else {
+            alert('비밀번호가 틀렸습니다.');
+            return;
+        }
 
+        currentRole = loggedInRole;
+        localStorage.setItem('daeyeon_admin_role', loggedInRole);
+        sessionStorage.setItem('daeyeon_admin_role', loggedInRole);
+        localStorage.removeItem('daeyeon_active_user'); // 관리자 모드 진입 시 일반 사용자 뱃지 숨김
+
+        document.documentElement.classList.add('is-authenticated');
         closeModal('loginModal');
-        updateAdminUI(); render();
+        startSessionCountdown();
+        updateAdminUI(); 
+        updateUserIdentityBadge();
+        render();
     }
 
     function updateAdminUI() {
         const adminBar = document.getElementById('adminBar');
         const adminBtn = document.getElementById('adminLoginBtn');
         const roleText = document.getElementById('adminRoleText');
+        if (!adminBar || !adminBtn || !roleText) return;
+
         adminBar.className = 'admin-bar';
 
         if (currentRole === 'dev' || currentRole === 'super' || currentRole === 'sub' || currentRole === 'general') {
@@ -2344,7 +2411,7 @@
         }
     }
 
-    function openPasswordManageModal() { alert('비밀번호 관리'); }
+    function openPasswordManageModal() { alert('비밀번호 관리 기능'); }
     function toggleUniformFeature() {
         isUniformActive = !isUniformActive;
         localStorage.setItem('daeyeon_uniform_active', isUniformActive ? 'true' : 'false');
@@ -2359,9 +2426,10 @@
         try {
             if (savedSearchQuery) document.getElementById('searchInput').value = savedSearchQuery;
             updateAdminUI();
+            updateUserIdentityBadge();
 
             const res = await fetch(getRealtimeCsvUrl(ROSTER_GID), { cache: 'no-store' });
-            if (!res.ok) throw new Error("시트 응답 실패");
+            if (!res.ok) throw new Error("시트 응답 실패 (" + res.status + ")");
             const csvText = await res.text();
 
             Papa.parse(csvText, {
@@ -2439,11 +2507,17 @@
             }).catch(()=>{});
 
         } catch (error) {
-            document.getElementById('statusNotice').textContent = "데이터 로드 중 (" + error.message + ")";
+            console.error(error);
+            document.getElementById('statusNotice').textContent = "데이터 로드 실패: " + error.message;
         }
     }
 
-    // ★★★ [2. 안전한 초기화 순서: 세션 체크 ➔ 데이터 로드] ★★★
+    // ★★★ [2. 안전한 초기화: 세션 확인 후 즉시 명단 로드] ★★★
+    const activeAuthExpire = localStorage.getItem('daeyeon_auth_expire');
+    if (activeAuthExpire && Date.now() < parseInt(activeAuthExpire, 10)) {
+        startSessionCountdown();
+    }
+    updateAdminUI();
     updateUserIdentityBadge();
     loadGoogleSheetData();
 </script>
