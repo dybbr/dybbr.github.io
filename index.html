@@ -1,17 +1,29 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- 구글 연동 설정 (CSV 주소, 편집창 주소, 유니폼 API) -->
+    <!-- 브라우저 캐시 원천 방지 메타태그 -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <!-- 구글 연동 설정 (실시간 gviz 주소 + 백업 CSV + 유니폼 API) -->
     <script>
+        const GOOGLE_SHEET_ID = "1ljpHkiJL_H1NN5rwTaQOL5QYeev32QvaBTKzxSPgNVA";
+        
+        // ★ 캐시 지연 0초 실시간 gviz CSV 주소 (시트 수정 즉시 1초 반영) ★
+        const GOOGLE_SHEET_GVIZ_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&gid=1653839889`;
         const GOOGLE_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSw2YtYByfiPWXbRfqkzmZ6yzaZVfJHO0f9zAmCiLnwlMvVXCt9lv4AmQAz4_vSjzPy0APtl0hwYNmW/pub?output=csv";
+        
+        const GOOGLE_SHEET_CONTACTS_GVIZ_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&gid=812608822`;
+        const GOOGLE_SHEET_CONTACTS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSw2YtYByfiPWXbRfqkzmZ6yzaZVfJHO0f9zAmCiLnwlMvVXCt9lv4AmQAz4_vSjzPy0APtl0hwYNmW/pub?gid=812608822&single=true&output=csv";
+        
         const GOOGLE_SHEET_EDIT_URL = "https://docs.google.com/spreadsheets/d/1ljpHkiJL_H1NN5rwTaQOL5QYeev32QvaBTKzxSPgNVA/edit?gid=1653839889#gid=1653839889";
         const GOOGLE_SHEET_CONTACTS_URL = "https://docs.google.com/spreadsheets/d/1ljpHkiJL_H1NN5rwTaQOL5QYeev32QvaBTKzxSPgNVA/edit?gid=812608822#gid=812608822";
         const GOOGLE_SHEET_UNIFORM_URL = "https://docs.google.com/spreadsheets/d/1ljpHkiJL_H1NN5rwTaQOL5QYeev32QvaBTKzxSPgNVA/edit?gid=1881893260#gid=1881893260";
-        const GOOGLE_SHEET_CONTACTS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSw2YtYByfiPWXbRfqkzmZ6yzaZVfJHO0f9zAmCiLnwlMvVXCt9lv4AmQAz4_vSjzPy0APtl0hwYNmW/pub?gid=812608822&single=true&output=csv";
         const GOOGLE_SCRIPT_UNIFORM_API_URL = "https://script.google.com/macros/s/AKfycbwAdnLPVvTMIUGt538hM18pS_upBZt8FhKRTESjWXNonKFHOH5e59Vxi0hjDqYend-IHg/exec";
         
-        // 웹페이지 배포 버전 (관리자 안내창 비밀번호 비노출 v2.0.4)
-        const APP_VERSION = "v2.0.4 · b260916";
+        // 웹페이지 배포 버전 (캐시 제로 실시간 gviz 동기화 v2.0.6)
+        const APP_VERSION = "v2.0.6 · b260921";
     </script>
 
     <meta charset="UTF-8">
@@ -64,11 +76,21 @@
             width: 100%;
             max-width: 380px;
             border-radius: 16px;
-            padding: 26px 22px;
+            padding: 26px 20px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.35);
             text-align: center;
             border-top: 6px solid var(--kbo-red);
             animation: fadeInScale 0.25s ease-out;
+        }
+
+        .lock-desc {
+            font-size: clamp(11px, 3.2vw, 13px);
+            color: #64748b;
+            margin-bottom: 16px;
+            line-height: 1.4;
+            letter-spacing: -0.4px;
+            white-space: nowrap;
+            word-break: keep-all;
         }
 
         @keyframes fadeInScale {
@@ -1173,9 +1195,9 @@
     <div class="lock-card">
         <div style="font-size: 32px; margin-bottom: 8px;">⚾</div>
         <h2 style="font-size: 18px; font-weight: 900; color: var(--kbo-blue); margin-bottom: 6px;">대연초 야구부 보안 인증</h2>
-        <p style="font-size: 12px; color: #64748b; margin-bottom: 16px; line-height: 1.5;">
-            선수 명단 및 비상연락망 보호를 위해 보안 비밀번호를 입력해 주세요.
-        </p>
+        <div class="lock-desc">
+            선수 명단 보호를 위해 비밀번호를 입력해 주세요.
+        </div>
         <div style="margin-bottom: 12px;">
             <input type="password" id="lockPasswordInput" placeholder="비밀번호 입력" style="width: 100%; padding: 10px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 16px; text-align: center; font-weight: 800; letter-spacing: 2px; outline: none;" onkeydown="if(event.key==='Enter') verifyLockPassword()">
         </div>
@@ -1185,11 +1207,8 @@
     </div>
 </div>
 
-<!-- ===================================================
-     상단 헤더 영역 (Flex 3단 분리 - 모바일 겹침 100% 방지)
-     =================================================== -->
+<!-- 상단 헤더 영역 -->
 <header>
-    <!-- 1단: 좌측(타이머+화면잠금) / 우측(관리자 로그인+버전) -->
     <div class="header-top-bar">
         <div class="header-top-left">
             <div id="sessionTimerBadge" class="session-timer-badge">
@@ -1199,17 +1218,15 @@
         </div>
         <div class="header-top-right">
             <button id="adminLoginBtn" class="admin-toggle-btn" onclick="openAdminModal()">🔒 관리자 로그인</button>
-            <span class="app-version-tag" id="appVersionDisplay">v2.0.4 · b260916</span>
+            <span class="app-version-tag" id="appVersionDisplay">v2.0.6 · b260921</span>
         </div>
     </div>
 
-    <!-- 2단: 중앙 타이틀 (버튼과 완전히 분리된 단독 행) -->
     <div class="header-center-title">
         <div class="header-title">대연초 야구부 명단</div>
         <div class="header-subtitle" id="rosterCountText">선수단 데이터를 불러오는 중...</div>
     </div>
 
-    <!-- 3단: 하단 주요 CTA 액션 (유니폼 주문 접수 버튼) -->
     <div class="header-bottom-cta" id="headerCtaBar">
         <button id="btnUniformCTA" class="btn-uniform-cta" style="display: none;" onclick="openUniformModal()">👕 유니폼 주문 접수</button>
     </div>
@@ -1279,9 +1296,7 @@
     <div id="statusNotice" class="loading-notice">선수 명단을 실시간으로 불러오고 있습니다...</div>
 </div>
 
-<!-- ===================================================
-     1. 관리자 로그인 모달 (초기 비밀번호 비노출)
-     =================================================== -->
+<!-- 1. 관리자 로그인 모달 -->
 <div id="loginModal" class="modal">
     <div class="modal-content" style="overflow: visible;">
         <div class="modal-header">관리자 등급 로그인</div>
@@ -1307,17 +1322,14 @@
 <div id="uniformModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">👕 유니폼 주문 신청</div>
-        
         <div class="modal-scroll-body">
             <p style="font-size: 12px; color: #64748b; margin-bottom: 12px; line-height: 1.4;">
                 선수를 선택하시면 학년과 체격이 자동 입력됩니다. 필요한 의류에 체크하고 사이즈를 선택해 주세요.
             </p>
-
             <div class="form-group">
                 <label>대상 선수 선택 *</label>
                 <select id="ordPlayerSelect" style="font-weight: 800; color: var(--kbo-blue);" onchange="handleUniformPlayerChange(this.value)"></select>
             </div>
-
             <div style="display: flex; gap: 8px; background: #f8fafc; border: 1px solid var(--card-border); border-radius: 8px; padding: 10px; margin-bottom: 12px;">
                 <div style="flex: 1;">
                     <label style="font-size: 11px; font-weight: 700; color: #64748b;">학년</label>
@@ -1337,16 +1349,12 @@
                 <label>유니폼 품목 및 사이즈 선택 *</label>
                 <div style="background: #f8fafc; border: 1px solid var(--card-border); border-radius: 8px; padding: 6px 10px;">
                     
-                    <!-- 1. 모자 -->
                     <div class="uniform-item-row" data-name="모자">
                         <label class="uniform-item-name"><input type="checkbox" class="chk-item" onchange="toggleRowInputs(this)"> 🧢 모자</label>
-                        <select class="uniform-item-size" disabled>
-                            <option value="프리" selected>프리</option>
-                        </select>
+                        <select class="uniform-item-size" disabled><option value="프리" selected>프리</option></select>
                         <select class="uniform-item-qty" disabled><option value="1개">1개</option><option value="2개">2개</option><option value="3개">3개</option></select>
                     </div>
 
-                    <!-- 2. 유니폼 상의 -->
                     <div class="uniform-item-row" data-name="유니폼상의">
                         <label class="uniform-item-name"><input type="checkbox" class="chk-item" onchange="toggleRowInputs(this)"> ⚾ 유니폼 상의</label>
                         <select class="uniform-item-size" disabled>
@@ -1357,7 +1365,6 @@
                         <select class="uniform-item-qty" disabled><option value="1벌">1벌</option><option value="2벌">2벌</option><option value="3벌">3벌</option></select>
                     </div>
 
-                    <!-- 3. 바지(허리/기장) -->
                     <div class="uniform-item-row" id="rowPants">
                         <label class="uniform-item-name"><input type="checkbox" id="chkPants" onchange="togglePantsInputs(this)"> 👖 바지(허리/기장)</label>
                         <div class="pants-double-box">
@@ -1375,7 +1382,6 @@
                         <select id="pantsQty" class="uniform-item-qty" disabled><option value="1벌">1벌</option><option value="2벌">2벌</option><option value="3벌">3벌</option></select>
                     </div>
 
-                    <!-- 4. 여름훈련티 -->
                     <div class="uniform-item-row" data-name="여름훈련티">
                         <label class="uniform-item-name"><input type="checkbox" class="chk-item" onchange="toggleRowInputs(this)"> ☀️ 여름훈련티</label>
                         <select class="uniform-item-size" disabled>
@@ -1386,7 +1392,6 @@
                         <select class="uniform-item-qty" disabled><option value="1벌">1벌</option><option value="2벌">2벌</option><option value="3벌">3벌</option></select>
                     </div>
 
-                    <!-- 5. 겨울훈련티 -->
                     <div class="uniform-item-row" data-name="겨울훈련티">
                         <label class="uniform-item-name"><input type="checkbox" class="chk-item" onchange="toggleRowInputs(this)"> ❄️ 겨울훈련티</label>
                         <select class="uniform-item-size" disabled>
@@ -1397,7 +1402,6 @@
                         <select class="uniform-item-qty" disabled><option value="1벌">1벌</option><option value="2벌">2벌</option><option value="3벌">3벌</option></select>
                     </div>
 
-                    <!-- 6. 바람막이 -->
                     <div class="uniform-item-row" data-name="바람막이">
                         <label class="uniform-item-name"><input type="checkbox" class="chk-item" onchange="toggleRowInputs(this)"> 💨 바람막이</label>
                         <select class="uniform-item-size" disabled>
@@ -1408,7 +1412,6 @@
                         <select class="uniform-item-qty" disabled><option value="1벌">1벌</option><option value="2벌">2벌</option><option value="3벌">3벌</option></select>
                     </div>
 
-                    <!-- 7. 풀오버 -->
                     <div class="uniform-item-row" data-name="풀오버">
                         <label class="uniform-item-name"><input type="checkbox" class="chk-item" onchange="toggleRowInputs(this)"> 🧥 풀오버</label>
                         <select class="uniform-item-size" disabled>
@@ -1419,7 +1422,6 @@
                         <select class="uniform-item-qty" disabled><option value="1벌">1벌</option><option value="2벌">2벌</option><option value="3벌">3벌</option></select>
                     </div>
 
-                    <!-- 8. 겨울점퍼 -->
                     <div class="uniform-item-row" data-name="겨울점퍼">
                         <label class="uniform-item-name"><input type="checkbox" class="chk-item" onchange="toggleRowInputs(this)"> 🧤 겨울점퍼</label>
                         <select class="uniform-item-size" disabled>
@@ -1445,15 +1447,12 @@
 <div id="ordersModal" class="modal">
     <div class="modal-content" style="max-width: 520px; width: 95%;">
         <div class="modal-header">📋 유니폼 주문 현황 & 발주 관리</div>
-        
         <div class="order-modal-tabs">
             <button class="order-tab-btn active" id="tabBtnPlayerOrders" onclick="switchOrderModalTab('players')">선수별 내역</button>
             <button class="order-tab-btn" id="tabBtnItemSummary" onclick="switchOrderModalTab('summary')">📦 사이즈별 발주 집계</button>
             <button class="order-tab-btn" id="tabBtnUnordered" onclick="switchOrderModalTab('unordered')">⚠️ 미신청자 (<span id="unorderedCount">0</span>)</button>
         </div>
-
         <div class="modal-scroll-body" id="ordersListContent"></div>
-
         <div class="modal-btns" style="justify-content: space-between;">
             <button class="btn-sheet-link" onclick="window.open(GOOGLE_SHEET_UNIFORM_URL, '_blank')">📊 시트 편집창 열기</button>
             <button class="btn-save" onclick="closeModal('ordersModal')">닫기</button>
@@ -1478,22 +1477,18 @@
             <p style="font-size: 12px; color: #64748b; margin-bottom: 14px;">
                 새 사진을 등록하거나, 등록된 사진을 삭제하여 기본 이미지로 복원할 수 있습니다.
             </p>
-            
             <div style="width: 160px; aspect-ratio: 4 / 5; margin: 0 auto 14px; background: #f1f5f9; border: 2px dashed #cbd5e1; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative;">
                 <img id="photoPreviewImg" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
                 <span id="photoPreviewPlaceholder" style="font-size: 12px; color: #94a3b8; font-weight: 700;">사진을 선택해 주세요</span>
             </div>
-
             <input type="file" id="targetPhotoInput" accept="image/*" style="display: none;" onchange="handlePhotoFileSelected(this)">
             <button type="button" class="btn-cancel" style="width: 100%; padding: 10px; font-size: 13px; font-weight: 800; border-color: #0284c7; color: #0284c7; margin-bottom: 8px;" onclick="document.getElementById('targetPhotoInput').click()">
                 📁 새 사진 앨범/카메라에서 선택
             </button>
-
             <button type="button" id="btnDeletePhoto" class="btn-cancel" style="width: 100%; padding: 8px; font-size: 12px; font-weight: 700; border-color: #fecaca; color: #b91c1c; background: #fff5f5; margin-bottom: 14px; display: none;" onclick="executeDeletePhoto()">
                 🗑️ 등록된 사진 삭제 (기본 이미지 복원)
             </button>
         </div>
-
         <div class="modal-btns" style="justify-content: space-between;">
             <button class="btn-cancel" onclick="closeModal('photoUploadModal')">취소</button>
             <button class="btn-save" id="btnUploadSubmit" style="background: #0284c7;" onclick="executeUploadPhoto()">구글 드라이브 등록</button>
@@ -1505,7 +1500,6 @@
 <div id="emergencyContactsModal" class="modal">
     <div class="modal-content" style="max-width: 480px; width: 95%;">
         <div class="modal-header" id="contactsModalTitle">🚨 학부모 비상연락망</div>
-        
         <div style="display: flex; gap: 6px; margin-bottom: 8px; flex-shrink: 0;">
             <input type="text" id="contactSearchInput" placeholder="선수명 / 연락처 / 주소 검색" style="flex: 1; padding: 7px 10px; border: 1px solid var(--card-border); border-radius: 6px; font-size: 12px;" oninput="renderEmergencyContacts()">
             <select id="contactGradeSelect" style="padding: 7px 8px; border: 1px solid var(--card-border); border-radius: 6px; font-size: 12px; font-weight: 700;" onchange="renderEmergencyContacts()">
@@ -1518,7 +1512,6 @@
                 <option value="1">1학년</option>
             </select>
         </div>
-
         <div class="contact-quick-bar" style="flex-shrink: 0;">
             <span style="font-size: 11px; font-weight: 800; color: #991b1b; white-space: nowrap;">⚡ 긴급 공지</span>
             <div style="display: flex; gap: 3px; flex-wrap: wrap;">
@@ -1528,9 +1521,7 @@
                 <button class="btn-quick-action" onclick="copyEmergencyTemplate('safe')">🏠 안전귀가</button>
             </div>
         </div>
-
         <div class="modal-scroll-body" id="contactsListContent"></div>
-
         <div class="modal-btns" style="justify-content: space-between;">
             <button class="btn-sheet-link" onclick="window.open(GOOGLE_SHEET_CONTACTS_URL, '_blank')">📊 시트 원본</button>
             <button class="btn-save" onclick="closeModal('emergencyContactsModal')">닫기</button>
@@ -1688,68 +1679,56 @@
             d + m + yy
         ];
 
+        let unlocked = false;
+
         // 1. 개발자 당일 코드 (오늘 밤 자정 24:00까지 해제)
         if (devCodes.includes(inputVal)) {
             let midnightDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
             localStorage.setItem('daeyeon_auth_expire', midnightDate.getTime());
-            const overlay = document.getElementById('lockOverlay');
-            if (overlay) overlay.style.display = 'none';
-            startSessionCountdown();
             sendActivityLog("잠금해제", "개발자", "오늘 자정까지 세션 해제");
             alert('🔓 개발자 인증 완료 (오늘 밤 자정까지 유지됩니다)');
-            document.getElementById('lockPasswordInput').value = '';
-            return;
+            unlocked = true;
         }
-
         // 2. 최고관리자 (4시간)
-        if (inputVal === pws.super) {
+        else if (inputVal === pws.super) {
             const expireTime = Date.now() + (4 * 60 * 60 * 1000);
             localStorage.setItem('daeyeon_auth_expire', expireTime);
-            const overlay = document.getElementById('lockOverlay');
-            if (overlay) overlay.style.display = 'none';
-            startSessionCountdown();
             sendActivityLog("잠금해제", "최고관리자", "4시간 세션 해제");
             alert('🔓 최고관리자 인증 완료 (4시간 동안 유지됩니다)');
-            document.getElementById('lockPasswordInput').value = '';
-            return;
+            unlocked = true;
         }
-
         // 3. 보조관리자 (1시간)
-        if (inputVal === pws.sub) {
+        else if (inputVal === pws.sub) {
             const expireTime = Date.now() + (1 * 60 * 60 * 1000);
             localStorage.setItem('daeyeon_auth_expire', expireTime);
-            const overlay = document.getElementById('lockOverlay');
-            if (overlay) overlay.style.display = 'none';
-            startSessionCountdown();
             sendActivityLog("잠금해제", "보조관리자", "1시간 세션 해제");
             alert('🔓 보조관리자 인증 완료 (1시간 동안 유지됩니다)');
-            document.getElementById('lockPasswordInput').value = '';
-            return;
+            unlocked = true;
         }
-
         // 4. 일반관리자 (30분)
-        if (inputVal === pws.general) {
+        else if (inputVal === pws.general) {
             const expireTime = Date.now() + (30 * 60 * 1000);
             localStorage.setItem('daeyeon_auth_expire', expireTime);
-            const overlay = document.getElementById('lockOverlay');
-            if (overlay) overlay.style.display = 'none';
-            startSessionCountdown();
             sendActivityLog("잠금해제", "일반관리자", "30분 세션 해제");
             alert('🔓 일반관리자 인증 완료 (30분 동안 유지됩니다)');
-            document.getElementById('lockPasswordInput').value = '';
-            return;
+            unlocked = true;
         }
-
         // 5. 기본 창립년도 '1922' (10분)
-        if (inputVal === "1922") {
+        else if (inputVal === "1922") {
             const expireTime = Date.now() + (10 * 60 * 1000);
             localStorage.setItem('daeyeon_auth_expire', expireTime);
+            sendActivityLog("잠금해제", "일반열람", "10분 기본 해제");
+            alert('🔓 보안 인증 완료 (10분 동안 유지됩니다)');
+            unlocked = true;
+        }
+
+        if (unlocked) {
             const overlay = document.getElementById('lockOverlay');
             if (overlay) overlay.style.display = 'none';
             startSessionCountdown();
-            sendActivityLog("잠금해제", "일반열람", "10분 기본 해제");
-            alert('🔓 보안 인증 완료 (10분 동안 유지됩니다)');
             document.getElementById('lockPasswordInput').value = '';
+            // ★ 잠금 해제와 동시에 최신 시트 데이터를 즉시 다시 불러옵니다! ★
+            loadGoogleSheetData();
             return;
         }
 
@@ -1833,8 +1812,18 @@
         return `<span class="bt-tag bt-etc">${val}</span>`;
     }
 
+    // ★ [핵심] xxxx.xx.xx 및 0cm 더미 데이터 자동 제거 함수 ★
+    function cleanValue(val) {
+        if (!val) return '';
+        const s = String(val).trim();
+        if (!s || s === '-' || s.toLowerCase() === 'null' || s.toLowerCase() === 'undefined') return '';
+        if (/^[xX0\.\-\s]+$/.test(s)) return ''; // xxxx.xx.xx 나 0000.00.00 형태 완벽 제거
+        if (s === '0' || s === '0cm' || s === '0kg') return '';
+        return s;
+    }
+
     function formatBirth(p) {
-        if (!p.birth || p.birth === '-') return '-';
+        if (!p.birth || p.birth === '-' || p.birth === '') return '-';
         const bHidden = !!p.hideBirth;
         if (currentRole === 'guest') return bHidden ? '<span class="text-private">비공개</span>' : p.birth;
         const bBadge = (bHidden && (currentRole === 'super' || currentRole === 'sub' || currentRole === 'dev')) ? '<span class="admin-private-badge">비공개</span>' : '';
@@ -1850,16 +1839,18 @@
 
         if (currentRole === 'guest') {
             if (hHidden && wHidden) return '<span class="text-private">비공개</span>';
-            const hStr = h ? (hHidden ? '<span class="text-private">비공개</span>' : `${h}cm`) : '-';
-            const wStr = w ? (wHidden ? '<span class="text-private">비공개</span>' : `${w}kg`) : '-';
-            return `${hStr} / ${wStr}`;
+            const hStr = h ? (hHidden ? '<span class="text-private">비공개</span>' : `${h}cm`) : '';
+            const wStr = w ? (wHidden ? '<span class="text-private">비공개</span>' : `${w}kg`) : '';
+            if (hStr && wStr) return `${hStr} / ${wStr}`;
+            return hStr || wStr || '-';
         } else {
             const showBadge = (currentRole === 'super' || currentRole === 'sub' || currentRole === 'dev');
             const hBadge = (hHidden && showBadge) ? '<span class="admin-private-badge">비공개</span>' : '';
             const wBadge = (wHidden && showBadge) ? '<span class="admin-private-badge">비공개</span>' : '';
-            const hStr = h ? `${h}cm${hBadge}` : '-';
-            const wStr = w ? `${w}kg${wBadge}` : '-';
-            return `${hStr} / ${wStr}`;
+            const hStr = h ? `${h}cm${hBadge}` : '';
+            const wStr = w ? `${w}kg${wBadge}` : '';
+            if (hStr && wStr) return `${hStr} / ${wStr}`;
+            return hStr || wStr || '-';
         }
     }
 
@@ -2085,7 +2076,7 @@
 
         if (GOOGLE_SCRIPT_UNIFORM_API_URL && GOOGLE_SCRIPT_UNIFORM_API_URL.trim() !== "") {
             try {
-                const res = await fetch(GOOGLE_SCRIPT_UNIFORM_API_URL + '?nocache=' + Date.now());
+                const res = await fetch(GOOGLE_SCRIPT_UNIFORM_API_URL + '?nocache=' + Date.now(), { cache: 'no-store' });
                 const json = await res.json();
                 if (json && json.orders) {
                     loadedOrdersData = json.orders;
@@ -2408,10 +2399,22 @@
         }
 
         try {
-            const cacheUrl = GOOGLE_SHEET_CONTACTS_CSV_URL + (GOOGLE_SHEET_CONTACTS_CSV_URL.includes('?') ? '&' : '?') + 'nocache=' + Date.now();
-            const csvRes = await fetch(cacheUrl);
-            const csvText = await csvRes.text();
-            
+            let csvText = null;
+            // 1순위: 실시간 gviz 시도
+            try {
+                const res = await fetch(GOOGLE_SHEET_CONTACTS_GVIZ_URL + '&nocache=' + Date.now(), { cache: 'no-store' });
+                if (res.ok) {
+                    const text = await res.text();
+                    if (text && !text.includes('<!DOCTYPE') && !text.includes('<html')) csvText = text;
+                }
+            } catch(e) {}
+
+            // 2순위: 백업 CSV
+            if (!csvText) {
+                const csvRes = await fetch(GOOGLE_SHEET_CONTACTS_CSV_URL + '&nocache=' + Date.now(), { cache: 'no-store' });
+                csvText = await csvRes.text();
+            }
+
             if (csvText && !csvText.trim().startsWith('<!DOCTYPE') && !csvText.trim().startsWith('<html')) {
                 Papa.parse(csvText, {
                     header: true,
@@ -2817,7 +2820,7 @@
         content.innerHTML = '<div style="text-align: center; padding: 40px; color: #64748b;">구글 시트에서 최신 활동 로그를 불러오는 중...</div>';
 
         try {
-            const res = await fetch(GOOGLE_SCRIPT_UNIFORM_API_URL + "?action=getLogs&nocache=" + Date.now());
+            const res = await fetch(GOOGLE_SCRIPT_UNIFORM_API_URL + "?action=getLogs&nocache=" + Date.now(), { cache: 'no-store' });
             const json = await res.json();
             if (!json || !json.logs || json.logs.length === 0) {
                 content.innerHTML = '<div style="text-align: center; padding: 40px; color: #94a3b8;">기록된 로그가 아직 없습니다.</div>';
@@ -3098,6 +3101,7 @@
         return '';
     }
 
+    // ★ [핵심] 캐시를 100% 무력화하고 실시간 gviz를 우선 로드하는 엔진 ★
     async function loadGoogleSheetData() {
         try {
             if (savedSearchQuery) document.getElementById('searchInput').value = savedSearchQuery;
@@ -3108,9 +3112,35 @@
 
             updateAdminUI();
 
-            const cacheUrl = GOOGLE_SHEET_CSV_URL + (GOOGLE_SHEET_CSV_URL.includes('?') ? '&' : '?') + 'nocache=' + new Date().getTime();
-            const response = await fetch(cacheUrl);
-            const csvText = await response.text();
+            let csvText = null;
+            const fetchOptions = {
+                cache: 'no-store', // 브라우저 캐시 무시 강제
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache'
+                }
+            };
+
+            // 1. 구글 서버 실시간 gviz 엔드포인트 시도 (캐시 0초)
+            try {
+                const gvizUrl = GOOGLE_SHEET_GVIZ_URL + '&nocache=' + Date.now();
+                const res = await fetch(gvizUrl, fetchOptions);
+                if (res.ok) {
+                    const text = await res.text();
+                    if (text && !text.includes('<!DOCTYPE') && !text.includes('<html')) {
+                        csvText = text;
+                    }
+                }
+            } catch (e) {
+                console.warn("gviz 실시간 로드 지연, 일반 CSV로 대체:", e);
+            }
+
+            // 2. 실패 시 백업 CSV 엔드포인트 사용
+            if (!csvText) {
+                const cacheUrl = GOOGLE_SHEET_CSV_URL + (GOOGLE_SHEET_CSV_URL.includes('?') ? '&' : '?') + 'nocache=' + Date.now();
+                const response = await fetch(cacheUrl, fetchOptions);
+                csvText = await response.text();
+            }
 
             Papa.parse(csvText, {
                 header: true,
@@ -3127,6 +3157,11 @@
                         const parsedNo = parseInt(rawNo, 10);
                         const no = (!isNaN(parsedNo) && parsedNo > 0) ? parsedNo : 0;
 
+                        // xxxx.xx.xx 같은 더미 텍스트는 깨끗하게 공백 처리
+                        let birthRaw = cleanValue(row['생년월일']);
+                        let heightRaw = cleanValue(row['키']);
+                        let weightRaw = cleanValue(row['몸무게']);
+
                         return {
                             id: idx + 1,
                             no: no,
@@ -3134,9 +3169,9 @@
                             grade: (row['구분'] || '').trim(),
                             pos: (row['포지션'] || '-').trim(),
                             bt: (row['투타'] || '-').trim(),
-                            birth: (row['생년월일'] || '').trim(),
-                            height: (row['키'] || '').trim(),
-                            weight: (row['몸무게'] || '').trim(),
+                            birth: birthRaw,
+                            height: heightRaw,
+                            weight: weightRaw,
                             visible: String(row['노출여부'] || '').toUpperCase().trim() !== 'OFF',
                             hidePhoto: isOff(photoFlag),
                             hideBirth: isOff(birthFlag),
@@ -3155,6 +3190,7 @@
         }
     }
 
+    // 초기 실행
     loadGoogleSheetData();
 </script>
 
