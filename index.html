@@ -22,7 +22,7 @@
         const GOOGLE_SHEET_UNIFORM_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/edit?gid=${UNIFORM_GID}#gid=${UNIFORM_GID}`;
         const GOOGLE_SCRIPT_UNIFORM_API_URL = "https://script.google.com/macros/s/AKfycbwAdnLPVvTMIUGt538hM18pS_upBZt8FhKRTESjWXNonKFHOH5e59Vxi0hjDqYend-IHg/exec";
         
-        const APP_VERSION = "v2.3.7 · b260921";
+        const APP_VERSION = "v2.3.8 · b260921";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -706,7 +706,7 @@
             선수 명단 보호중. 등록된 휴대폰 번호 또는 관리자 비밀번호를 입력해 주세요.
         </div>
         
-        <!-- 최초 등록 시에만 나타나는 자녀 선수 이름 및 깔끔하게 정리된 관계 선택 필드 -->
+        <!-- 최초 등록 시에만 나타나는 자녀 선수 이름 및 관계 선택 필드 (불필요한 문구 제거) -->
         <div id="firstRegFields" style="display: none; margin-bottom: 16px; text-align: left;">
             <div class="lock-input-group">
                 <label>자녀 선수 이름 * (명단 대조 확인)</label>
@@ -750,7 +750,7 @@
             <button class="btn-screen-lock" onclick="lockScreenNow()" title="즉시 화면 잠금 및 완전 로그아웃">🔒 화면 잠금</button>
         </div>
 
-        <!-- 로그인한 학부모님 표시 뱃지 (중앙 배치) -->
+        <!-- 로그인한 학부모님 표시 뱃지 (잠금 버튼과 관리자 로그인 버튼 사이 중앙 배치) -->
         <div class="header-top-center">
             <span id="userIdentityBadge" class="user-identity-badge" onclick="promptUserIdentity()" title="접속자 정보 변경"></span>
         </div>
@@ -805,7 +805,7 @@
             <button id="btnViewOrders" class="btn-orders-view" style="display: none;" onclick="openOrdersSummaryModal()">📋 유니폼 접수 & 발주 집계</button>
             <button id="btnViewLogs" class="btn-manage-pw" style="display: none; background: #4338ca;" onclick="openLogsModal()">📜 보안 활동 로그</button>
             <button id="btnManagePw" class="btn-manage-pw" style="display: none;" onclick="openPasswordManageModal()">🔑 비밀번호 관리</button>
-            <button id="btnSheetLink" class="btn-sheet-link" style="display: none;" onclick="window.open(GOOGLE_SHEET_EDIT_URL, '_blank')">📊 구글 시트 편집창 열기</button>
+            <button id="btnSheetLink" class="btn-sheet-link" style="display: none;" onclick="window.open(GOOGLE_SHEET_EDIT_URL, '_blank')">📊 시트 편집창 열기</button>
         </div>
     </div>
 
@@ -2362,7 +2362,6 @@
         render();
     }
 
-    // ★ [핵심] 일반 학부모 화면에서는 관리자 로그인 버튼을 숨기고, 관리자 로그인 시에만 노출
     function updateAdminUI() {
         const adminBar = document.getElementById('adminBar');
         const adminBtn = document.getElementById('adminLoginBtn');
@@ -2372,7 +2371,7 @@
         adminBar.className = 'admin-bar';
 
         if (currentRole === 'dev' || currentRole === 'super' || currentRole === 'sub' || currentRole === 'general') {
-            adminBtn.style.display = 'inline-flex'; // 관리자일 때만 버튼 노출
+            adminBtn.style.display = 'inline-flex';
             adminBtn.textContent = '🔓 로그아웃';
             adminBtn.classList.add('logged-in');
             adminBar.style.display = 'flex';
@@ -2384,7 +2383,6 @@
             document.getElementById('btnManagePw').style.display = isSuperOrDev() ? 'inline-block' : 'none';
             document.getElementById('btnEmergencyContacts').style.display = isSuperOrDev() ? 'inline-flex' : 'none';
         } else {
-            // 일반 학부모/사용자 화면에서는 관리자 로그인 버튼을 완전히 숨김
             adminBtn.style.display = 'none';
             adminBar.style.display = 'none';
         }
