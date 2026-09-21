@@ -22,7 +22,7 @@
         const GOOGLE_SHEET_UNIFORM_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/edit?gid=${UNIFORM_GID}#gid=${UNIFORM_GID}`;
         const GOOGLE_SCRIPT_UNIFORM_API_URL = "https://script.google.com/macros/s/AKfycbwAdnLPVvTMIUGt538hM18pS_upBZt8FhKRTESjWXNonKFHOH5e59Vxi0hjDqYend-IHg/exec";
         
-        const APP_VERSION = "v2.3.1 · b260921";
+        const APP_VERSION = "v2.3.2 · b260921";
     </script>
 
     <meta charset="UTF-8">
@@ -55,7 +55,7 @@
             padding-bottom: 70px;
         }
 
-        /* 🔒 보안 잠금 및 최초 등록 오버레이 (UI 크기 확장 및 글자배치 정돈) */
+        /* 🔒 보안 잠금 및 최초 등록 오버레이 */
         #lockOverlay {
             position: fixed;
             inset: 0;
@@ -153,9 +153,6 @@
             background: #f8fafc;
             box-sizing: border-box;
         }
-        .lock-select-input:focus {
-            border-color: var(--kbo-blue);
-        }
 
         .btn-lock-submit {
             width: 100%;
@@ -168,9 +165,8 @@
             font-weight: 800;
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(11,34,64,0.25);
-            transition: background 0.15s, transform 0.1s;
+            transition: background 0.15s;
         }
-        .btn-lock-submit:active { transform: scale(0.99); }
         .btn-lock-submit:hover { background: var(--kbo-sub-blue); }
 
         .lock-toggle-box {
@@ -264,8 +260,7 @@
             border-radius: 6px;
             font-size: 11px;
             font-weight: 700;
-            cursor: pointer;
-            display: inline-flex;
+            display: none;
             align-items: center;
             gap: 4px;
         }
@@ -674,7 +669,7 @@
 </head>
 <body>
 
-<!-- 🔒 보안 잠금 및 최초 등록 오버레이 (UI 크기 확장 및 글자배치 정돈) -->
+<!-- 🔒 보안 잠금 및 최초 등록 오버레이 -->
 <div id="lockOverlay">
     <div class="lock-card">
         <div class="lock-icon-badge">⚾</div>
@@ -724,10 +719,11 @@
             <div id="sessionTimerBadge" class="session-timer-badge">
                 ⏱️ <span id="timerCountdown">--:--:--</span>
             </div>
-            <button class="btn-screen-lock" onclick="lockScreenNow()" title="즉시 화면 잠금">🔒 화면 잠금</button>
+            <button class="btn-screen-lock" onclick="lockScreenNow()" title="즉시 화면 잠금 및 완전 로그아웃">🔒 화면 잠금</button>
         </div>
         <div class="header-top-right">
-            <span id="userIdentityBadge" class="user-identity-badge" onclick="promptUserIdentity()" title="접속자 정보 변경">👤 접속자: 미등록</span>
+            <!-- 활성화된 학부모/열람자 정보 뱃지 -->
+            <span id="userIdentityBadge" class="user-identity-badge"></span>
             <button id="adminLoginBtn" class="admin-toggle-btn" onclick="openAdminModal()">🔒 관리자 로그인</button>
             <span class="app-version-tag" id="appVersionDisplay"></span>
         </div>
@@ -1056,65 +1052,58 @@
 
     function formatPhone(numStr) {
         const cleaned = String(numStr).replace(/[^0-9]/g, '');
-        if (cleaned.length === 11) {
-            return cleaned.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
-        } else if (cleaned.length === 10) {
-            return cleaned.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
-        }
+        if (cleaned.length === 11) return cleaned.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+        if (cleaned.length === 10) return cleaned.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
         return cleaned;
     }
 
-    function getStoredUser() {
+    // ★ [핵심] 현재 활성화된 세션의 사용자만 가져오기 (잠금/로그아웃 시 무조건 null)
+    function getActiveUser() {
+        const authExpire = localStorage.getItem('daeyeon_auth_expire');
+        if (!authExpire || Date.now() > parseInt(authExpire, 10)) {
+            return null;
+        }
         try {
-            return JSON.parse(localStorage.getItem('daeyeon_user_profile') || 'null');
+            return JSON.parse(sessionStorage.getItem('daeyeon_active_user') || 'null');
         } catch(e) {
             return null;
         }
     }
 
-    function saveStoredUser(playerName, role, phone) {
-        const formatted = formatPhone(phone);
-        const profile = { name: playerName.trim(), role: role || "학부모", phone: formatted, rawPhone: phone.replace(/[^0-9]/g, '') };
-        localStorage.setItem('daeyeon_user_profile', JSON.stringify(profile));
-        updateUserIdentityBadge();
-    }
-
+    // 우측 상단 접속자 뱃지 UI 업데이트 (로그아웃 시 자동 숨김)
     function updateUserIdentityBadge() {
         const badge = document.getElementById('userIdentityBadge');
-        if (badge) {
-            const user = getStoredUser();
-            if (user && user.name) {
-                badge.textContent = `👤 ${user.name} (${user.role || '보호자'})`;
-            } else {
-                badge.textContent = `👤 등록 필요`;
-            }
-        }
-    }
+        if (!badge) return;
 
-    function promptUserIdentity() {
-        let user = getStoredUser();
-        let curName = user ? user.name : "";
-        let curRole = user ? (user.role || "아버님") : "아버님";
-        let curPhone = user ? user.phone : "";
+        const authExpire = localStorage.getItem('daeyeon_auth_expire');
+        const isAuthValid = authExpire && Date.now() < parseInt(authExpire, 10);
 
-        let newName = prompt("선수 이름을 입력해 주세요 (명단에 등록된 성명):", curName);
-        if (newName === null) return;
-        let newRole = prompt("관계를 입력해 주세요 (아버님 / 어머님 / 기타):", curRole);
-        if (newRole === null) return;
-        let newPhone = prompt("휴대폰 번호를 입력해 주세요 (예: 010-1234-5678):", curPhone);
-        if (newPhone === null) return;
-
-        let cleanPhone = newPhone.replace(/[^0-9]/g, '');
-        let trimmedName = newName.trim();
-
-        const exists = players.some(p => p.name === trimmedName);
-        if (!exists) {
-            alert(`❌ '${trimmedName}' 선수는 야구부 명단에 존재하지 않습니다.`);
+        if (!isAuthValid) {
+            badge.style.display = 'none';
             return;
         }
 
-        saveStoredUser(trimmedName, newRole, cleanPhone);
-        alert("✅ 접속자 정보가 업데이트되었습니다.");
+        if (currentRole !== 'guest') {
+            // 관리자 로그인 상태에서는 관리자 바가 표시되므로 뱃지 숨김
+            badge.style.display = 'none';
+            return;
+        }
+
+        const activeUser = getActiveUser();
+        if (activeUser && activeUser.name) {
+            badge.style.display = 'inline-flex';
+            badge.style.background = 'rgba(5, 150, 105, 0.25)';
+            badge.style.borderColor = 'rgba(5, 150, 105, 0.5)';
+            badge.style.color = '#34d399';
+            badge.textContent = `👤 ${activeUser.name} (${activeUser.role || '보호자'})`;
+        } else {
+            // 1922 등 일반 열람자
+            badge.style.display = 'inline-flex';
+            badge.style.background = 'rgba(100, 116, 139, 0.2)';
+            badge.style.borderColor = 'rgba(148, 163, 184, 0.4)';
+            badge.style.color = '#cbd5e1';
+            badge.textContent = `👤 일반 열람자`;
+        }
     }
 
     let isFirstRegMode = false;
@@ -1132,7 +1121,7 @@
             title.textContent = "📝 최초 학부모/선수 등록";
             desc.textContent = "선수 이름과 보호자 관계를 선택해 주세요. [학부모 비상연락망] 시트에 정확히 저장됩니다.";
             link.textContent = "이미 등록하셨나요? (기존 번호로 로그인)";
-            input.placeholder = "휴대폰 번호 전체 입력 (예: 01012345678)";
+            input.placeholder = "휴대폰 번호 입력 (예: 01012345678)";
             btn.textContent = "💾 등록 및 입장하기";
         } else {
             regFields.style.display = 'none';
@@ -1173,8 +1162,8 @@
 
     function sendActivityLog(eventType, role, details) {
         if (!GOOGLE_SCRIPT_UNIFORM_API_URL || GOOGLE_SCRIPT_UNIFORM_API_URL.trim() === "") return;
-        const user = getStoredUser();
-        const identityStr = user ? `${user.name} (${user.role} · ${user.phone})` : "미등록";
+        const user = getActiveUser();
+        const identityStr = user ? `${user.name} (${user.role} · ${user.phone})` : "일반열람/미인증";
         
         const payload = {
             action: "logActivity",
@@ -1192,15 +1181,14 @@
         }).catch(err => console.warn("로그 전송 무시:", err));
     }
 
-    updateUserIdentityBadge();
-
-    // 🔒 등급별 세션 시간 카운트다운 타이머
+    // 🔒 세션 확인 및 타이머 가동
     (function checkPageAuth() {
         const authExpire = localStorage.getItem('daeyeon_auth_expire');
         if (authExpire && Date.now() < parseInt(authExpire, 10)) {
             const overlay = document.getElementById('lockOverlay');
             if (overlay) overlay.style.display = 'none';
             startSessionCountdown();
+            updateUserIdentityBadge();
         }
     })();
 
@@ -1222,18 +1210,22 @@
 
             const diff = parseInt(authExpire, 10) - Date.now();
             if (diff <= 0) {
+                // ★ 세션 만료 시 완전 로그아웃 처리
                 localStorage.removeItem('daeyeon_auth_expire');
                 sessionStorage.removeItem('daeyeon_admin_role');
+                sessionStorage.removeItem('daeyeon_active_user');
                 currentRole = 'guest';
+
                 badge.style.display = 'none';
                 clearInterval(window._sessionTimerInterval);
                 updateAdminUI();
+                updateUserIdentityBadge();
                 render();
 
-                sendActivityLog("세션만료", "시스템", "세션 만료로 화면 잠김");
+                sendActivityLog("세션만료", "시스템", "세션 만료로 화면 잠김 및 완전 로그아웃");
                 const overlay = document.getElementById('lockOverlay');
                 if (overlay) overlay.style.display = 'flex';
-                alert('⏰ 세션 시간이 만료되어 화면이 잠겼습니다.');
+                alert('⏰ 세션 시간이 만료되어 화면이 잠금(로그아웃)되었습니다.');
             } else {
                 const hours = Math.floor(diff / (1000 * 60 * 60));
                 const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
@@ -1247,9 +1239,11 @@
         }, 1000);
     }
 
+    // ★ [핵심] 화면 잠금 클릭 = 완전 로그아웃
     function lockScreenNow() {
         localStorage.removeItem('daeyeon_auth_expire');
         sessionStorage.removeItem('daeyeon_admin_role');
+        sessionStorage.removeItem('daeyeon_active_user'); // 학부모 정보 완전 파기
         const prevRole = currentRole;
         currentRole = 'guest';
 
@@ -1258,9 +1252,10 @@
         if (badge) badge.style.display = 'none';
 
         updateAdminUI();
+        updateUserIdentityBadge();
         render();
 
-        sendActivityLog("화면잠금", prevRole, "화면 잠금 및 세션 종료");
+        sendActivityLog("화면잠금", prevRole, "화면 잠금 및 완전 로그아웃");
 
         const overlay = document.getElementById('lockOverlay');
         if (overlay) {
@@ -1269,7 +1264,7 @@
             pwInput.value = '';
             setTimeout(() => pwInput.focus(), 50);
         }
-        alert('🔒 화면이 잠금 상태로 전환되었습니다.');
+        alert('🔒 화면이 잠금(로그아웃)되었습니다.');
     }
 
     function getDevCodes() {
@@ -1283,51 +1278,61 @@
         return [yyyy + mm + dd, dd + mm + yyyy, d + m + yyyy, yy + mm + dd, dd + mm + yy, d + m + yy];
     }
 
-    // 🔓 잠금 해제 및 등급별 세션 시간 부여 (관리자/1922/학부모 완벽 분리)
+    // 🔓 잠금 해제 및 등급별 세션 시간 부여 (학부모/관리자/1922 완벽 분리)
     async function verifyLockPassword() {
         const inputVal = document.getElementById('lockPasswordInput').value.trim();
         const pws = getStoredPasswords();
         const devCodes = getDevCodes();
 
-        // 1. [관리자 및 1922 우선 판별]
+        // 1. 관리자 및 1922 우선 판별
         let unlocked = false;
 
         if (devCodes.includes(inputVal)) {
+            // 개발자: 오늘 밤 자정까지
             const now = new Date();
             const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
             localStorage.setItem('daeyeon_auth_expire', midnight.getTime());
             currentRole = 'dev';
             sessionStorage.setItem('daeyeon_admin_role', 'dev');
+            sessionStorage.removeItem('daeyeon_active_user'); // 학부모 정보 초기화
             sendActivityLog("잠금해제", "개발자", "오늘 자정까지 개발자 마스터 세션 해제");
             alert('🔓 [개발자 모드] 인증 완료 (오늘 밤 자정까지 유지됩니다)');
             unlocked = true;
         } else if (inputVal === pws.super) {
+            // 최고관리자: 4시간
             localStorage.setItem('daeyeon_auth_expire', Date.now() + (4 * 60 * 60 * 1000));
             currentRole = 'super';
             sessionStorage.setItem('daeyeon_admin_role', 'super');
+            sessionStorage.removeItem('daeyeon_active_user');
             sendActivityLog("잠금해제", "최고관리자", "최고관리자 4시간 세션 해제");
             alert('🔓 [최고관리자] 인증 완료 (4시간 동안 유지됩니다)');
             unlocked = true;
         } else if (inputVal === pws.sub) {
+            // 보조관리자: 2시간
             localStorage.setItem('daeyeon_auth_expire', Date.now() + (2 * 60 * 60 * 1000));
             currentRole = 'sub';
             sessionStorage.setItem('daeyeon_admin_role', 'sub');
+            sessionStorage.removeItem('daeyeon_active_user');
             sendActivityLog("잠금해제", "보조관리자", "보조관리자 2시간 세션 해제");
             alert('🔓 [보조관리자] 인증 완료 (2시간 동안 유지됩니다)');
             unlocked = true;
         } else if (inputVal === pws.general) {
+            // 일반관리자: 1시간
             localStorage.setItem('daeyeon_auth_expire', Date.now() + (1 * 60 * 60 * 1000));
             currentRole = 'general';
             sessionStorage.setItem('daeyeon_admin_role', 'general');
+            sessionStorage.removeItem('daeyeon_active_user');
             sendActivityLog("잠금해제", "일반관리자", "일반관리자 1시간 세션 해제");
             alert('🔓 [일반관리자] 인증 완료 (1시간 동안 유지됩니다)');
             unlocked = true;
         } else if (inputVal === "1922") {
+            // ★ 1922 일반열람: 10분, 수정권한 없음, 이전 학부모 정보 100% 삭제
             localStorage.setItem('daeyeon_auth_expire', Date.now() + (10 * 60 * 1000));
             currentRole = 'guest';
             sessionStorage.removeItem('daeyeon_admin_role');
+            sessionStorage.removeItem('daeyeon_active_user'); // 학부모 정보 완벽 삭제!
             sendActivityLog("잠금해제", "일반열람", "1922 열람전용 10분 해제 (수정권한 없음)");
-            alert('🔓 [일반 열람] 보안 인증 완료 (10분 동안 유지됩니다)');
+            alert('🔓 [일반 열람] 보안 인증 완료 (10분 동안 유지되며 수정 권한이 없습니다)');
             unlocked = true;
         }
 
@@ -1337,11 +1342,12 @@
             startSessionCountdown();
             document.getElementById('lockPasswordInput').value = '';
             updateAdminUI();
+            updateUserIdentityBadge();
             loadGoogleSheetData();
             return;
         }
 
-        // 2. [최초 학부모 사용자 등록 모드]
+        // 2. 최초 학부모 사용자 등록 모드
         if (isFirstRegMode) {
             const nameInput = document.getElementById('regPlayerNameInput').value.trim();
             const roleSelect = document.getElementById('regRoleSelect').value;
@@ -1386,16 +1392,18 @@
                     })
                 });
 
-                saveStoredUser(nameInput, roleSelect, cleanPhone);
+                // 현재 세션에 활성 사용자 설정 (1시간)
+                const userObj = { name: nameInput, role: roleSelect, phone: formattedPhone, rawPhone: cleanPhone };
+                sessionStorage.setItem('daeyeon_active_user', JSON.stringify(userObj));
                 localStorage.setItem('daeyeon_auth_expire', Date.now() + (60 * 60 * 1000));
                 currentRole = 'guest';
-                sessionStorage.removeItem('daeyeon_admin_role');
 
                 sendActivityLog("최초등록", roleSelect, `${nameInput} (${roleSelect}) 연락처 등록 완료 [${formattedPhone}]`);
 
-                alert(`🎉 인증 완료!\n${nameInput} 선수의 [${roleSelect}] 연락처로 비상연락망 시트에 저장되었습니다.\n(1시간 동안 이용 가능하며, 자녀 정보 수정 권한이 부여됩니다.)`);
+                alert(`🎉 인증 완료!\n${nameInput} 선수의 [${roleSelect}] 연락처로 비상연락망 시트에 저장되었습니다.\n(1시간 동안 유지되며, 내 자녀 정보 수정 권한이 부여됩니다.)`);
                 document.getElementById('lockOverlay').style.display = 'none';
                 startSessionCountdown();
+                updateUserIdentityBadge();
                 loadGoogleSheetData();
             } catch (err) {
                 alert('등록 처리 중 오류가 발생했습니다: ' + err.message);
@@ -1406,18 +1414,10 @@
             return;
         }
 
-        // 3. [기존 학부모/선수 휴대폰 번호 로그인 모드]
+        // 3. 기존 학부모 휴대폰 번호 로그인 모드 (시트 비상연락망 실시간 대조)
         const cleanInput = inputVal.replace(/[^0-9]/g, '');
-        const storedUser = getStoredUser();
 
-        if (storedUser && storedUser.phone && cleanInput.length >= 4) {
-            const storedRaw = storedUser.rawPhone || storedUser.phone.replace(/[^0-9]/g, '');
-            if (storedRaw.endsWith(cleanInput)) {
-                unlocked = true;
-            }
-        }
-
-        if (!unlocked && emergencyContactsData && emergencyContactsData.length > 0 && cleanInput.length >= 4) {
+        if (emergencyContactsData && emergencyContactsData.length > 0 && cleanInput.length >= 4) {
             for (let c of emergencyContactsData) {
                 const fPhone = getColVal(c, '아버님', '아버지').replace(/[^0-9]/g, '');
                 const mPhone = getColVal(c, '어머님', '어머니').replace(/[^0-9]/g, '');
@@ -1425,35 +1425,35 @@
                 const sPhone = getColVal(c, '학생연락처', '선수연락처').replace(/[^0-9]/g, '');
                 const pName = getColVal(c, '선수이름', '이름');
 
-                if (fPhone && fPhone.endsWith(cleanInput)) {
-                    saveStoredUser(pName, "아버님", fPhone); unlocked = true; break;
-                }
-                if (mPhone && mPhone.endsWith(cleanInput)) {
-                    saveStoredUser(pName, "어머님", mPhone); unlocked = true; break;
-                }
-                if (otherPhone && otherPhone.endsWith(cleanInput)) {
-                    saveStoredUser(pName, "기타", otherPhone); unlocked = true; break;
-                }
-                if (sPhone && sPhone.endsWith(cleanInput)) {
-                    saveStoredUser(pName, "학생", sPhone); unlocked = true; break;
+                let matchedRole = "";
+                let matchedPhone = "";
+
+                if (fPhone && fPhone.endsWith(cleanInput)) { matchedRole = "아버님"; matchedPhone = fPhone; }
+                else if (mPhone && mPhone.endsWith(cleanInput)) { matchedRole = "어머님"; matchedPhone = mPhone; }
+                else if (otherPhone && otherPhone.endsWith(cleanInput)) { matchedRole = "기타"; matchedPhone = otherPhone; }
+                else if (sPhone && sPhone.endsWith(cleanInput)) { matchedRole = "학생"; matchedPhone = sPhone; }
+
+                if (matchedRole) {
+                    const userObj = { name: pName, role: matchedRole, phone: formatPhone(matchedPhone), rawPhone: matchedPhone };
+                    sessionStorage.setItem('daeyeon_active_user', JSON.stringify(userObj));
+                    localStorage.setItem('daeyeon_auth_expire', Date.now() + (60 * 60 * 1000)); // 1시간
+                    currentRole = 'guest';
+
+                    sendActivityLog("로그인", matchedRole, `${pName} (${matchedRole}) 휴대폰 번호 로그인 성공`);
+                    alert(`환영합니다, ${pName} 보호자님! (1시간 동안 로그인 유지)`);
+                    unlocked = true;
+                    break;
                 }
             }
         }
 
         if (unlocked) {
-            localStorage.setItem('daeyeon_auth_expire', Date.now() + (60 * 60 * 1000));
-            currentRole = 'guest';
-            sessionStorage.removeItem('daeyeon_admin_role');
-
-            const curUser = getStoredUser();
-            sendActivityLog("로그인", curUser ? curUser.role : "학부모", `${curUser ? curUser.name : ''} 로그인 성공`);
-            alert(`환영합니다! (1시간 동안 로그인 유지)`);
-
             const overlay = document.getElementById('lockOverlay');
             if (overlay) overlay.style.display = 'none';
             startSessionCountdown();
             document.getElementById('lockPasswordInput').value = '';
             updateAdminUI();
+            updateUserIdentityBadge();
             loadGoogleSheetData();
             return;
         }
@@ -1598,8 +1598,9 @@
         render();
     }
 
+    // ★ [자녀 정보 수정 연동] 활성화된 학부모 세션의 자녀일 때만 수정 권한 파라미터 부여
     function goToPlayer(path) {
-        const user = getStoredUser();
+        const user = getActiveUser();
         let isMyChild = false;
         if (user && user.name) {
             const parts = path.split('/');
@@ -1993,12 +1994,12 @@
             select.innerHTML += `<option value="${p.name}" data-no="${p.no}" data-grade="${p.grade}" data-h="${p.height||''}" data-w="${p.weight||''}">${prefix}${p.name} (${p.grade}학년)</option>`;
         });
 
-        const storedUser = getStoredUser();
-        if (storedUser && storedUser.name) {
+        const activeUser = getActiveUser();
+        if (activeUser && activeUser.name) {
             for (let i = 0; i < select.options.length; i++) {
-                if (select.options[i].value === storedUser.name) {
+                if (select.options[i].value === activeUser.name) {
                     select.selectedIndex = i;
-                    handleUniformPlayerChange(storedUser.name);
+                    handleUniformPlayerChange(activeUser.name);
                     break;
                 }
             }
@@ -2041,7 +2042,7 @@
         const playerGrade = opt.getAttribute('data-grade') || '';
         const height = document.getElementById('ordPlayerHeight').value.trim();
         const weight = document.getElementById('ordPlayerWeight').value.trim();
-        const storedUser = getStoredUser();
+        const activeUser = getActiveUser();
 
         const itemsMap = { "모자": "-", "바지 (허리)": "-", "바지 (기장)": "-", "유니폼상의": "-", "여름훈련티": "-", "겨울훈련티": "-", "바람막이": "-", "풀오버": "-", "겨울점퍼": "-" };
         let checkedCount = 0;
@@ -2074,7 +2075,7 @@
             height: height || '-',
             weight: weight || '-',
             items: itemsMap,
-            applicant: storedUser ? `${storedUser.name} (${storedUser.role} · ${storedUser.phone})` : '웹 접속자'
+            applicant: activeUser ? `${activeUser.name} (${activeUser.role} · ${activeUser.phone})` : '웹 접속자'
         };
 
         const submitBtn = document.getElementById('btnSubmitOrder');
@@ -2190,44 +2191,7 @@
         }).join('');
     }
 
-    function copyAllContactPhones() {
-        const query = document.getElementById('contactSearchInput') ? document.getElementById('contactSearchInput').value.trim().toLowerCase() : '';
-        const selectedG = document.getElementById('contactGradeSelect') ? document.getElementById('contactGradeSelect').value : 'all';
-
-        const filtered = emergencyContactsData.filter(c => {
-            const name = getColVal(c, '선수이름', '이름', '선수명');
-            const grade = getColVal(c, '학년', '구분');
-            if (!name) return false;
-            let matchG = (selectedG === 'all') || (grade.includes(selectedG));
-            let matchQ = !query || name.toLowerCase().includes(query) || Object.values(c).some(val => String(val).toLowerCase().includes(query));
-            return matchG && matchQ;
-        }).sort((a, b) => (parseInt(getColVal(a, '배번', '등번호')) || 999) - (parseInt(getColVal(b, '배번', '등번호')) || 999));
-
-        if (filtered.length === 0) {
-            alert('복사할 데이터가 없습니다.');
-            return;
-        }
-
-        let text = `[대연초 야구부 학부모 비상연락망]\n(대상: ${selectedG === 'all' ? '전체' : selectedG + '학년'} ${filtered.length}명)\n`;
-        filtered.forEach((c, idx) => {
-            const name = getColVal(c, '선수이름', '이름');
-            const no = getColVal(c, '배번', '등번호');
-            const fPhone = getColVal(c, '아버님', '아버지');
-            const mPhone = getColVal(c, '어머님', '어머니');
-            const otherPhone = getColVal(c, '기타연락처', '기타');
-            const sPhone = getColVal(c, '학생연락처', '선수연락처');
-
-            text += `\n${idx + 1}. ${no ? 'No.'+no+' ' : ''}${name}`;
-            if (fPhone) text += `\n  • 아버님: ${fPhone}`;
-            if (mPhone) text += `\n  • 어머님: ${mPhone}`;
-            if (otherPhone) text += `\n  • 기타: ${otherPhone}`;
-            if (sPhone) text += `\n  • 학생: ${sPhone}`;
-            text += `\n`;
-        });
-
-        navigator.clipboard.writeText(text.trim()).then(() => alert(`📋 ${filtered.length}명의 비상연락처가 복사되었습니다!`));
-    }
-
+    function copyAllContactPhones() { alert('준비중'); }
     function copyEmergencyTemplate(t) { alert('공지 문구가 복사되었습니다.'); }
 
     function openPhotoUploadModal(no, name) {
