@@ -23,8 +23,8 @@
         const GOOGLE_SHEET_UNIFORM_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/edit?gid=${UNIFORM_GID}#gid=${UNIFORM_GID}`;
         const GOOGLE_SCRIPT_UNIFORM_API_URL = "https://script.google.com/macros/s/AKfycbwAdnLPVvTMIUGt538hM18pS_upBZt8FhKRTESjWXNonKFHOH5e59Vxi0hjDqYend-IHg/exec";
         
-        // 웹페이지 배포 버전 (서상일 감독님 복원 및 배번 매핑 v2.1.2)
-        const APP_VERSION = "v2.1.2 · b260921";
+        // 웹페이지 배포 버전
+        const APP_VERSION = "v2.1.3 · b260921";
     </script>
 
     <meta charset="UTF-8">
@@ -1237,7 +1237,7 @@
         </div>
         <div class="header-top-right">
             <button id="adminLoginBtn" class="admin-toggle-btn" onclick="openAdminModal()">🔒 관리자 로그인</button>
-            <span class="app-version-tag" id="appVersionDisplay">v2.1.2 · b260921</span>
+            <span class="app-version-tag" id="appVersionDisplay"></span>
         </div>
     </div>
 
@@ -1569,6 +1569,8 @@
 </div>
 
 <script>
+    document.getElementById('appVersionDisplay').textContent = APP_VERSION;
+
     function getDeviceClientId() {
         let cid = localStorage.getItem('daeyeon_device_cid');
         if (!cid) {
@@ -1606,15 +1608,13 @@
         }).catch(err => console.warn("로그 전송 무시:", err));
     }
 
-    // 🔒 보안 인증 & 타이머
+    // 🔒 보안 인증 & 타이머 (깜빡임 없이 즉시 처리)
     (function checkPageAuth() {
         const authExpire = localStorage.getItem('daeyeon_auth_expire');
         if (authExpire && Date.now() < parseInt(authExpire, 10)) {
-            document.addEventListener("DOMContentLoaded", () => {
-                const overlay = document.getElementById('lockOverlay');
-                if (overlay) overlay.style.display = 'none';
-                startSessionCountdown();
-            });
+            const overlay = document.getElementById('lockOverlay');
+            if (overlay) overlay.style.display = 'none';
+            startSessionCountdown();
         }
     })();
 
@@ -1636,9 +1636,15 @@
 
             const diff = parseInt(authExpire, 10) - Date.now();
             if (diff <= 0) {
+                // 🔒 세션 만료 시 관리자 권한 강제 초기화
                 localStorage.removeItem('daeyeon_auth_expire');
+                sessionStorage.removeItem('daeyeon_admin_role');
+                currentRole = 'guest';
                 badge.style.display = 'none';
                 clearInterval(window._sessionTimerInterval);
+                updateAdminUI();
+                render();
+
                 sendActivityLog("세션만료", "시스템", "자동 화면 잠금 실행됨");
                 const overlay = document.getElementById('lockOverlay');
                 if (overlay) overlay.style.display = 'flex';
@@ -1655,13 +1661,21 @@
         }, 1000);
     }
 
+    // 🔒 화면 잠금 실행 시 관리자 세션 즉시 파기
     function lockScreenNow() {
         localStorage.removeItem('daeyeon_auth_expire');
+        sessionStorage.removeItem('daeyeon_admin_role');
+        const prevRole = currentRole;
+        currentRole = 'guest';
+
         if (window._sessionTimerInterval) clearInterval(window._sessionTimerInterval);
         const badge = document.getElementById('sessionTimerBadge');
         if (badge) badge.style.display = 'none';
 
-        sendActivityLog("화면잠금", currentRole, "사용자가 직접 화면 잠금 버튼 클릭");
+        updateAdminUI();
+        render();
+
+        sendActivityLog("화면잠금", prevRole, "화면 잠금 및 관리자 세션 종료");
 
         const overlay = document.getElementById('lockOverlay');
         if (overlay) {
@@ -1672,10 +1686,7 @@
         alert('🔒 화면이 잠금 상태로 전환되었습니다.');
     }
 
-    function verifyLockPassword() {
-        const inputVal = document.getElementById('lockPasswordInput').value.trim();
-        const pws = getStoredPasswords();
-
+    function getDevCodes() {
         const now = new Date();
         const yyyy = String(now.getFullYear());
         const yy = yyyy.slice(-2);
@@ -1684,7 +1695,7 @@
         const d = String(now.getDate());
         const m = String(now.getMonth() + 1);
 
-        const devCodes = [
+        return [
             yyyy + mm + dd,
             dd + mm + yyyy,
             d + m + yyyy,
@@ -1692,36 +1703,69 @@
             dd + mm + yy,
             d + m + yy
         ];
+    }
+
+    // 🔓 잠금 해제와 동시에 해당 관리자 등급 자동 승격 로그인
+    function verifyLockPassword() {
+        const inputVal = document.getElementById('lockPasswordInput').value.trim();
+        const pws = getStoredPasswords();
+        const devCodes = getDevCodes();
 
         let unlocked = false;
 
         if (devCodes.includes(inputVal)) {
+            const now = new Date();
             let midnightDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
             localStorage.setItem('daeyeon_auth_expire', midnightDate.getTime());
-            sendActivityLog("잠금해제", "개발자", "오늘 자정까지 세션 해제");
+            
+            // ⚡ 개발자 마스터 권한 자동 획득
+            currentRole = 'dev';
+            sessionStorage.setItem('daeyeon_admin_role', 'dev');
+
+            sendActivityLog("잠금해제", "개발자", "오늘 자정까지 개발자 마스터 세션 해제");
             alert('🔓 개발자 인증 완료 (오늘 밤 자정까지 유지됩니다)');
             unlocked = true;
         } else if (inputVal === pws.super) {
             const expireTime = Date.now() + (4 * 60 * 60 * 1000);
             localStorage.setItem('daeyeon_auth_expire', expireTime);
-            sendActivityLog("잠금해제", "최고관리자", "4시간 세션 해제");
+
+            // 👑 최고관리자 권한 자동 획득
+            currentRole = 'super';
+            sessionStorage.setItem('daeyeon_admin_role', 'super');
+
+            sendActivityLog("잠금해제", "최고관리자", "최고관리자 4시간 세션 해제");
             alert('🔓 최고관리자 인증 완료 (4시간 동안 유지됩니다)');
             unlocked = true;
         } else if (inputVal === pws.sub) {
             const expireTime = Date.now() + (1 * 60 * 60 * 1000);
             localStorage.setItem('daeyeon_auth_expire', expireTime);
-            sendActivityLog("잠금해제", "보조관리자", "1시간 세션 해제");
+
+            // 🛠️ 보조관리자 권한 자동 획득
+            currentRole = 'sub';
+            sessionStorage.setItem('daeyeon_admin_role', 'sub');
+
+            sendActivityLog("잠금해제", "보조관리자", "보조관리자 1시간 세션 해제");
             alert('🔓 보조관리자 인증 완료 (1시간 동안 유지됩니다)');
             unlocked = true;
         } else if (inputVal === pws.general) {
             const expireTime = Date.now() + (30 * 60 * 1000);
             localStorage.setItem('daeyeon_auth_expire', expireTime);
-            sendActivityLog("잠금해제", "일반관리자", "30분 세션 해제");
+
+            // 📋 일반관리자 권한 자동 획득
+            currentRole = 'general';
+            sessionStorage.setItem('daeyeon_admin_role', 'general');
+
+            sendActivityLog("잠금해제", "일반관리자", "일반관리자 30분 세션 해제");
             alert('🔓 일반관리자 인증 완료 (30분 동안 유지됩니다)');
             unlocked = true;
         } else if (inputVal === "1922") {
             const expireTime = Date.now() + (10 * 60 * 1000);
             localStorage.setItem('daeyeon_auth_expire', expireTime);
+
+            // 👤 일반 열람자 게스트로 고정
+            currentRole = 'guest';
+            sessionStorage.removeItem('daeyeon_admin_role');
+
             sendActivityLog("잠금해제", "일반열람", "10분 기본 해제");
             alert('🔓 보안 인증 완료 (10분 동안 유지됩니다)');
             unlocked = true;
@@ -1732,7 +1776,8 @@
             if (overlay) overlay.style.display = 'none';
             startSessionCountdown();
             document.getElementById('lockPasswordInput').value = '';
-            // 잠금 해제와 동시에 100% 최신 실시간 시트 데이터 즉시 동기화
+            
+            updateAdminUI();
             loadGoogleSheetData();
             return;
         }
@@ -1767,22 +1812,6 @@
             sub: localStorage.getItem('daeyeon_pw_sub') || '1111',
             general: localStorage.getItem('daeyeon_pw_general') || '2222'
         };
-    }
-
-    function isDevPassword(inputPw) {
-        const now = new Date();
-        const yyyy = String(now.getFullYear());
-        const yy = yyyy.slice(-2);
-        const mm = String(now.getMonth() + 1).padStart(2, '0');
-        const dd = String(now.getDate()).padStart(2, '0');
-        const d = String(now.getDate());
-        const m = String(now.getMonth() + 1);
-        const p1 = yyyy + mm + dd;
-        const p2 = dd + mm + yyyy;
-        const p3 = yy + mm + dd;
-        const p4 = dd + mm + yy;
-        const t = inputPw.trim();
-        return (t === p1 || t === p2 || t === p3 || t === p4);
     }
 
     function isStaff(grade) { 
@@ -1829,8 +1858,8 @@
     }
 
     function formatPhys(p) {
-        const h = p.height && p.height !== '0' ? p.height : '';
-        const w = p.weight && p.weight !== '0' ? p.weight : '';
+        const h = p.height && p.height !== '0' && p.height !== '-' ? p.height : '';
+        const w = p.weight && p.weight !== '0' && p.weight !== '-' ? p.weight : '';
         if (!h && !w) return '-';
         const hHidden = !!p.hideHeight;
         const wHidden = !!p.hideWeight;
@@ -1925,7 +1954,11 @@
 
     function render() {
         const searchEl = document.getElementById('searchInput');
-        const query = searchEl.value.trim().toLowerCase();
+        const rawQuery = searchEl.value.trim().toLowerCase();
+        // 🔍 등번호 검색 유연화 ('7번', 'no.7' 등 처리)
+        const query = rawQuery;
+        const numberQuery = rawQuery.replace(/^(no\.?|번)\s*|\s*번$/gi, '').trim();
+
         const tableBody = document.getElementById('tableBody');
         const cardContainer = document.getElementById('cardContainer');
         const notice = document.getElementById('statusNotice');
@@ -1936,11 +1969,16 @@
         const filtered = players.filter(p => {
             const isVisible = (p.visible !== false);
             if (!isSuperOrDev() && !isVisible) return false;
+            
             let matchGrade = false;
             if (selectedGrade === 'all') matchGrade = true;
             else if (selectedGrade === 'staff') matchGrade = isStaff(p.grade);
             else matchGrade = (p.grade.toString() === selectedGrade);
-            const matchSearch = p.name.toLowerCase().includes(query) || (p.no && p.no.toString().includes(query)) || (p.pos && p.pos.includes(query)) || (p.bt && p.bt.includes(query));
+
+            const matchSearch = p.name.toLowerCase().includes(query) || 
+                                (p.no && (p.no.toString().includes(query) || (numberQuery && p.no.toString() === numberQuery))) || 
+                                (p.pos && p.pos.includes(query)) || 
+                                (p.bt && p.bt.includes(query));
             return matchGrade && matchSearch;
         }).sort((a, b) => {
             const rankA = getStaffRank(a);
@@ -2065,7 +2103,7 @@
     }
 
     // ==========================================
-    // 📋 유니폼 주문 현황 & 발주 집계 (시트 직결 파싱)
+    // 📋 유니폼 주문 현황 & 발주 집계
     // ==========================================
     async function openOrdersSummaryModal() {
         document.getElementById('ordersModal').style.display = 'flex';
@@ -2319,7 +2357,7 @@
         });
     }
 
-    // 유니폼 신청 팝업 모달
+    // 유니폼 신청 팝업 모달 (숨김 선수 제외 필터링)
     function openUniformModal() {
         if (!isUniformActive && !isSuperOrDev()) {
             alert('현재는 유니폼 접수 기간이 아닙니다.');
@@ -2328,7 +2366,9 @@
 
         const select = document.getElementById('ordPlayerSelect');
         select.innerHTML = '<option value="">-- 선수를 선택해 주세요 --</option>';
-        players.filter(p => !isStaff(p.grade)).forEach(p => {
+        
+        // 숨김(visible === false) 선수는 목록에서 제외
+        players.filter(p => !isStaff(p.grade) && (isSuperOrDev() || p.visible !== false)).forEach(p => {
             const prefix = p.no ? `No.${p.no} ` : '';
             select.innerHTML += `<option value="${p.name}" data-no="${p.no}" data-grade="${p.grade}" data-h="${p.height||''}" data-w="${p.weight||''}">${prefix}${p.name} (${p.grade}학년)</option>`;
         });
@@ -2378,6 +2418,7 @@
         document.getElementById('pantsQty').disabled = !chk.checked;
     }
 
+    // 유니폼 주문 접수 (action: submitOrder 명시)
     async function submitUniformOrder() {
         const select = document.getElementById('ordPlayerSelect');
         const opt = select.options[select.selectedIndex];
@@ -2429,6 +2470,7 @@
         }
 
         const orderData = {
+            action: "submitOrder",
             playerNo: playerNo > 0 ? playerNo : '-',
             playerName: playerName,
             playerGrade: playerGrade ? playerGrade + '학년' : '-',
@@ -2464,7 +2506,7 @@
     }
 
     // ==========================================================
-    // 🚨 학부모 비상연락망 모달 로직 (차량번호 1, 2 정밀 매핑)
+    // 🚨 학부모 비상연락망 모달 로직
     // ==========================================================
     async function openEmergencyContactsModal() {
         document.getElementById('emergencyContactsModal').style.display = 'flex';
@@ -2644,8 +2686,7 @@
                                 <span class="contact-phone-text" style="color:#1d4ed8;">${sPhone}</span>
                             </div>
                             <div class="contact-actions">
-                                <a href="tel:${sRaw}" class="btn-call" style="background:#2563eb;">📞 통화</a>
-                                <a href="sms:${sRaw}" class="btn-sms">💬 문자</a>
+                                ${sRaw ? `<a href="tel:${sRaw}" class="btn-call" style="background:#2563eb;">📞 통화</a><a href="sms:${sRaw}" class="btn-sms">💬 문자</a>` : `<span style="font-size:11px; color:#64748b; font-weight:700;">${sPhone}</span>`}
                             </div>
                         </div>
                     ` : ''}
@@ -2898,7 +2939,7 @@
             delete customPhotos[uploadTargetPlayer.name];
             localStorage.setItem('daeyeon_custom_photos', JSON.stringify(customPhotos));
 
-            const p = players.find(item => (uploadTargetPlayer.no && item.no === uploadTargetPlayer.no) || item.name === uploadTargetPlayer.name);
+            const p = players.find(item => (uploadTargetPlayer.no && item.no === uploadTargetPlayer.no) || item.name === target.name);
             if (p) p.photoLink = "";
 
             sendActivityLog("사진삭제", currentRole, `${uploadTargetPlayer.name} 등록 사진 삭제 (기본 복원)`);
@@ -2982,8 +3023,9 @@
     function handleLogin() {
         const pw = document.getElementById('adminPw').value.trim();
         const pws = getStoredPasswords();
+        const devCodes = getDevCodes();
 
-        if (isDevPassword(pw)) {
+        if (devCodes.includes(pw)) {
             currentRole = 'dev';
             sessionStorage.setItem('daeyeon_admin_role', 'dev');
             sendActivityLog("관리자로그인", "개발자", "마스터 개발자 로그인 성공");
@@ -3199,7 +3241,7 @@
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
     function isOff(val) { if (!val) return false; const v = String(val).toUpperCase().trim(); return v === 'OFF' || v === '비공개'; }
 
-    // ★ [100% 무결점 실시간 로더: 서상일 감독님(2행) 캡처 보장 2D 배열 파서] ★
+    // ★ 실시간 시트 로더 (2D 배열 파서)
     async function loadGoogleSheetData() {
         try {
             if (savedSearchQuery) document.getElementById('searchInput').value = savedSearchQuery;
@@ -3228,7 +3270,6 @@
                 throw new Error("구글 시트 권한 필요 (시트 공유를 '링크가 있는 모든 사용자-뷰어'로 설정해 주세요)");
             }
 
-            // header: false 로 2차원 배열 파싱 -> 1행(헤더)과 2행(서상일 감독님)을 100% 정확하게 분리!
             Papa.parse(csvText, {
                 header: false,
                 skipEmptyLines: 'greedy',
