@@ -23,8 +23,8 @@
         const GOOGLE_SHEET_UNIFORM_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/edit?gid=${UNIFORM_GID}#gid=${UNIFORM_GID}`;
         const GOOGLE_SCRIPT_UNIFORM_API_URL = "https://script.google.com/macros/s/AKfycbwAdnLPVvTMIUGt538hM18pS_upBZt8FhKRTESjWXNonKFHOH5e59Vxi0hjDqYend-IHg/exec";
         
-        // 웹페이지 배포 버전 (시트 변경 규격 정밀 동기화 v2.1.1)
-        const APP_VERSION = "v2.1.1 · b260921";
+        // 웹페이지 배포 버전 (서상일 감독님 복원 및 배번 매핑 v2.1.2)
+        const APP_VERSION = "v2.1.2 · b260921";
     </script>
 
     <meta charset="UTF-8">
@@ -1237,7 +1237,7 @@
         </div>
         <div class="header-top-right">
             <button id="adminLoginBtn" class="admin-toggle-btn" onclick="openAdminModal()">🔒 관리자 로그인</button>
-            <span class="app-version-tag" id="appVersionDisplay">v2.1.1 · b260921</span>
+            <span class="app-version-tag" id="appVersionDisplay">v2.1.2 · b260921</span>
         </div>
     </div>
 
@@ -1462,7 +1462,7 @@
     </div>
 </div>
 
-<!-- 3. 유니폼 접수 & 발주 집계 모달 (시트 데이터 100% 직결 파싱) -->
+<!-- 3. 유니폼 접수 & 발주 집계 모달 -->
 <div id="ordersModal" class="modal">
     <div class="modal-content" style="max-width: 520px; width: 95%;">
         <div class="modal-header">📋 유니폼 주문 현황 & 발주 관리</div>
@@ -1515,7 +1515,7 @@
     </div>
 </div>
 
-<!-- 6. 학부모 비상연락망 모달 (차량번호 1, 2 표시 탑재) -->
+<!-- 6. 학부모 비상연락망 모달 -->
 <div id="emergencyContactsModal" class="modal">
     <div class="modal-content" style="max-width: 480px; width: 95%;">
         <div class="modal-header" id="contactsModalTitle">🚨 학부모 비상연락망</div>
@@ -1732,6 +1732,7 @@
             if (overlay) overlay.style.display = 'none';
             startSessionCountdown();
             document.getElementById('lockPasswordInput').value = '';
+            // 잠금 해제와 동시에 100% 최신 실시간 시트 데이터 즉시 동기화
             loadGoogleSheetData();
             return;
         }
@@ -2063,9 +2064,9 @@
         }).join('');
     }
 
-    // ==========================================================
-    // 📋 유니폼 주문 현황 & 발주 집계 (시트 gviz 직결 파싱)
-    // ==========================================================
+    // ==========================================
+    // 📋 유니폼 주문 현황 & 발주 집계 (시트 직결 파싱)
+    // ==========================================
     async function openOrdersSummaryModal() {
         document.getElementById('ordersModal').style.display = 'flex';
         const content = document.getElementById('ordersListContent');
@@ -2085,33 +2086,63 @@
                 const csvText = await res.text();
                 if (csvText && !csvText.trim().startsWith('<!DOCTYPE') && !csvText.trim().startsWith('<html')) {
                     Papa.parse(csvText, {
-                        header: true,
+                        header: false,
                         skipEmptyLines: 'greedy',
                         complete: function(results) {
-                            if (results.data && results.data.length > 0) {
-                                loadedOrdersData = results.data.map(row => {
-                                    const pNo = getColVal(row, '배번', '등번호');
-                                    const pName = getColVal(row, '선수이름', '이름');
-                                    const pGrade = getColVal(row, '학년', '구분');
-                                    const h = getColVal(row, '키');
-                                    const w = getColVal(row, '몸무게');
-                                    const reqDate = getColVal(row, '신청날짜');
+                            if (results.data && results.data.length > 1) {
+                                const headerRow = results.data[0].map(h => String(h || '').trim());
+                                const findIdx = (...names) => {
+                                    for (let n of names) {
+                                        const idx = headerRow.findIndex(h => h === n || h.replace(/\s+/g, '') === n.replace(/\s+/g, ''));
+                                        if (idx !== -1) return idx;
+                                    }
+                                    return -1;
+                                };
 
-                                    const cap = getColVal(row, '모자');
-                                    const pWaist = getColVal(row, '바지 (허리)', '바지(허리)');
-                                    const pLen = getColVal(row, '바지 (기장)', '바지(기장)');
-                                    const top = getColVal(row, '유니폼상의');
-                                    const sumT = getColVal(row, '여름훈련티');
-                                    const winT = getColVal(row, '겨울훈련티');
-                                    const wind = getColVal(row, '바람막이');
-                                    const pull = getColVal(row, '풀오버');
-                                    const jump = getColVal(row, '겨울점퍼');
+                                const idxNo = findIdx('배번', '등번호');
+                                const idxName = findIdx('선수이름', '이름');
+                                const idxGrade = findIdx('학년', '구분');
+                                const idxHeight = findIdx('키');
+                                const idxWeight = findIdx('몸무게');
+                                const idxCap = findIdx('모자');
+                                const idxWaist = findIdx('바지 (허리)', '바지(허리)');
+                                const idxLen = findIdx('바지 (기장)', '바지(기장)');
+                                const idxTop = findIdx('유니폼상의');
+                                const idxSumT = findIdx('여름훈련티');
+                                const idxWinT = findIdx('겨울훈련티');
+                                const idxWind = findIdx('바람막이');
+                                const idxPull = findIdx('풀오버');
+                                const idxJump = findIdx('겨울점퍼');
+                                const idxDate = findIdx('신청날짜');
+
+                                loadedOrdersData = results.data.slice(1).map(row => {
+                                    const getCell = (idx, fallback) => {
+                                        const target = idx !== -1 ? idx : fallback;
+                                        return (target !== undefined && target < row.length) ? String(row[target] || '').trim() : '';
+                                    };
+
+                                    const pNo = getCell(idxNo, 1);
+                                    const pName = getCell(idxName, 2);
+                                    const pGrade = getCell(idxGrade, 3);
+                                    const h = getCell(idxHeight, 4);
+                                    const w = getCell(idxWeight, 5);
+
+                                    const cap = getCell(idxCap, 6);
+                                    const pWaist = getCell(idxWaist, 7);
+                                    const pLen = getCell(idxLen, 8);
+                                    const top = getCell(idxTop, 9);
+                                    const sumT = getCell(idxSumT, 10);
+                                    const winT = getCell(idxWinT, 11);
+                                    const wind = getCell(idxWind, 12);
+                                    const pull = getCell(idxPull, 13);
+                                    const jump = getCell(idxJump, 14);
+                                    const reqDate = getCell(idxDate, 15);
 
                                     const items = {};
                                     let hasAnyOrder = false;
 
                                     if (cap && cap !== '-' && cap !== '0') { items['모자'] = cap; hasAnyOrder = true; }
-                                    if (pWaist && pWaist !== '-' && pWaist !== '0') { items['바지(허리)'] = pWaist + '인치'; hasAnyOrder = true; }
+                                    if (pWaist && pWaist !== '-' && pWaist !== '0') { items['바지(허리)'] = pWaist.includes('인치') ? pWaist : pWaist + '인치'; hasAnyOrder = true; }
                                     if (pLen && pLen !== '-' && pLen !== '0') { items['바지(기장)'] = pLen; hasAnyOrder = true; }
                                     if (top && top !== '-' && top !== '0') { items['유니폼상의'] = top; hasAnyOrder = true; }
                                     if (sumT && sumT !== '-' && sumT !== '0') { items['여름훈련티'] = sumT; hasAnyOrder = true; }
@@ -2482,6 +2513,21 @@
         }
     }
 
+    function getColVal(row, ...keys) {
+        if (!row) return '';
+        for (let k of keys) {
+            if (row[k] !== undefined && row[k] !== null && String(row[k]).trim() !== '') {
+                return String(row[k]).trim();
+            }
+            for (let prop in row) {
+                if (prop.trim() === k && row[prop] !== undefined && row[prop] !== null && String(row[prop]).trim() !== '') {
+                    return String(row[prop]).trim();
+                }
+            }
+        }
+        return '';
+    }
+
     function renderEmergencyContacts() {
         const query = document.getElementById('contactSearchInput') ? document.getElementById('contactSearchInput').value.trim().toLowerCase() : '';
         const selectedG = document.getElementById('contactGradeSelect') ? document.getElementById('contactGradeSelect').value : 'all';
@@ -2502,7 +2548,7 @@
             const fPhone = getColVal(c, '아버님', '아버지', '부 연락처');
             const mPhone = getColVal(c, '어머님', '어머니', '모 연락처');
             const sPhone = getColVal(c, '학생연락처', '선수연락처');
-            const car1 = getColVal(c, '차량번호 (학교주차장 출입등록)', '차량번호1', '차량번호');
+            const car1 = getColVal(c, '차량번호1', '차량번호 (학교주차장 출입등록)', '차량번호');
             const car2 = getColVal(c, '차량번호2');
             const address = getColVal(c, '주소');
 
@@ -2536,8 +2582,7 @@
             const mPhone = getColVal(c, '어머님', '어머니');
             const sPhone = getColVal(c, '학생연락처', '선수연락처');
             
-            // 시트 헤더: 차량번호 (학교주차장 출입등록), 차량번호2
-            const car1 = getColVal(c, '차량번호 (학교주차장 출입등록)', '차량번호1', '차량번호');
+            const car1 = getColVal(c, '차량번호1', '차량번호 (학교주차장 출입등록)', '차량번호');
             const car2 = getColVal(c, '차량번호2');
             
             const address = getColVal(c, '주소');
@@ -2548,7 +2593,6 @@
             const sRaw = sPhone.replace(/[^0-9]/g, '');
             const gradeText = grade ? (grade.includes('학년') ? grade : grade + '학년') : '';
 
-            // 차량번호 HTML 뱃지 생성
             let carHtml = '';
             if (car1 || car2) {
                 carHtml = `
@@ -2631,7 +2675,7 @@
             const fPhone = getColVal(c, '아버님', '아버지', '부 연락처');
             const mPhone = getColVal(c, '어머님', '어머니', '모 연락처');
             const sPhone = getColVal(c, '학생연락처', '선수연락처');
-            const car1 = getColVal(c, '차량번호 (학교주차장 출입등록)', '차량번호1', '차량번호');
+            const car1 = getColVal(c, '차량번호1', '차량번호 (학교주차장 출입등록)', '차량번호');
             const car2 = getColVal(c, '차량번호2');
             const address = getColVal(c, '주소');
 
@@ -2663,7 +2707,7 @@
             const fPhone = getColVal(c, '아버님', '아버지');
             const mPhone = getColVal(c, '어머님', '어머니');
             const sPhone = getColVal(c, '학생연락처', '선수연락처');
-            const car1 = getColVal(c, '차량번호 (학교주차장 출입등록)', '차량번호1', '차량번호');
+            const car1 = getColVal(c, '차량번호1', '차량번호 (학교주차장 출입등록)', '차량번호');
             const car2 = getColVal(c, '차량번호2');
             const address = getColVal(c, '주소');
             const note = getColVal(c, '비고', '메모');
@@ -3154,24 +3198,8 @@
 
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
     function isOff(val) { if (!val) return false; const v = String(val).toUpperCase().trim(); return v === 'OFF' || v === '비공개'; }
-    
-    // 컬럼명 공백이나 유사어까지 포괄하는 안전한 추출 함수
-    function getColVal(row, ...keys) {
-        if (!row) return '';
-        for (let k of keys) {
-            if (row[k] !== undefined && row[k] !== null && String(row[k]).trim() !== '') {
-                return String(row[k]).trim();
-            }
-            for (let prop in row) {
-                if (prop.trim() === k && row[prop] !== undefined && row[prop] !== null && String(row[prop]).trim() !== '') {
-                    return String(row[prop]).trim();
-                }
-            }
-        }
-        return '';
-    }
 
-    // ★ [100% 실시간 데이터 로드 엔진: 변경된 열 헤더 완벽 매핑] ★
+    // ★ [100% 무결점 실시간 로더: 서상일 감독님(2행) 캡처 보장 2D 배열 파서] ★
     async function loadGoogleSheetData() {
         try {
             if (savedSearchQuery) document.getElementById('searchInput').value = savedSearchQuery;
@@ -3200,31 +3228,66 @@
                 throw new Error("구글 시트 권한 필요 (시트 공유를 '링크가 있는 모든 사용자-뷰어'로 설정해 주세요)");
             }
 
+            // header: false 로 2차원 배열 파싱 -> 1행(헤더)과 2행(서상일 감독님)을 100% 정확하게 분리!
             Papa.parse(csvText, {
-                header: true,
-                skipEmptyLines: true,
+                header: false,
+                skipEmptyLines: 'greedy',
                 complete: function(results) {
-                    players = results.data.map((row, idx) => {
-                        // 변경된 컬럼 헤더에 대응
-                        const rawSeq = getColVal(row, '순번');
-                        const rawNo = getColVal(row, '등번호', '배번');
-                        const name = getColVal(row, '이름', '선수이름', '성명');
-                        const grade = getColVal(row, '구분', '학년');
-                        const pos = getColVal(row, '포지션') || '-';
-                        const bt = getColVal(row, '투타') || '-';
-                        const birth = getColVal(row, '생년월일');
-                        const height = getColVal(row, '키');
-                        const weight = getColVal(row, '몸무게');
-                        
-                        const photoFlag = getColVal(row, '사진공개');
-                        const birthFlag = getColVal(row, '생년월일공개');
-                        const heightFlag = getColVal(row, '키공개');
-                        const weightFlag = getColVal(row, '몸무게공개');
-                        const drivePhotoLink = getColVal(row, '사진링크');
+                    if (!results.data || results.data.length < 2) return;
+
+                    const headerRow = results.data[0].map(h => String(h || '').trim());
+                    const findIdx = (...names) => {
+                        for (let n of names) {
+                            const idx = headerRow.findIndex(h => h === n || h.replace(/\s+/g, '') === n.replace(/\s+/g, ''));
+                            if (idx !== -1) return idx;
+                        }
+                        return -1;
+                    };
+
+                    const idxSeq = findIdx('순번');
+                    const idxNo = findIdx('배번', '등번호', '번호');
+                    const idxName = findIdx('이름', '선수이름', '성명', '지도자명');
+                    const idxGrade = findIdx('구분', '학년', '직책');
+                    const idxPos = findIdx('포지션', '역할');
+                    const idxBt = findIdx('투타', '투/타');
+                    const idxBirth = findIdx('생년월일', '생일');
+                    const idxHeight = findIdx('키', '신장');
+                    const idxWeight = findIdx('몸무게', '체중');
+                    const idxVisible = findIdx('노출여부');
+                    const idxPhoto = findIdx('사진공개', '사진노출');
+                    const idxBirthOpen = findIdx('생년월일공개', '생일공개');
+                    const idxHeightOpen = findIdx('키공개');
+                    const idxWeightOpen = findIdx('몸무게공개');
+                    const idxPhotoLink = findIdx('사진링크', '드라이브사진', '사진URL');
+
+                    players = results.data.slice(1).map((row, rowIdx) => {
+                        const getVal = (colIdx, fallbackIdx) => {
+                            const target = colIdx !== -1 ? colIdx : fallbackIdx;
+                            return (target !== undefined && target < row.length) ? String(row[target] || '').trim() : '';
+                        };
+
+                        const name = getVal(idxName, 2);
+                        if (!name) return null;
+
+                        const rawSeq = getVal(idxSeq, 0);
+                        const rawNo = getVal(idxNo, 1);
+                        const grade = getVal(idxGrade, 3);
+                        const pos = getVal(idxPos, 4) || '-';
+                        const bt = getVal(idxBt, 5) || '-';
+                        const birth = getVal(idxBirth, 6);
+                        const height = getVal(idxHeight, 7);
+                        const weight = getVal(idxWeight, 8);
+
+                        const visibleVal = getVal(idxVisible, 9);
+                        const photoFlag = getVal(idxPhoto, 10);
+                        const birthFlag = getVal(idxBirthOpen, 11);
+                        const heightFlag = getVal(idxHeightOpen, 12);
+                        const weightFlag = getVal(idxWeightOpen, 13);
+                        const photoLink = getVal(idxPhotoLink, 14);
 
                         const parsedNo = parseInt(rawNo, 10);
                         const no = (!isNaN(parsedNo) && parsedNo > 0) ? parsedNo : 0;
-                        const seq = parseInt(rawSeq, 10) || (idx + 1);
+                        const seq = parseInt(rawSeq, 10) || (rowIdx + 1);
 
                         return {
                             id: seq,
@@ -3236,14 +3299,14 @@
                             birth: birth,
                             height: height,
                             weight: weight,
-                            visible: String(getColVal(row, '노출여부') || '').toUpperCase().trim() !== 'OFF',
+                            visible: visibleVal.toUpperCase() !== 'OFF',
                             hidePhoto: isOff(photoFlag),
                             hideBirth: isOff(birthFlag),
                             hideHeight: isOff(heightFlag),
                             hideWeight: isOff(weightFlag),
-                            photoLink: drivePhotoLink
+                            photoLink: photoLink
                         };
-                    }).filter(p => p.name);
+                    }).filter(Boolean);
 
                     switchView(currentView);
                 }
