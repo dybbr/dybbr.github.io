@@ -26,7 +26,7 @@
         // ★ Code.gs 의 API_KEY 와 반드시 같은 값으로 맞춰 주세요.
         const API_KEY = "dybbr2026hacohadrone";
 
-        const APP_VERSION = "v2.7.1 · b260922";
+        const APP_VERSION = "v2.7.2 · b260922";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -118,7 +118,7 @@
             line-height: 1.5;
             letter-spacing: -0.3px;
             word-break: keep-all;
-            white-space: normal;
+            white-space: pre-line;
             font-weight: 600;
             padding: 0 4px;
         }
@@ -706,9 +706,9 @@
     <div class="lock-card">
         <div class="lock-icon-badge">⚾</div>
         <h2 id="lockOverlayTitle" class="lock-title">대연초 야구부 보안 인증</h2>
-        <div id="lockOverlayDesc" class="lock-desc">
-            선수 명단 보호중. 등록된 휴대폰 번호 또는 관리자 비밀번호를 입력해 주세요.
-        </div>
+        <div id="lockOverlayDesc" class="lock-desc">선수 명단 웹페이지 보호중입니다.
+등록된 휴대폰 번호 8자리 또는 11자리를 입력하세요.
+또는 관리자는 관리자비밀번호를 입력하세요.</div>
 
         <!-- 최초 등록 시에만 나타나는 자녀 선수 이름 및 관계 선택 필드 -->
         <div id="firstRegFields" style="display: none; margin-bottom: 16px; text-align: left;">
@@ -736,7 +736,7 @@
         <div style="margin-bottom: 16px;">
             <input type="password" id="lockPasswordInput" class="lock-text-input"
                    style="text-align: center; font-size: 16px; letter-spacing: 2px; padding: 13px 14px;"
-                   placeholder="휴대폰 번호 뒷 8자리 또는 비밀번호"
+                   placeholder="비밀번호를 입력하세요"
                    onkeydown="if(event.key==='Enter' || event.key===' ' || event.code==='Space') { event.preventDefault(); verifyLockPassword(); }">
         </div>
 
@@ -1269,9 +1269,9 @@
         } else {
             regFields.style.display = 'none';
             title.textContent = "대연초 야구부 보안 인증";
-            desc.textContent = "선수 명단 보호중. 등록된 휴대폰 번호 또는 관리자 비밀번호를 입력해 주세요.";
+            desc.textContent = "선수 명단 웹페이지 보호중입니다.\n등록된 휴대폰 번호 8자리 또는 11자리를 입력하세요.\n또는 관리자는 관리자비밀번호를 입력하세요.";
             link.textContent = "처음 오셨나요? (최초 사용자 등록)";
-            input.placeholder = "휴대폰 번호 뒷 8자리 또는 비밀번호";
+            input.placeholder = "비밀번호를 입력하세요";
             btn.textContent = "🔐 잠금 해제 (로그인)";
         }
         input.value = '';
