@@ -26,7 +26,7 @@
         // ★ Code.gs 의 API_KEY 와 반드시 같은 값으로 맞춰 주세요.
         const API_KEY = "dybbr2026hacohadrone";
 
-        const APP_VERSION = "v2.9.2 · b260922";
+        const APP_VERSION = "v2.9.3 · b260922";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -670,7 +670,7 @@
         .contact-car-box { font-size: 11px; color: #1e40af; background: #eff6ff; padding: 5px 8px; border-radius: 6px; margin-top: 4px; border: 1px solid #bfdbfe; }
         .car-num-tag { background: #ffffff; border: 1px solid #93c5fd; padding: 1px 6px; border-radius: 4px; font-weight: 800; color: #1d4ed8; }
         .contact-address-box { font-size: 11px; color: #475569; background: #f1f5f9; padding: 5px 8px; border-radius: 6px; margin-top: 4px; border: 1px solid #e2e8f0; }
-        .contact-quick-bar { display: flex; justify-content: space-between; align-items: center; background: #fef2f2; border: 1px solid #fecaca; padding: 6px 8px; border-radius: 8px; margin-bottom: 8px; }
+        .contact-quick-bar { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: #fef2f2; border: 1px solid #fecaca; padding: 6px 8px; border-radius: 8px; margin-bottom: 8px; }
         .btn-quick-action { background: #ffffff; border: 1px solid #cbd5e1; padding: 3px 6px; border-radius: 5px; font-size: 11px; font-weight: 700; cursor: pointer; color: #334155; }
 
         .log-item-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; font-size: 12px; display: flex; flex-direction: column; gap: 2px; }
@@ -1062,7 +1062,7 @@
             </div>
         </div>
         <div class="contact-quick-bar" style="flex-shrink: 0; margin-top: 4px;">
-            <span style="font-size: 11px; font-weight: 800; color: #0369a1; white-space: nowrap;">📱 학년별 번호복사</span>
+            <span style="font-size: 11px; font-weight: 800; color: #0369a1; white-space: nowrap;">📱 단체문자용 번호복사(학년별)</span>
             <div style="display: flex; gap: 3px; flex-wrap: wrap;">
                 <button class="btn-quick-action" onclick="copyGradePhones('6')">6학년</button>
                 <button class="btn-quick-action" onclick="copyGradePhones('5')">5학년</button>
