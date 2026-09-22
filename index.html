@@ -26,7 +26,7 @@
         // ★ Code.gs 의 API_KEY 와 반드시 같은 값으로 맞춰 주세요.
         const API_KEY = "dybbr2026hacohadrone";
 
-        const APP_VERSION = "v2.8.1 · b260922";
+        const APP_VERSION = "v2.8.2 · b260922";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1066,10 +1066,7 @@
             <div style="display: flex; gap: 3px; flex-wrap: wrap;">
                 <button class="btn-quick-action" onclick="copyGradePhones('6')">6학년</button>
                 <button class="btn-quick-action" onclick="copyGradePhones('5')">5학년</button>
-                <button class="btn-quick-action" onclick="copyGradePhones('4')">4학년</button>
-                <button class="btn-quick-action" onclick="copyGradePhones('3')">3학년</button>
-                <button class="btn-quick-action" onclick="copyGradePhones('2')">2학년</button>
-                <button class="btn-quick-action" onclick="copyGradePhones('1')">1학년</button>
+                <button class="btn-quick-action" onclick="copyLowGradePhones()">저학년 (1~4학년)</button>
             </div>
         </div>
         <div class="modal-scroll-body" id="contactsListContent"></div>
@@ -2549,12 +2546,8 @@
         copyText('[대연초 야구부 비상연락망]\n' + lines.join('\n'), `📋 ${list.length}명의 비상연락망이 복사되었습니다.`);
     }
 
-    // 현재 검색/학년 필터에 보이는 학부모(아버님/어머님/기타) 번호만 콤마로 이어 붙여 복사
-    // → 문자 앱의 '받는사람'란에 붙여넣으면 한 번에 단체 문자를 보낼 수 있다 (전화번호부 저장 불필요).
-    function copyAllContactPhonesOnly() {
-        const list = getFilteredContacts();
-        if (list.length === 0) { alert('복사할 번호가 없습니다.'); return; }
-
+    // 선수 목록에서 학부모(아버님/어머님/기타) 번호만 중복 없이 뽑아 배열로 반환
+    function collectParentPhoneNumbers(list) {
         const numSet = new Set();
         list.forEach(c => {
             const f = digitsOnly(getColVal(c, '아버님', '아버지'));
@@ -2562,15 +2555,25 @@
             const o = digitsOnly(getColVal(c, '기타연락처', '기타', '추가연락처'));
             [f, m, o].forEach(n => { if (n) numSet.add(n); });
         });
+        return Array.from(numSet);
+    }
 
-        if (numSet.size === 0) { alert('복사할 번호가 없습니다.'); return; }
-
-        const numbers = Array.from(numSet);
-        sendActivityLog("복사", currentRole, `학부모 번호만 ${numbers.length}건 복사 (문자 발송용)`);
+    // 뽑아낸 번호 목록을 콤마로 이어붙여 복사 (문자 앱 '받는사람'란에 바로 붙여넣기용)
+    function copyPhoneNumberList(numbers, label) {
+        if (numbers.length === 0) { alert('복사할 번호가 없습니다.'); return; }
+        sendActivityLog("복사", currentRole, `${label} 학부모 번호 ${numbers.length}건 복사 (문자 발송용)`);
         copyText(
             numbers.join(','),
-            `📱 학부모 번호 ${numbers.length}건이 복사되었습니다.\n문자(메시지) 앱의 '받는사람'란에 붙여넣어 단체로 보내 주세요.\n(그룹 문자로 전송되면 받는 분들끼리 서로 번호가 보일 수 있어요)`
+            `📱 [${label}] 학부모 번호 ${numbers.length}건이 복사되었습니다.\n문자(메시지) 앱의 '받는사람'란에 붙여넣어 단체로 보내 주세요.\n(그룹 문자로 전송되면 받는 분들끼리 서로 번호가 보일 수 있어요)`
         );
+    }
+
+    // 현재 검색/학년 필터에 보이는 학부모 번호만 복사
+    // → 문자 앱의 '받는사람'란에 붙여넣으면 한 번에 단체 문자를 보낼 수 있다 (전화번호부 저장 불필요).
+    function copyAllContactPhonesOnly() {
+        const list = getFilteredContacts();
+        if (list.length === 0) { alert('복사할 번호가 없습니다.'); return; }
+        copyPhoneNumberList(collectParentPhoneNumbers(list), '전체');
     }
 
     // 특정 학년만 골라서 학부모 번호를 복사 (검색창은 비우고 학년 필터만 그 학년으로 맞춘 뒤 복사)
@@ -2581,6 +2584,19 @@
         if (gradeSelect) gradeSelect.value = grade;
         renderEmergencyContacts();
         copyAllContactPhonesOnly();
+    }
+
+    // 저학년(1~4학년)을 한 번에 묶어서 학부모 번호 복사 (선수 수가 적어 학년별로 따로따로 복사하기 번거로울 때)
+    function copyLowGradePhones() {
+        const lowGrades = ['1', '2', '3', '4'];
+        const list = emergencyContactsData.filter(c => {
+            const name = getColVal(c, '선수이름', '이름', '선수명');
+            const grade = getColVal(c, '학년', '구분');
+            if (!name) return false;
+            return lowGrades.some(g => grade.includes(g));
+        });
+        if (list.length === 0) { alert('복사할 번호가 없습니다.'); return; }
+        copyPhoneNumberList(collectParentPhoneNumbers(list), '저학년(1~4학년)');
     }
 
     // 긴급 공지 문구 복사 (○ 부분은 붙여넣은 뒤 수정해서 사용)
