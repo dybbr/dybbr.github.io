@@ -26,7 +26,7 @@
         // ★ Code.gs 의 API_KEY 와 반드시 같은 값으로 맞춰 주세요.
         const API_KEY = "dybbr2026hacohadrone";
 
-        const APP_VERSION = "v2.11.1 · b260922";
+        const APP_VERSION = "v2.11.2 · b260922";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -628,6 +628,9 @@
         .form-group { margin-bottom: 10px; display: flex; flex-direction: column; gap: 4px; }
         .form-group label { font-size: 12px; font-weight: 700; color: #475569; }
         .form-group input, .form-group select, .form-group textarea { padding: 7px 10px; border: 1px solid var(--card-border); border-radius: 6px; font-size: 13px; outline: none; }
+        .chk-open-row { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left; font-weight: 600; font-size: 13px; color: #1e293b; cursor: pointer; margin-top: 4px; box-sizing: border-box; }
+        .chk-open-row input[type="checkbox"] { flex-shrink: 0; margin: 0; }
+        .chk-open-row span { flex: 1; text-align: left; }
         .modal-btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; padding-top: 8px; border-top: 1px solid #f1f5f9; flex-shrink: 0; }
         .btn-cancel { background: #f1f5f9; border: 1px solid var(--card-border); padding: 7px 12px; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; }
         .btn-save { background: var(--kbo-blue); color: #ffffff; border: none; padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; }
@@ -1058,22 +1061,22 @@
             <div class="form-group">
                 <label>생년월일 (예: 20150302)</label>
                 <input type="text" id="infoEditBirth" placeholder="예: 20150302" maxlength="20">
-                <label style="display:flex; align-items:center; gap:6px; font-weight:600; margin-top:4px;">
-                    <input type="checkbox" id="infoEditBirthOpen" checked> 명단에 생년월일 공개
+                <label class="chk-open-row">
+                    <input type="checkbox" id="infoEditBirthOpen" checked><span>명단에 생년월일 공개</span>
                 </label>
             </div>
             <div class="form-group">
                 <label>신장 (cm)</label>
                 <input type="text" id="infoEditHeight" placeholder="예: 153" maxlength="6">
-                <label style="display:flex; align-items:center; gap:6px; font-weight:600; margin-top:4px;">
-                    <input type="checkbox" id="infoEditHeightOpen" checked> 명단에 신장 공개
+                <label class="chk-open-row">
+                    <input type="checkbox" id="infoEditHeightOpen" checked><span>명단에 신장 공개</span>
                 </label>
             </div>
             <div class="form-group">
                 <label>몸무게 (kg)</label>
                 <input type="text" id="infoEditWeight" placeholder="예: 46" maxlength="6">
-                <label style="display:flex; align-items:center; gap:6px; font-weight:600; margin-top:4px;">
-                    <input type="checkbox" id="infoEditWeightOpen" checked> 명단에 몸무게 공개
+                <label class="chk-open-row">
+                    <input type="checkbox" id="infoEditWeightOpen" checked><span>명단에 몸무게 공개</span>
                 </label>
             </div>
         </div>
