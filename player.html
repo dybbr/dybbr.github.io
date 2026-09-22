@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
     <title>선수 프로필 | 대연초 야구부</title>
 
     <!-- 브라우저 캐시 원천 방지 메타태그 -->
@@ -15,6 +16,9 @@
         const GOOGLE_SHEET_ID = "1ljpHkiJL_H1NN5rwTaQOL5QYeev32QvaBTKzxSPgNVA";
         const ROSTER_GID = "1653839889";
         const GOOGLE_SCRIPT_UNIFORM_API_URL = "https://script.google.com/macros/s/AKfycbwAdnLPVvTMIUGt538hM18pS_upBZt8FhKRTESjWXNonKFHOH5e59Vxi0hjDqYend-IHg/exec";
+
+        // ★ Code.gs / index.html 의 API_KEY 와 반드시 같은 값으로 맞춰 주세요.
+        const API_KEY = "dybbr2026hacohadrone";
 
         // 캐시 지연 없는 100% 실시간 gviz CSV URL 생성기
         function getRealtimeCsvUrl(gid) {
@@ -397,7 +401,7 @@
         <p style="font-size: 12px; color: #64748b; margin-bottom: 14px;">
             새 사진을 등록하거나, 등록된 사진을 삭제하여 기본 이미지로 복원할 수 있습니다.
         </p>
-        
+
         <div style="width: 160px; aspect-ratio: 4 / 5; margin: 0 auto 14px; background: #f1f5f9; border: 2px dashed #cbd5e1; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative;">
             <img id="photoPreviewImg" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
             <span id="photoPreviewPlaceholder" style="font-size: 12px; color: #94a3b8; font-weight: 700;">사진을 선택해 주세요</span>
@@ -420,6 +424,24 @@
 </div>
 
 <script>
+    // ==========================================================
+    // 공통 유틸
+    // ==========================================================
+    function escapeHtml(v) {
+        return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+
+    function postApi(payload) {
+        return fetch(GOOGLE_SCRIPT_UNIFORM_API_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(Object.assign({ key: API_KEY }, payload))
+        });
+    }
+
     // 🔒 [보안 인증 검증] 메인에서 인증되지 않았거나 세션 만료 시 메인으로 자동 리다이렉트
     (function checkAuth() {
         const authExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -436,9 +458,29 @@
         el.src = defaultAvatar;
     }
 
-    const currentRole = sessionStorage.getItem('daeyeon_admin_role') || 'guest';
+    // 권한은 index.html 과 동일하게 localStorage 우선으로 읽고, 세션이 만료됐으면 guest 로 처리
+    const currentRole = (function () {
+        const exp = localStorage.getItem('daeyeon_auth_expire');
+        if (!exp || Date.now() > parseInt(exp, 10)) return 'guest';
+        const r = localStorage.getItem('daeyeon_admin_role') || sessionStorage.getItem('daeyeon_admin_role') || 'guest';
+        return ['dev', 'super', 'sub', 'general'].indexOf(r) !== -1 ? r : 'guest';
+    })();
     const isSuperOrDev = (currentRole === 'super' || currentRole === 'dev');
     const canViewPhoto = (currentRole === 'sub' || isSuperOrDev);
+
+    // 로그인한 학부모(activeUser.children)에 등록된 "내 자녀"인지 확인 → 자기 자녀 사진만 변경 가능
+    const activeUser = (function () {
+        if (!localStorage.getItem('daeyeon_auth_expire') || Date.now() > parseInt(localStorage.getItem('daeyeon_auth_expire'), 10)) return null;
+        try {
+            return JSON.parse(localStorage.getItem('daeyeon_active_user') || sessionStorage.getItem('daeyeon_active_user') || 'null');
+        } catch (e) {
+            return null;
+        }
+    })();
+    function isParentOfPlayer(p) {
+        if (!activeUser || !activeUser.children || !activeUser.children.length) return false;
+        return activeUser.children.some(c => (p.no && c.no) ? (c.no === p.no) : (c.name === p.name));
+    }
 
     let allRosterPlayers = [];
     let currentPlayer = null;
@@ -450,21 +492,23 @@
     }
 
     function getGradeBadge(grade) {
-        if (isStaff(grade)) return `<span class="grade-tag grade-staff">${grade}</span>`;
-        return `<span class="grade-tag grade-${grade}">${grade}학년</span>`;
+        const g = escapeHtml(grade);
+        if (isStaff(grade)) return `<span class="grade-tag grade-staff">${g}</span>`;
+        return `<span class="grade-tag grade-${g}">${g}학년</span>`;
     }
 
     function getPosBadge(pos, grade) {
         if (!pos || pos === '-' || pos === '정보없음' || pos === '미정') return '<span class="pos-tag pos-none">미정</span>';
         const p = String(pos).trim();
-        if (grade === '감독' || p.includes('감독') || p.includes('총괄')) return `<span class="pos-tag pos-manager">${p}</span>`;
-        if (grade === '코치' || p.includes('코치')) return `<span class="pos-tag pos-coach">${p}</span>`;
-        if (p.includes('투수')) return `<span class="pos-tag pos-pitcher">${p}</span>`;
-        if (p.includes('포수')) return `<span class="pos-tag pos-catcher">${p}</span>`;
-        if (p.includes('내야') || p.includes('1루') || p.includes('2루') || p.includes('3루') || p.includes('유격')) return `<span class="pos-tag pos-infield">${p}</span>`;
-        if (p.includes('외야') || p.includes('좌익') || p.includes('중견') || p.includes('우익')) return `<span class="pos-tag pos-outfield">${p}</span>`;
-        if (p.includes('지명') || p.toUpperCase().includes('DH')) return `<span class="pos-tag pos-dh">${p}</span>`;
-        return `<span class="pos-tag pos-etc">${p}</span>`;
+        const e = escapeHtml(p);
+        if (grade === '감독' || p.includes('감독') || p.includes('총괄')) return `<span class="pos-tag pos-manager">${e}</span>`;
+        if (grade === '코치' || p.includes('코치')) return `<span class="pos-tag pos-coach">${e}</span>`;
+        if (p.includes('투수')) return `<span class="pos-tag pos-pitcher">${e}</span>`;
+        if (p.includes('포수')) return `<span class="pos-tag pos-catcher">${e}</span>`;
+        if (p.includes('내야') || p.includes('1루') || p.includes('2루') || p.includes('3루') || p.includes('유격')) return `<span class="pos-tag pos-infield">${e}</span>`;
+        if (p.includes('외야') || p.includes('좌익') || p.includes('중견') || p.includes('우익')) return `<span class="pos-tag pos-outfield">${e}</span>`;
+        if (p.includes('지명') || p.toUpperCase().includes('DH')) return `<span class="pos-tag pos-dh">${e}</span>`;
+        return `<span class="pos-tag pos-etc">${e}</span>`;
     }
 
     function getBtBadge(bt, grade) {
@@ -475,7 +519,7 @@
         if (val.includes('우투좌타') || val === '우좌') return `<span class="bt-tag bt-rl">우투좌타</span>`;
         if (val.includes('좌투좌타') || val === '좌좌') return `<span class="bt-tag bt-ll">좌투좌타</span>`;
         if (val.includes('좌투우타') || val === '좌우') return `<span class="bt-tag bt-lr">좌투우타</span>`;
-        return `<span class="bt-tag bt-etc">${val}</span>`;
+        return `<span class="bt-tag bt-etc">${escapeHtml(val)}</span>`;
     }
 
     function isOff(val) {
@@ -484,8 +528,12 @@
         return v === 'OFF' || v === '비공개';
     }
 
+    function getCustomPhotos() {
+        try { return JSON.parse(localStorage.getItem('daeyeon_custom_photos') || '{}'); } catch (e) { return {}; }
+    }
+
     function getPlayerPhotoUrl(p) {
-        const customPhotos = JSON.parse(localStorage.getItem('daeyeon_custom_photos') || '{}');
+        const customPhotos = getCustomPhotos();
         if (p.photoLink && p.photoLink !== '-' && p.photoLink.startsWith('http')) return p.photoLink;
         if (p.no && customPhotos[p.no]) return customPhotos[p.no];
         if (!p.no && customPhotos[p.name]) return customPhotos[p.name];
@@ -525,13 +573,7 @@
 
         try {
             const realtimeUrl = getRealtimeCsvUrl(ROSTER_GID);
-            const response = await fetch(realtimeUrl, {
-                cache: 'no-store',
-                headers: {
-                    'Cache-Control': 'no-cache, no-store, must-revalidate',
-                    'Pragma': 'no-cache'
-                }
-            });
+            const response = await fetch(realtimeUrl, { cache: 'no-store' });
 
             if (!response.ok) throw new Error("실시간 시트 응답 실패: " + response.status);
 
@@ -556,7 +598,7 @@
                     };
 
                     const idxSeq = findIdx('순번');
-                    const idxNo = findIdx('배번', '등번호', '번호'); // ★ 배번 정밀 매핑
+                    const idxNo = findIdx('배번', '등번호', '번호');
                     const idxName = findIdx('이름', '선수이름', '성명', '지도자명');
                     const idxGrade = findIdx('구분', '학년', '직책');
                     const idxPos = findIdx('포지션', '역할');
@@ -648,10 +690,10 @@
     function renderPlayerCard(p) {
         const notice = document.getElementById('statusNotice');
         const card = document.getElementById('profileCard');
-        const photoUrl = getPlayerPhotoUrl(p);
+        const photoUrl = escapeHtml(getPlayerPhotoUrl(p));
 
-        const uploadBtnHtml = isSuperOrDev ? `
-            <button type="button" class="btn-upload-photo" onclick="openPhotoUploadModal(${p.no || 0}, '${p.name}')">📷 사진 변경</button>
+        const uploadBtnHtml = (isSuperOrDev || isParentOfPlayer(p)) ? `
+            <button type="button" class="btn-upload-photo" id="btnOpenPhotoModal">📷 사진 변경</button>
         ` : '';
 
         let photoHtml = '';
@@ -667,7 +709,7 @@
             const adminPhotoBadge = (p.hidePhoto && canViewPhoto) ? `<span class="admin-private-badge" style="position:absolute; bottom:12px; left:14px; background:#ef4444; color:#ffffff; font-size:11px; padding:3px 8px; border-radius:4px; z-index:3;">🔒 사진 비공개</span>` : '';
             photoHtml = `
                 <div class="profile-photo-wrap">
-                    <img class="profile-img" src="${photoUrl}" alt="${p.name}" onerror="handleImgError(this)">
+                    <img class="profile-img" src="${photoUrl}" alt="${escapeHtml(p.name)}" onerror="handleImgError(this)">
                     ${adminPhotoBadge}
                     ${uploadBtnHtml}
                 </div>
@@ -684,14 +726,14 @@
                 birthValue = '<span class="text-private">비공개</span>';
             } else {
                 const bBadge = (p.hideBirth && canViewPhoto) ? '<span class="admin-private-badge">비공개</span>' : '';
-                birthValue = `${p.birth}${bBadge}`;
+                birthValue = `${escapeHtml(p.birth)}${bBadge}`;
             }
         }
 
         // 체격 정제 ('0' 제거 및 비공개 처리)
         let physValue = '-';
-        const h = (p.height && p.height !== '0' && p.height !== '-') ? p.height : '';
-        const w = (p.weight && p.weight !== '0' && p.weight !== '-') ? p.weight : '';
+        const h = (p.height && p.height !== '0' && p.height !== '-') ? escapeHtml(p.height) : '';
+        const w = (p.weight && p.weight !== '0' && p.weight !== '-') ? escapeHtml(p.weight) : '';
 
         if (h || w) {
             const canViewPhys = (currentRole !== 'guest');
@@ -721,14 +763,14 @@
             </div>
             <div class="profile-body">
                 <div class="name-row">
-                    <div class="player-name">${p.name}${hiddenBadge}</div>
+                    <div class="player-name">${escapeHtml(p.name)}${hiddenBadge}</div>
                     <div>${getGradeBadge(p.grade)}</div>
                 </div>
 
                 <div class="spec-list">
                     <div class="spec-item">
                         <span class="spec-label">⚾ 포지션 / 역할</span>
-                        <span class="spec-value">${p.pos}</span>
+                        <span class="spec-value">${escapeHtml(p.pos)}</span>
                     </div>
                     <div class="spec-item">
                         <span class="spec-label">🧤 투 / 타</span>
@@ -750,6 +792,9 @@
             </div>
         `;
 
+        const openBtn = document.getElementById('btnOpenPhotoModal');
+        if (openBtn) openBtn.addEventListener('click', function () { openPhotoUploadModal(p.no || 0, p.name); });
+
         notice.style.display = 'none';
         card.style.display = 'flex';
         document.title = `${noBadgeText} ${p.name} | 대연초 야구부`;
@@ -770,9 +815,9 @@
         };
 
         navBar.innerHTML = `
-            ${prevPlayer ? `<a href="${getPlayerUrl(prevPlayer)}" class="nav-btn">◀ ${prevPlayer.no ? 'No.'+prevPlayer.no : ''} ${prevPlayer.name}</a>` : `<span class="nav-btn disabled">◀ 처음</span>`}
+            ${prevPlayer ? `<a href="${escapeHtml(getPlayerUrl(prevPlayer))}" class="nav-btn">◀ ${prevPlayer.no ? 'No.' + prevPlayer.no : ''} ${escapeHtml(prevPlayer.name)}</a>` : `<span class="nav-btn disabled">◀ 처음</span>`}
             <a href="index.html" class="nav-btn" style="background:var(--kbo-blue); color:#ffffff; border:none;">📋 목록</a>
-            ${nextPlayer ? `<a href="${getPlayerUrl(nextPlayer)}" class="nav-btn">${nextPlayer.no ? 'No.'+nextPlayer.no : ''} ${nextPlayer.name} ▶</a>` : `<span class="nav-btn disabled">마지막 ▶</span>`}
+            ${nextPlayer ? `<a href="${escapeHtml(getPlayerUrl(nextPlayer))}" class="nav-btn">${nextPlayer.no ? 'No.' + nextPlayer.no : ''} ${escapeHtml(nextPlayer.name)} ▶</a>` : `<span class="nav-btn disabled">마지막 ▶</span>`}
         `;
         navBar.style.display = 'flex';
     }
@@ -785,7 +830,7 @@
         document.getElementById('photoPreviewImg').style.display = 'none';
         document.getElementById('photoPreviewPlaceholder').style.display = 'block';
         document.getElementById('targetPhotoInput').value = '';
-        
+
         const btn = document.getElementById('btnUploadSubmit');
         btn.disabled = true;
         btn.textContent = '구글 드라이브 등록';
@@ -844,11 +889,16 @@
     }
 
     function savePhotoLocally(target, url) {
-        const customPhotos = JSON.parse(localStorage.getItem('daeyeon_custom_photos') || '{}');
-        const photoKey = target.no || target.name;
-        customPhotos[photoKey] = url;
-        if (target.no) customPhotos[target.name] = url;
-        localStorage.setItem('daeyeon_custom_photos', JSON.stringify(customPhotos));
+        // 브라우저 저장 용량이 부족해도 업로드 자체는 성공으로 처리되도록 예외를 삼킨다
+        try {
+            const customPhotos = getCustomPhotos();
+            const photoKey = target.no || target.name;
+            customPhotos[photoKey] = url;
+            if (target.no) customPhotos[target.name] = url;
+            localStorage.setItem('daeyeon_custom_photos', JSON.stringify(customPhotos));
+        } catch (e) {
+            console.warn('사진 로컬 저장 실패(무시):', e);
+        }
         if (currentPlayer) currentPlayer.photoLink = url;
     }
 
@@ -862,19 +912,12 @@
         const previewImg = document.getElementById('photoPreviewImg');
         const dataUrl = previewImg.src;
 
-        const payload = {
-            action: "uploadPhoto",
-            playerNo: currentPlayer.no || 0,
-            playerName: currentPlayer.name,
-            base64Data: uploadOptimizedBase64
-        };
-
         try {
-            await fetch(GOOGLE_SCRIPT_UNIFORM_API_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify(payload)
+            await postApi({
+                action: "uploadPhoto",
+                playerNo: currentPlayer.no || 0,
+                playerName: currentPlayer.name,
+                base64Data: uploadOptimizedBase64
             });
 
             savePhotoLocally(currentPlayer, dataUrl);
@@ -898,24 +941,19 @@
         delBtn.disabled = true;
         delBtn.textContent = '삭제 중...';
 
-        const payload = {
-            action: "deletePhoto",
-            playerNo: currentPlayer.no || 0,
-            playerName: currentPlayer.name
-        };
-
         try {
-            await fetch(GOOGLE_SCRIPT_UNIFORM_API_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify(payload)
+            await postApi({
+                action: "deletePhoto",
+                playerNo: currentPlayer.no || 0,
+                playerName: currentPlayer.name
             });
 
-            const customPhotos = JSON.parse(localStorage.getItem('daeyeon_custom_photos') || '{}');
-            if (currentPlayer.no) delete customPhotos[currentPlayer.no];
-            delete customPhotos[currentPlayer.name];
-            localStorage.setItem('daeyeon_custom_photos', JSON.stringify(customPhotos));
+            try {
+                const customPhotos = getCustomPhotos();
+                if (currentPlayer.no) delete customPhotos[currentPlayer.no];
+                delete customPhotos[currentPlayer.name];
+                localStorage.setItem('daeyeon_custom_photos', JSON.stringify(customPhotos));
+            } catch (e) {}
 
             currentPlayer.photoLink = "";
             alert(`✅ ${currentPlayer.name} 선수의 사진이 삭제되었습니다.`);
