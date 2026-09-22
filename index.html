@@ -26,7 +26,7 @@
         // ★ Code.gs 의 API_KEY 와 반드시 같은 값으로 맞춰 주세요.
         const API_KEY = "dybbr2026hacohadrone";
 
-        const APP_VERSION = "v2.11.0 · b260922";
+        const APP_VERSION = "v2.11.1 · b260922";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1237,7 +1237,7 @@
         const r = localStorage.getItem('daeyeon_admin_role') || sessionStorage.getItem('daeyeon_admin_role') || 'guest';
         return VALID_ROLES.indexOf(r) !== -1 ? r : 'guest';
     })();
-    let selectedGrade = sessionStorage.getItem('daeyeon_selected_grade') || 'all';
+    let selectedGrade = 'all'; // 학년 필터는 항상 "전체"로 시작 (이전 방문자가 보던 학년이 다음 사람에게 이어지지 않도록)
     let currentView = localStorage.getItem('daeyeon_view_mode') || 'list';
     let savedSearchQuery = sessionStorage.getItem('daeyeon_search_query') || '';
     let isUniformActive = localStorage.getItem('daeyeon_uniform_active') !== 'false';   // 서버 값으로 곧 덮어씀
@@ -1859,7 +1859,6 @@
 
     function setGrade(grade, btn) {
         selectedGrade = grade;
-        sessionStorage.setItem('daeyeon_selected_grade', grade);
         document.querySelectorAll('#gradeFilters .filter-btn').forEach(b => b.classList.remove('active'));
         if (btn) btn.classList.add('active');
         render();
