@@ -26,7 +26,7 @@
         // ★ Code.gs 의 API_KEY 와 반드시 같은 값으로 맞춰 주세요.
         const API_KEY = "dybbr2026hacohadrone";
 
-        const APP_VERSION = "v2.9.4 · b260922";
+        const APP_VERSION = "v2.9.5 · b260922";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -2566,7 +2566,7 @@
         sendActivityLog("복사", currentRole, `${label} 학부모 번호 ${numbers.length}건 복사 (문자 발송용)`);
         copyText(
             numbers.join(','),
-            `📱 [${label}] 학부모 번호 ${numbers.length}건이 복사되었습니다.\n문자(메시지) 앱의 '받는사람'란에 붙여넣어 단체로 보내 주세요.\n(그룹 문자로 전송되면 받는 분들끼리 서로 번호가 보일 수 있어요)`
+            `📱 [${label}] 학부모 번호 ${numbers.length}건이 복사되었습니다.\n문자 앱의 '단체 문자보내기'에서 붙여넣기를 하면 됩니다.\n(그룹 문자로 전송되면 받는 분들끼리 서로 번호가 보일 수 있어요)`
         );
     }
 
