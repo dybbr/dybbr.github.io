@@ -26,7 +26,7 @@
         // ★ Code.gs 의 API_KEY 와 반드시 같은 값으로 맞춰 주세요.
         const API_KEY = "dybbr2026hacohadrone";
 
-        const APP_VERSION = "v2.9.3 · b260922";
+        const APP_VERSION = "v2.9.4 · b260922";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -2545,7 +2545,7 @@
         });
 
         sendActivityLog("복사", currentRole, `비상연락망 ${list.length}명 복사`);
-        copyText('[대연초 야구부 비상연락망]\n' + lines.join('\n'), `📋 ${list.length}명의 비상연락망이 복사되었습니다.`);
+        copyText('[대연초 야구부 비상연락망]\n' + lines.join('\n'), `📋 전체 선수의 비상연락망 연락처를 복사하였습니다.`);
     }
 
     // 선수 목록에서 학부모(아버님/어머님/기타) 번호만 중복 없이 뽑아 배열로 반환
