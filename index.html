@@ -26,7 +26,7 @@
         // ★ Code.gs 의 API_KEY 와 반드시 같은 값으로 맞춰 주세요.
         const API_KEY = "dybbr2026hacohadrone";
 
-        const APP_VERSION = "v2.9.0 · b260922";
+        const APP_VERSION = "v2.9.1 · b260922";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -2570,12 +2570,16 @@
         );
     }
 
-    // 현재 검색/학년 필터에 보이는 학부모 번호만 복사
+    // 현재 검색/학년 필터에 보이는 학부모 번호만 복사 (라벨을 지정해서 안내 문구에 정확히 표시)
     // → 문자 앱의 '받는사람'란에 붙여넣으면 한 번에 단체 문자를 보낼 수 있다 (전화번호부 저장 불필요).
-    function copyAllContactPhonesOnly() {
+    function copyFilteredContactPhones(label) {
         const list = getFilteredContacts();
         if (list.length === 0) { alert('복사할 번호가 없습니다.'); return; }
-        copyPhoneNumberList(collectParentPhoneNumbers(list), '전체');
+        copyPhoneNumberList(collectParentPhoneNumbers(list), label);
+    }
+
+    function copyAllContactPhonesOnly() {
+        copyFilteredContactPhones('전체');
     }
 
     // 특정 학년만 골라서 학부모 번호를 복사 (검색창은 비우고 학년 필터만 그 학년으로 맞춘 뒤 복사)
@@ -2585,7 +2589,7 @@
         if (searchInput) searchInput.value = '';
         if (gradeSelect) gradeSelect.value = grade;
         renderEmergencyContacts();
-        copyAllContactPhonesOnly();
+        copyFilteredContactPhones(`${grade}학년`);
     }
 
     // 저학년(1~4학년)을 한 번에 묶어서 학부모 번호 복사 (선수 수가 적어 학년별로 따로따로 복사하기 번거로울 때)
