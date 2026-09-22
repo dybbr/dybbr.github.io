@@ -26,7 +26,7 @@
         // ★ Code.gs 의 API_KEY 와 반드시 같은 값으로 맞춰 주세요.
         const API_KEY = "dybbr2026hacohadrone";
 
-        const APP_VERSION = "v2.10.2 · b260922";
+        const APP_VERSION = "v2.11.0 · b260922";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -614,6 +614,7 @@
         .card-no-badge { position: absolute; top: 8px; left: 8px; background: rgba(11, 34, 64, 0.92); color: #ffffff; font-size: 12px; font-weight: 800; padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.4); z-index: 2; }
         .card-pos { position: absolute; top: 8px; right: 8px; z-index: 2; }
         .btn-upload-photo { position: absolute; bottom: 8px; right: 8px; background: rgba(15, 23, 42, 0.85); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.4); padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; cursor: pointer; z-index: 4; backdrop-filter: blur(4px); }
+        .btn-edit-info { position: absolute; bottom: 38px; right: 8px; background: rgba(2, 132, 199, 0.9); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.4); padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; cursor: pointer; z-index: 4; backdrop-filter: blur(4px); }
         .card-info { padding: 12px 10px; display: flex; flex-direction: column; gap: 4px; }
         .card-name-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; width: 100%; }
         .card-name { font-weight: 800; color: var(--text-title); display: flex; align-items: baseline; gap: 3px; }
@@ -855,7 +856,7 @@
                 <span style="font-size: 11px; color: #64748b; line-height: 1.6; margin-top: 8px;">
                     • <b>최고관리자</b>: 비상연락망 + 유니폼 발주 집계 + 사진 등록 + 유니폼 접수 ON/OFF<br>
                     • <b>보조관리자</b>: 비공개 사진 및 체격 열람 + 시트 편집<br>
-                    • <b>일반관리자</b>: 선수 비공개 체격(키/몸무게/생년월일) 열람 전용
+                    • <b>일반관리자</b>: 선수 비공개 체격(신장/몸무게/생년월일) 열람 전용
                 </span>
             </div>
         </div>
@@ -1031,6 +1032,54 @@
         <div class="modal-btns" style="justify-content: space-between;">
             <button class="btn-cancel" onclick="closeModal('photoUploadModal')">취소</button>
             <button class="btn-save" id="btnUploadSubmit" style="background: #0284c7;" onclick="executeUploadPhoto()">구글 드라이브 등록</button>
+        </div>
+    </div>
+</div>
+
+<!-- 5-1. 학부모 선수 정보 수정 모달 -->
+<div id="playerInfoEditModal" class="modal">
+    <div class="modal-content" style="max-width: 420px;">
+        <div class="modal-header" id="infoEditModalTitle">✏️ 선수 정보 수정</div>
+        <div class="modal-scroll-body">
+            <p style="font-size: 12px; color: #64748b; margin-bottom: 14px;">
+                수정 즉시 명단에 반영됩니다. 공개 여부를 끄면 학부모 인증을 하지 않은 방문자에게는 해당 정보가 "비공개"로 표시됩니다.
+            </p>
+            <div class="form-group">
+                <label>투 / 타</label>
+                <select id="infoEditBt" class="lock-select-input">
+                    <option value="">- 선택 안 함 -</option>
+                    <option value="우투우타">우투우타</option>
+                    <option value="좌투좌타">좌투좌타</option>
+                    <option value="우투좌타">우투좌타</option>
+                    <option value="좌투우타">좌투우타</option>
+                    <option value="양투양타">양투양타</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>생년월일 (예: 20150302)</label>
+                <input type="text" id="infoEditBirth" placeholder="예: 20150302" maxlength="20">
+                <label style="display:flex; align-items:center; gap:6px; font-weight:600; margin-top:4px;">
+                    <input type="checkbox" id="infoEditBirthOpen" checked> 명단에 생년월일 공개
+                </label>
+            </div>
+            <div class="form-group">
+                <label>신장 (cm)</label>
+                <input type="text" id="infoEditHeight" placeholder="예: 153" maxlength="6">
+                <label style="display:flex; align-items:center; gap:6px; font-weight:600; margin-top:4px;">
+                    <input type="checkbox" id="infoEditHeightOpen" checked> 명단에 신장 공개
+                </label>
+            </div>
+            <div class="form-group">
+                <label>몸무게 (kg)</label>
+                <input type="text" id="infoEditWeight" placeholder="예: 46" maxlength="6">
+                <label style="display:flex; align-items:center; gap:6px; font-weight:600; margin-top:4px;">
+                    <input type="checkbox" id="infoEditWeightOpen" checked> 명단에 몸무게 공개
+                </label>
+            </div>
+        </div>
+        <div class="modal-btns" style="justify-content: space-between;">
+            <button class="btn-cancel" onclick="closeModal('playerInfoEditModal')">취소</button>
+            <button class="btn-save" id="btnInfoEditSubmit" style="background: #0284c7;" onclick="executeUpdatePlayerInfo()">저장</button>
         </div>
     </div>
 </div>
@@ -1827,6 +1876,12 @@
 
     // 목록/카드 클릭은 이벤트 위임으로 처리 (이름에 따옴표가 있어도 안전)
     document.addEventListener('click', function (ev) {
+        const editBtn = ev.target.closest('.btn-edit-info');
+        if (editBtn) {
+            ev.stopPropagation();
+            openPlayerInfoEditModal(parseInt(editBtn.dataset.no, 10) || 0, editBtn.dataset.name || '');
+            return;
+        }
         const upBtn = ev.target.closest('.btn-upload-photo');
         if (upBtn) {
             ev.stopPropagation();
@@ -2005,6 +2060,7 @@
             const noNameText = p.no ? `<span class="card-name-no">No.${p.no}</span>` : '';
 
             const uploadBtnHtml = (isSuperOrDev() || isParentOfPlayer(p)) ? `<button type="button" class="btn-upload-photo" data-no="${p.no || 0}" data-name="${escapeHtml(p.name)}">📷 사진 변경</button>` : '';
+            const editInfoBtnHtml = isParentOfPlayer(p) ? `<button type="button" class="btn-edit-info" data-no="${p.no || 0}" data-name="${escapeHtml(p.name)}">✏️ 정보 수정</button>` : '';
 
             let cardPhotoHtml = '';
             if (p.hidePhoto && !canViewPhoto) {
@@ -2015,6 +2071,7 @@
                         <div style="font-size:32px; opacity:0.35;">👤</div>
                         <span style="margin-top:6px; font-size:11px; font-weight:800; color:#64748b; background:rgba(255,255,255,0.9); padding:3px 8px; border-radius:12px; border:1px solid #cbd5e1;">🔒 사진 비공개</span>
                         ${uploadBtnHtml}
+                        ${editInfoBtnHtml}
                     </div>
                 `;
             } else {
@@ -2026,6 +2083,7 @@
                         <img class="card-img" src="${photoUrl}" alt="" loading="lazy" onerror="handleImgError(this)">
                         ${adminPhotoBadge}
                         ${uploadBtnHtml}
+                        ${editInfoBtnHtml}
                     </div>
                 `;
             }
@@ -2735,6 +2793,54 @@
             closeModal('photoUploadModal');
             loadGoogleSheetData();
         } catch (err) { alert('에러: ' + err.message); }
+    }
+
+    // ==========================================================
+    // 학부모 선수 정보 수정 (투타 / 생년월일 / 신장 / 몸무게 + 공개여부)
+    // ==========================================================
+    let infoEditTargetPlayer = null;
+
+    function openPlayerInfoEditModal(no, name) {
+        const p = players.find(item => (no > 0 ? item.no === no : item.name === name));
+        if (!p) return;
+        infoEditTargetPlayer = { no: no, name: name };
+        document.getElementById('infoEditModalTitle').textContent = `✏️ ${no ? 'No.' + no + ' ' : ''}${name} 정보 수정`;
+        document.getElementById('infoEditBt').value = (p.bt && p.bt !== '-') ? p.bt : '';
+        document.getElementById('infoEditBirth').value = (p.birth && p.birth !== '0' && p.birth !== '-') ? p.birth : '';
+        document.getElementById('infoEditHeight').value = (p.height && p.height !== '0' && p.height !== '-') ? p.height : '';
+        document.getElementById('infoEditWeight').value = (p.weight && p.weight !== '0' && p.weight !== '-') ? p.weight : '';
+        document.getElementById('infoEditBirthOpen').checked = !p.hideBirth;
+        document.getElementById('infoEditHeightOpen').checked = !p.hideHeight;
+        document.getElementById('infoEditWeightOpen').checked = !p.hideWeight;
+        document.getElementById('playerInfoEditModal').style.display = 'flex';
+    }
+
+    async function executeUpdatePlayerInfo() {
+        if (!infoEditTargetPlayer) return;
+        const btn = document.getElementById('btnInfoEditSubmit');
+        btn.disabled = true; btn.textContent = '저장 중...';
+        try {
+            await postApi({
+                action: "updatePlayerInfo",
+                playerNo: infoEditTargetPlayer.no,
+                playerName: infoEditTargetPlayer.name,
+                bt: document.getElementById('infoEditBt').value,
+                birth: document.getElementById('infoEditBirth').value,
+                height: document.getElementById('infoEditHeight').value,
+                weight: document.getElementById('infoEditWeight').value,
+                hideBirth: !document.getElementById('infoEditBirthOpen').checked,
+                hideHeight: !document.getElementById('infoEditHeightOpen').checked,
+                hideWeight: !document.getElementById('infoEditWeightOpen').checked
+            });
+            sendActivityLog("선수정보수정", currentRole, `${infoEditTargetPlayer.name} 정보 수정`);
+            alert('✅ 선수 정보가 저장되었습니다. (시트 반영까지 잠시 걸릴 수 있습니다)');
+            closeModal('playerInfoEditModal');
+            loadGoogleSheetData();
+        } catch (err) {
+            alert('에러: ' + err.message);
+        } finally {
+            btn.disabled = false; btn.textContent = '저장';
+        }
     }
 
     // ==========================================================
