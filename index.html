@@ -26,7 +26,7 @@
         // ★ Code.gs 의 API_KEY 와 반드시 같은 값으로 맞춰 주세요.
         const API_KEY = "dybbr2026hacohadrone";
 
-        const APP_VERSION = "v2.9.5 · b260922";
+        const APP_VERSION = "v2.9.6 · b260922";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1051,14 +1051,18 @@
                 <option value="1">1학년</option>
             </select>
         </div>
-        <div class="contact-quick-bar" style="flex-shrink: 0;">
-            <span style="font-size: 11px; font-weight: 800; color: #991b1b; white-space: nowrap;">⚡ 긴급 공지</span>
-            <div style="display: flex; gap: 3px; flex-wrap: wrap;">
-                <button class="btn-quick-action" onclick="copyAllContactPhones()">📋 비상연락망 복사</button>
-                <button class="btn-quick-action" onclick="copyAllContactPhonesOnly()">📱 학부모 번호 전체복사</button>
-                <button class="btn-quick-action" onclick="copyEmergencyTemplate('weather')">🌧️ 우천취소</button>
-                <button class="btn-quick-action" onclick="copyEmergencyTemplate('match')">⚾ 경기시간</button>
-                <button class="btn-quick-action" onclick="copyEmergencyTemplate('safe')">🏠 안전귀가</button>
+        <div class="contact-quick-bar" style="flex-shrink: 0; align-items: flex-start;">
+            <span style="font-size: 11px; font-weight: 800; color: #991b1b; white-space: nowrap; padding-top: 4px;">⚡ 긴급 공지</span>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+                <div style="display: flex; gap: 3px; flex-wrap: wrap;">
+                    <button class="btn-quick-action" onclick="copyAllContactPhones()">📋 비상연락망 전체 복사</button>
+                    <button class="btn-quick-action" onclick="copyAllContactPhonesOnly()">📱 단체문자용 전체 복사</button>
+                </div>
+                <div style="display: flex; gap: 3px; flex-wrap: wrap;">
+                    <button class="btn-quick-action" onclick="copyEmergencyTemplate('weather')">🌧️ 우천취소</button>
+                    <button class="btn-quick-action" onclick="copyEmergencyTemplate('match')">⚾ 경기시간</button>
+                    <button class="btn-quick-action" onclick="copyEmergencyTemplate('safe')">🏠 안전귀가</button>
+                </div>
             </div>
         </div>
         <div class="contact-quick-bar" style="flex-shrink: 0; margin-top: 4px;">
