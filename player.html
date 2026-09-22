@@ -170,6 +170,25 @@
         }
         .btn-upload-photo:hover { background: #0284c7; }
 
+        /* 학부모 전용 선수 정보 수정 버튼 */
+        .btn-edit-info {
+            position: absolute;
+            bottom: 46px;
+            right: 12px;
+            background: rgba(2, 132, 199, 0.9);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            z-index: 4;
+            backdrop-filter: blur(4px);
+            transition: 0.15s;
+        }
+        .btn-edit-info:hover { background: #0369a1; }
+
         .grade-tag {
             display: inline-block;
             padding: 3px 10px;
@@ -377,6 +396,9 @@
         .modal-btns { display: flex; justify-content: space-between; gap: 8px; margin-top: 14px; }
         .btn-cancel { background: #f1f5f9; border: 1px solid var(--card-border); padding: 8px 14px; border-radius: 6px; font-weight: 700; cursor: pointer; }
         .btn-save { background: #0284c7; color: #ffffff; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 700; cursor: pointer; }
+        .form-group { margin-bottom: 10px; display: flex; flex-direction: column; gap: 4px; text-align: left; }
+        .form-group label { font-size: 12px; font-weight: 700; color: #475569; }
+        .form-group input, .form-group select { padding: 7px 10px; border: 1px solid var(--card-border); border-radius: 6px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -419,6 +441,52 @@
         <div class="modal-btns">
             <button class="btn-cancel" onclick="closeModal('photoUploadModal')">취소</button>
             <button class="btn-save" id="btnUploadSubmit" onclick="executeUploadPhoto()">구글 드라이브 등록</button>
+        </div>
+    </div>
+</div>
+
+<!-- 학부모 선수 정보 수정 모달 -->
+<div id="playerInfoEditModal" class="modal">
+    <div class="modal-content" style="max-width: 420px;">
+        <div class="modal-header" id="infoEditModalTitle">✏️ 선수 정보 수정</div>
+        <p style="font-size: 12px; color: #64748b; margin-bottom: 14px;">
+            수정 즉시 명단에 반영됩니다. 공개 여부를 끄면 학부모 인증을 하지 않은 방문자에게는 해당 정보가 "비공개"로 표시됩니다.
+        </p>
+        <div class="form-group">
+            <label>투 / 타</label>
+            <select id="infoEditBt">
+                <option value="">- 선택 안 함 -</option>
+                <option value="우투우타">우투우타</option>
+                <option value="좌투좌타">좌투좌타</option>
+                <option value="우투좌타">우투좌타</option>
+                <option value="좌투우타">좌투우타</option>
+                <option value="양투양타">양투양타</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>생년월일 (예: 20150302)</label>
+            <input type="text" id="infoEditBirth" placeholder="예: 20150302" maxlength="20">
+            <label style="display:flex; align-items:center; gap:6px; font-weight:600; margin-top:4px;">
+                <input type="checkbox" id="infoEditBirthOpen" checked> 명단에 생년월일 공개
+            </label>
+        </div>
+        <div class="form-group">
+            <label>신장 (cm)</label>
+            <input type="text" id="infoEditHeight" placeholder="예: 153" maxlength="6">
+            <label style="display:flex; align-items:center; gap:6px; font-weight:600; margin-top:4px;">
+                <input type="checkbox" id="infoEditHeightOpen" checked> 명단에 신장 공개
+            </label>
+        </div>
+        <div class="form-group">
+            <label>몸무게 (kg)</label>
+            <input type="text" id="infoEditWeight" placeholder="예: 46" maxlength="6">
+            <label style="display:flex; align-items:center; gap:6px; font-weight:600; margin-top:4px;">
+                <input type="checkbox" id="infoEditWeightOpen" checked> 명단에 몸무게 공개
+            </label>
+        </div>
+        <div class="modal-btns">
+            <button class="btn-cancel" onclick="closeModal('playerInfoEditModal')">취소</button>
+            <button class="btn-save" id="btnInfoEditSubmit" onclick="executeUpdatePlayerInfo()">저장</button>
         </div>
     </div>
 </div>
@@ -695,6 +763,9 @@
         const uploadBtnHtml = (isSuperOrDev || isParentOfPlayer(p)) ? `
             <button type="button" class="btn-upload-photo" id="btnOpenPhotoModal">📷 사진 변경</button>
         ` : '';
+        const editInfoBtnHtml = isParentOfPlayer(p) ? `
+            <button type="button" class="btn-edit-info" id="btnOpenInfoEditModal">✏️ 정보 수정</button>
+        ` : '';
 
         let photoHtml = '';
         if (p.hidePhoto && !canViewPhoto) {
@@ -703,6 +774,7 @@
                     <div style="font-size: 52px; opacity: 0.35;">👤</div>
                     <span style="margin-top:10px; font-size:13px; font-weight:800; color:#64748b; background:rgba(255,255,255,0.9); padding:4px 12px; border-radius:14px; border:1px solid #cbd5e1;">🔒 사진 비공개</span>
                     ${uploadBtnHtml}
+                    ${editInfoBtnHtml}
                 </div>
             `;
         } else {
@@ -712,6 +784,7 @@
                     <img class="profile-img" src="${photoUrl}" alt="${escapeHtml(p.name)}" onerror="handleImgError(this)">
                     ${adminPhotoBadge}
                     ${uploadBtnHtml}
+                    ${editInfoBtnHtml}
                 </div>
             `;
         }
@@ -794,6 +867,9 @@
 
         const openBtn = document.getElementById('btnOpenPhotoModal');
         if (openBtn) openBtn.addEventListener('click', function () { openPhotoUploadModal(p.no || 0, p.name); });
+
+        const openInfoBtn = document.getElementById('btnOpenInfoEditModal');
+        if (openInfoBtn) openInfoBtn.addEventListener('click', function () { openPlayerInfoEditModal(p); });
 
         notice.style.display = 'none';
         card.style.display = 'flex';
@@ -965,6 +1041,51 @@
         } finally {
             delBtn.disabled = false;
             delBtn.textContent = '🗑️ 등록된 사진 삭제 (기본 이미지 복원)';
+        }
+    }
+
+    // ==========================================================
+    // 학부모 선수 정보 수정 (투타 / 생년월일 / 신장 / 몸무게 + 공개여부)
+    // ==========================================================
+    function openPlayerInfoEditModal(p) {
+        if (!p) return;
+        const titleNo = p.no ? `No.${p.no} ` : '';
+        document.getElementById('infoEditModalTitle').textContent = `✏️ ${titleNo}${p.name} 정보 수정`;
+        document.getElementById('infoEditBt').value = (p.bt && p.bt !== '-') ? p.bt : '';
+        document.getElementById('infoEditBirth').value = (p.birth && p.birth !== '0' && p.birth !== '-') ? p.birth : '';
+        document.getElementById('infoEditHeight').value = (p.height && p.height !== '0' && p.height !== '-') ? p.height : '';
+        document.getElementById('infoEditWeight').value = (p.weight && p.weight !== '0' && p.weight !== '-') ? p.weight : '';
+        document.getElementById('infoEditBirthOpen').checked = !p.hideBirth;
+        document.getElementById('infoEditHeightOpen').checked = !p.hideHeight;
+        document.getElementById('infoEditWeightOpen').checked = !p.hideWeight;
+        document.getElementById('playerInfoEditModal').style.display = 'flex';
+    }
+
+    async function executeUpdatePlayerInfo() {
+        if (!currentPlayer) return;
+        const btn = document.getElementById('btnInfoEditSubmit');
+        btn.disabled = true; btn.textContent = '저장 중...';
+        try {
+            await postApi({
+                action: "updatePlayerInfo",
+                playerNo: currentPlayer.no || 0,
+                playerName: currentPlayer.name,
+                bt: document.getElementById('infoEditBt').value,
+                birth: document.getElementById('infoEditBirth').value,
+                height: document.getElementById('infoEditHeight').value,
+                weight: document.getElementById('infoEditWeight').value,
+                hideBirth: !document.getElementById('infoEditBirthOpen').checked,
+                hideHeight: !document.getElementById('infoEditHeightOpen').checked,
+                hideWeight: !document.getElementById('infoEditWeightOpen').checked
+            });
+            alert(`✅ ${currentPlayer.name} 선수의 정보가 저장되었습니다. (시트 반영까지 잠시 걸릴 수 있습니다)`);
+            closeModal('playerInfoEditModal');
+            loadPlayerDetail();
+        } catch (err) {
+            console.error("정보 수정 에러:", err);
+            alert("정보 저장 중 오류가 발생했습니다: " + err.message);
+        } finally {
+            btn.disabled = false; btn.textContent = '저장';
         }
     }
 
