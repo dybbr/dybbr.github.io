@@ -26,7 +26,7 @@
         // ★ Code.gs 의 API_KEY 와 반드시 같은 값으로 맞춰 주세요.
         const API_KEY = "dybbr2026hacohadrone";
 
-        const APP_VERSION = "v2.8.0 · b260922";
+        const APP_VERSION = "v2.8.1 · b260922";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1059,6 +1059,17 @@
                 <button class="btn-quick-action" onclick="copyEmergencyTemplate('weather')">🌧️ 우천취소</button>
                 <button class="btn-quick-action" onclick="copyEmergencyTemplate('match')">⚾ 경기시간</button>
                 <button class="btn-quick-action" onclick="copyEmergencyTemplate('safe')">🏠 안전귀가</button>
+            </div>
+        </div>
+        <div class="contact-quick-bar" style="flex-shrink: 0; margin-top: 4px;">
+            <span style="font-size: 11px; font-weight: 800; color: #0369a1; white-space: nowrap;">📱 학년별 번호복사</span>
+            <div style="display: flex; gap: 3px; flex-wrap: wrap;">
+                <button class="btn-quick-action" onclick="copyGradePhones('6')">6학년</button>
+                <button class="btn-quick-action" onclick="copyGradePhones('5')">5학년</button>
+                <button class="btn-quick-action" onclick="copyGradePhones('4')">4학년</button>
+                <button class="btn-quick-action" onclick="copyGradePhones('3')">3학년</button>
+                <button class="btn-quick-action" onclick="copyGradePhones('2')">2학년</button>
+                <button class="btn-quick-action" onclick="copyGradePhones('1')">1학년</button>
             </div>
         </div>
         <div class="modal-scroll-body" id="contactsListContent"></div>
@@ -2560,6 +2571,16 @@
             numbers.join(','),
             `📱 학부모 번호 ${numbers.length}건이 복사되었습니다.\n문자(메시지) 앱의 '받는사람'란에 붙여넣어 단체로 보내 주세요.\n(그룹 문자로 전송되면 받는 분들끼리 서로 번호가 보일 수 있어요)`
         );
+    }
+
+    // 특정 학년만 골라서 학부모 번호를 복사 (검색창은 비우고 학년 필터만 그 학년으로 맞춘 뒤 복사)
+    function copyGradePhones(grade) {
+        const gradeSelect = document.getElementById('contactGradeSelect');
+        const searchInput = document.getElementById('contactSearchInput');
+        if (searchInput) searchInput.value = '';
+        if (gradeSelect) gradeSelect.value = grade;
+        renderEmergencyContacts();
+        copyAllContactPhonesOnly();
     }
 
     // 긴급 공지 문구 복사 (○ 부분은 붙여넣은 뒤 수정해서 사용)
