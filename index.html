@@ -5,6 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
+    <meta name="robots" content="noindex, nofollow">
 
     <!-- 구글 연동 설정 (100% 실시간 export 직결 스트림) -->
     <script>
@@ -12,17 +13,20 @@
         const ROSTER_GID = "1653839889";
         const UNIFORM_GID = "1881893260";
         const CONTACTS_GID = "812608822";
-        
+
         function getRealtimeCsvUrl(gid) {
             return `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/export?format=csv&gid=${gid}&_t=${Date.now()}`;
         }
-        
+
         const GOOGLE_SHEET_EDIT_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/edit?gid=${ROSTER_GID}#gid=${ROSTER_GID}`;
         const GOOGLE_SHEET_CONTACTS_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/edit?gid=${CONTACTS_GID}#gid=${CONTACTS_GID}`;
         const GOOGLE_SHEET_UNIFORM_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/edit?gid=${UNIFORM_GID}#gid=${UNIFORM_GID}`;
         const GOOGLE_SCRIPT_UNIFORM_API_URL = "https://script.google.com/macros/s/AKfycbwAdnLPVvTMIUGt538hM18pS_upBZt8FhKRTESjWXNonKFHOH5e59Vxi0hjDqYend-IHg/exec";
-        
-        const APP_VERSION = "v2.3.9 · b260921";
+
+        // ★ Code.gs 의 API_KEY 와 반드시 같은 값으로 맞춰 주세요.
+        const API_KEY = "dybbr2026hacohadrone";
+
+        const APP_VERSION = "v2.7.1 · b260922";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -210,8 +214,8 @@
         }
 
         .header-top-bar {
-            display: flex;
-            justify-content: space-between;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
             align-items: center;
             width: 100%;
             min-height: 32px;
@@ -260,7 +264,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            flex: 1;
             padding: 0 8px;
         }
 
@@ -269,11 +272,12 @@
             background: rgba(5, 150, 105, 0.3);
             border: 1px solid rgba(5, 150, 105, 0.6);
             color: #34d399;
-            padding: 4px 12px;
-            border-radius: 8px;
-            font-size: 12px;
+            padding: 0 9px;
+            border-radius: 6px;
+            font-size: 11px;
             font-weight: 800;
             cursor: pointer;
+            height: 30px;
             display: none;
             align-items: center;
             gap: 5px;
@@ -705,31 +709,37 @@
         <div id="lockOverlayDesc" class="lock-desc">
             선수 명단 보호중. 등록된 휴대폰 번호 또는 관리자 비밀번호를 입력해 주세요.
         </div>
-        
-        <!-- 최초 등록 시에만 나타나는 자녀 선수 이름 및 관계 선택 필드 (간결한 문구 적용) -->
+
+        <!-- 최초 등록 시에만 나타나는 자녀 선수 이름 및 관계 선택 필드 -->
         <div id="firstRegFields" style="display: none; margin-bottom: 16px; text-align: left;">
             <div class="lock-input-group">
                 <label>자녀 선수 이름 * (명단 대조 확인)</label>
-                <input type="text" id="regPlayerNameInput" class="lock-text-input" placeholder="예: 오승환 (공식 명단 이름)">
+                <input type="text" id="regPlayerNameInput" class="lock-text-input" placeholder="예: 오승환 (공식 명단 이름)" oninput="resetRegPick()">
+            </div>
+
+            <!-- 동명이인이 있을 때만 나타나는 선택칸 -->
+            <div id="regPickBox" class="lock-input-group" style="display: none;">
+                <label>⚠️ 같은 이름의 선수가 있습니다. 자녀를 선택해 주세요 *</label>
+                <select id="regPlayerPick" class="lock-select-input"></select>
             </div>
 
             <div class="lock-input-group">
-                <label>보호자 관계 선택 *</label>
+                <label>보호자 관계 선택 * (비상연락망 저장 위치)</label>
                 <select id="regRoleSelect" class="lock-select-input">
-                    <option value="아버님">👨 아버님</option>
-                    <option value="어머님">👩 어머님</option>
-                    <option value="기타">📞 기타</option>
+                    <option value="아버님">👨 아버님 (비상연락망 [아버님] 열에 저장)</option>
+                    <option value="어머님">👩 어머님 (비상연락망 [어머님] 열에 저장)</option>
+                    <option value="기타">📞 기타 (비상연락망 [기타연락처] 열에 저장)</option>
                 </select>
             </div>
         </div>
 
         <div style="margin-bottom: 16px;">
-            <input type="password" id="lockPasswordInput" class="lock-text-input" 
-                   style="text-align: center; font-size: 16px; letter-spacing: 2px; padding: 13px 14px;" 
-                   placeholder="휴대폰 번호 뒷 8자리 또는 비밀번호" 
+            <input type="password" id="lockPasswordInput" class="lock-text-input"
+                   style="text-align: center; font-size: 16px; letter-spacing: 2px; padding: 13px 14px;"
+                   placeholder="휴대폰 번호 뒷 8자리 또는 비밀번호"
                    onkeydown="if(event.key==='Enter' || event.key===' ' || event.code==='Space') { event.preventDefault(); verifyLockPassword(); }">
         </div>
-        
+
         <button id="lockSubmitBtn" class="btn-lock-submit" onclick="verifyLockPassword()">
             🔐 잠금 해제 (로그인)
         </button>
@@ -750,7 +760,6 @@
             <button class="btn-screen-lock" onclick="lockScreenNow()" title="즉시 화면 잠금 및 완전 로그아웃">🔒 화면 잠금</button>
         </div>
 
-        <!-- 로그인한 학부모님 표시 뱃지 (중앙 배치) -->
         <div class="header-top-center">
             <span id="userIdentityBadge" class="user-identity-badge" onclick="promptUserIdentity()" title="접속자 정보 변경"></span>
         </div>
@@ -805,7 +814,7 @@
             <button id="btnViewOrders" class="btn-orders-view" style="display: none;" onclick="openOrdersSummaryModal()">📋 유니폼 접수 & 발주 집계</button>
             <button id="btnViewLogs" class="btn-manage-pw" style="display: none; background: #4338ca;" onclick="openLogsModal()">📜 보안 활동 로그</button>
             <button id="btnManagePw" class="btn-manage-pw" style="display: none;" onclick="openPasswordManageModal()">🔑 비밀번호 관리</button>
-            <button id="btnSheetLink" class="btn-sheet-link" style="display: none;" onclick="window.open(GOOGLE_SHEET_EDIT_URL, '_blank')">📊 시트 편집창 열기</button>
+            <button id="btnSheetLink" class="btn-sheet-link" style="display: none;" onclick="window.open(GOOGLE_SHEET_EDIT_URL, '_blank')">📊 구글 시트 편집창 열기</button>
         </div>
     </div>
 
@@ -841,7 +850,7 @@
         <div class="modal-scroll-body">
             <div class="form-group">
                 <label>관리자 비밀번호</label>
-                <input type="password" id="adminPw" placeholder="비밀번호 입력" 
+                <input type="password" id="adminPw" placeholder="비밀번호 입력"
                        onkeydown="if(event.key==='Enter' || event.key===' ' || event.code==='Space') { event.preventDefault(); handleLogin(); }">
                 <span style="font-size: 11px; color: #64748b; line-height: 1.6; margin-top: 8px;">
                     • <b>최고관리자</b>: 비상연락망 + 유니폼 발주 집계 + 사진 등록 + 유니폼 접수 ON/OFF<br>
@@ -990,7 +999,7 @@
     </div>
 </div>
 
-<!-- 4. 관리자 비밀번호 관리 모달 (복원 완료) -->
+<!-- 4. 관리자 비밀번호 관리 모달 -->
 <div id="passwordModal" class="modal">
     <div class="modal-content" style="max-width: 440px;">
         <div class="modal-header" id="pwModalTitle">🔑 관리자 비밀번호 설정</div>
@@ -1080,13 +1089,96 @@
 </div>
 
 <script>
-    // 전역 변수 안전 선언
+    // ==========================================================
+    // 공통 유틸
+    // ==========================================================
+    function escapeHtml(v) {
+        return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+
+    function digitsOnly(v) { return String(v == null ? '' : v).replace(/[^0-9]/g, ''); }
+
+    // Apps Script 호출 (POST는 응답을 읽을 수 없는 no-cors 방식)
+    function postApi(payload) {
+        return fetch(GOOGLE_SCRIPT_UNIFORM_API_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(Object.assign({ key: API_KEY }, payload))
+        });
+    }
+
+    function apiGetUrl(params) {
+        return GOOGLE_SCRIPT_UNIFORM_API_URL + '?key=' + encodeURIComponent(API_KEY) + '&' + params + '&_t=' + Date.now();
+    }
+
+    // 응답을 읽어야 하는 조회/처리 전용 (비밀번호 검증/변경 등).
+    // 앱스 스크립트는 읽을 수 있는(GET) 응답은 안정적으로 지원하지만, 읽을 수 있는 POST 응답은
+    // 배포 환경에 따라 브라우저 CORS로 막혀 "Failed to fetch"가 나는 경우가 있어 GET 방식을 쓴다.
+    function apiGetJson(params) {
+        return fetch(apiGetUrl(params)).then(function (res) { return res.json(); });
+    }
+
+    // 관리자 비밀번호는 이제 구글 시트(Script Properties)에서 서버가 직접 검증한다.
+    // 성공 시 { result:'success', role:'super'|'sub'|'general' }, 실패/오류 시 role 없이 반환.
+    async function verifyAdminPasswordOnServer(pw) {
+        if (!pw) return null;
+        try {
+            const res = await apiGetJson('action=verifyAdminPw&pw=' + encodeURIComponent(pw));
+            return (res && res.result === 'success') ? res.role : null;
+        } catch (err) {
+            console.warn('관리자 비밀번호 서버 검증 실패:', err);
+            return null;
+        }
+    }
+
+    function copyText(text, okMsg) {
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(function () { alert(okMsg); }).catch(function () { fallbackCopy(text, okMsg); });
+        } else {
+            fallbackCopy(text, okMsg);
+        }
+    }
+
+    function fallbackCopy(text, okMsg) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        let ok = false;
+        try { ok = document.execCommand('copy'); } catch (e) {}
+        document.body.removeChild(ta);
+        alert(ok ? okMsg : '복사에 실패했습니다. 직접 선택해서 복사해 주세요.');
+    }
+
+    function isAuthValid() {
+        const exp = localStorage.getItem('daeyeon_auth_expire');
+        return !!exp && Date.now() < parseInt(exp, 10);
+    }
+
+    function clearAdminRoleStorage() {
+        localStorage.removeItem('daeyeon_admin_role');
+        sessionStorage.removeItem('daeyeon_admin_role');
+    }
+
+    // ==========================================================
+    // 전역 변수
+    // ==========================================================
     let players = [];
-    let currentRole = localStorage.getItem('daeyeon_admin_role') || sessionStorage.getItem('daeyeon_admin_role') || 'guest';
+    const VALID_ROLES = ['dev', 'super', 'sub', 'general'];
+    let currentRole = (function () {
+        if (!isAuthValid()) return 'guest';   // 만료된 관리자 권한이 되살아나지 않도록
+        const r = localStorage.getItem('daeyeon_admin_role') || sessionStorage.getItem('daeyeon_admin_role') || 'guest';
+        return VALID_ROLES.indexOf(r) !== -1 ? r : 'guest';
+    })();
     let selectedGrade = sessionStorage.getItem('daeyeon_selected_grade') || 'all';
     let currentView = localStorage.getItem('daeyeon_view_mode') || 'list';
     let savedSearchQuery = sessionStorage.getItem('daeyeon_search_query') || '';
-    let isUniformActive = localStorage.getItem('daeyeon_uniform_active') !== 'false';
+    let isUniformActive = localStorage.getItem('daeyeon_uniform_active') !== 'false';   // 서버 값으로 곧 덮어씀
     let emergencyContactsData = [];
     let loadedOrdersData = [];
     let activeOrderModalTab = 'players';
@@ -1104,36 +1196,36 @@
     }
 
     function getActiveUser() {
-        const authExpire = localStorage.getItem('daeyeon_auth_expire');
-        if (!authExpire || Date.now() > parseInt(authExpire, 10)) {
-            return null;
-        }
+        if (!isAuthValid()) return null;
         try {
             return JSON.parse(localStorage.getItem('daeyeon_active_user') || sessionStorage.getItem('daeyeon_active_user') || 'null');
-        } catch(e) {
+        } catch (e) {
             return null;
         }
+    }
+
+    function saveActiveUser(userObj) {
+        localStorage.setItem('daeyeon_active_user', JSON.stringify(userObj));
+        sessionStorage.setItem('daeyeon_active_user', JSON.stringify(userObj));
     }
 
     function updateUserIdentityBadge() {
         const badge = document.getElementById('userIdentityBadge');
         if (!badge) return;
 
-        const authExpire = localStorage.getItem('daeyeon_auth_expire');
-        const isAuthValid = authExpire && Date.now() < parseInt(authExpire, 10);
-
-        if (!isAuthValid || currentRole !== 'guest') {
+        if (!isAuthValid() || currentRole !== 'guest') {
             badge.style.display = 'none';
             return;
         }
 
         const activeUser = getActiveUser();
         if (activeUser && activeUser.name) {
+            const extra = (activeUser.children && activeUser.children.length > 1) ? ` 외 ${activeUser.children.length - 1}명` : '';
             badge.style.display = 'inline-flex';
             badge.style.background = 'rgba(5, 150, 105, 0.3)';
             badge.style.borderColor = 'rgba(5, 150, 105, 0.6)';
             badge.style.color = '#34d399';
-            badge.textContent = `👤 ${activeUser.name} (${activeUser.role || '보호자'})`;
+            badge.textContent = `👤 ${activeUser.name}${extra} (${activeUser.role || '보호자'})`;
         } else {
             badge.style.display = 'inline-flex';
             badge.style.background = 'rgba(100, 116, 139, 0.2)';
@@ -1141,6 +1233,19 @@
             badge.style.color = '#cbd5e1';
             badge.textContent = `👤 일반 열람자`;
         }
+    }
+
+    function promptUserIdentity() {
+        const u = getActiveUser();
+        const msg = (u && u.name)
+            ? `현재 로그인: ${u.name} (${u.role})\n다른 번호로 다시 로그인하시겠습니까?`
+            : '일반 열람 상태입니다.\n다시 로그인하시겠습니까?';
+        if (confirm(msg)) lockScreenNow();
+    }
+
+    function resetRegPick() {
+        const box = document.getElementById('regPickBox');
+        if (box) box.style.display = 'none';
     }
 
     function toggleFirstRegistrationMode() {
@@ -1152,10 +1257,12 @@
         const input = document.getElementById('lockPasswordInput');
         const btn = document.getElementById('lockSubmitBtn');
 
+        resetRegPick();
+
         if (isFirstRegMode) {
             regFields.style.display = 'block';
             title.textContent = "📝 최초 학부모/선수 등록";
-            desc.textContent = "선수 이름과 보호자 관계를 선택해 주세요.";
+            desc.textContent = "선수 이름과 보호자 관계를 선택해 주세요. [학부모 비상연락망] 시트에 정확히 저장됩니다.";
             link.textContent = "이미 등록하셨나요? (기존 번호로 로그인)";
             input.placeholder = "휴대폰 번호 입력 (예: 01012345678)";
             btn.textContent = "💾 등록 및 입장하기";
@@ -1200,20 +1307,14 @@
         if (!GOOGLE_SCRIPT_UNIFORM_API_URL || GOOGLE_SCRIPT_UNIFORM_API_URL.trim() === "") return;
         const user = getActiveUser();
         const identityStr = user ? `${user.name} (${user.role} · ${user.phone})` : "일반열람/미인증";
-        
-        const payload = {
+
+        postApi({
             action: "logActivity",
             clientId: getDeviceClientId(),
             eventType: eventType,
-            role: (role || "-", ` [${identityStr}]`),
+            role: (role || "-") + ` [${identityStr}]`,
             device: getDeviceInfo(),
             details: details || "-"
-        };
-        fetch(GOOGLE_SCRIPT_UNIFORM_API_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(payload)
         }).catch(err => console.warn("로그 전송 무시:", err));
     }
 
@@ -1236,9 +1337,8 @@
             const diff = parseInt(authExpire, 10) - Date.now();
             if (diff <= 0) {
                 localStorage.removeItem('daeyeon_auth_expire');
-                localStorage.removeItem('daeyeon_admin_role');
+                clearAdminRoleStorage();
                 localStorage.removeItem('daeyeon_active_user');
-                sessionStorage.removeItem('daeyeon_admin_role');
                 sessionStorage.removeItem('daeyeon_active_user');
                 currentRole = 'guest';
 
@@ -1268,11 +1368,10 @@
 
     function lockScreenNow() {
         localStorage.removeItem('daeyeon_auth_expire');
-        localStorage.removeItem('daeyeon_admin_role');
+        clearAdminRoleStorage();
         localStorage.removeItem('daeyeon_active_user');
-        sessionStorage.removeItem('daeyeon_admin_role');
         sessionStorage.removeItem('daeyeon_active_user');
-        
+
         const prevRole = currentRole;
         currentRole = 'guest';
 
@@ -1309,9 +1408,24 @@
         return [yyyy + mm + dd, dd + mm + yyyy, d + m + yyyy, yy + mm + dd, dd + mm + yy, d + m + yy];
     }
 
+    // 비상연락망 행에서 선수 찾기 (배번 우선, 없으면 이름)
+    function findContactRowFor(p) {
+        return emergencyContactsData.find(c => {
+            const cNo = parseInt(getColVal(c, '배번', '등번호'), 10) || 0;
+            const cName = getColVal(c, '선수이름', '이름', '선수명');
+            if (p.no > 0 && cNo > 0) return p.no === cNo;
+            return cName === p.name;
+        });
+    }
+
+    const ROLE_SLOT_KEYS = {
+        '아버님': ['아버님', '아버지'],
+        '어머님': ['어머님', '어머니'],
+        '기타': ['기타연락처', '기타', '추가연락처']
+    };
+
     async function verifyLockPassword() {
         const inputVal = document.getElementById('lockPasswordInput').value.trim();
-        const pws = getStoredPasswords();
         const devCodes = getDevCodes();
         let unlocked = false;
 
@@ -1327,46 +1441,56 @@
             sendActivityLog("잠금해제", "개발자", "오늘 자정까지 개발자 마스터 세션 해제");
             alert('🔓 [개발자 모드] 인증 완료 (오늘 밤 자정까지 유지됩니다)');
             unlocked = true;
-        } else if (inputVal === pws.super) {
-            localStorage.setItem('daeyeon_auth_expire', Date.now() + (4 * 60 * 60 * 1000));
-            currentRole = 'super';
-            localStorage.setItem('daeyeon_admin_role', 'super');
-            sessionStorage.setItem('daeyeon_admin_role', 'super');
-            localStorage.removeItem('daeyeon_active_user');
-            sessionStorage.removeItem('daeyeon_active_user');
-            sendActivityLog("잠금해제", "최고관리자", "최고관리자 4시간 세션 해제");
-            alert('🔓 [최고관리자] 인증 완료 (4시간 동안 유지됩니다)');
-            unlocked = true;
-        } else if (inputVal === pws.sub) {
-            localStorage.setItem('daeyeon_auth_expire', Date.now() + (2 * 60 * 60 * 1000));
-            currentRole = 'sub';
-            localStorage.setItem('daeyeon_admin_role', 'sub');
-            sessionStorage.setItem('daeyeon_admin_role', 'sub');
-            localStorage.removeItem('daeyeon_active_user');
-            sessionStorage.removeItem('daeyeon_active_user');
-            sendActivityLog("잠금해제", "보조관리자", "보조관리자 2시간 세션 해제");
-            alert('🔓 [보조관리자] 인증 완료 (2시간 동안 유지됩니다)');
-            unlocked = true;
-        } else if (inputVal === pws.general) {
-            localStorage.setItem('daeyeon_auth_expire', Date.now() + (1 * 60 * 60 * 1000));
-            currentRole = 'general';
-            localStorage.setItem('daeyeon_admin_role', 'general');
-            sessionStorage.setItem('daeyeon_admin_role', 'general');
-            localStorage.removeItem('daeyeon_active_user');
-            sessionStorage.removeItem('daeyeon_active_user');
-            sendActivityLog("잠금해제", "일반관리자", "일반관리자 1시간 세션 해제");
-            alert('🔓 [일반관리자] 인증 완료 (1시간 동안 유지됩니다)');
-            unlocked = true;
         } else if (inputVal === "1922") {
             localStorage.setItem('daeyeon_auth_expire', Date.now() + (10 * 60 * 1000));
             currentRole = 'guest';
-            localStorage.removeItem('daeyeon_admin_role');
-            sessionStorage.removeItem('daeyeon_admin_role');
+            clearAdminRoleStorage();
             localStorage.removeItem('daeyeon_active_user');
             sessionStorage.removeItem('daeyeon_active_user');
             sendActivityLog("잠금해제", "일반열람", "1922 열람전용 10분 해제 (수정권한 없음)");
-            alert('🔓 [일반 열람] 보안 인증 완료 (10분 동안 유지되며 수정 권한이 없습니다)');
+            alert('🔓 [일반 열람] 보안 인증 완료\n(10분 동안 유지되며 수정 권한이 없습니다)');
             unlocked = true;
+        } else if (inputVal) {
+            // 관리자(최고/보조/일반) 비밀번호는 이제 구글 시트(서버)에서 검증한다 → 모든 기기에 동일하게 적용됨
+            const submitBtn = document.getElementById('lockSubmitBtn');
+            const prevBtnText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = '확인 중...';
+            const serverRole = await verifyAdminPasswordOnServer(inputVal);
+            submitBtn.disabled = false;
+            submitBtn.textContent = prevBtnText;
+
+            if (serverRole === 'super') {
+                localStorage.setItem('daeyeon_auth_expire', Date.now() + (4 * 60 * 60 * 1000));
+                currentRole = 'super';
+                localStorage.setItem('daeyeon_admin_role', 'super');
+                sessionStorage.setItem('daeyeon_admin_role', 'super');
+                localStorage.removeItem('daeyeon_active_user');
+                sessionStorage.removeItem('daeyeon_active_user');
+                sendActivityLog("잠금해제", "최고관리자", "최고관리자 4시간 세션 해제");
+                alert('🔓 [최고관리자] 인증 완료\n(4시간 동안 유지됩니다)');
+                unlocked = true;
+            } else if (serverRole === 'sub') {
+                localStorage.setItem('daeyeon_auth_expire', Date.now() + (2 * 60 * 60 * 1000));
+                currentRole = 'sub';
+                localStorage.setItem('daeyeon_admin_role', 'sub');
+                sessionStorage.setItem('daeyeon_admin_role', 'sub');
+                localStorage.removeItem('daeyeon_active_user');
+                sessionStorage.removeItem('daeyeon_active_user');
+                sendActivityLog("잠금해제", "보조관리자", "보조관리자 2시간 세션 해제");
+                alert('🔓 [보조관리자] 인증 완료\n(2시간 동안 유지됩니다)');
+                unlocked = true;
+            } else if (serverRole === 'general') {
+                localStorage.setItem('daeyeon_auth_expire', Date.now() + (1 * 60 * 60 * 1000));
+                currentRole = 'general';
+                localStorage.setItem('daeyeon_admin_role', 'general');
+                sessionStorage.setItem('daeyeon_admin_role', 'general');
+                localStorage.removeItem('daeyeon_active_user');
+                sessionStorage.removeItem('daeyeon_active_user');
+                sendActivityLog("잠금해제", "일반관리자", "일반관리자 1시간 세션 해제");
+                alert('🔓 [일반관리자] 인증 완료\n(1시간 동안 유지됩니다)');
+                unlocked = true;
+            }
         }
 
         if (unlocked) {
@@ -1381,6 +1505,7 @@
             return;
         }
 
+        // ---------- 최초 등록 ----------
         if (isFirstRegMode) {
             const nameInput = document.getElementById('regPlayerNameInput').value.trim();
             const roleSelect = document.getElementById('regRoleSelect').value;
@@ -1395,15 +1520,47 @@
                 await loadGoogleSheetData();
             }
 
-            const targetPlayer = players.find(p => p.name === nameInput);
-            if (!targetPlayer) {
+            // 코칭스태프는 제외하고 같은 이름의 선수를 모두 찾는다
+            const candidates = players.filter(p => p.name === nameInput && !isStaff(p.grade));
+            if (candidates.length === 0) {
                 alert(`❌ '${nameInput}' 선수는 대연초 야구부 공식 명단에 등록되어 있지 않습니다.\n성명을 정확하게 입력해 주세요.`);
                 return;
             }
 
-            if (cleanPhone.length < 9) {
-                alert('휴대폰 번호를 올바르게 입력해 주세요.');
+            let targetPlayer = candidates[0];
+            if (candidates.length > 1) {
+                const pickBox = document.getElementById('regPickBox');
+                const pickSel = document.getElementById('regPlayerPick');
+                if (pickBox.style.display === 'none') {
+                    pickSel.innerHTML = '';
+                    candidates.forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = String(p.no);
+                        opt.textContent = `${p.grade}학년 · ${p.no ? 'No.' + p.no : '배번미정'} ${p.name}`;
+                        pickSel.appendChild(opt);
+                    });
+                    pickBox.style.display = 'flex';
+                    alert(`'${nameInput}' 선수가 ${candidates.length}명 있습니다.\n아래에서 자녀를 선택한 뒤 다시 눌러 주세요.`);
+                    return;
+                }
+                targetPlayer = candidates.find(p => String(p.no) === pickSel.value) || candidates[0];
+            }
+
+            if (cleanPhone.length < 10 || cleanPhone.length > 11) {
+                alert('휴대폰 번호를 올바르게 입력해 주세요. (예: 01012345678)');
                 return;
+            }
+
+            // 이미 다른 번호가 그 칸에 등록돼 있으면 막는다 (덮어쓰기 방지)
+            let alreadyRegistered = false;
+            const existingRow = findContactRowFor(targetPlayer);
+            if (existingRow) {
+                const cur = digitsOnly(getColVal(existingRow, ...ROLE_SLOT_KEYS[roleSelect]));
+                if (cur && cur !== cleanPhone) {
+                    alert(`이미 ${targetPlayer.name} 선수의 [${roleSelect}] 연락처가 다른 번호로 등록되어 있습니다.\n번호가 바뀌었다면 관리자에게 문의해 주세요.`);
+                    return;
+                }
+                if (cur === cleanPhone) alreadyRegistered = true;
             }
 
             const formattedPhone = formatPhone(cleanPhone);
@@ -1412,31 +1569,36 @@
             submitBtn.textContent = '비상연락망 시트 등록 중...';
 
             try {
-                await fetch(GOOGLE_SCRIPT_UNIFORM_API_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({
+                if (!alreadyRegistered) {
+                    await postApi({
                         action: "registerContact",
                         playerName: nameInput,
                         playerNo: targetPlayer.no || 0,
                         role: roleSelect,
                         phone: formattedPhone
-                    })
-                });
+                    });
+                }
 
-                const userObj = { name: nameInput, role: roleSelect, phone: formattedPhone, rawPhone: cleanPhone };
-                localStorage.setItem('daeyeon_active_user', JSON.stringify(userObj));
-                sessionStorage.setItem('daeyeon_active_user', JSON.stringify(userObj));
+                const userObj = {
+                    name: nameInput,
+                    no: targetPlayer.no || 0,
+                    role: roleSelect,
+                    phone: formattedPhone,
+                    rawPhone: cleanPhone,
+                    children: [{ name: nameInput, no: targetPlayer.no || 0 }]
+                };
+                clearAdminRoleStorage();
+                saveActiveUser(userObj);
                 localStorage.setItem('daeyeon_auth_expire', Date.now() + (60 * 60 * 1000));
                 currentRole = 'guest';
 
-                sendActivityLog("최초등록", roleSelect, `${nameInput} (${roleSelect}) 연락처 등록 완료 [${formattedPhone}]`);
+                sendActivityLog("최초등록", roleSelect, `${nameInput}${targetPlayer.no ? ' No.' + targetPlayer.no : ''} (${roleSelect}) 연락처 등록 완료 [${formattedPhone}]`);
 
                 alert(`🎉 인증 완료!\n${nameInput} 선수의 [${roleSelect}] 연락처로 비상연락망 시트에 저장되었습니다.\n(1시간 동안 유지되며, 내 자녀 정보 수정 권한이 부여됩니다.)`);
                 document.documentElement.classList.add('is-authenticated');
                 document.getElementById('lockOverlay').style.display = 'none';
                 startSessionCountdown();
+                updateAdminUI();
                 updateUserIdentityBadge();
                 loadGoogleSheetData();
             } catch (err) {
@@ -1448,15 +1610,18 @@
             return;
         }
 
+        // ---------- 등록된 휴대폰 번호로 로그인 ----------
         const cleanInput = inputVal.replace(/[^0-9]/g, '');
 
         if (emergencyContactsData && emergencyContactsData.length > 0 && cleanInput.length >= 4) {
+            const matches = [];
             for (let c of emergencyContactsData) {
-                const fPhone = getColVal(c, '아버님', '아버지').replace(/[^0-9]/g, '');
-                const mPhone = getColVal(c, '어머님', '어머니').replace(/[^0-9]/g, '');
-                const otherPhone = getColVal(c, '기타연락처', '기타', '추가연락처').replace(/[^0-9]/g, '');
-                const sPhone = getColVal(c, '학생연락처', '선수연락처').replace(/[^0-9]/g, '');
+                const fPhone = digitsOnly(getColVal(c, '아버님', '아버지'));
+                const mPhone = digitsOnly(getColVal(c, '어머님', '어머니'));
+                const otherPhone = digitsOnly(getColVal(c, '기타연락처', '기타', '추가연락처'));
+                const sPhone = digitsOnly(getColVal(c, '학생연락처', '선수연락처'));
                 const pName = getColVal(c, '선수이름', '이름');
+                const pNo = parseInt(getColVal(c, '배번', '등번호'), 10) || 0;
 
                 let matchedRole = "";
                 let matchedPhone = "";
@@ -1466,18 +1631,30 @@
                 else if (otherPhone && otherPhone.endsWith(cleanInput)) { matchedRole = "기타"; matchedPhone = otherPhone; }
                 else if (sPhone && sPhone.endsWith(cleanInput)) { matchedRole = "학생"; matchedPhone = sPhone; }
 
-                if (matchedRole) {
-                    const userObj = { name: pName, role: matchedRole, phone: formatPhone(matchedPhone), rawPhone: matchedPhone };
-                    localStorage.setItem('daeyeon_active_user', JSON.stringify(userObj));
-                    sessionStorage.setItem('daeyeon_active_user', JSON.stringify(userObj));
-                    localStorage.setItem('daeyeon_auth_expire', Date.now() + (60 * 60 * 1000));
-                    currentRole = 'guest';
+                if (matchedRole) matches.push({ name: pName, no: pNo, role: matchedRole, phone: matchedPhone });
+            }
 
-                    sendActivityLog("로그인", matchedRole, `${pName} (${matchedRole}) 휴대폰 번호 로그인 성공`);
-                    alert(`환영합니다, ${pName} 보호자님! (1시간 동안 로그인 유지)`);
-                    unlocked = true;
-                    break;
-                }
+            if (matches.length > 0) {
+                const primary = matches[0];
+                // 같은 번호로 등록된 자녀(형제자매)를 모두 묶는다
+                const siblings = matches.filter(m => m.phone === primary.phone);
+                const userObj = {
+                    name: primary.name,
+                    no: primary.no,
+                    role: primary.role,
+                    phone: formatPhone(primary.phone),
+                    rawPhone: primary.phone,
+                    children: siblings.map(s => ({ name: s.name, no: s.no }))
+                };
+                clearAdminRoleStorage();
+                saveActiveUser(userObj);
+                localStorage.setItem('daeyeon_auth_expire', Date.now() + (60 * 60 * 1000));
+                currentRole = 'guest';
+
+                const names = siblings.map(s => s.name).join('·');
+                sendActivityLog("로그인", primary.role, `${names} (${primary.role}) 휴대폰 번호 로그인 성공`);
+                alert(`환영합니다, ${names} 보호자님!\n(1시간 동안 로그인 유지)`);
+                unlocked = true;
             }
         }
 
@@ -1503,36 +1680,40 @@
 
     function handleImgError(el) { el.onerror = null; el.src = defaultAvatar; }
 
-    function getStoredPasswords() {
-        return {
-            super: localStorage.getItem('daeyeon_pw_super') || '0000',
-            sub: localStorage.getItem('daeyeon_pw_sub') || '1111',
-            general: localStorage.getItem('daeyeon_pw_general') || '2222'
-        };
-    }
+    // 관리자(최고/보조/일반) 비밀번호는 이제 구글 시트(서버)에서만 검증/저장된다.
+    // → verifyAdminPasswordOnServer() / apiGetJson('action=changeAdminPw&...') 참고
 
-    function isStaff(grade) { 
+    function isStaff(grade) {
         const g = String(grade || '').trim();
         return g.includes('감독') || g.includes('코치') || g.includes('지도자');
     }
     function isSuperOrDev() { return currentRole === 'super' || currentRole === 'dev'; }
 
+    // 로그인한 학부모(activeUser.children)에 등록된 "내 자녀"인지 확인 → 자기 자녀 사진만 변경 가능
+    function isParentOfPlayer(p) {
+        const activeUser = getActiveUser();
+        if (!activeUser || !activeUser.children || !activeUser.children.length) return false;
+        return activeUser.children.some(c => (p.no && c.no) ? (c.no === p.no) : (c.name === p.name));
+    }
+
     function getGradeBadge(grade) {
-        if (isStaff(grade)) return `<span class="grade-tag grade-staff">${grade}</span>`;
-        return `<span class="grade-tag grade-${grade}">${grade}학년</span>`;
+        const g = escapeHtml(grade);
+        if (isStaff(grade)) return `<span class="grade-tag grade-staff">${g}</span>`;
+        return `<span class="grade-tag grade-${g}">${g}학년</span>`;
     }
 
     function getPosBadge(pos, grade) {
         if (!pos || pos === '-' || pos === '정보없음' || pos === '미정') return '<span class="pos-tag pos-none">미정</span>';
         const p = String(pos).trim();
-        if (grade === '감독' || p.includes('감독') || p.includes('총괄')) return `<span class="pos-tag pos-manager">${p}</span>`;
-        if (grade === '코치' || p.includes('코치')) return `<span class="pos-tag pos-coach">${p}</span>`;
-        if (p.includes('투수')) return `<span class="pos-tag pos-pitcher">${p}</span>`;
-        if (p.includes('포수')) return `<span class="pos-tag pos-catcher">${p}</span>`;
-        if (p.includes('내야') || p.includes('1루') || p.includes('2루') || p.includes('3루') || p.includes('유격')) return `<span class="pos-tag pos-infield">${p}</span>`;
-        if (p.includes('외야') || p.includes('좌익') || p.includes('중견') || p.includes('우익')) return `<span class="pos-tag pos-outfield">${p}</span>`;
-        if (p.includes('지명') || p.toUpperCase().includes('DH')) return `<span class="pos-tag pos-dh">${p}</span>`;
-        return `<span class="pos-tag pos-etc">${p}</span>`;
+        const e = escapeHtml(p);
+        if (grade === '감독' || p.includes('감독') || p.includes('총괄')) return `<span class="pos-tag pos-manager">${e}</span>`;
+        if (grade === '코치' || p.includes('코치')) return `<span class="pos-tag pos-coach">${e}</span>`;
+        if (p.includes('투수')) return `<span class="pos-tag pos-pitcher">${e}</span>`;
+        if (p.includes('포수')) return `<span class="pos-tag pos-catcher">${e}</span>`;
+        if (p.includes('내야') || p.includes('1루') || p.includes('2루') || p.includes('3루') || p.includes('유격')) return `<span class="pos-tag pos-infield">${e}</span>`;
+        if (p.includes('외야') || p.includes('좌익') || p.includes('중견') || p.includes('우익')) return `<span class="pos-tag pos-outfield">${e}</span>`;
+        if (p.includes('지명') || p.toUpperCase().includes('DH')) return `<span class="pos-tag pos-dh">${e}</span>`;
+        return `<span class="pos-tag pos-etc">${e}</span>`;
     }
 
     function getBtBadge(bt, grade) {
@@ -1543,26 +1724,27 @@
         if (val.includes('우투좌타') || val === '우좌') return `<span class="bt-tag bt-rl">우투좌타</span>`;
         if (val.includes('좌투좌타') || val === '좌좌') return `<span class="bt-tag bt-ll">좌투좌타</span>`;
         if (val.includes('좌투우타') || val === '좌우') return `<span class="bt-tag bt-lr">좌투우타</span>`;
-        return `<span class="bt-tag bt-etc">${val}</span>`;
+        return `<span class="bt-tag bt-etc">${escapeHtml(val)}</span>`;
     }
 
     function formatBirth(p) {
         const hasVal = p.birth && p.birth !== '-' && p.birth !== '0' && p.birth.trim() !== '';
         const bHidden = !!p.hideBirth;
+        const b = hasVal ? escapeHtml(p.birth) : '';
 
         if (bHidden) {
             if (currentRole === 'guest') {
                 return '<span class="text-private">비공개</span>';
             } else {
-                return hasVal ? `${p.birth}<span class="admin-private-badge">비공개</span>` : '<span class="admin-private-badge">비공개</span>';
+                return hasVal ? `${b}<span class="admin-private-badge">비공개</span>` : '<span class="admin-private-badge">비공개</span>';
             }
         }
-        return hasVal ? p.birth : '-';
+        return hasVal ? b : '-';
     }
 
     function formatPhys(p) {
-        const h = (p.height && p.height !== '0' && p.height !== '-' && p.height.trim() !== '') ? p.height : '';
-        const w = (p.weight && p.weight !== '0' && p.weight !== '-' && p.weight.trim() !== '') ? p.weight : '';
+        const h = (p.height && p.height !== '0' && p.height !== '-' && p.height.trim() !== '') ? escapeHtml(p.height) : '';
+        const w = (p.weight && p.weight !== '0' && p.weight !== '-' && p.weight.trim() !== '') ? escapeHtml(p.weight) : '';
         const hHidden = !!p.hideHeight;
         const wHidden = !!p.hideWeight;
 
@@ -1620,15 +1802,35 @@
     }
 
     function goToPlayer(path) {
-        const user = getActiveUser();
-        let isMyChild = false;
-        if (user && user.name) {
-            const parts = path.split('/');
-            const playerName = decodeURIComponent(parts[parts.length - 1]);
-            if (user.name === playerName) isMyChild = true;
+        window.location.href = `player.html?path=${encodeURIComponent(path)}`;
+    }
+
+    // 목록/카드 클릭은 이벤트 위임으로 처리 (이름에 따옴표가 있어도 안전)
+    document.addEventListener('click', function (ev) {
+        const upBtn = ev.target.closest('.btn-upload-photo');
+        if (upBtn) {
+            ev.stopPropagation();
+            openPhotoUploadModal(parseInt(upBtn.dataset.no, 10) || 0, upBtn.dataset.name || '');
+            return;
         }
-        const extraParam = isMyChild ? '&myChild=true' : '';
-        window.location.href = `player.html?path=${encodeURIComponent(path)}${extraParam}`;
+        const row = ev.target.closest('[data-path]');
+        if (row) goToPlayer(row.dataset.path);
+    });
+
+    // ==========================================================
+    // 유니폼 접수 ON/OFF (서버에 저장 → 모든 접속자에게 반영)
+    // ==========================================================
+    async function fetchSettings() {
+        try {
+            const res = await fetch(apiGetUrl('action=getSettings'), { cache: 'no-store' });
+            const json = await res.json();
+            if (json && typeof json.uniformActive === 'boolean') {
+                isUniformActive = json.uniformActive;
+                localStorage.setItem('daeyeon_uniform_active', isUniformActive ? 'true' : 'false');
+                return json;
+            }
+        } catch (e) { console.warn('설정 불러오기 실패:', e); }
+        return null;
     }
 
     function updateUniformButtonVisibility() {
@@ -1646,10 +1848,26 @@
                 cta.style.display = 'none';
             }
         }
+        const tg = document.getElementById('btnToggleUniform');
+        if (tg) tg.textContent = `👕 접수기능: ${isUniformActive ? 'ON' : 'OFF'}`;
+    }
+
+    async function toggleUniformFeature() {
+        const next = !isUniformActive;
+        isUniformActive = next;
+        localStorage.setItem('daeyeon_uniform_active', next ? 'true' : 'false');
+        updateUniformButtonVisibility();
+        try {
+            await postApi({ action: 'setUniformActive', active: next });
+            sendActivityLog("유니폼접수설정", currentRole, `유니폼 접수 상태 변경: [${next ? 'ON' : 'OFF'}]`);
+        } catch (err) {
+            alert('접수 상태를 서버에 저장하지 못했습니다: ' + err.message);
+        }
     }
 
     function getPlayerPhotoUrl(p) {
-        const customPhotos = JSON.parse(localStorage.getItem('daeyeon_custom_photos') || '{}');
+        let customPhotos = {};
+        try { customPhotos = JSON.parse(localStorage.getItem('daeyeon_custom_photos') || '{}'); } catch (e) {}
         if (p.photoLink && p.photoLink !== '-' && p.photoLink.startsWith('http')) return p.photoLink;
         if (p.no && customPhotos[p.no]) return customPhotos[p.no];
         if (!p.no && customPhotos[p.name]) return customPhotos[p.name];
@@ -1682,15 +1900,15 @@
         const filtered = players.filter(p => {
             const isVisible = (p.visible !== false);
             if (!isSuperOrDev() && !isVisible) return false;
-            
+
             let matchGrade = false;
             if (selectedGrade === 'all') matchGrade = true;
             else if (selectedGrade === 'staff') matchGrade = isStaff(p.grade);
             else matchGrade = (p.grade.toString() === selectedGrade);
 
-            const matchSearch = p.name.toLowerCase().includes(rawQuery) || 
-                                (p.no && (p.no.toString().includes(rawQuery) || (numberQuery && p.no.toString() === numberQuery))) || 
-                                (p.pos && p.pos.includes(rawQuery)) || 
+            const matchSearch = p.name.toLowerCase().includes(rawQuery) ||
+                                (p.no && (p.no.toString().includes(rawQuery) || (numberQuery && p.no.toString() === numberQuery))) ||
+                                (p.pos && p.pos.includes(rawQuery)) ||
                                 (p.bt && p.bt.includes(rawQuery));
             return matchGrade && matchSearch;
         }).sort((a, b) => {
@@ -1722,7 +1940,7 @@
         notice.style.display = 'none';
 
         tableBody.innerHTML = filtered.map(p => {
-            const photoUrl = getPlayerPhotoUrl(p);
+            const photoUrl = escapeHtml(getPlayerPhotoUrl(p));
             const isHidden = (p.visible === false);
             const hiddenBadge = isHidden ? `<span class="hidden-badge">숨김</span>` : '';
             const playerPath = isStaff(p.grade) ? `staff/${p.no || p.name}` : `${p.grade}/${p.no || p.name}`;
@@ -1737,10 +1955,10 @@
             }
 
             return `
-                <tr class="clickable-row ${isHidden ? 'is-hidden' : ''}" onclick="goToPlayer('${playerPath}')">
+                <tr class="clickable-row ${isHidden ? 'is-hidden' : ''}" data-path="${escapeHtml(playerPath)}">
                     <td class="td-no">${noDisplayText}</td>
                     <td>${photoCell}</td>
-                    <td class="td-name">${p.name}${hiddenBadge}</td>
+                    <td class="td-name">${escapeHtml(p.name)}${hiddenBadge}</td>
                     <td>${getGradeBadge(p.grade)}</td>
                     <td>${getPosBadge(p.pos, p.grade)}</td>
                     <td>${getBtBadge(p.bt, p.grade)}</td>
@@ -1751,7 +1969,7 @@
         }).join('');
 
         cardContainer.innerHTML = filtered.map(p => {
-            const photoUrl = getPlayerPhotoUrl(p);
+            const photoUrl = escapeHtml(getPlayerPhotoUrl(p));
             const isHidden = (p.visible === false);
             const hiddenBadge = isHidden ? `<span class="hidden-badge">숨김</span>` : '';
             const posBadge = (p.pos && p.pos !== '-' && p.pos !== '정보없음' && p.pos !== '미정') ? getPosBadge(p.pos, p.grade) : '';
@@ -1759,7 +1977,7 @@
             const noBadgeText = p.no ? `No.${p.no}` : '배번미정';
             const noNameText = p.no ? `<span class="card-name-no">No.${p.no}</span>` : '';
 
-            const uploadBtnHtml = isSuperOrDev() ? `<button type="button" class="btn-upload-photo" onclick="event.stopPropagation(); openPhotoUploadModal(${p.no || 0}, '${p.name}')">📷 사진 변경</button>` : '';
+            const uploadBtnHtml = (isSuperOrDev() || isParentOfPlayer(p)) ? `<button type="button" class="btn-upload-photo" data-no="${p.no || 0}" data-name="${escapeHtml(p.name)}">📷 사진 변경</button>` : '';
 
             let cardPhotoHtml = '';
             if (p.hidePhoto && !canViewPhoto) {
@@ -1778,7 +1996,7 @@
                     <div class="card-photo-box">
                         <span class="card-no-badge">${noBadgeText}</span>
                         <div class="card-pos">${posBadge}</div>
-                        <img class="card-img" src="${photoUrl}" alt="" onerror="handleImgError(this)">
+                        <img class="card-img" src="${photoUrl}" alt="" loading="lazy" onerror="handleImgError(this)">
                         ${adminPhotoBadge}
                         ${uploadBtnHtml}
                     </div>
@@ -1786,12 +2004,12 @@
             }
 
             return `
-                <div class="player-card ${isHidden ? 'is-hidden' : ''}" onclick="goToPlayer('${playerPath}')">
+                <div class="player-card ${isHidden ? 'is-hidden' : ''}" data-path="${escapeHtml(playerPath)}">
                     ${cardPhotoHtml}
                     <div class="card-info">
                         <div class="card-name-row">
                             <span class="card-name">
-                                ${noNameText}<span>${p.name}</span>${hiddenBadge}
+                                ${noNameText}<span>${escapeHtml(p.name)}</span>${hiddenBadge}
                             </span>
                             ${getGradeBadge(p.grade)}
                         </div>
@@ -1806,6 +2024,62 @@
         }).join('');
     }
 
+    // ==========================================================
+    // 유니폼 주문 현황 / 발주 집계
+    // ==========================================================
+    const ITEM_ORDER = ['모자', '유니폼상의', '바지', '여름훈련티', '겨울훈련티', '바람막이', '풀오버', '겨울점퍼'];
+
+    // "95 (2벌)" → {size:'95', qty:2}, "95" → {size:'95', qty:1}, "프리 (2개)" → {size:'프리', qty:2}
+    function parseOrderCell(val) {
+        const s = String(val || '').trim();
+        const m = s.match(/^(.*?)\s*\((\d+)\s*(?:벌|개)?\)\s*$/);
+        if (m) return { size: m[1].trim() || '-', qty: parseInt(m[2], 10) || 1 };
+        return { size: s, qty: 1 };
+    }
+
+    function itemUnit(item) { return item === '모자' ? '개' : '벌'; }
+
+    function buildOrderSummary() {
+        const summary = {};
+        let totalQty = 0;
+        const add = function (item, label, qty) {
+            if (!summary[item]) summary[item] = {};
+            summary[item][label] = (summary[item][label] || 0) + qty;
+            totalQty += qty;
+        };
+
+        // 날짜가 없어도 사이즈가 있으면 신청한 것으로 집계 (hasOrder)
+        loadedOrdersData.filter(o => o.hasOrder).forEach(o => {
+            const items = o.items || {};
+            for (const k in items) {
+                const val = items[k];
+                if (!val || val === '-') continue;
+                if (k === '바지(허리)' || k === '바지(기장)') continue;
+                const p = parseOrderCell(val);
+                add(k, p.size, p.qty);
+            }
+            const waist = items['바지(허리)'];
+            const len = items['바지(기장)'];
+            const hasWaist = waist && waist !== '-';
+            const hasLen = len && len !== '-';
+            if (hasWaist || hasLen) {
+                const lp = hasLen ? parseOrderCell(len) : { size: '기본', qty: 1 };
+                add('바지', `${hasWaist ? waist : '허리?'} · 기장 ${lp.size}`, lp.qty);
+            }
+        });
+
+        const sorted = {};
+        Object.keys(summary).sort((a, b) => {
+            const ia = ITEM_ORDER.indexOf(a), ib = ITEM_ORDER.indexOf(b);
+            return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+        }).forEach(k => { sorted[k] = summary[k]; });
+        return { summary: sorted, totalQty: totalQty };
+    }
+
+    function sortedSizeLabels(sizes) {
+        return Object.keys(sizes).sort((a, b) => ((parseFloat(a) || 0) - (parseFloat(b) || 0)) || a.localeCompare(b, 'ko'));
+    }
+
     async function openOrdersSummaryModal() {
         document.getElementById('ordersModal').style.display = 'flex';
         const content = document.getElementById('ordersListContent');
@@ -1813,7 +2087,7 @@
 
         try {
             const realtimeUniformUrl = getRealtimeCsvUrl(UNIFORM_GID);
-            const res = await fetch(realtimeUniformUrl, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } });
+            const res = await fetch(realtimeUniformUrl, { cache: 'no-store' });
 
             if (res.ok) {
                 const csvText = await res.text();
@@ -1821,7 +2095,7 @@
                     Papa.parse(csvText, {
                         header: false,
                         skipEmptyLines: 'greedy',
-                        complete: function(results) {
+                        complete: function (results) {
                             if (results.data && results.data.length > 1) {
                                 const headerRow = results.data[0].map(h => String(h || '').trim());
                                 const findIdx = (...names) => {
@@ -1892,7 +2166,7 @@
                                         weight: (w && w !== '0') ? w + 'kg' : '-',
                                         date: reqDate || '-',
                                         items: items,
-                                        hasOrder: hasAnyOrder
+                                        hasOrder: hasAnyOrder      // 신청날짜와 무관하게 품목이 있으면 신청함
                                     };
                                 }).filter(item => item.playerName);
 
@@ -1926,7 +2200,7 @@
                 return;
             }
             content.innerHTML = orderedList.map((o, idx) => {
-                const pNo = o.playerNo && o.playerNo !== '-' ? `No.${o.playerNo} ` : '';
+                const pNo = o.playerNo && o.playerNo !== '-' ? `No.${escapeHtml(o.playerNo)} ` : '';
                 const activeItems = [];
                 const items = o.items || {};
                 for (let k in items) {
@@ -1935,92 +2209,100 @@
                 return `
                     <div class="order-card">
                         <div class="order-card-header">
-                            <span class="order-player-title">#${idx+1}. ${pNo}${o.playerName} (${o.playerGrade})</span>
-                            <span class="order-date-text">${o.date}</span>
+                            <span class="order-player-title">#${idx + 1}. ${pNo}${escapeHtml(o.playerName)} (${escapeHtml(o.playerGrade)})</span>
+                            <span class="order-date-text">${escapeHtml(o.date)}</span>
                         </div>
-                        <div class="order-meta-bar"><span>📏 키: ${o.height} / 몸무게: ${o.weight}</span></div>
+                        <div class="order-meta-bar"><span>📏 키: ${escapeHtml(o.height)} / 몸무게: ${escapeHtml(o.weight)}</span></div>
                         <table class="order-table">
                             <thead><tr><th style="text-align:left; padding-left:10px;">신청 품목</th><th style="text-align:right; padding-right:10px;">사이즈/옵션</th></tr></thead>
                             <tbody>
-                                ${activeItems.map(it => `<tr><td style="text-align:left; padding-left:10px; font-weight:700;">⚾ ${it.name}</td><td style="text-align:right; padding-right:10px;"><span class="size-badge">${it.val}</span></td></tr>`).join('')}
+                                ${activeItems.map(it => `<tr><td style="text-align:left; padding-left:10px; font-weight:700;">⚾ ${escapeHtml(it.name)}</td><td style="text-align:right; padding-right:10px;"><span class="size-badge">${escapeHtml(it.val)}</span></td></tr>`).join('')}
                             </tbody>
                         </table>
                     </div>
                 `;
             }).join('');
         } else if (tab === 'summary') {
-            const summary = {};
-            let totalOrderCount = 0;
-            loadedOrdersData.filter(o => o.hasOrder).forEach(o => {
-                const items = o.items || {};
-                for (let k in items) {
-                    const val = items[k];
-                    if (val && val !== '-') {
-                        if (!summary[k]) summary[k] = {};
-                        summary[k][val] = (summary[k][val] || 0) + 1;
-                        totalOrderCount++;
-                    }
-                }
-            });
+            const built = buildOrderSummary();
+            const summary = built.summary;
             if (Object.keys(summary).length === 0) {
                 content.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8; font-weight:600;">집계할 주문 데이터가 없습니다.</div>';
                 return;
             }
-            let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;"><span style="font-size:12px; font-weight:800; color:#1e40af;">총 발주 품목: ${totalOrderCount}건</span><button class="btn-quick-action" style="background:#0284c7; color:white; border:none; padding:5px 10px; font-size:11px;" onclick="copyOrderSummaryText()">📋 발주용 텍스트 복사</button></div>`;
+            let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;"><span style="font-size:12px; font-weight:800; color:#1e40af;">총 발주 수량: ${built.totalQty}점 (${Object.keys(summary).length}종)</span><button class="btn-quick-action" style="background:#0284c7; color:white; border:none; padding:5px 10px; font-size:11px;" onclick="copyOrderSummaryText()">📋 발주용 텍스트 복사</button></div>`;
             for (let item in summary) {
                 const sizes = summary[item];
-                html += `<div class="summary-box"><div class="summary-title"><span>⚾ ${item}</span></div><div style="display:flex; flex-wrap:wrap; gap:4px;">${Object.keys(sizes).map(s => `<span class="summary-item-badge"><b>${s}</b>: <span style="color:#c8102e; font-weight:800;">${sizes[s]}</span>벌</span>`).join('')}</div></div>`;
+                const unit = itemUnit(item);
+                html += `<div class="summary-box"><div class="summary-title"><span>⚾ ${escapeHtml(item)}</span></div><div style="display:flex; flex-wrap:wrap; gap:4px;">${sortedSizeLabels(sizes).map(s => `<span class="summary-item-badge"><b>${escapeHtml(s)}</b>: <span style="color:#c8102e; font-weight:800;">${sizes[s]}</span>${unit}</span>`).join('')}</div></div>`;
             }
             content.innerHTML = html;
         } else if (tab === 'unordered') {
-            const unordered = loadedOrdersData.filter(o => !o.hasOrder);
-            if (unordered.length === 0) {
+            const list = loadedOrdersData.filter(o => !o.hasOrder);
+            if (list.length === 0) {
                 content.innerHTML = '<div style="text-align:center; padding:40px; color:#15803d; font-weight:700;">🎉 모든 선수가 유니폼 신청을 완료했습니다!</div>';
                 return;
             }
-            content.innerHTML = `<div style="font-size:12px; font-weight:800; color:#b91c1c; margin-bottom:10px;">⚠️ 아직 신청하지 않은 선수 (총 ${unordered.length}명)</div><div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:6px;">${unordered.map(u => `<div style="background:#fff5f5; border:1px solid #fecaca; border-radius:6px; padding:8px 10px; font-size:12px; display:flex; justify-content:space-between; align-items:center;"><span style="font-weight:800; color:#991b1b;">${u.playerNo !== '-' ? 'No.'+u.playerNo+' ' : ''}${u.playerName}</span><span style="font-size:11px; color:#64748b;">${u.playerGrade}</span></div>`).join('')}</div>`;
+            content.innerHTML = `<div style="font-size:12px; font-weight:800; color:#b91c1c; margin-bottom:10px;">⚠️ 아직 신청하지 않은 선수 (총 ${list.length}명)</div><div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:6px;">${list.map(u => `<div style="background:#fff5f5; border:1px solid #fecaca; border-radius:6px; padding:8px 10px; font-size:12px; display:flex; justify-content:space-between; align-items:center;"><span style="font-weight:800; color:#991b1b;">${u.playerNo !== '-' ? 'No.' + escapeHtml(u.playerNo) + ' ' : ''}${escapeHtml(u.playerName)}</span><span style="font-size:11px; color:#64748b;">${escapeHtml(u.playerGrade)}</span></div>`).join('')}</div>`;
         }
     }
 
     function copyOrderSummaryText() {
-        const summary = {};
-        loadedOrdersData.filter(o => o.hasOrder).forEach(o => {
-            const items = o.items || {};
-            for (let k in items) {
-                const val = items[k];
-                if (val && val !== '-') {
-                    if (!summary[k]) summary[k] = {};
-                    summary[k][val] = (summary[k][val] || 0) + 1;
-                }
-            }
-        });
+        const built = buildOrderSummary();
         let text = "[대연초 야구부 유니폼 발주 집계 내역]\n";
-        for (let item in summary) {
+        for (let item in built.summary) {
+            const unit = itemUnit(item);
             text += `\n■ ${item}\n`;
-            for (let size in summary[item]) text += ` - ${size}: ${summary[item][size]}벌\n`;
+            const sizes = built.summary[item];
+            sortedSizeLabels(sizes).forEach(size => { text += ` - ${size}: ${sizes[size]}${unit}\n`; });
         }
-        navigator.clipboard.writeText(text).then(() => alert("📋 발주용 텍스트가 복사되었습니다!"));
+        text += `\n총 ${built.totalQty}점`;
+        copyText(text, "📋 발주용 텍스트가 복사되었습니다!");
     }
 
+    // ==========================================================
+    // 유니폼 주문 신청
+    // ==========================================================
     function openUniformModal() {
         if (!isUniformActive && !isSuperOrDev()) {
             alert('현재는 유니폼 접수 기간이 아닙니다.');
             return;
         }
         const select = document.getElementById('ordPlayerSelect');
-        select.innerHTML = '<option value="">-- 선수를 선택해 주세요 --</option>';
+        select.innerHTML = '';
+        const first = document.createElement('option');
+        first.value = '';
+        first.textContent = '-- 선수를 선택해 주세요 --';
+        select.appendChild(first);
+
         players.filter(p => !isStaff(p.grade) && (isSuperOrDev() || p.visible !== false)).forEach(p => {
-            const prefix = p.no ? `No.${p.no} ` : '';
-            select.innerHTML += `<option value="${p.name}" data-no="${p.no}" data-grade="${p.grade}" data-h="${p.height||''}" data-w="${p.weight||''}">${prefix}${p.name} (${p.grade}학년)</option>`;
+            const opt = document.createElement('option');
+            opt.value = p.name;
+            opt.textContent = `${p.no ? 'No.' + p.no + ' ' : ''}${p.name} (${p.grade}학년)`;
+            opt.dataset.name = p.name;
+            opt.dataset.no = String(p.no || 0);
+            opt.dataset.grade = p.grade;
+            opt.dataset.h = p.height || '';
+            opt.dataset.w = p.weight || '';
+            select.appendChild(opt);
         });
 
+        // 로그인한 보호자의 자녀가 1명이면 자동 선택 (배번 우선, 동명이인 방지)
         const activeUser = getActiveUser();
         if (activeUser && activeUser.name) {
-            for (let i = 0; i < select.options.length; i++) {
-                if (select.options[i].value === activeUser.name) {
-                    select.selectedIndex = i;
-                    handleUniformPlayerChange(activeUser.name);
-                    break;
+            const children = (activeUser.children && activeUser.children.length)
+                ? activeUser.children
+                : [{ name: activeUser.name, no: activeUser.no || 0 }];
+            if (children.length === 1) {
+                const child = children[0];
+                for (let i = 0; i < select.options.length; i++) {
+                    const o = select.options[i];
+                    const sameNo = child.no > 0 && parseInt(o.dataset.no, 10) === child.no;
+                    const sameName = !(child.no > 0) && o.dataset.name === child.name;
+                    if (sameNo || sameName) {
+                        select.selectedIndex = i;
+                        handleUniformPlayerChange(o.value);
+                        break;
+                    }
                 }
             }
         }
@@ -2035,9 +2317,9 @@
         const select = document.getElementById('ordPlayerSelect');
         const opt = select.options[select.selectedIndex];
         if (!opt || !opt.value) return;
-        document.getElementById('ordPlayerGrade').value = (opt.getAttribute('data-grade') || '') + '학년';
-        document.getElementById('ordPlayerHeight').value = opt.getAttribute('data-h') || '';
-        document.getElementById('ordPlayerWeight').value = opt.getAttribute('data-w') || '';
+        document.getElementById('ordPlayerGrade').value = (opt.dataset.grade || '') + '학년';
+        document.getElementById('ordPlayerHeight').value = opt.dataset.h || '';
+        document.getElementById('ordPlayerWeight').value = opt.dataset.w || '';
     }
 
     function toggleRowInputs(chk) {
@@ -2055,11 +2337,11 @@
     async function submitUniformOrder() {
         const select = document.getElementById('ordPlayerSelect');
         const opt = select.options[select.selectedIndex];
-        const playerName = select.value;
-        if (!playerName) { alert('대상 선수를 선택해 주세요.'); return; }
+        if (!opt || !opt.value) { alert('대상 선수를 선택해 주세요.'); return; }
 
-        const playerNo = opt.getAttribute('data-no') || '0';
-        const playerGrade = opt.getAttribute('data-grade') || '';
+        const playerName = opt.dataset.name || opt.value;
+        const playerNo = parseInt(opt.dataset.no, 10) || 0;
+        const playerGrade = opt.dataset.grade || '';
         const height = document.getElementById('ordPlayerHeight').value.trim();
         const weight = document.getElementById('ordPlayerWeight').value.trim();
         const activeUser = getActiveUser();
@@ -2087,28 +2369,33 @@
 
         if (checkedCount === 0) { alert('최소 1개 이상의 품목을 선택해 주세요.'); return; }
 
-        const orderData = {
-            action: "submitOrder",
-            playerNo: playerNo > 0 ? playerNo : '-',
-            playerName: playerName,
-            playerGrade: playerGrade ? playerGrade + '학년' : '-',
-            height: height || '-',
-            weight: weight || '-',
-            items: itemsMap,
-            applicant: activeUser ? `${activeUser.name} (${activeUser.role} · ${activeUser.phone})` : '웹 접속자'
-        };
-
         const submitBtn = document.getElementById('btnSubmitOrder');
         submitBtn.disabled = true;
-        submitBtn.textContent = '구글 시트로 접수 중...';
+        submitBtn.textContent = '접수 상태 확인 중...';
 
         try {
-            await fetch(GOOGLE_SCRIPT_UNIFORM_API_URL, {
-                method: 'POST', mode: 'no-cors',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify(orderData)
+            // 제출 직전에 서버의 접수 상태를 다시 확인 (마감 후 열려 있던 화면 대비)
+            await fetchSettings();
+            updateUniformButtonVisibility();
+            if (!isUniformActive && !isSuperOrDev()) {
+                alert('⛔ 유니폼 접수가 마감되었습니다.');
+                closeModal('uniformModal');
+                return;
+            }
+
+            submitBtn.textContent = '구글 시트로 접수 중...';
+            await postApi({
+                action: "submitOrder",
+                playerNo: playerNo > 0 ? playerNo : '-',
+                playerName: playerName,
+                playerGrade: playerGrade ? playerGrade + '학년' : '-',
+                height: height || '-',
+                weight: weight || '-',
+                items: itemsMap,
+                asAdmin: isSuperOrDev(),
+                applicant: activeUser ? `${activeUser.name} (${activeUser.role} · ${activeUser.phone})` : '웹 접속자'
             });
-            sendActivityLog("주문접수", playerName, `${playerName} (${playerGrade}학년) 유니폼 주문 신청 완료`);
+            sendActivityLog("주문접수", playerName, `${playerName}${playerNo ? ' No.' + playerNo : ''} (${playerGrade}학년) 유니폼 주문 신청 완료`);
             alert(`✅ ${playerName} 선수의 유니폼 신청이 완료되었습니다!`);
             closeModal('uniformModal');
         } catch (err) {
@@ -2119,6 +2406,9 @@
         }
     }
 
+    // ==========================================================
+    // 학부모 비상연락망
+    // ==========================================================
     async function openEmergencyContactsModal() {
         document.getElementById('emergencyContactsModal').style.display = 'flex';
         const content = document.getElementById('contactsListContent');
@@ -2126,7 +2416,7 @@
 
         const cached = localStorage.getItem('daeyeon_emergency_contacts');
         if (cached) {
-            try { emergencyContactsData = JSON.parse(cached); renderEmergencyContacts(); } catch(e) {}
+            try { emergencyContactsData = JSON.parse(cached); renderEmergencyContacts(); } catch (e) {}
         } else {
             content.innerHTML = '<div style="text-align:center; padding:40px; color:#64748b;">불러오는 중...</div>';
         }
@@ -2139,7 +2429,7 @@
                     Papa.parse(csvText, {
                         header: true,
                         skipEmptyLines: 'greedy',
-                        complete: function(results) {
+                        complete: function (results) {
                             if (results.data && results.data.length > 0) {
                                 emergencyContactsData = results.data;
                                 localStorage.setItem('daeyeon_emergency_contacts', JSON.stringify(emergencyContactsData));
@@ -2149,7 +2439,7 @@
                     });
                 }
             }
-        } catch(e) {}
+        } catch (e) {}
     }
 
     function getColVal(row, ...keys) {
@@ -2163,14 +2453,11 @@
         return '';
     }
 
-    function renderEmergencyContacts() {
+    function getFilteredContacts() {
         const query = document.getElementById('contactSearchInput') ? document.getElementById('contactSearchInput').value.trim().toLowerCase() : '';
         const selectedG = document.getElementById('contactGradeSelect') ? document.getElementById('contactGradeSelect').value : 'all';
-        const content = document.getElementById('contactsListContent');
-        const title = document.getElementById('contactsModalTitle');
-        if (!content) return;
 
-        const filtered = emergencyContactsData.filter(c => {
+        return emergencyContactsData.filter(c => {
             const name = getColVal(c, '선수이름', '이름', '선수명');
             const grade = getColVal(c, '학년', '구분');
             if (!name) return false;
@@ -2178,9 +2465,22 @@
             let matchQ = !query || name.toLowerCase().includes(query) || Object.values(c).some(val => String(val).toLowerCase().includes(query));
             return matchG && matchQ;
         }).sort((a, b) => (parseInt(getColVal(a, '배번', '등번호')) || 999) - (parseInt(getColVal(b, '배번', '등번호')) || 999));
+    }
+
+    function renderEmergencyContacts() {
+        const content = document.getElementById('contactsListContent');
+        const title = document.getElementById('contactsModalTitle');
+        if (!content) return;
+
+        const filtered = getFilteredContacts();
 
         if (title) title.textContent = `🚨 학부모 비상연락망 (${filtered.length}명)`;
         if (filtered.length === 0) { content.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8;">검색 결과가 없습니다.</div>'; return; }
+
+        const phoneRow = (roleCls, roleLabel, phone, extraStyle, phoneStyle) => {
+            const d = digitsOnly(phone);
+            return `<div class="contact-row"${extraStyle ? ` style="${extraStyle}"` : ''}><div class="contact-left-info"><span class="contact-role-badge ${roleCls}">${roleLabel}</span><span class="contact-phone-text"${phoneStyle ? ` style="${phoneStyle}"` : ''}>${escapeHtml(phone)}</span></div><div class="contact-actions"><a href="tel:${d}" class="btn-call">📞 통화</a><a href="sms:${d}" class="btn-sms">💬 문자</a></div></div>`;
+        };
 
         content.innerHTML = filtered.map(c => {
             const name = getColVal(c, '선수이름', '이름', '선수명');
@@ -2193,48 +2493,115 @@
             const car1 = getColVal(c, '차량번호1', '차량번호');
             const car2 = getColVal(c, '차량번호2');
             const address = getColVal(c, '주소');
+            const gradeNum = grade.replace(/[^0-9]/g, '');
 
             return `
                 <div class="contact-card">
                     <div class="contact-header">
-                        <span class="contact-player-name">${no ? 'No.'+no+' ' : ''}${name}</span>
-                        ${grade ? `<span class="grade-tag grade-${grade.replace(/[^0-9]/g,'')}">${grade}학년</span>` : ''}
+                        <span class="contact-player-name">${no ? 'No.' + escapeHtml(no) + ' ' : ''}${escapeHtml(name)}</span>
+                        ${grade ? `<span class="grade-tag grade-${escapeHtml(gradeNum)}">${escapeHtml(grade)}학년</span>` : ''}
                     </div>
-                    ${fPhone ? `<div class="contact-row"><div class="contact-left-info"><span class="contact-role-badge role-father">👨 아버님</span><span class="contact-phone-text">${fPhone}</span></div><div class="contact-actions"><a href="tel:${fPhone.replace(/[^0-9]/g,'')}" class="btn-call">📞 통화</a><a href="sms:${fPhone.replace(/[^0-9]/g,'')}" class="btn-sms">💬 문자</a></div></div>` : ''}
-                    ${mPhone ? `<div class="contact-row"><div class="contact-left-info"><span class="contact-role-badge role-mother">👩 어머님</span><span class="contact-phone-text">${mPhone}</span></div><div class="contact-actions"><a href="tel:${mPhone.replace(/[^0-9]/g,'')}" class="btn-call">📞 통화</a><a href="sms:${mPhone.replace(/[^0-9]/g,'')}" class="btn-sms">💬 문자</a></div></div>` : ''}
-                    ${otherPhone ? `<div class="contact-row"><div class="contact-left-info"><span class="contact-role-badge role-other">📞 기타연락처</span><span class="contact-phone-text">${otherPhone}</span></div><div class="contact-actions"><a href="tel:${otherPhone.replace(/[^0-9]/g,'')}" class="btn-call">📞 통화</a><a href="sms:${otherPhone.replace(/[^0-9]/g,'')}" class="btn-sms">💬 문자</a></div></div>` : ''}
-                    ${sPhone ? `<div class="contact-row" style="background:#eff6ff;"><div class="contact-left-info"><span class="contact-role-badge role-student">📱 학생</span><span class="contact-phone-text" style="color:#1d4ed8;">${sPhone}</span></div><div class="contact-actions"><a href="tel:${sPhone.replace(/[^0-9]/g,'')}" class="btn-call">📞 통화</a><a href="sms:${sPhone.replace(/[^0-9]/g,'')}" class="btn-sms">💬 문자</a></div></div>` : ''}
-                    ${car1 || car2 ? `<div class="contact-car-box">🚗 <b>차량:</b> ${[car1, car2].filter(Boolean).join(' / ')}</div>` : ''}
-                    ${address ? `<div class="contact-address-box">🏠 <b>주소:</b> ${address}</div>` : ''}
+                    ${fPhone ? phoneRow('role-father', '👨 아버님', fPhone) : ''}
+                    ${mPhone ? phoneRow('role-mother', '👩 어머님', mPhone) : ''}
+                    ${otherPhone ? phoneRow('role-other', '📞 기타연락처', otherPhone) : ''}
+                    ${sPhone ? phoneRow('role-student', '📱 학생', sPhone, 'background:#eff6ff;', 'color:#1d4ed8;') : ''}
+                    ${car1 || car2 ? `<div class="contact-car-box">🚗 <b>차량:</b> ${escapeHtml([car1, car2].filter(Boolean).join(' / '))}</div>` : ''}
+                    ${address ? `<div class="contact-address-box">🏠 <b>주소:</b> ${escapeHtml(address)}</div>` : ''}
                 </div>
             `;
         }).join('');
     }
 
-    function copyAllContactPhones() { alert('준비중'); }
-    function copyEmergencyTemplate(t) { alert('공지 문구가 복사되었습니다.'); }
+    // 현재 검색/학년 필터에 보이는 선수들의 연락처를 텍스트로 복사
+    function copyAllContactPhones() {
+        const list = getFilteredContacts();
+        if (list.length === 0) { alert('복사할 연락처가 없습니다.'); return; }
 
+        const lines = list.map(c => {
+            const name = getColVal(c, '선수이름', '이름', '선수명');
+            const no = getColVal(c, '배번', '등번호');
+            const grade = getColVal(c, '학년', '구분');
+            const phones = [];
+            const f = getColVal(c, '아버님', '아버지');
+            const m = getColVal(c, '어머님', '어머니');
+            const o = getColVal(c, '기타연락처', '기타', '추가연락처');
+            const s = getColVal(c, '학생연락처', '선수연락처');
+            if (f) phones.push(`아버님 ${f}`);
+            if (m) phones.push(`어머님 ${m}`);
+            if (o) phones.push(`기타 ${o}`);
+            if (s) phones.push(`학생 ${s}`);
+            return `${no ? 'No.' + no + ' ' : ''}${name}${grade ? ` (${grade}학년)` : ''} - ${phones.join(' / ') || '연락처 없음'}`;
+        });
+
+        sendActivityLog("복사", currentRole, `비상연락망 ${list.length}명 복사`);
+        copyText('[대연초 야구부 비상연락망]\n' + lines.join('\n'), `📋 ${list.length}명의 비상연락망이 복사되었습니다.`);
+    }
+
+    // 긴급 공지 문구 복사 (○ 부분은 붙여넣은 뒤 수정해서 사용)
+    function copyEmergencyTemplate(type) {
+        const templates = {
+            weather: {
+                label: '우천취소',
+                text: '[대연초 야구부 공지]\n우천으로 인해 ○월 ○일(○) 훈련(경기)이 취소되었습니다.\n다음 일정은 확정되는 대로 다시 안내드리겠습니다.\n안전에 유의해 주세요. 감사합니다.'
+            },
+            match: {
+                label: '경기시간',
+                text: '[대연초 야구부 공지]\n○월 ○일(○) 경기 일정 안내드립니다.\n- 상대팀: ○○초\n- 장소: ○○○\n- 집합 시간: ○시 ○○분\n- 경기 시작: ○시 ○○분\n준비물: 유니폼, 글러브, 모자, 물\n참석 여부를 회신해 주세요. 감사합니다.'
+            },
+            safe: {
+                label: '안전귀가',
+                text: '[대연초 야구부 공지]\n오늘 훈련(경기)이 종료되었습니다.\n아이들이 안전하게 귀가할 수 있도록 부탁드립니다.\n귀가 후 도착 확인 부탁드립니다. 감사합니다.'
+            }
+        };
+        const t = templates[type];
+        if (!t) return;
+        sendActivityLog("복사", currentRole, `긴급 공지 문구 복사: ${t.label}`);
+        copyText(t.text, `📋 [${t.label}] 공지 문구가 복사되었습니다.\n○ 부분을 수정한 뒤 단톡방에 붙여넣어 주세요.`);
+    }
+
+    // ==========================================================
+    // 사진 관리
+    // ==========================================================
     function openPhotoUploadModal(no, name) {
         uploadTargetPlayer = { no: no, name: name };
         uploadOptimizedBase64 = null;
-        document.getElementById('photoModalTitle').textContent = `📷 No.${no} ${name} 사진 관리`;
+        document.getElementById('photoModalTitle').textContent = `📷 ${no ? 'No.' + no + ' ' : ''}${name} 사진 관리`;
         document.getElementById('photoPreviewImg').style.display = 'none';
         document.getElementById('photoPreviewPlaceholder').style.display = 'block';
         document.getElementById('targetPhotoInput').value = '';
         document.getElementById('btnUploadSubmit').disabled = true;
+
+        const target = players.find(p => (no > 0 ? p.no === no : p.name === name));
+        const hasPhoto = !!(target && target.photoLink && target.photoLink.startsWith('http'));
+        document.getElementById('btnDeletePhoto').style.display = hasPhoto ? 'block' : 'none';
+
         document.getElementById('photoUploadModal').style.display = 'flex';
     }
 
     function handlePhotoFileSelected(input) {
         if (!input.files || !input.files[0]) return;
         const reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = function (e) {
             const img = new Image();
-            img.onload = function() {
+            img.onload = function () {
+                const targetW = 600, targetH = 750;
                 const canvas = document.createElement('canvas');
-                canvas.width = 600; canvas.height = 750;
+                canvas.width = targetW; canvas.height = targetH;
                 const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, 600, 750);
+
+                // 4:5 비율로 가운데를 크롭 (사진이 찌그러지지 않게)
+                let sWidth = img.width, sHeight = img.height, sx = 0, sy = 0;
+                const imgRatio = img.width / img.height;
+                const targetRatio = 4 / 5;
+                if (imgRatio > targetRatio) {
+                    sWidth = img.height * targetRatio;
+                    sx = (img.width - sWidth) / 2;
+                } else {
+                    sHeight = img.width / targetRatio;
+                    sy = (img.height - sHeight) / 2;
+                }
+                ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, targetW, targetH);
+
                 const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
                 uploadOptimizedBase64 = dataUrl.split(',')[1];
                 document.getElementById('photoPreviewImg').src = dataUrl;
@@ -2252,12 +2619,9 @@
         const btn = document.getElementById('btnUploadSubmit');
         btn.disabled = true; btn.textContent = '업로드 중...';
         try {
-            await fetch(GOOGLE_SCRIPT_UNIFORM_API_URL, {
-                method: 'POST', mode: 'no-cors',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ action: "uploadPhoto", playerNo: uploadTargetPlayer.no, playerName: uploadTargetPlayer.name, base64Data: uploadOptimizedBase64 })
-            });
-            alert('✅ 사진이 등록되었습니다!');
+            await postApi({ action: "uploadPhoto", playerNo: uploadTargetPlayer.no, playerName: uploadTargetPlayer.name, base64Data: uploadOptimizedBase64 });
+            sendActivityLog("사진등록", currentRole, `${uploadTargetPlayer.name} 사진 등록`);
+            alert('✅ 사진이 등록되었습니다! (시트 반영까지 잠시 걸릴 수 있습니다)');
             closeModal('photoUploadModal');
             loadGoogleSheetData();
         } catch (err) { alert('에러: ' + err.message); } finally { btn.disabled = false; btn.textContent = '구글 드라이브 등록'; }
@@ -2266,17 +2630,17 @@
     async function executeDeletePhoto() {
         if (!uploadTargetPlayer || !confirm('사진을 삭제하시겠습니까?')) return;
         try {
-            await fetch(GOOGLE_SCRIPT_UNIFORM_API_URL, {
-                method: 'POST', mode: 'no-cors',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ action: "deletePhoto", playerNo: uploadTargetPlayer.no, playerName: uploadTargetPlayer.name })
-            });
+            await postApi({ action: "deletePhoto", playerNo: uploadTargetPlayer.no, playerName: uploadTargetPlayer.name });
+            sendActivityLog("사진삭제", currentRole, `${uploadTargetPlayer.name} 사진 삭제`);
             alert('✅ 사진이 삭제되었습니다.');
             closeModal('photoUploadModal');
             loadGoogleSheetData();
         } catch (err) { alert('에러: ' + err.message); }
     }
 
+    // ==========================================================
+    // 보안 활동 로그 (개발자 전용 화면)
+    // ==========================================================
     async function openLogsModal() {
         if (currentRole !== 'dev') return;
         document.getElementById('logsModal').style.display = 'flex';
@@ -2287,27 +2651,29 @@
         const content = document.getElementById('logsListContent');
         content.innerHTML = '<div style="text-align:center; padding:40px;">불러오는 중...</div>';
         try {
-            const res = await fetch(GOOGLE_SCRIPT_UNIFORM_API_URL + "?action=getLogs&nocache=" + Date.now(), { cache: 'no-store' });
+            const res = await fetch(apiGetUrl('action=getLogs'), { cache: 'no-store' });
             const json = await res.json();
             if (!json || !json.logs || json.logs.length === 0) { content.innerHTML = '<div style="text-align:center; padding:40px;">로그 없음</div>'; return; }
             content.innerHTML = json.logs.map(log => `
                 <div class="log-item-card">
-                    <div class="log-header-row"><span class="log-type-tag log-type-unlock">[${log.eventType}] ${log.role}</span><span style="font-size:11px; color:#94a3b8;">${log.date}</span></div>
-                    <div style="font-size:11px; color:#475569;">📱 <b>${log.device}</b></div>
-                    <div style="font-size:12px; color:#0f172a; font-weight:600; margin-top:2px;">${log.details}</div>
+                    <div class="log-header-row"><span class="log-type-tag log-type-unlock">[${escapeHtml(log.eventType)}] ${escapeHtml(log.role)}</span><span style="font-size:11px; color:#94a3b8;">${escapeHtml(log.date)}</span></div>
+                    <div style="font-size:11px; color:#475569;">📱 <b>${escapeHtml(log.device)}</b></div>
+                    <div style="font-size:12px; color:#0f172a; font-weight:600; margin-top:2px;">${escapeHtml(log.details)}</div>
                 </div>
             `).join('');
         } catch (err) { content.innerHTML = '<div style="text-align:center; padding:40px; color:red;">불러오기 실패</div>'; }
     }
 
+    // ==========================================================
+    // 관리자 로그인
+    // ==========================================================
     function openAdminModal() {
         if (currentRole !== 'guest') {
             if (confirm('관리자 모드를 로그아웃 하시겠습니까?')) {
                 sendActivityLog("관리자로그아웃", currentRole, "로그아웃");
                 currentRole = 'guest';
-                localStorage.removeItem('daeyeon_admin_role');
-                sessionStorage.removeItem('daeyeon_admin_role');
-                updateAdminUI(); 
+                clearAdminRoleStorage();
+                updateAdminUI();
                 updateUserIdentityBadge();
                 render();
             }
@@ -2319,11 +2685,12 @@
         }
     }
 
-    function handleLogin() {
+    async function handleLogin() {
         const pw = document.getElementById('adminPw').value.trim();
-        const pws = getStoredPasswords();
         const devCodes = getDevCodes();
         let loggedInRole = "";
+
+        if (!pw) { alert('비밀번호를 입력해 주세요.'); return; }
 
         if (devCodes.includes(pw)) {
             const now = new Date();
@@ -2331,21 +2698,30 @@
             localStorage.setItem('daeyeon_auth_expire', midnight.getTime());
             loggedInRole = 'dev';
             alert('⚡ [개발자 모드] 로그인 완료 (오늘 밤 자정까지)');
-        } else if (pw === pws.super) {
-            localStorage.setItem('daeyeon_auth_expire', Date.now() + (4 * 60 * 60 * 1000));
-            loggedInRole = 'super';
-            alert('👑 [최고관리자] 로그인 완료 (4시간)');
-        } else if (pw === pws.sub) {
-            localStorage.setItem('daeyeon_auth_expire', Date.now() + (2 * 60 * 60 * 1000));
-            loggedInRole = 'sub';
-            alert('🛠️ [보조관리자] 로그인 완료 (2시간)');
-        } else if (pw === pws.general) {
-            localStorage.setItem('daeyeon_auth_expire', Date.now() + (1 * 60 * 60 * 1000));
-            loggedInRole = 'general';
-            alert('📋 [일반관리자] 로그인 완료 (1시간)');
         } else {
-            alert('비밀번호가 틀렸습니다.');
-            return;
+            // 관리자(최고/보조/일반) 비밀번호는 구글 시트(서버)에서 검증한다 → 모든 기기에 동일하게 적용됨
+            const loginBtn = document.querySelector('#loginModal .btn-save');
+            const prevText = loginBtn ? loginBtn.textContent : '';
+            if (loginBtn) { loginBtn.disabled = true; loginBtn.textContent = '확인 중...'; }
+            const serverRole = await verifyAdminPasswordOnServer(pw);
+            if (loginBtn) { loginBtn.disabled = false; loginBtn.textContent = prevText; }
+
+            if (serverRole === 'super') {
+                localStorage.setItem('daeyeon_auth_expire', Date.now() + (4 * 60 * 60 * 1000));
+                loggedInRole = 'super';
+                alert('👑 [최고관리자] 로그인 완료 (4시간)');
+            } else if (serverRole === 'sub') {
+                localStorage.setItem('daeyeon_auth_expire', Date.now() + (2 * 60 * 60 * 1000));
+                loggedInRole = 'sub';
+                alert('🛠️ [보조관리자] 로그인 완료 (2시간)');
+            } else if (serverRole === 'general') {
+                localStorage.setItem('daeyeon_auth_expire', Date.now() + (1 * 60 * 60 * 1000));
+                loggedInRole = 'general';
+                alert('📋 [일반관리자] 로그인 완료 (1시간)');
+            } else {
+                alert('비밀번호가 틀렸습니다.');
+                return;
+            }
         }
 
         currentRole = loggedInRole;
@@ -2357,12 +2733,11 @@
         document.documentElement.classList.add('is-authenticated');
         closeModal('loginModal');
         startSessionCountdown();
-        updateAdminUI(); 
+        updateAdminUI();
         updateUserIdentityBadge();
         render();
     }
 
-    // ★ [복원] 관리자 로그인 버튼이 관리자 권한일 때만 확실히 보이도록 수정
     function updateAdminUI() {
         const adminBar = document.getElementById('adminBar');
         const adminBtn = document.getElementById('adminLoginBtn');
@@ -2372,7 +2747,7 @@
         adminBar.className = 'admin-bar';
 
         if (currentRole === 'dev' || currentRole === 'super' || currentRole === 'sub' || currentRole === 'general') {
-            adminBtn.style.display = 'inline-flex'; // 관리자일 때만 노출
+            adminBtn.style.display = '';
             adminBtn.textContent = '🔓 로그아웃';
             adminBtn.classList.add('logged-in');
             adminBar.style.display = 'flex';
@@ -2384,122 +2759,145 @@
             document.getElementById('btnManagePw').style.display = isSuperOrDev() ? 'inline-block' : 'none';
             document.getElementById('btnEmergencyContacts').style.display = isSuperOrDev() ? 'inline-flex' : 'none';
         } else {
-            // 일반 학부모/사용자 화면에서는 관리자 로그인 버튼을 완전히 숨김
+            // 일반 학부모/사용자인 경우 우측 상단 관리자 로그인 버튼을 숨김 (관리자 비번 인증 시에만 노출)
             adminBtn.style.display = 'none';
             adminBar.style.display = 'none';
         }
     }
 
-    // ★ [복원] 관리자 비밀번호 변경 모달 기능 복구
-    function openPasswordManageModal() {
-        const body = document.getElementById('pwModalBody');
-        const btns = document.getElementById('pwModalBtns');
-        const title = document.getElementById('pwModalTitle');
-        const pws = getStoredPasswords();
-
-        if (currentRole === 'dev') {
-            title.textContent = '⚡ 개발자 마스터 비밀번호 제어';
-            body.innerHTML = `
-                <div style="background:#f3e8ff; border:1px solid #d8b4fe; border-radius:8px; padding:10px; font-size:12px; color:#581c87; margin-bottom:14px; line-height:1.5;">
-                    • <b>현재 최고관리자 비번:</b> <span style="color:#b91c1c; font-weight:800;">${pws.super}</span><br>
-                    • <b>현재 보조관리자 비번:</b> <span style="color:#1d4ed8; font-weight:800;">${pws.sub}</span><br>
-                    • <b>현재 일반관리자 비번:</b> <span style="color:#15803d; font-weight:800;">${pws.general}</span>
-                </div>
-                <div class="form-group"><label>최고관리자 새 비밀번호</label><input type="text" id="devNewSuperPw" value="${pws.super}"></div>
-                <div class="form-group"><label>보조관리자 새 비밀번호</label><input type="text" id="devNewSubPw" value="${pws.sub}"></div>
-                <div class="form-group"><label>일반관리자 새 비밀번호</label><input type="text" id="devNewGenPw" value="${pws.general}"></div>
-            `;
-            btns.innerHTML = `
-                <button class="btn-cancel" style="color:#b91c1c; border-color:#fecaca;" onclick="resetAllPasswordsToDefault()">기본값 리셋</button>
-                <button class="btn-cancel" onclick="closeModal('passwordModal')">취소</button>
-                <button class="btn-save" style="background:#7c3aed;" onclick="saveDevPasswords()">전체 저장</button>
-            `;
-        } else if (currentRole === 'super') {
-            title.textContent = '🔑 관리자 비밀번호 변경';
-            body.innerHTML = `
-                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-bottom:12px;">
-                    <div style="font-size:13px; font-weight:800; color:#0b2240; margin-bottom:8px;">👑 최고관리자 본인 비밀번호 변경</div>
-                    <div class="form-group"><label>현재 최고관리자 비밀번호 확인 *</label><input type="password" id="curSuperPw" placeholder="현재 비밀번호 입력"></div>
-                    <div class="form-group"><label>새 비밀번호 *</label><input type="password" id="newSuperPw" placeholder="변경할 새 비밀번호"></div>
-                    <div class="form-group"><label>새 비밀번호 확인 *</label><input type="password" id="newSuperPwConfirm" placeholder="변경할 새 비밀번호 재입력"></div>
-                </div>
-                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px;">
-                    <div style="font-size:13px; font-weight:800; color:#0b2240; margin-bottom:8px;">👥 하위 관리자 비밀번호 변경</div>
-                    <div class="form-group"><label>보조관리자 새 비밀번호</label><input type="text" id="newSubPw" placeholder="현재: 보안유지됨"></div>
-                    <div class="form-group"><label>일반관리자 새 비밀번호</label><input type="text" id="newGenPw" placeholder="현재: 보안유지됨"></div>
-                </div>
-            `;
-            btns.innerHTML = `
-                <button class="btn-cancel" onclick="closeModal('passwordModal')">취소</button>
-                <button class="btn-save" onclick="saveSuperPasswords()">변경사항 저장</button>
-            `;
+    // 개발자 전용: 현재 서버(Script Properties)에 저장된 관리자 비밀번호 값을 그대로 조회한다.
+    // ⚠️ 서버는 "진짜 개발자가 호출했는지"를 구분할 방법이 없어 API_KEY만 맞으면 누구나 호출 가능하다.
+    //    (소스코드를 볼 수 있는 사람은 이 API도 호출할 수 있다는 뜻 — 개발자 본인이 위험을 인지하고 요청하여 추가함)
+    async function fetchCurrentAdminPasswordsForDev() {
+        try {
+            const res = await apiGetJson('action=getAdminPasswordsRaw');
+            return (res && res.super) ? res : null;
+        } catch (err) {
+            console.warn('현재 비밀번호 조회 실패:', err);
+            return null;
         }
+    }
+
+    // 비밀번호 관리: 최고관리자/개발자만 열 수 있고, 변경은 항상 서버(구글 시트)에 저장되어
+    // 특정 기기가 아니라 모든 접속자에게 동일하게 적용된다.
+    async function openPasswordManageModal() {
+        if (!isSuperOrDev()) { alert('최고관리자만 비밀번호를 변경할 수 있습니다.'); return; }
+
+        // 개발자 모드에서는 입력 중인 비밀번호를 마스킹하지 않고 그대로 보여준다 (테스트 편의용).
+        const isDev = (currentRole === 'dev');
+        const pwInputType = isDev ? 'text' : 'password';
+        const curValRow = (id, label) => isDev
+            ? `<div id="${id}" style="font-size:11px; color:#0369a1; margin-bottom:4px;">${label} 불러오는 중...</div>`
+            : '';
+
+        document.getElementById('pwModalTitle').textContent = '🔑 관리자 비밀번호 설정';
+        document.getElementById('pwModalBody').innerHTML = `
+            <p style="font-size: 12px; color: #64748b; line-height: 1.5; margin-bottom: 12px;">
+                바꿀 등급만 새 비밀번호를 입력하고, 나머지는 비워두면 그대로 유지됩니다.
+            </p>
+            <div class="form-group">
+                <label>현재 최고관리자 비밀번호 * (변경 권한 확인용)</label>
+                <input type="${pwInputType}" id="pwCurrentSuper" placeholder="현재 최고관리자 비밀번호">
+            </div>
+            <div class="form-group">
+                <label>👑 최고관리자 새 비밀번호 (4~20자, 선택)</label>
+                ${curValRow('pwCurValSuper', '현재 값:')}
+                <input type="${pwInputType}" id="pwNewSuper" placeholder="변경하지 않으려면 비워두세요">
+            </div>
+            <div class="form-group">
+                <label>🛠️ 보조관리자 새 비밀번호 (4~20자, 선택)</label>
+                ${curValRow('pwCurValSub', '현재 값:')}
+                <input type="${pwInputType}" id="pwNewSub" placeholder="변경하지 않으려면 비워두세요">
+            </div>
+            <div class="form-group">
+                <label>📋 일반관리자 새 비밀번호 (4~20자, 선택)</label>
+                ${curValRow('pwCurValGeneral', '현재 값:')}
+                <input type="${pwInputType}" id="pwNewGeneral" placeholder="변경하지 않으려면 비워두세요">
+            </div>
+        `;
+        document.getElementById('pwModalBtns').innerHTML = `
+            <button class="btn-cancel" onclick="closeModal('passwordModal')">취소</button>
+            <button class="btn-save" id="btnSavePw" onclick="executeChangePasswords()">저장</button>
+        `;
         document.getElementById('passwordModal').style.display = 'flex';
-    }
+        setTimeout(() => document.getElementById('pwCurrentSuper').focus(), 50);
 
-    function saveSuperPasswords() {
-        const pws = getStoredPasswords();
-        const curSuper = document.getElementById('curSuperPw').value.trim();
-        const newSuper = document.getElementById('newSuperPw').value.trim();
-        const newSuperConfirm = document.getElementById('newSuperPwConfirm').value.trim();
-        const newSub = document.getElementById('newSubPw').value.trim();
-        const newGen = document.getElementById('newGenPw').value.trim();
-        let updatedMsg = [];
-
-        if (newSuper || curSuper) {
-            if (curSuper !== pws.super) { alert('현재 최고관리자 비밀번호가 일치하지 않습니다.'); return; }
-            if (!newSuper) { alert('새로운 최고관리자 비밀번호를 입력해 주세요.'); return; }
-            if (newSuper !== newSuperConfirm) { alert('새 비밀번호와 비밀번호 확인이 일치하지 않습니다.'); return; }
-            localStorage.setItem('daeyeon_pw_super', newSuper);
-            updatedMsg.push('최고관리자');
-        }
-        if (newSub) { localStorage.setItem('daeyeon_pw_sub', newSub); updatedMsg.push('보조관리자'); }
-        if (newGen) { localStorage.setItem('daeyeon_pw_general', newGen); updatedMsg.push('일반관리자'); }
-        if (updatedMsg.length === 0) { alert('변경된 항목이 없습니다.'); return; }
-
-        sendActivityLog("비밀번호변경", "최고관리자", `[${updatedMsg.join(', ')}] 비밀번호 변경됨`);
-        alert(`✅ [${updatedMsg.join(', ')}] 비밀번호가 성공적으로 변경되었습니다.`);
-        closeModal('passwordModal');
-    }
-
-    function saveDevPasswords() {
-        const s = document.getElementById('devNewSuperPw').value.trim();
-        const sub = document.getElementById('devNewSubPw').value.trim();
-        const g = document.getElementById('devNewGenPw').value.trim();
-        if (!s || !sub || !g) { alert('비밀번호를 공백으로 둘 수 없습니다.'); return; }
-        localStorage.setItem('daeyeon_pw_super', s);
-        localStorage.setItem('daeyeon_pw_sub', sub);
-        localStorage.setItem('daeyeon_pw_general', g);
-        sendActivityLog("비밀번호변경", "개발자", "모든 관리자 비밀번호 마스터 권한 일괄 변경");
-        alert('⚡ 모든 관리자 비밀번호가 마스터 권한으로 즉시 변경 저장되었습니다.');
-        closeModal('passwordModal');
-    }
-
-    function resetAllPasswordsToDefault() {
-        if (confirm('모든 관리자 비밀번호를 초기값(최고:0000, 보조:1111, 일반:2222)으로 리셋하시겠습니까?')) {
-            localStorage.setItem('daeyeon_pw_super', '0000');
-            localStorage.setItem('daeyeon_pw_sub', '1111');
-            localStorage.setItem('daeyeon_pw_general', '2222');
-            sendActivityLog("비밀번호리셋", "개발자", "모든 관리자 비밀번호 기본값(0000/1111/2222) 리셋");
-            alert('비밀번호가 초기값(최고:0000, 보조:1111, 일반:2222)으로 리셋되었습니다.');
-            openPasswordManageModal();
+        if (isDev) {
+            const cur = await fetchCurrentAdminPasswordsForDev();
+            const superEl = document.getElementById('pwCurValSuper');
+            const subEl = document.getElementById('pwCurValSub');
+            const generalEl = document.getElementById('pwCurValGeneral');
+            if (cur) {
+                if (superEl) superEl.textContent = `현재 값: ${cur.super}`;
+                if (subEl) subEl.textContent = `현재 값: ${cur.sub}`;
+                if (generalEl) generalEl.textContent = `현재 값: ${cur.general}`;
+            } else {
+                if (superEl) superEl.textContent = '현재 값을 불러오지 못했습니다.';
+                if (subEl) subEl.textContent = '현재 값을 불러오지 못했습니다.';
+                if (generalEl) generalEl.textContent = '현재 값을 불러오지 못했습니다.';
+            }
         }
     }
 
-    function toggleUniformFeature() {
-        isUniformActive = !isUniformActive;
-        localStorage.setItem('daeyeon_uniform_active', isUniformActive ? 'true' : 'false');
-        updateAdminUI(); render();
+    async function executeChangePasswords() {
+        const curPw = document.getElementById('pwCurrentSuper').value.trim();
+        const newSuper = document.getElementById('pwNewSuper').value.trim();
+        const newSub = document.getElementById('pwNewSub').value.trim();
+        const newGeneral = document.getElementById('pwNewGeneral').value.trim();
+
+        if (!curPw) { alert('현재 최고관리자 비밀번호를 입력해 주세요.'); return; }
+
+        const updates = {};
+        const labels = [];
+        if (newSuper) { updates.super = newSuper; labels.push('최고관리자'); }
+        if (newSub) { updates.sub = newSub; labels.push('보조관리자'); }
+        if (newGeneral) { updates.general = newGeneral; labels.push('일반관리자'); }
+
+        if (labels.length === 0) { alert('변경할 비밀번호를 하나 이상 입력해 주세요.'); return; }
+
+        for (const v of [newSuper, newSub, newGeneral]) {
+            if (v && (v.length < 4 || v.length > 20)) { alert('새 비밀번호는 4~20자로 입력해 주세요.'); return; }
+        }
+
+        const btn = document.getElementById('btnSavePw');
+        btn.disabled = true;
+        btn.textContent = '저장 중...';
+
+        try {
+            let qs = 'action=changeAdminPw&currentPw=' + encodeURIComponent(curPw);
+            if (newSuper) qs += '&newSuper=' + encodeURIComponent(newSuper);
+            if (newSub) qs += '&newSub=' + encodeURIComponent(newSub);
+            if (newGeneral) qs += '&newGeneral=' + encodeURIComponent(newGeneral);
+            const res = await apiGetJson(qs);
+            if (res && res.result === 'success') {
+                sendActivityLog("비밀번호변경", currentRole, `관리자 비밀번호 변경: [${labels.join(', ')}]`);
+                alert(`✅ ${labels.join(', ')} 비밀번호가 변경되었습니다.\n(모든 기기에 즉시 적용됩니다)`);
+                closeModal('passwordModal');
+            } else {
+                alert('❌ ' + (res && res.message ? res.message : '비밀번호 변경에 실패했습니다.'));
+            }
+        } catch (err) {
+            alert('비밀번호 변경 중 오류가 발생했습니다: ' + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '저장';
+        }
     }
 
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
     function isOff(val) { if (!val) return false; const v = String(val).toUpperCase().trim(); return v === 'OFF' || v === '비공개'; }
 
+    // ==========================================================
+    // 실시간 시트 로더
+    // ==========================================================
     async function loadGoogleSheetData() {
         try {
             if (savedSearchQuery) document.getElementById('searchInput').value = savedSearchQuery;
             updateAdminUI();
             updateUserIdentityBadge();
+
+            // 유니폼 접수 상태는 서버 값으로 갱신 (실패해도 명단 로딩에는 영향 없음)
+            fetchSettings().then(() => updateUniformButtonVisibility());
 
             const res = await fetch(getRealtimeCsvUrl(ROSTER_GID), { cache: 'no-store' });
             if (!res.ok) throw new Error("시트 응답 실패 (" + res.status + ")");
@@ -2508,7 +2906,7 @@
             Papa.parse(csvText, {
                 header: false,
                 skipEmptyLines: 'greedy',
-                complete: function(results) {
+                complete: function (results) {
                     if (!results.data || results.data.length < 2) return;
                     const headerRow = results.data[0].map(h => String(h || '').trim());
                     const findIdx = (...names) => {
@@ -2570,13 +2968,14 @@
                 }
             });
 
+            // 비상연락망 데이터 사전 캐시 로드 (휴대폰 번호 로그인용)
             fetch(getRealtimeCsvUrl(CONTACTS_GID), { cache: 'no-store' }).then(r => r.text()).then(t => {
                 if (t && !t.trim().startsWith('<!DOCTYPE')) {
                     Papa.parse(t, { header: true, skipEmptyLines: 'greedy', complete: res => {
                         if (res.data) emergencyContactsData = res.data;
                     }});
                 }
-            }).catch(()=>{});
+            }).catch(() => {});
 
         } catch (error) {
             console.error(error);
@@ -2584,8 +2983,8 @@
         }
     }
 
-    const activeAuthExpire = localStorage.getItem('daeyeon_auth_expire');
-    if (activeAuthExpire && Date.now() < parseInt(activeAuthExpire, 10)) {
+    // 초기화 실행
+    if (isAuthValid()) {
         startSessionCountdown();
     }
     updateAdminUI();
