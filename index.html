@@ -26,7 +26,7 @@
         // ★ Code.gs 의 API_KEY 와 반드시 같은 값으로 맞춰 주세요.
         const API_KEY = "dybbr2026hacohadrone";
 
-        const APP_VERSION = "v2.8.2 · b260922";
+        const APP_VERSION = "v2.9.0 · b260922";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1323,6 +1323,8 @@
             eventType: eventType,
             role: (role || "-") + ` [${identityStr}]`,
             device: getDeviceInfo(),
+            screenRes: `${window.screen.width}x${window.screen.height}`,
+            lang: navigator.language || navigator.userLanguage || "-",
             details: details || "-"
         }).catch(err => console.warn("로그 전송 무시:", err));
     }
@@ -2719,7 +2721,7 @@
             content.innerHTML = json.logs.map(log => `
                 <div class="log-item-card">
                     <div class="log-header-row"><span class="log-type-tag log-type-unlock">[${escapeHtml(log.eventType)}] ${escapeHtml(log.role)}</span><span style="font-size:11px; color:#94a3b8;">${escapeHtml(log.date)}</span></div>
-                    <div style="font-size:11px; color:#475569;">📱 <b>${escapeHtml(log.device)}</b></div>
+                    <div style="font-size:11px; color:#475569;">📱 <b>${escapeHtml(log.device)}</b>${log.screenRes && log.screenRes !== '-' ? ` · ${escapeHtml(log.screenRes)}` : ''}${log.lang && log.lang !== '-' ? ` · ${escapeHtml(log.lang)}` : ''}</div>
                     <div style="font-size:12px; color:#0f172a; font-weight:600; margin-top:2px;">${escapeHtml(log.details)}</div>
                 </div>
             `).join('');
