@@ -26,7 +26,7 @@
         // ★ Code.gs 의 API_KEY 와 반드시 같은 값으로 맞춰 주세요.
         const API_KEY = "dybbr2026hacohadrone";
 
-        const APP_VERSION = "v2.7.2 · b260922";
+        const APP_VERSION = "v2.7.3 · b260922";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -724,11 +724,11 @@
             </div>
 
             <div class="lock-input-group">
-                <label>보호자 관계 선택 * (비상연락망 저장 위치)</label>
+                <label>보호자 관계 선택 *</label>
                 <select id="regRoleSelect" class="lock-select-input">
-                    <option value="아버님">👨 아버님 (비상연락망 [아버님] 열에 저장)</option>
-                    <option value="어머님">👩 어머님 (비상연락망 [어머님] 열에 저장)</option>
-                    <option value="기타">📞 기타 (비상연락망 [기타연락처] 열에 저장)</option>
+                    <option value="아버님">👨 아버님</option>
+                    <option value="어머님">👩 어머님</option>
+                    <option value="기타">📞 기타</option>
                 </select>
             </div>
         </div>
@@ -1262,7 +1262,7 @@
         if (isFirstRegMode) {
             regFields.style.display = 'block';
             title.textContent = "📝 최초 학부모/선수 등록";
-            desc.textContent = "선수 이름과 보호자 관계를 선택해 주세요. [학부모 비상연락망] 시트에 정확히 저장됩니다.";
+            desc.textContent = "선수 이름과 보호자 관계를 선택해 주세요.";
             link.textContent = "이미 등록하셨나요? (기존 번호로 로그인)";
             input.placeholder = "휴대폰 번호 입력 (예: 01012345678)";
             btn.textContent = "💾 등록 및 입장하기";
