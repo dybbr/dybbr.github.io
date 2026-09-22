@@ -26,7 +26,7 @@
         // ★ Code.gs 의 API_KEY 와 반드시 같은 값으로 맞춰 주세요.
         const API_KEY = "dybbr2026hacohadrone";
 
-        const APP_VERSION = "v2.10.0 · b260922";
+        const APP_VERSION = "v2.10.1 · b260922";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -2305,7 +2305,11 @@
         first.textContent = '-- 선수를 선택해 주세요 --';
         select.appendChild(first);
 
-        players.filter(p => !isStaff(p.grade) && (isSuperOrDev() || p.visible !== false)).forEach(p => {
+        // 학부모(로그인된 일반 사용자)는 본인 자녀(형제자매 포함)만 선택 가능. 관리자/개발자는 전체 선수 선택 가능.
+        const parentUser = getActiveUser();
+        const isParentLogin = !isSuperOrDev() && parentUser && parentUser.children && parentUser.children.length > 0;
+
+        players.filter(p => !isStaff(p.grade) && (isSuperOrDev() || p.visible !== false) && (!isParentLogin || isParentOfPlayer(p))).forEach(p => {
             const opt = document.createElement('option');
             opt.value = p.name;
             opt.textContent = `${p.no ? 'No.' + p.no + ' ' : ''}${p.name} (${p.grade}학년)`;
