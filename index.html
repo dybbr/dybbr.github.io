@@ -26,7 +26,7 @@
         // ★ Code.gs 의 API_KEY 와 반드시 같은 값으로 맞춰 주세요.
         const API_KEY = "dybbr2026hacohadrone";
 
-        const APP_VERSION = "v2.11.2 · b260922";
+        const APP_VERSION = "v2.11.3 · b260924";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -739,6 +739,7 @@
 
         <div style="margin-bottom: 16px;">
             <input type="password" id="lockPasswordInput" class="lock-text-input"
+                   inputmode="numeric" pattern="[0-9]*" autocomplete="off"
                    style="text-align: center; font-size: 16px; letter-spacing: 2px; padding: 13px 14px;"
                    placeholder="비밀번호를 입력하세요"
                    onkeydown="if(event.key==='Enter' || event.key===' ' || event.code==='Space') { event.preventDefault(); verifyLockPassword(); }">
@@ -855,6 +856,7 @@
             <div class="form-group">
                 <label>관리자 비밀번호</label>
                 <input type="password" id="adminPw" placeholder="비밀번호 입력"
+                       inputmode="numeric" pattern="[0-9]*" autocomplete="off"
                        onkeydown="if(event.key==='Enter' || event.key===' ' || event.code==='Space') { event.preventDefault(); handleLogin(); }">
                 <span style="font-size: 11px; color: #64748b; line-height: 1.6; margin-top: 8px;">
                     • <b>최고관리자</b>: 비상연락망 + 유니폼 발주 집계 + 사진 등록 + 유니폼 접수 ON/OFF<br>
