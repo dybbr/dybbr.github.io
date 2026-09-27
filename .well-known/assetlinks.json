@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "io.github.dybbr.roster",
+      "sha256_cert_fingerprints": [
+        "FE:23:7B:53:4E:97:84:2D:93:5B:01:BA:3B:9E:94:FD:04:7B:4E:34:79:37:73:C9:F1:E3:6A:71:06:23:2C:79"
+      ]
+    }
+  }
+]
