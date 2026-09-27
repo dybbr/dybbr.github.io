@@ -11,6 +11,16 @@
     <meta name="theme-color" content="#0b2240">
     <link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+    <!-- 🔍 저장된 화면 크기를 그리기 전에 먼저 적용 (깜빡임 방지) -->
+    <script>
+        (function () {
+            try {
+                var z = parseFloat(localStorage.getItem('daeyeon_ui_zoom'));
+                if (z >= 0.6 && z <= 1.3) document.documentElement.style.setProperty('--ui-zoom', z);
+            } catch (e) {}
+        })();
+    </script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
@@ -413,9 +423,70 @@
         .chk-open-row { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left; font-weight: 600; font-size: 13px; color: #1e293b; cursor: pointer; margin-top: 4px; box-sizing: border-box; }
         .chk-open-row input[type="checkbox"] { flex-shrink: 0; margin: 0; }
         .chk-open-row span { flex: 1; text-align: left; }
+
+        /* 🔍 화면 크기(확대/축소) 조절 버튼 — 지도 +/- 처럼 오른쪽 아래에 떠 있음 (터치 기기에서만 표시) */
+        body { zoom: var(--ui-zoom, 1); }
+        .ui-zoom-ctrl {
+            position: fixed; right: 12px; bottom: 18px; z-index: 100000;
+            display: none; flex-direction: column; align-items: center;
+            background: rgba(11, 34, 64, 0.95); border: 1px solid rgba(255,255,255,0.25);
+            border-radius: 12px; box-shadow: 0 4px 14px rgba(0,0,0,0.25); overflow: hidden;
+            zoom: calc(1 / var(--ui-zoom, 1));   /* 버튼 자체는 확대/축소와 상관없이 항상 같은 크기 */
+            -webkit-user-select: none; user-select: none;
+        }
+        .ui-zoom-ctrl button {
+            width: 42px; height: 40px; border: none; background: transparent; color: #ffffff;
+            font-size: 22px; font-weight: 800; line-height: 1; cursor: pointer; padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .ui-zoom-ctrl button:active { background: rgba(255,255,255,0.18); }
+        .ui-zoom-ctrl button:disabled { opacity: 0.35; }
+        .ui-zoom-ctrl .zoom-level {
+            width: 42px; height: 24px; font-size: 10px; font-weight: 800; letter-spacing: -0.2px;
+            border-top: 1px solid rgba(255,255,255,0.2); border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+        @media (pointer: coarse) {
+            .ui-zoom-ctrl { display: flex; }
+            .container { padding-bottom: 90px !important; }
+        }
     </style>
 </head>
 <body>
+
+<!-- 🔍 화면 크기 조절 (+ / 현재% / -) : 현재%를 누르면 100%로 되돌림 -->
+<div class="ui-zoom-ctrl" id="uiZoomCtrl" aria-label="화면 크기 조절">
+    <button type="button" id="uiZoomIn" onclick="changeUiZoom(1)" aria-label="크게">＋</button>
+    <button type="button" class="zoom-level" id="uiZoomLevel" onclick="resetUiZoom()" title="100%로 되돌리기">100%</button>
+    <button type="button" id="uiZoomOut" onclick="changeUiZoom(-1)" aria-label="작게">－</button>
+</div>
+<script>
+    // 화면 크기 단계 (60% ~ 130%). 기기마다 따로 저장됨 (localStorage).
+    var UI_ZOOM_STEPS = [0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3];
+    function getUiZoom() {
+        var z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom'));
+        return (z >= 0.6 && z <= 1.3) ? z : 1;
+    }
+    function applyUiZoom(z) {
+        document.documentElement.style.setProperty('--ui-zoom', z);
+        try { localStorage.setItem('daeyeon_ui_zoom', String(z)); } catch (e) {}
+        var lv = document.getElementById('uiZoomLevel');
+        if (lv) lv.textContent = Math.round(z * 100) + '%';
+        var zi = document.getElementById('uiZoomIn'), zo = document.getElementById('uiZoomOut');
+        if (zi) zi.disabled = z >= UI_ZOOM_STEPS[UI_ZOOM_STEPS.length - 1];
+        if (zo) zo.disabled = z <= UI_ZOOM_STEPS[0];
+    }
+    function changeUiZoom(dir) {
+        var cur = getUiZoom(), idx = 0, best = 99;
+        for (var i = 0; i < UI_ZOOM_STEPS.length; i++) {
+            var d = Math.abs(UI_ZOOM_STEPS[i] - cur);
+            if (d < best) { best = d; idx = i; }
+        }
+        idx = Math.max(0, Math.min(UI_ZOOM_STEPS.length - 1, idx + dir));
+        applyUiZoom(UI_ZOOM_STEPS[idx]);
+    }
+    function resetUiZoom() { applyUiZoom(1); }
+    applyUiZoom(getUiZoom());
+</script>
 
 <header>
     <div class="header-left">
