@@ -1,0 +1,297 @@
+# ==========================================================
+# 📱 대연초 야구부 명단 - 안드로이드 앱(APK) 자동 빌드
+# ==========================================================
+# - 실행 방법: 저장소 → Actions → "안드로이드 앱(APK) 빌드" → Run workflow
+#   (이 파일을 수정해서 올려도 자동 실행됨)
+# - 결과물: Releases 의 "android-app" 에 daeyeon-baseball.apk 가 올라감.
+#   다운로드 주소(항상 최신): https://github.com/<저장소>/releases/latest/download/daeyeon-baseball.apk
+# - 앱은 https://dybbr.github.io 를 그대로 보여주는 방식(TWA)이라,
+#   사이트를 수정하면 앱에도 자동 반영됨 → 사이트만 고칠 때는 다시 빌드할 필요 없음.
+# - 필요한 시크릿: ANDROID_KEYSTORE_PASSWORD (Settings → Secrets and variables → Actions)
+# - 아래 서명키(keystore)는 비밀번호로 AES-256 암호화된 상태라 비밀번호 없이는 쓸 수 없음.
+#   ⚠️ 이 키를 바꾸면 이미 설치된 앱이 업데이트되지 않고, assetlinks.json 도 다시 만들어야 하니 절대 바꾸지 말 것.
+name: 안드로이드 앱(APK) 빌드
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/android-apk.yml'
+      - 'icons/icon-512.png'
+      - 'icons/icon-maskable-512.png'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-apk
+  cancel-in-progress: true
+
+env:
+  APP_ID: io.github.dybbr.roster   # 앱 고유 ID (assetlinks.json 과 같아야 함, 바꾸지 말 것)
+  APP_NAME: 대연초 야구부
+  SITE_HOST: dybbr.github.io   # 주소를 바꾸면 AndroidManifest 부분(DEFAULT_URL, host)도 같이 바꿀 것
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 저장소 가져오기
+        uses: actions/checkout@v4
+
+      - name: Java 17 설치
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Gradle 설치
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: 시크릿 확인
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_PASSWORD" ]; then
+            echo "::error::ANDROID_KEYSTORE_PASSWORD 시크릿이 없습니다. Settings → Secrets and variables → Actions 에서 추가해 주세요."
+            exit 1
+          fi
+
+      - name: 서명키 복원
+        run: |
+          base64 -d > "$RUNNER_TEMP/release.keystore" <<'KEYSTORE_EOF'
+          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
+          it5mjSU7rMwzTYotXci+AgInEA==
+          KEYSTORE_EOF
+
+      - name: 안드로이드 프로젝트 생성
+        run: |
+          set -e
+          P=android-build
+          R=$P/app/src/main/res
+          mkdir -p $P/app/src/main $R/values $R/xml $R/drawable-nodpi $R/mipmap-anydpi-v26 $R/mipmap-xxxhdpi
+
+          cat > $P/settings.gradle <<'EOF'
+          pluginManagement {
+              repositories { google(); mavenCentral(); gradlePluginPortal() }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories { google(); mavenCentral() }
+          }
+          rootProject.name = "DaeyeonBaseball"
+          include ':app'
+          EOF
+
+          cat > $P/build.gradle <<'EOF'
+          plugins {
+              id 'com.android.application' version '8.5.2' apply false
+          }
+          EOF
+
+          cat > $P/gradle.properties <<'EOF'
+          android.useAndroidX=true
+          org.gradle.jvmargs=-Xmx2g -Dfile.encoding=UTF-8
+          EOF
+
+          cat > $P/app/build.gradle <<'EOF'
+          plugins {
+              id 'com.android.application'
+          }
+          android {
+              namespace "io.github.dybbr.roster"
+              compileSdk 34
+              defaultConfig {
+                  applicationId "io.github.dybbr.roster"
+                  minSdk 21
+                  targetSdk 34
+                  versionCode Integer.parseInt(System.getenv("VERSION_CODE") ?: "1")
+                  versionName "1.0." + (System.getenv("VERSION_CODE") ?: "1")
+              }
+              signingConfigs {
+                  release {
+                      storeFile file(System.getenv("KEYSTORE_FILE"))
+                      storeType "pkcs12"
+                      storePassword System.getenv("KEYSTORE_PASSWORD")
+                      keyAlias "daeyeon"
+                      keyPassword System.getenv("KEYSTORE_PASSWORD")
+                  }
+              }
+              buildTypes {
+                  release {
+                      minifyEnabled false
+                      signingConfig signingConfigs.release
+                  }
+              }
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+              lint {
+                  checkReleaseBuilds false
+                  abortOnError false
+              }
+          }
+          dependencies {
+              implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'
+          }
+          EOF
+
+          cat > $P/app/src/main/AndroidManifest.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <queries>
+                  <intent>
+                      <action android:name="android.support.customtabs.action.CustomTabsService" />
+                  </intent>
+              </queries>
+              <application
+                  android:allowBackup="true"
+                  android:icon="@mipmap/ic_launcher"
+                  android:label="@string/app_name"
+                  android:supportsRtl="true"
+                  android:theme="@android:style/Theme.Translucent.NoTitleBar">
+                  <meta-data android:name="asset_statements" android:resource="@string/asset_statements" />
+                  <activity
+                      android:name="com.google.androidbrowserhelper.trusted.LauncherActivity"
+                      android:label="@string/app_name"
+                      android:exported="true"
+                      android:alwaysRetainTaskState="true">
+                      <meta-data android:name="android.support.customtabs.trusted.DEFAULT_URL" android:value="https://dybbr.github.io/index.html" />
+                      <meta-data android:name="android.support.customtabs.trusted.STATUS_BAR_COLOR" android:resource="@color/brand_navy" />
+                      <meta-data android:name="android.support.customtabs.trusted.NAVIGATION_BAR_COLOR" android:resource="@color/brand_navy" />
+                      <meta-data android:name="android.support.customtabs.trusted.SPLASH_IMAGE_DRAWABLE" android:resource="@drawable/splash" />
+                      <meta-data android:name="android.support.customtabs.trusted.SPLASH_SCREEN_BACKGROUND_COLOR" android:resource="@color/brand_navy" />
+                      <meta-data android:name="android.support.customtabs.trusted.SPLASH_SCREEN_FADE_OUT_DURATION" android:value="300" />
+                      <meta-data android:name="android.support.customtabs.trusted.FILE_PROVIDER_AUTHORITY" android:value="${applicationId}.fileprovider" />
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                      <intent-filter android:autoVerify="true">
+                          <action android:name="android.intent.action.VIEW" />
+                          <category android:name="android.intent.category.DEFAULT" />
+                          <category android:name="android.intent.category.BROWSABLE" />
+                          <data android:scheme="https" android:host="dybbr.github.io" />
+                      </intent-filter>
+                  </activity>
+                  <provider
+                      android:name="androidx.core.content.FileProvider"
+                      android:authorities="${applicationId}.fileprovider"
+                      android:grantUriPermissions="true"
+                      android:exported="false">
+                      <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/filepaths" />
+                  </provider>
+              </application>
+          </manifest>
+          EOF
+
+          cat > $R/values/strings.xml <<EOF
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <string name="app_name">${APP_NAME}</string>
+              <string name="asset_statements" translatable="false">[{\"relation\": [\"delegate_permission/common.handle_all_urls\"], \"target\": {\"namespace\": \"web\", \"site\": \"https://${SITE_HOST}\"}}]</string>
+          </resources>
+          EOF
+
+          cat > $R/values/colors.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <color name="brand_navy">#0B2240</color>
+          </resources>
+          EOF
+
+          cat > $R/xml/filepaths.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <paths>
+              <files-path path="twa_splash/" name="twa_splash" />
+          </paths>
+          EOF
+
+          cat > $R/mipmap-anydpi-v26/ic_launcher.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+              <background android:drawable="@color/brand_navy" />
+              <foreground android:drawable="@drawable/ic_foreground" />
+          </adaptive-icon>
+          EOF
+
+          # 앱 아이콘/스플래시는 사이트의 icons 폴더 이미지를 그대로 사용
+          cp icons/icon-maskable-512.png $R/drawable-nodpi/ic_foreground.png
+          cp icons/icon-maskable-512.png $R/drawable-nodpi/splash.png
+          cp icons/icon-512.png $R/mipmap-xxxhdpi/ic_launcher.png
+
+          echo "생성된 파일:"; find $P -type f | sort
+
+      - name: APK 빌드 (서명 포함)
+        working-directory: android-build
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          VERSION_CODE: ${{ github.run_number }}
+        run: |
+          export KEYSTORE_FILE="$RUNNER_TEMP/release.keystore"
+          gradle assembleRelease --no-daemon --stacktrace
+          cp app/build/outputs/apk/release/app-release.apk ../daeyeon-baseball.apk
+          ls -la ../daeyeon-baseball.apk
+
+      - name: 릴리즈에 APK 올리기
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete android-app --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag || true
+          gh release create android-app daeyeon-baseball.apk \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --latest \
+            --title "대연초 야구부 앱 (안드로이드) · 빌드 ${{ github.run_number }}" \
+            --notes "안드로이드 폰에서 daeyeon-baseball.apk 를 받아 설치하세요. 설치 시 '출처를 알 수 없는 앱 허용'이 필요할 수 있습니다."
+          echo "다운로드: https://github.com/$GITHUB_REPOSITORY/releases/latest/download/daeyeon-baseball.apk"
