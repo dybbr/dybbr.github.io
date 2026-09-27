@@ -6,6 +6,17 @@
     <meta name="robots" content="noindex, nofollow">
     <title>선수 프로필 | 대연초 야구부</title>
 
+    <!-- 📱 앱 설치(PWA) / 안드로이드 APK(TWA) 설정 -->
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#0b2240">
+    <link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+        }
+    </script>
+
     <!-- 브라우저 캐시 원천 방지 메타태그 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">

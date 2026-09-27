@@ -26,7 +26,7 @@
         // ★ Code.gs 의 API_KEY 와 반드시 같은 값으로 맞춰 주세요.
         const API_KEY = "dybbr2026hacohadrone";
 
-        const APP_VERSION = "v2.11.3 · b260924";
+        const APP_VERSION = "v2.12.0 · b260927";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -38,6 +38,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>대연초 야구부 명단</title>
+
+    <!-- 📱 앱 설치(PWA) / 안드로이드 APK(TWA) 설정 -->
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#0b2240">
+    <link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="대연초 야구부">
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+        }
+    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
     <style>
