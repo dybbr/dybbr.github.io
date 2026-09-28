@@ -26,7 +26,7 @@
         // ★ Code.gs 의 API_KEY 와 반드시 같은 값으로 맞춰 주세요.
         const API_KEY = "dybbr2026hacohadrone";
 
-        const APP_VERSION = "v2.15.1 · b260928";
+        const APP_VERSION = "v2.16.0 · b260928";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -753,6 +753,24 @@
         .next-event-banner .neb-arrow { color: #94a3b8; font-size: 18px; font-weight: 800; }
 
         .app-section { display: none; }
+        .main-tab .tab-ico { margin-right: 4px; }
+        @media (max-width: 480px) {
+            .main-tab { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 7px 2px; font-size: 12px; }
+            .main-tab .tab-ico { margin-right: 0; font-size: 17px; line-height: 1.2; }
+            .tab-dot { right: 22%; top: 5px; }
+        }
+        .admin-panel { background: #ffffff; border: 1px solid var(--card-border); border-radius: 16px; padding: 16px; box-shadow: 0 2px 10px rgba(15,23,42,0.05); }
+        .admin-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+        .admin-panel-head h2 { font-size: 18px; font-weight: 900; color: var(--text-title); }
+        .admin-role-pill { font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 14px; background: #ede9fe; color: #5b21b6; }
+        .admin-role-pill.super { background: #fee2e2; color: #991b1b; }
+        .admin-role-pill.sub { background: #eff6ff; color: #1e40af; }
+        .admin-role-pill.general { background: #f0fdf4; color: #166534; }
+        .admin-role-desc { font-size: 12px; color: #64748b; line-height: 1.6; margin: 8px 0 4px; }
+        .admin-group { border-top: 1px solid #f1f5f9; margin-top: 12px; padding-top: 12px; }
+        .admin-group-title { font-size: 12px; font-weight: 800; color: #94a3b8; margin-bottom: 8px; letter-spacing: 0.3px; }
+        #adminSection .admin-bar { padding: 0; margin: 0; background: transparent !important; border: none !important; }
+        .admin-empty { display: none; font-size: 12px; color: #94a3b8; font-weight: 700; padding: 6px 0; }
         .app-section.active { display: block; }
 
         .sched-card { background: #ffffff; border: 1px solid var(--card-border); border-radius: 16px; box-shadow: 0 2px 10px rgba(15,23,42,0.05); overflow: hidden; }
@@ -1057,9 +1075,10 @@
 <div class="container">
     <!-- 상단 메뉴 탭 (로그인 후 표시) -->
     <nav class="main-tabs" id="mainTabs" style="display: none;">
-        <button type="button" class="main-tab active" data-tab="roster" onclick="showMainTab('roster')">👥 선수 명단</button>
-        <button type="button" class="main-tab" data-tab="schedule" id="tabBtnSchedule" onclick="showMainTab('schedule')">📅 일정</button>
-        <button type="button" class="main-tab" data-tab="notice" id="tabBtnNotice" onclick="showMainTab('notice')">📢 공지<span class="tab-dot" id="noticeDot"></span></button>
+        <button type="button" class="main-tab active" data-tab="roster" onclick="showMainTab('roster')"><span class="tab-ico">👥</span><span class="tab-txt">선수 명단</span></button>
+        <button type="button" class="main-tab" data-tab="schedule" id="tabBtnSchedule" onclick="showMainTab('schedule')"><span class="tab-ico">📅</span><span class="tab-txt">일정</span></button>
+        <button type="button" class="main-tab" data-tab="notice" id="tabBtnNotice" onclick="showMainTab('notice')"><span class="tab-ico">📢</span><span class="tab-txt">공지</span><span class="tab-dot" id="noticeDot"></span></button>
+        <button type="button" class="main-tab admin-tab" data-tab="admin" id="tabBtnAdmin" style="display: none;" onclick="showMainTab('admin')"><span class="tab-ico">⚙️</span><span class="tab-txt">관리자</span></button>
     </nav>
     <div class="next-event-banner" id="nextEventBanner"></div>
 
@@ -1086,18 +1105,6 @@
                     <button class="view-btn" id="btnCardView" onclick="switchView('card')">▦ 이미지형</button>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <div id="adminBar" class="admin-bar">
-        <span id="adminRoleText" style="font-size: 13px; font-weight: 700;"></span>
-        <div class="admin-bar-btns">
-            <button id="btnEmergencyContacts" class="btn-emergency-contact" onclick="openEmergencyContactsModal()">🚨 학부모 비상연락망</button>
-            <button id="btnToggleUniform" class="btn-toggle-uniform" style="display: none;" onclick="toggleUniformFeature()">👕 접수기능: ON</button>
-            <button id="btnViewOrders" class="btn-orders-view" style="display: none;" onclick="openOrdersSummaryModal()">📋 유니폼 접수 & 발주 집계</button>
-            <button id="btnViewLogs" class="btn-manage-pw" style="display: none; background: #4338ca;" onclick="openLogsModal()">📜 보안 활동 로그</button>
-            <button id="btnManagePw" class="btn-manage-pw" style="display: none;" onclick="openPasswordManageModal()">🔑 비밀번호 관리</button>
-            <button id="btnSheetLink" class="btn-sheet-link" style="display: none;" onclick="window.open(GOOGLE_SHEET_EDIT_URL, '_blank')">📊 구글 시트 편집창 열기</button>
         </div>
     </div>
 
@@ -1149,6 +1156,43 @@
             </div>
             <div id="calBody"></div>
             <div class="cal-legend" id="calLegend"></div>
+        </div>
+    </section>
+
+
+    <!-- ⚙️ 관리자 탭 (관리자·개발자 로그인 시에만 표시) -->
+    <section id="adminSection" class="app-section">
+        <div class="admin-panel">
+            <div class="admin-panel-head">
+                <h2>⚙️ 관리자 메뉴</h2>
+                <span class="admin-role-pill" id="adminRoleText"></span>
+            </div>
+            <p class="admin-role-desc" id="adminRoleDesc"></p>
+
+            <div class="admin-group">
+                <div class="admin-group-title">운영</div>
+                <div id="adminBar" class="admin-bar">
+                    <div class="admin-bar-btns">
+            <button id="btnEmergencyContacts" class="btn-emergency-contact" onclick="openEmergencyContactsModal()">🚨 학부모 비상연락망</button>
+            <button id="btnToggleUniform" class="btn-toggle-uniform" style="display: none;" onclick="toggleUniformFeature()">👕 접수기능: ON</button>
+            <button id="btnViewOrders" class="btn-orders-view" style="display: none;" onclick="openOrdersSummaryModal()">📋 유니폼 접수 & 발주 집계</button>
+            <button id="btnViewLogs" class="btn-manage-pw" style="display: none; background: #4338ca;" onclick="openLogsModal()">📜 보안 활동 로그</button>
+            <button id="btnManagePw" class="btn-manage-pw" style="display: none;" onclick="openPasswordManageModal()">🔑 비밀번호 관리</button>
+            <button id="btnSheetLink" class="btn-sheet-link" style="display: none;" onclick="window.open(GOOGLE_SHEET_EDIT_URL, '_blank')">📊 구글 시트 편집창 열기</button>
+        </div>
+    </div>
+
+                <div class="admin-empty" id="adminOpsEmpty">이 등급에서 쓸 수 있는 운영 기능이 없습니다.</div>
+            </div>
+
+            <div class="admin-group" id="adminGroupContent">
+                <div class="admin-group-title">일정 · 공지</div>
+                <div class="admin-bar-btns">
+                    <button type="button" class="btn-sched-admin" onclick="showMainTab('schedule'); openEventEditor(null)">＋ 일정 추가</button>
+                    <button type="button" class="btn-sched-admin alt" onclick="showMainTab('schedule'); openEventImport()">📋 단톡방 공지 붙여넣기로 일정 추가</button>
+                    <button type="button" class="btn-sched-admin" style="background:#0f766e;" onclick="showMainTab('notice'); openNoticeEditor(null)">✏️ 새 공지 작성</button>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -1750,6 +1794,24 @@
     function canViewSchedule() { return isAuthValid() && (VALID_ROLES.indexOf(currentRole) !== -1 || !!getActiveUser()); }
     function canEditSchedule() { return isAuthValid() && ['dev', 'super', 'general'].indexOf(currentRole) !== -1; }
     function canViewNotice() { return isAuthValid(); }
+    function canViewAdmin() { return isAuthValid() && VALID_ROLES.indexOf(currentRole) !== -1; }
+
+    // 관리자 탭 안내문 · 빈 그룹 처리
+    function updateAdminPanel() {
+        const desc = document.getElementById('adminRoleDesc');
+        if (!desc) return;
+        desc.textContent = ({
+            dev: '모든 관리자 기능 + 보안 활동 로그, 비밀번호 확인까지 사용할 수 있습니다.',
+            super: '비상연락망, 유니폼 접수·발주, 비밀번호 관리, 구글 시트 편집, 일정·공지 관리, 선수 사진 등록을 할 수 있습니다.',
+            sub: '비공개 사진과 체격 정보를 열람할 수 있습니다.',
+            general: '비공개 체격 정보 열람과 일정·공지 관리를 할 수 있습니다.'
+        })[currentRole] || '';
+        const bar = document.getElementById('adminBar');
+        const anyOps = bar && Array.from(bar.querySelectorAll('button')).some(b => b.style.display !== 'none');
+        document.getElementById('adminOpsEmpty').style.display = anyOps ? 'none' : 'block';
+        if (bar) bar.style.display = anyOps ? 'flex' : 'none';
+        document.getElementById('adminGroupContent').style.display = canEditSchedule() ? '' : 'none';
+    }
     function editorAuthorName() { return currentRole === 'super' ? '대표' : currentRole === 'general' ? '총무' : currentRole === 'dev' ? '관리자' : ''; }
 
     // 로그인한 학부모의 자녀 학년 목록 (명단에서 찾아서 계산)
@@ -1819,13 +1881,14 @@
     function refreshMainTabs() {
         const tabs = document.getElementById('mainTabs');
         if (!tabs) return;
-        const sv = canViewSchedule(), nv = canViewNotice();
+        const sv = canViewSchedule(), nv = canViewNotice(), av = canViewAdmin();
         document.getElementById('tabBtnSchedule').style.display = sv ? '' : 'none';
         document.getElementById('tabBtnNotice').style.display = nv ? '' : 'none';
-        tabs.style.display = (sv || nv) ? 'flex' : 'none';
+        document.getElementById('tabBtnAdmin').style.display = av ? '' : 'none';
+        tabs.style.display = (sv || nv || av) ? 'flex' : 'none';
         if (!sv) { schedEvents = []; schedLoaded = false; }
         if (!nv) { noticeList = []; noticeLoaded = false; }
-        if ((currentMainTab === 'schedule' && !sv) || (currentMainTab === 'notice' && !nv)) currentMainTab = 'roster';
+        if ((currentMainTab === 'schedule' && !sv) || (currentMainTab === 'notice' && !nv) || (currentMainTab === 'admin' && !av)) currentMainTab = 'roster';
         showMainTab(currentMainTab, true);
         if (sv) loadSchedule();
         if (nv) loadNotices();
@@ -1837,6 +1900,8 @@
         document.getElementById('rosterSection').style.display = tab === 'roster' ? '' : 'none';
         document.getElementById('scheduleSection').classList.toggle('active', tab === 'schedule');
         document.getElementById('noticeSection').classList.toggle('active', tab === 'notice');
+        document.getElementById('adminSection').classList.toggle('active', tab === 'admin');
+        if (tab === 'admin') updateAdminPanel();
         if (tab === 'schedule') { renderSchedule(); if (!silent) loadSchedule(true); }
         if (tab === 'notice') { renderNotices(); markNoticesSeen(); if (!silent) loadNotices(true); }
         renderNextEventBanner();
@@ -4237,7 +4302,8 @@
             adminBtn.textContent = '🔓 로그아웃';
             adminBtn.classList.add('logged-in');
             adminBar.style.display = 'flex';
-            roleText.textContent = `현재 모드: ${currentRole.toUpperCase()}`;
+            roleText.textContent = ({ dev: '개발자', super: '최고관리자 (대표)', sub: '보조관리자', general: '일반관리자 (총무)' })[currentRole] || currentRole.toUpperCase();
+            roleText.className = 'admin-role-pill ' + currentRole;
             document.getElementById('btnSheetLink').style.display = isSuperOrDev() ? 'inline-flex' : 'none';
             document.getElementById('btnToggleUniform').style.display = isSuperOrDev() ? 'inline-block' : 'none';
             document.getElementById('btnViewOrders').style.display = isSuperOrDev() ? 'inline-block' : 'none';
@@ -4249,6 +4315,7 @@
             adminBtn.style.display = 'none';
             adminBar.style.display = 'none';
         }
+        try { updateAdminPanel(); } catch (e) {}
         try { refreshMainTabs(); } catch (e) { console.warn('탭 갱신 실패:', e); }
         try { fitHeaderTopBar(); } catch (e) {}
     }
