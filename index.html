@@ -26,7 +26,7 @@
         // ★ Code.gs 의 API_KEY 와 반드시 같은 값으로 맞춰 주세요.
         const API_KEY = "dybbr2026hacohadrone";
 
-        const APP_VERSION = "v2.15.0 · b260928";
+        const APP_VERSION = "v2.15.1 · b260928";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -349,10 +349,13 @@
         }
 
         /* 폭이 좁은 폰(360px 미만)에서 상단 줄이 화면 밖으로 넘쳐 팝업창이 잘리는 문제 방지 */
-        .header-top-left, .header-top-center, .header-top-right { min-width: 0; }
+        .header-top-right { min-width: 0; }
         @media (max-width: 370px) {
             .app-version-tag { display: none; }
         }
+        /* 한 줄에 다 안 들어가면(자동 판단) 접속자 이름 배지를 둘째 줄 가운데로 내려서 버튼끼리 겹치지 않게 */
+        .header-top-bar.compact { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; row-gap: 6px; }
+        .header-top-bar.compact .header-top-center { order: 3; flex-basis: 100%; display: flex; justify-content: center; }
 
         .header-center-title {
             text-align: center;
@@ -2490,6 +2493,23 @@
 
     document.getElementById('appVersionDisplay').textContent = APP_VERSION;
 
+    // 상단 줄(타이머·잠금 | 접속자 배지 | 로그아웃·버전)이 한 줄에 안 들어가면 배지를 둘째 줄로 내림
+    function fitHeaderTopBar() {
+        const bar = document.querySelector('.header-top-bar');
+        if (!bar) return;
+        bar.classList.remove('compact');
+        const l = bar.querySelector('.header-top-left'), c = bar.querySelector('.header-top-center'), r = bar.querySelector('.header-top-right');
+        const badge = document.getElementById('userIdentityBadge');
+        if (!badge || badge.offsetWidth === 0) return;
+        const bl = badge.getBoundingClientRect(), lr = l.getBoundingClientRect();
+        const rightEdges = Array.from(r.children).filter(el => el.offsetWidth > 0).map(el => el.getBoundingClientRect().left);
+        const rightLeft = rightEdges.length ? Math.min.apply(null, rightEdges) : Infinity;
+        const leftRight = Math.max.apply(null, Array.from(l.children).filter(el => el.offsetWidth > 0).map(el => el.getBoundingClientRect().right).concat([lr.left]));
+        const overlap = (leftRight > bl.left - 4) || (bl.right > rightLeft - 4) || bar.scrollWidth > bar.clientWidth + 1;
+        if (overlap) bar.classList.add('compact');
+    }
+    window.addEventListener('resize', fitHeaderTopBar);
+
     // ==========================================================
     // 📱 안드로이드 앱(APK) 다운로드 링크
     //   - GitHub Actions 가 빌드해서 Releases 에 올린 최신 APK 로 연결된다.
@@ -2537,6 +2557,7 @@
 
         if (!isAuthValid() || currentRole !== 'guest') {
             badge.style.display = 'none';
+            fitHeaderTopBar();
             return;
         }
 
@@ -2555,6 +2576,7 @@
             badge.style.color = '#cbd5e1';
             badge.textContent = `👤 일반 열람자`;
         }
+        fitHeaderTopBar();
     }
 
     function promptUserIdentity() {
@@ -4228,6 +4250,7 @@
             adminBar.style.display = 'none';
         }
         try { refreshMainTabs(); } catch (e) { console.warn('탭 갱신 실패:', e); }
+        try { fitHeaderTopBar(); } catch (e) {}
     }
 
     // 개발자 전용: 현재 서버(Script Properties)에 저장된 관리자 비밀번호 값을 그대로 조회한다.
