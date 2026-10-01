@@ -26,7 +26,7 @@
         // ★ Code.gs 의 API_KEY 와 반드시 같은 값으로 맞춰 주세요.
         const API_KEY = "dybbr2026hacohadrone";
 
-        const APP_VERSION = "v2.16.0 · b260928";
+        const APP_VERSION = "v2.17.0 · b261001";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -912,10 +912,17 @@
         .nt-list { list-style: none; margin: 6px 0; padding: 0; }
         .nt-list li { display: flex; gap: 10px; padding: 10px 12px; margin-bottom: 8px; background: #f8fafc; border-radius: 10px; }
         .nt-num { flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; background: var(--kbo-blue); color: #ffffff; font-size: 12px; font-weight: 900; display: flex; align-items: center; justify-content: center; margin-top: 2px; }
-        .nt-admin { display: flex; gap: 6px; justify-content: flex-end; border-top: 1px solid #f1f5f9; padding-top: 10px; margin-top: 6px; }
+        .nt-admin { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; border-top: 1px solid #f1f5f9; padding-top: 10px; margin-top: 6px; }
+        .nt-admin button { white-space: nowrap; }
         .nt-admin button { border: 1px solid #cbd5e1; background: #ffffff; border-radius: 8px; font-size: 12px; font-weight: 800; padding: 6px 10px; cursor: pointer; color: #334155; }
         .nt-admin button.danger { color: #b91c1c; border-color: #fecaca; background: #fff5f5; }
         .nt-author { font-size: 12px; color: #94a3b8; font-weight: 700; margin-top: 6px; }
+        .nt-views { margin-left: 8px; color: #64748b; }
+        .nt-readers:empty { display: none; }
+        .nt-readers { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; margin-top: 10px; }
+        .nt-readers-title { font-size: 12px; font-weight: 800; color: #334155; margin-bottom: 6px; }
+        .nt-reader-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+        .nt-reader { font-size: 11px; font-weight: 700; color: #334155; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; padding: 3px 8px; }
 
         /* 🔍 화면 크기(확대/축소) 조절 버튼 — 지도 +/- 처럼 오른쪽 아래에 떠 있음 (터치 기기에서만 표시) */
         body { zoom: var(--ui-zoom, 1); }
@@ -2459,7 +2466,7 @@
                         ${n.pinned === 'Y' ? '<span class="nt-pin">📌 고정</span>' : ''}
                         <span class="nt-cat" style="--c:${cm.c};--bg:${cm.bg}">${escapeHtml(n.category || '일반')}</span>
                         ${isNewNotice(n) ? '<span class="nt-new">NEW</span>' : ''}
-                        <span class="nt-date">${escapeHtml(String(n.created || '').slice(0, 10).replace(/-/g, '.'))}</span>
+                        <span class="nt-date">${escapeHtml(String(n.created || '').slice(0, 10).replace(/-/g, '.'))}<span class="nt-views" title="읽은 사람 수">👁 ${Number(n.views) || 0}</span></span>
                     </div>
                     <div class="nt-title"><span>${escapeHtml(n.title)}</span><span class="chev">▾</span></div>
                     <div class="nt-preview">${escapeHtml(preview)}</div>
@@ -2467,16 +2474,63 @@
                 <div class="nt-body">
                     ${formatNoticeBody(n.body)}
                     ${n.author ? `<div class="nt-author">작성: ${escapeHtml(n.author)}${n.updated && n.updated !== n.created ? ' · 수정 ' + escapeHtml(String(n.updated).slice(0, 16)) : ''}</div>` : ''}
-                    ${canEditSchedule() ? `<div class="nt-admin">
-                        <button type="button" onclick="toggleNoticePin('${escapeHtml(n.id)}')">${n.pinned === 'Y' ? '고정 해제' : '📌 고정'}</button>
+                    ${canViewAdmin() ? `<div class="nt-readers" id="ntReaders-${escapeHtml(n.id)}"></div>` : ''}
+                    ${canViewAdmin() || canEditSchedule() ? `<div class="nt-admin">
+                        ${canViewAdmin() ? `<button type="button" onclick="toggleNoticeReaders('${escapeHtml(n.id)}')">👁 읽은 사람</button>` : ''}
+                        ${canEditSchedule() ? `<button type="button" onclick="toggleNoticePin('${escapeHtml(n.id)}')">${n.pinned === 'Y' ? '고정 해제' : '📌 고정'}</button>
                         <button type="button" onclick="openNoticeEditor('${escapeHtml(n.id)}')">수정</button>
-                        <button type="button" class="danger" onclick="deleteNotice('${escapeHtml(n.id)}')">삭제</button>
+                        <button type="button" class="danger" onclick="deleteNotice('${escapeHtml(n.id)}')">삭제</button>` : ''}
                     </div>` : ''}
                 </div>
             </div>`;
         }).join('');
     }
-    function toggleNotice(id) { noticeOpenId = noticeOpenId === id ? null : id; renderNotices(); }
+    function toggleNotice(id) {
+        noticeOpenId = noticeOpenId === id ? null : id;
+        if (noticeOpenId) recordNoticeView(noticeOpenId);
+        renderNotices();
+    }
+
+    // 👁 조회수: 공지를 펼친 사람을 1인 1회만 기록 (같은 사람이 다시 열어도 다시 세지 않음)
+    function noticeViewer() {
+        const u = getActiveUser();
+        if (u && u.name) {
+            const ph = digitsOnly(u.rawPhone || u.phone || '').slice(-8);
+            return { key: 'P:' + (ph || (u.name + u.role)), name: `${u.name} ${u.role || ''}`.trim() };
+        }
+        const roleName = ({ dev: '개발자', super: '대표', sub: '보조관리자', general: '총무' })[currentRole];
+        if (roleName) return { key: 'A:' + currentRole + ':' + getDeviceClientId(), name: '관리자 (' + roleName + ')' };
+        return { key: 'G:' + getDeviceClientId(), name: '일반 열람자' };
+    }
+    function recordNoticeView(id) {
+        const v = noticeViewer();
+        const mark = v.key + '|' + id;
+        let seen = [];
+        try { seen = JSON.parse(localStorage.getItem('daeyeon_notice_views') || '[]'); } catch (e) {}
+        if (seen.indexOf(mark) !== -1) return;
+        seen.push(mark);
+        try { localStorage.setItem('daeyeon_notice_views', JSON.stringify(seen.slice(-500))); } catch (e) {}
+        const n = noticeList.find(x => x.id === id);
+        if (n) n.views = (Number(n.views) || 0) + 1;
+        postApi({ action: 'viewNotice', id: id, viewerKey: v.key, viewerName: v.name }).catch(() => {});
+    }
+    async function toggleNoticeReaders(id) {
+        const box = document.getElementById('ntReaders-' + id);
+        if (!box) return;
+        if (box.dataset.open === '1') { box.dataset.open = ''; box.innerHTML = ''; return; }
+        box.dataset.open = '1';
+        box.innerHTML = '<div class="form-hint">불러오는 중...</div>';
+        try {
+            const res = await apiGetJson('action=getNoticeReaders&id=' + encodeURIComponent(id));
+            const list = (res && res.readers) || [];
+            box.innerHTML = list.length
+                ? `<div class="nt-readers-title">읽은 사람 ${list.length}명</div><div class="nt-reader-chips">` +
+                  list.map(r => `<span class="nt-reader" title="${escapeHtml(r.time)}">${escapeHtml(r.name)}</span>`).join('') + '</div>'
+                : '<div class="form-hint">아직 읽은 사람이 없습니다.</div>';
+        } catch (err) {
+            box.innerHTML = '<div class="form-hint">목록을 불러오지 못했습니다.</div>';
+        }
+    }
     function noticeStamp(n) { return String(n.updated || n.created || ''); }
     function updateNoticeDot() {
         const dot = document.getElementById('noticeDot');
