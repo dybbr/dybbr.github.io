@@ -619,7 +619,7 @@
         return ['dev', 'super', 'sub', 'general'].indexOf(r) !== -1 ? r : 'guest';
     })();
     const isSuperOrDev = (currentRole === 'super' || currentRole === 'dev');
-    const canViewPhoto = (currentRole === 'sub' || isSuperOrDev);
+    const canViewPhoto = (currentRole === 'sub' || currentRole === 'general' || isSuperOrDev);   // 코치진·총무님·대표님: 비공개 정보 열람
 
     // 로그인한 학부모(activeUser.children)에 등록된 "내 자녀"인지 확인 → 자기 자녀 사진만 변경 가능
     const activeUser = (function () {
@@ -904,7 +904,7 @@
                     physValue = (hText && wText) ? `${hText} / ${wText}` : (hText || wText || '-');
                 }
             } else {
-                const showBadge = (currentRole === 'super' || currentRole === 'sub' || currentRole === 'dev');
+                const showBadge = (currentRole === 'super' || currentRole === 'sub' || currentRole === 'general' || currentRole === 'dev');
                 const hBadge = (p.hideHeight && showBadge) ? '<span class="admin-private-badge">비공개</span>' : '';
                 const wBadge = (p.hideWeight && showBadge) ? '<span class="admin-private-badge">비공개</span>' : '';
                 const hStr = h ? `${h}cm${hBadge}` : '';
