@@ -26,7 +26,7 @@
         // ★ Code.gs 의 API_KEY 와 반드시 같은 값으로 맞춰 주세요.
         const API_KEY = "dybbr2026hacohadrone";
 
-        const APP_VERSION = "v2.17.0 · b261001";
+        const APP_VERSION = "v2.18.0 · b261001";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -706,6 +706,25 @@
         .contact-car-box { font-size: 11px; color: #1e40af; background: #eff6ff; padding: 5px 8px; border-radius: 6px; margin-top: 4px; border: 1px solid #bfdbfe; }
         .car-num-tag { background: #ffffff; border: 1px solid #93c5fd; padding: 1px 6px; border-radius: 4px; font-weight: 800; color: #1d4ed8; }
         .contact-address-box { font-size: 11px; color: #475569; background: #f1f5f9; padding: 5px 8px; border-radius: 6px; margin-top: 4px; border: 1px solid #e2e8f0; }
+        .contact-sibling { font-size: 10.5px; font-weight: 800; color: #7c3aed; background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 10px; padding: 1px 7px; margin-left: 6px; white-space: nowrap; }
+        .contact-sibling.addr { color: #0369a1; background: #f0f9ff; border-color: #bae6fd; }
+        .contact-name-wrap { display: flex; align-items: center; flex-wrap: wrap; gap: 2px; min-width: 0; }
+        .contact-commute { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 4px; }
+        .commute-cell { font-size: 11px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 7px; color: #334155; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+        .commute-cell b { color: #64748b; font-weight: 800; margin-right: 2px; }
+        .commute-chip { font-weight: 800; white-space: nowrap; }
+        .commute-chip.car { color: #b45309; } .commute-chip.subway { color: #1d4ed8; } .commute-chip.bus { color: #047857; }
+        .commute-chip.walk { color: #475569; } .commute-chip.academy { color: #7c3aed; }
+        .contact-memo-box { font-size: 11px; color: #92400e; background: #fffbeb; padding: 5px 8px; border-radius: 6px; margin-top: 4px; border: 1px solid #fde68a; white-space: pre-line; }
+        .btn-map { margin-left: 6px; font-size: 10.5px; font-weight: 800; color: #0369a1; text-decoration: none; background: #ffffff; border: 1px solid #bae6fd; border-radius: 5px; padding: 1px 6px; white-space: nowrap; }
+        .contact-phone-none { font-size: 11px; color: #94a3b8; font-weight: 700; }
+        .contact-filter-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; flex-shrink: 0; }
+        .contact-filter-row input { flex: 1 1 100%; min-width: 0; }
+        .contact-filter-row select { flex: 1 1 0; min-width: 0; }
+        @media (min-width: 520px) { .contact-filter-row input { flex-basis: 0; } .contact-filter-row select { flex: 0 0 auto; } }
+        .commute-summary { display: none; font-size: 11px; color: #334155; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 8px; margin-bottom: 8px; line-height: 1.7; flex-shrink: 0; }
+        .commute-summary b { color: #0f172a; margin-right: 4px; }
+        .commute-summary .cs-item { white-space: nowrap; margin-right: 8px; }
         .contact-quick-bar { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: #fef2f2; border: 1px solid #fecaca; padding: 6px 8px; border-radius: 8px; margin-bottom: 8px; }
         .btn-quick-action { background: #ffffff; border: 1px solid #cbd5e1; padding: 3px 6px; border-radius: 5px; font-size: 11px; font-weight: 700; cursor: pointer; color: #334155; }
 
@@ -947,6 +966,7 @@
         }
         @media (pointer: coarse) {
             .ui-zoom-ctrl { display: flex; }
+            body:has(.modal[style*="flex"]) .ui-zoom-ctrl { display: none; }   /* 팝업창이 열려 있으면 줌 버튼 숨김 (닫기 버튼 가림 방지) */
             .container { padding-bottom: 90px !important; }
         }
     </style>
@@ -1340,9 +1360,9 @@
                        inputmode="numeric" pattern="[0-9]*" autocomplete="off"
                        onkeydown="if(event.key==='Enter' || event.key===' ' || event.code==='Space') { event.preventDefault(); handleLogin(); }">
                 <span style="font-size: 11px; color: #64748b; line-height: 1.6; margin-top: 8px;">
-                    • <b>최고관리자</b>: 비상연락망 + 유니폼 발주 집계 + 사진 등록 + 유니폼 접수 ON/OFF<br>
-                    • <b>보조관리자</b>: 비공개 사진 및 체격 열람 + 시트 편집<br>
-                    • <b>일반관리자</b>: 선수 비공개 체격(신장/몸무게/생년월일) 열람 전용
+                    • <b>대표님</b>: 모든 기능 (비상연락망, 유니폼 접수·발주, 비밀번호 관리, 일정·공지 관리 등)<br>
+                    • <b>총무님</b>: 비공개 정보 열람 + 일정·공지 관리<br>
+                    • <b>코치진</b>: 비공개 정보 열람
                 </span>
             </div>
         </div>
@@ -1572,10 +1592,10 @@
 
 <!-- 6. 학부모 비상연락망 모달 -->
 <div id="emergencyContactsModal" class="modal">
-    <div class="modal-content" style="max-width: 480px; width: 95%;">
+    <div class="modal-content" style="max-width: 480px; width: 95%; max-height: 90vh;">
         <div class="modal-header" id="contactsModalTitle">🚨 학부모 비상연락망</div>
-        <div style="display: flex; gap: 6px; margin-bottom: 8px; flex-shrink: 0;">
-            <input type="text" id="contactSearchInput" placeholder="선수명 / 연락처 / 차량 / 주소 검색" style="flex: 1; padding: 7px 10px; border: 1px solid var(--card-border); border-radius: 6px; font-size: 12px;" oninput="renderEmergencyContacts()">
+        <div class="contact-filter-row">
+            <input type="text" id="contactSearchInput" placeholder="선수명 / 연락처 / 차량 / 주소 / 등하교 검색" style="padding: 7px 10px; border: 1px solid var(--card-border); border-radius: 6px; font-size: 12px;" oninput="renderEmergencyContacts()">
             <select id="contactGradeSelect" style="padding: 7px 8px; border: 1px solid var(--card-border); border-radius: 6px; font-size: 12px; font-weight: 700;" onchange="renderEmergencyContacts()">
                 <option value="all">전체</option>
                 <option value="6">6학년</option>
@@ -1585,30 +1605,42 @@
                 <option value="2">2학년</option>
                 <option value="1">1학년</option>
             </select>
+            <select id="contactCommuteSelect" title="등·하교 방법" style="padding: 7px 6px; border: 1px solid var(--card-border); border-radius: 6px; font-size: 12px; font-weight: 700;" onchange="renderEmergencyContacts()">
+                <option value="all">등하교 전체</option>
+                <option value="car">🚗 자차</option>
+                <option value="subway">🚇 지하철</option>
+                <option value="bus">🚌 버스</option>
+                <option value="walk">🚶 도보</option>
+                <option value="academy">🚐 학원차량</option>
+            </select>
         </div>
-        <div class="contact-quick-bar" style="flex-shrink: 0; align-items: flex-start;">
-            <span style="font-size: 11px; font-weight: 800; color: #991b1b; white-space: nowrap; padding-top: 4px;">⚡ 긴급 공지</span>
-            <div style="display: flex; flex-direction: column; gap: 4px;">
-                <div style="display: flex; gap: 3px; flex-wrap: wrap;">
-                    <button class="btn-quick-action" onclick="copyAllContactPhones()">📋 비상연락망 전체 복사</button>
-                    <button class="btn-quick-action" onclick="copyAllContactPhonesOnly()">📱 단체문자용 전체 복사</button>
-                </div>
-                <div style="display: flex; gap: 3px; flex-wrap: wrap;">
-                    <button class="btn-quick-action" onclick="copyEmergencyTemplate('weather')">🌧️ 우천취소</button>
-                    <button class="btn-quick-action" onclick="copyEmergencyTemplate('match')">⚾ 경기시간</button>
-                    <button class="btn-quick-action" onclick="copyEmergencyTemplate('safe')">🏠 안전귀가</button>
+        <div class="modal-scroll-body">
+            <div class="commute-summary" id="commuteSummary"></div>
+            <div class="contact-quick-bar" style="flex-shrink: 0; align-items: flex-start;">
+                <span style="font-size: 11px; font-weight: 800; color: #991b1b; white-space: nowrap; padding-top: 4px;">⚡ 긴급 공지</span>
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <div style="display: flex; gap: 3px; flex-wrap: wrap;">
+                        <button class="btn-quick-action" onclick="copyAllContactPhones()">📋 비상연락망 전체 복사</button>
+                        <button class="btn-quick-action" onclick="copyAllContactPhonesOnly()">📱 단체문자용 전체 복사</button>
+                        <button class="btn-quick-action" onclick="copyDismissalList()">🏠 하교방법별 명단</button>
+                    </div>
+                    <div style="display: flex; gap: 3px; flex-wrap: wrap;">
+                        <button class="btn-quick-action" onclick="copyEmergencyTemplate('weather')">🌧️ 우천취소</button>
+                        <button class="btn-quick-action" onclick="copyEmergencyTemplate('match')">⚾ 경기시간</button>
+                        <button class="btn-quick-action" onclick="copyEmergencyTemplate('safe')">🏠 안전귀가</button>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="contact-quick-bar" style="flex-shrink: 0; margin-top: 4px;">
-            <span style="font-size: 11px; font-weight: 800; color: #0369a1; white-space: nowrap;">📱 단체문자용 번호복사(학년별)</span>
-            <div style="display: flex; gap: 3px; flex-wrap: wrap;">
-                <button class="btn-quick-action" onclick="copyGradePhones('6')">6학년</button>
-                <button class="btn-quick-action" onclick="copyGradePhones('5')">5학년</button>
-                <button class="btn-quick-action" onclick="copyLowGradePhones()">저학년 (1~4학년)</button>
+            <div class="contact-quick-bar" style="flex-shrink: 0; margin-top: 4px;">
+                <span style="font-size: 11px; font-weight: 800; color: #0369a1; white-space: nowrap;">📱 단체문자용 번호복사(학년별)</span>
+                <div style="display: flex; gap: 3px; flex-wrap: wrap;">
+                    <button class="btn-quick-action" onclick="copyGradePhones('6')">6학년</button>
+                    <button class="btn-quick-action" onclick="copyGradePhones('5')">5학년</button>
+                    <button class="btn-quick-action" onclick="copyLowGradePhones()">저학년 (1~4학년)</button>
+                </div>
             </div>
+            <div id="contactsListContent"></div>
         </div>
-        <div class="modal-scroll-body" id="contactsListContent"></div>
         <div class="modal-btns" style="justify-content: space-between;">
             <button class="btn-sheet-link" onclick="window.open(GOOGLE_SHEET_CONTACTS_URL, '_blank')">📊 시트 원본</button>
             <button class="btn-save" onclick="closeModal('emergencyContactsModal')">닫기</button>
@@ -1737,7 +1769,7 @@
     // ==========================================================
     // 📅 일정 / 📢 공지 (v2.15.0)
     //   - 조회: 학부모 인증자 + 관리자 (1922 익명 열람자는 일정 탭이 안 보임, 공지는 볼 수 있음)
-    //   - 수정: 최고관리자(대표) · 일반관리자(총무) · 개발자
+    //   - 수정: 대표님 · 총무님 · 개발자
     //   - 데이터: 구글 시트 [일정] / [공지사항] 탭 (없으면 앱스 스크립트가 자동 생성)
     // ==========================================================
     const SCHED_TYPES = {
@@ -1809,9 +1841,9 @@
         if (!desc) return;
         desc.textContent = ({
             dev: '모든 관리자 기능 + 보안 활동 로그, 비밀번호 확인까지 사용할 수 있습니다.',
-            super: '비상연락망, 유니폼 접수·발주, 비밀번호 관리, 구글 시트 편집, 일정·공지 관리, 선수 사진 등록을 할 수 있습니다.',
-            sub: '비공개 사진과 체격 정보를 열람할 수 있습니다.',
-            general: '비공개 체격 정보 열람과 일정·공지 관리를 할 수 있습니다.'
+            super: '모든 기능을 사용할 수 있습니다. (비상연락망, 유니폼 접수·발주, 비밀번호 관리, 구글 시트 편집, 일정·공지 관리, 선수 사진 등록)',
+            sub: '비공개 정보(사진·생년월일·신장·몸무게)를 볼 수 있습니다.',
+            general: '비공개 정보(사진·생년월일·신장·몸무게)를 볼 수 있고, 일정·공지를 관리할 수 있습니다.'
         })[currentRole] || '';
         const bar = document.getElementById('adminBar');
         const anyOps = bar && Array.from(bar.querySelectorAll('button')).some(b => b.style.display !== 'none');
@@ -1819,7 +1851,7 @@
         if (bar) bar.style.display = anyOps ? 'flex' : 'none';
         document.getElementById('adminGroupContent').style.display = canEditSchedule() ? '' : 'none';
     }
-    function editorAuthorName() { return currentRole === 'super' ? '대표' : currentRole === 'general' ? '총무' : currentRole === 'dev' ? '관리자' : ''; }
+    function editorAuthorName() { return currentRole === 'super' ? '대표님' : currentRole === 'general' ? '총무님' : currentRole === 'dev' ? '관리자' : ''; }
 
     // 로그인한 학부모의 자녀 학년 목록 (명단에서 찾아서 계산)
     function myChildGrades() {
@@ -2498,7 +2530,7 @@
             const ph = digitsOnly(u.rawPhone || u.phone || '').slice(-8);
             return { key: 'P:' + (ph || (u.name + u.role)), name: `${u.name} ${u.role || ''}`.trim() };
         }
-        const roleName = ({ dev: '개발자', super: '대표', sub: '보조관리자', general: '총무' })[currentRole];
+        const roleName = ({ dev: '개발자', super: '대표님', sub: '코치진', general: '총무님' })[currentRole];
         if (roleName) return { key: 'A:' + currentRole + ':' + getDeviceClientId(), name: '관리자 (' + roleName + ')' };
         return { key: 'G:' + getDeviceClientId(), name: '일반 열람자' };
     }
@@ -2932,8 +2964,8 @@
                 sessionStorage.setItem('daeyeon_admin_role', 'super');
                 localStorage.removeItem('daeyeon_active_user');
                 sessionStorage.removeItem('daeyeon_active_user');
-                sendActivityLog("잠금해제", "최고관리자", "최고관리자 4시간 세션 해제");
-                alert('🔓 [최고관리자] 인증 완료\n(4시간 동안 유지됩니다)');
+                sendActivityLog("잠금해제", "대표님", "대표님 4시간 세션 해제");
+                alert('🔓 [대표님] 인증 완료\n(4시간 동안 유지됩니다)');
                 unlocked = true;
             } else if (serverRole === 'sub') {
                 localStorage.setItem('daeyeon_auth_expire', Date.now() + (2 * 60 * 60 * 1000));
@@ -2942,8 +2974,8 @@
                 sessionStorage.setItem('daeyeon_admin_role', 'sub');
                 localStorage.removeItem('daeyeon_active_user');
                 sessionStorage.removeItem('daeyeon_active_user');
-                sendActivityLog("잠금해제", "보조관리자", "보조관리자 2시간 세션 해제");
-                alert('🔓 [보조관리자] 인증 완료\n(2시간 동안 유지됩니다)');
+                sendActivityLog("잠금해제", "코치진", "코치진 2시간 세션 해제");
+                alert('🔓 [코치진] 인증 완료\n(2시간 동안 유지됩니다)');
                 unlocked = true;
             } else if (serverRole === 'general') {
                 localStorage.setItem('daeyeon_auth_expire', Date.now() + (1 * 60 * 60 * 1000));
@@ -2952,8 +2984,8 @@
                 sessionStorage.setItem('daeyeon_admin_role', 'general');
                 localStorage.removeItem('daeyeon_active_user');
                 sessionStorage.removeItem('daeyeon_active_user');
-                sendActivityLog("잠금해제", "일반관리자", "일반관리자 1시간 세션 해제");
-                alert('🔓 [일반관리자] 인증 완료\n(1시간 동안 유지됩니다)');
+                sendActivityLog("잠금해제", "총무님", "총무님 1시간 세션 해제");
+                alert('🔓 [총무님] 인증 완료\n(1시간 동안 유지됩니다)');
                 unlocked = true;
             }
         }
@@ -3225,7 +3257,7 @@
             if (hStr === '-' && wStr === '-') return '-';
             return `${hStr} / ${wStr}`;
         } else {
-            const showBadge = (currentRole === 'super' || currentRole === 'sub' || currentRole === 'dev');
+            const showBadge = (currentRole === 'super' || currentRole === 'sub' || currentRole === 'general' || currentRole === 'dev');
             if (hHidden && wHidden && !h && !w) {
                 return showBadge ? '<span class="admin-private-badge">비공개</span>' : '<span class="text-private">비공개</span>';
             }
@@ -3377,7 +3409,7 @@
         const notice = document.getElementById('statusNotice');
 
         updateUniformButtonVisibility();
-        const canViewPhoto = (currentRole === 'sub' || isSuperOrDev());
+        const canViewPhoto = (currentRole === 'sub' || currentRole === 'general' || isSuperOrDev());   // 코치진·총무님·대표님: 비공개 정보 열람
 
         const filtered = players.filter(p => {
             const isVisible = (p.visible !== false);
@@ -3949,6 +3981,7 @@
     function getFilteredContacts() {
         const query = document.getElementById('contactSearchInput') ? document.getElementById('contactSearchInput').value.trim().toLowerCase() : '';
         const selectedG = document.getElementById('contactGradeSelect') ? document.getElementById('contactGradeSelect').value : 'all';
+        const selectedC = document.getElementById('contactCommuteSelect') ? document.getElementById('contactCommuteSelect').value : 'all';
 
         return emergencyContactsData.filter(c => {
             const name = getColVal(c, '선수이름', '이름', '선수명');
@@ -3956,8 +3989,76 @@
             if (!name) return false;
             let matchG = (selectedG === 'all') || (grade.includes(selectedG));
             let matchQ = !query || name.toLowerCase().includes(query) || Object.values(c).some(val => String(val).toLowerCase().includes(query));
-            return matchG && matchQ;
+            let matchC = true;
+            if (selectedC !== 'all') {
+                const cm = contactCommute(c);
+                matchC = parseCommute(cm.go).concat(parseCommute(cm.back)).some(x => x.key === selectedC);
+            }
+            return matchG && matchQ && matchC;
         }).sort((a, b) => (parseInt(getColVal(a, '배번', '등번호')) || 999) - (parseInt(getColVal(b, '배번', '등번호')) || 999));
+    }
+
+    // 등·하교 방법 → 종류 분류 ("자차, 대중교통 (지하철)" 처럼 여러 개면 각각)
+    const COMMUTE_TYPES = {
+        car:     { icon: '🚗', label: '자차' },
+        subway:  { icon: '🚇', label: '지하철' },
+        bus:     { icon: '🚌', label: '버스' },
+        walk:    { icon: '🚶', label: '도보' },
+        academy: { icon: '🚐', label: '학원차량' },
+        etc:     { icon: '•',  label: '기타' }
+    };
+    function parseCommute(v) {
+        return String(v || '').split(/[,/·]+/).map(t => t.trim()).filter(Boolean).map(t => {
+            let k = 'etc';
+            if (/지하철|전철/.test(t)) k = 'subway';
+            else if (/버스/.test(t)) k = 'bus';
+            else if (/학원|통학/.test(t)) k = 'academy';
+            else if (/자차|차량|픽업|승용/.test(t)) k = 'car';
+            else if (/도보|걸어/.test(t)) k = 'walk';
+            return { key: k, text: k === 'etc' ? t : COMMUTE_TYPES[k].label };
+        });
+    }
+    function commuteChips(v) {
+        const list = parseCommute(v);
+        if (!list.length) return '<span class="contact-phone-none">미입력</span>';
+        return list.map(c => `<span class="commute-chip ${c.key}">${COMMUTE_TYPES[c.key].icon} ${escapeHtml(c.text)}</span>`).join(' ');
+    }
+    function contactCommute(c) {
+        return { go: getColVal(c, '등교방법', '등교'), back: getColVal(c, '하교방법', '하교') };
+    }
+
+    // 형제자매 찾기: 아버님/어머님 번호 또는 주소가 같은 선수
+    function findSiblings(c) {
+        const name = getColVal(c, '선수이름', '이름', '선수명');
+        const keys = [digitsOnly(getColVal(c, '아버님', '아버지')), digitsOnly(getColVal(c, '어머님', '어머니'))].filter(k => k.length >= 9);
+        const addr = getColVal(c, '주소').replace(/\s+/g, '');
+        return emergencyContactsData.filter(o => {
+            const on = getColVal(o, '선수이름', '이름', '선수명');
+            if (!on || on === name) return false;
+            const ok = [digitsOnly(getColVal(o, '아버님', '아버지')), digitsOnly(getColVal(o, '어머님', '어머니'))].filter(k => k.length >= 9);
+            const oAddr = getColVal(o, '주소').replace(/\s+/g, '');
+            o._sibBy = keys.some(k => ok.indexOf(k) !== -1) ? 'phone' : ((addr && addr.length > 8 && addr === oAddr) ? 'addr' : '');
+            return !!o._sibBy;
+        }).map(o => ({ name: getColVal(o, '선수이름', '이름', '선수명'), grade: getColVal(o, '학년', '구분').replace(/[^0-9]/g, ''), by: o._sibBy }));
+    }
+
+    function sibTag(list, label, title, cls) {
+        if (!list.length) return '';
+        return `<span class="contact-sibling${cls ? ' ' + cls : ''}" title="${title}">${label} ${list.map(x => escapeHtml(x.name) + (x.grade ? '(' + x.grade + ')' : '')).join(', ')}</span>`;
+    }
+
+    function renderCommuteSummary(list) {
+        const box = document.getElementById('commuteSummary');
+        if (!box) return;
+        const count = (field) => {
+            const m = {};
+            list.forEach(c => parseCommute(contactCommute(c)[field]).forEach(x => { m[x.key] = (m[x.key] || 0) + 1; }));
+            return Object.keys(COMMUTE_TYPES).filter(k => m[k]).map(k => `<span class="cs-item">${COMMUTE_TYPES[k].icon} ${COMMUTE_TYPES[k].label} ${m[k]}</span>`).join('');
+        };
+        const go = count('go'), back = count('back');
+        if (!go && !back) { box.style.display = 'none'; return; }
+        box.innerHTML = `<div><b>등교</b>${go || '-'}</div><div><b>하교</b>${back || '-'}</div>`;
+        box.style.display = 'block';
     }
 
     function renderEmergencyContacts() {
@@ -3966,13 +4067,17 @@
         if (!content) return;
 
         const filtered = getFilteredContacts();
+        renderCommuteSummary(filtered);
 
         if (title) title.textContent = `🚨 학부모 비상연락망 (${filtered.length}명)`;
         if (filtered.length === 0) { content.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8;">검색 결과가 없습니다.</div>'; return; }
 
         const phoneRow = (roleCls, roleLabel, phone, extraStyle, phoneStyle) => {
             const d = digitsOnly(phone);
-            return `<div class="contact-row"${extraStyle ? ` style="${extraStyle}"` : ''}><div class="contact-left-info"><span class="contact-role-badge ${roleCls}">${roleLabel}</span><span class="contact-phone-text"${phoneStyle ? ` style="${phoneStyle}"` : ''}>${escapeHtml(phone)}</span></div><div class="contact-actions"><a href="tel:${d}" class="btn-call">📞 통화</a><a href="sms:${d}" class="btn-sms">💬 문자</a></div></div>`;
+            const valid = d.length >= 9;
+            return `<div class="contact-row"${extraStyle ? ` style="${extraStyle}"` : ''}><div class="contact-left-info"><span class="contact-role-badge ${roleCls}">${roleLabel}</span>` +
+                (valid ? `<span class="contact-phone-text"${phoneStyle ? ` style="${phoneStyle}"` : ''}>${escapeHtml(phone)}</span></div><div class="contact-actions"><a href="tel:${d}" class="btn-call">📞 통화</a><a href="sms:${d}" class="btn-sms">💬 문자</a></div>`
+                       : `<span class="contact-phone-none">${escapeHtml(phone)}</span></div>`) + `</div>`;
         };
 
         content.innerHTML = filtered.map(c => {
@@ -3986,26 +4091,38 @@
             const car1 = getColVal(c, '차량번호1', '차량번호');
             const car2 = getColVal(c, '차량번호2');
             const address = getColVal(c, '주소');
+            const memo = getColVal(c, '비고', '메모', '특이사항');
+            const cm = contactCommute(c);
             const gradeNum = grade.replace(/[^0-9]/g, '');
+            const sibs = findSiblings(c);
 
             return `
                 <div class="contact-card">
                     <div class="contact-header">
-                        <span class="contact-player-name">${no ? 'No.' + escapeHtml(no) + ' ' : ''}${escapeHtml(name)}</span>
+                        <span class="contact-name-wrap">
+                            <span class="contact-player-name">${no ? 'No.' + escapeHtml(no) + ' ' : ''}${escapeHtml(name)}</span>
+                            ${sibTag(sibs.filter(x => x.by === 'phone'), '👨‍👧 형제', '보호자 연락처가 같은 선수')}
+                            ${sibTag(sibs.filter(x => x.by === 'addr'), '🏠 같은 주소', '보호자 연락처는 다르지만 주소가 같은 선수', 'addr')}
+                        </span>
                         ${grade ? `<span class="grade-tag grade-${escapeHtml(gradeNum)}">${escapeHtml(grade)}학년</span>` : ''}
                     </div>
                     ${fPhone ? phoneRow('role-father', '👨 아버님', fPhone) : ''}
                     ${mPhone ? phoneRow('role-mother', '👩 어머님', mPhone) : ''}
                     ${otherPhone ? phoneRow('role-other', '📞 기타연락처', otherPhone) : ''}
                     ${sPhone ? phoneRow('role-student', '📱 학생', sPhone, 'background:#eff6ff;', 'color:#1d4ed8;') : ''}
+                    ${cm.go || cm.back ? `<div class="contact-commute">
+                        <div class="commute-cell"><b>등교</b>${commuteChips(cm.go)}</div>
+                        <div class="commute-cell"><b>하교</b>${commuteChips(cm.back)}</div>
+                    </div>` : ''}
                     ${car1 || car2 ? `<div class="contact-car-box">🚗 <b>차량:</b> ${escapeHtml([car1, car2].filter(Boolean).join(' / '))}</div>` : ''}
-                    ${address ? `<div class="contact-address-box">🏠 <b>주소:</b> ${escapeHtml(address)}</div>` : ''}
+                    ${address ? `<div class="contact-address-box">🏠 <b>주소:</b> ${escapeHtml(address)}<a class="btn-map" href="https://map.kakao.com/link/search/${encodeURIComponent(address)}" target="_blank" rel="noopener">지도</a></div>` : ''}
+                    ${memo ? `<div class="contact-memo-box">📝 ${escapeHtml(memo)}</div>` : ''}
                 </div>
             `;
         }).join('');
     }
 
-    // 현재 검색/학년 필터에 보이는 선수들의 연락처를 텍스트로 복사
+    // 현재 검색/학년/등하교 필터에 보이는 선수들의 연락처를 텍스트로 복사
     function copyAllContactPhones() {
         const list = getFilteredContacts();
         if (list.length === 0) { alert('복사할 연락처가 없습니다.'); return; }
@@ -4022,12 +4139,33 @@
             if (f) phones.push(`아버님 ${f}`);
             if (m) phones.push(`어머님 ${m}`);
             if (o) phones.push(`기타 ${o}`);
-            if (s) phones.push(`학생 ${s}`);
-            return `${no ? 'No.' + no + ' ' : ''}${name}${grade ? ` (${grade}학년)` : ''} - ${phones.join(' / ') || '연락처 없음'}`;
+            if (s && digitsOnly(s).length >= 9) phones.push(`학생 ${s}`);
+            const cm = contactCommute(c);
+            const commute = (cm.go || cm.back) ? ` (등교 ${cm.go || '-'} · 하교 ${cm.back || '-'})` : '';
+            return `${no ? 'No.' + no + ' ' : ''}${name}${grade ? ` (${grade}학년)` : ''} - ${phones.join(' / ') || '연락처 없음'}${commute}`;
         });
 
         sendActivityLog("복사", currentRole, `비상연락망 ${list.length}명 복사`);
         copyText('[대연초 야구부 비상연락망]\n' + lines.join('\n'), `📋 전체 선수의 비상연락망 연락처를 복사하였습니다.`);
+    }
+
+    // 🏠 하교방법별 명단 복사 (훈련·경기 후 안전귀가 확인용)
+    function copyDismissalList() {
+        const list = getFilteredContacts();
+        if (list.length === 0) { alert('복사할 명단이 없습니다.'); return; }
+        const groups = {};
+        list.forEach(c => {
+            const name = getColVal(c, '선수이름', '이름', '선수명');
+            const g = getColVal(c, '학년', '구분').replace(/[^0-9]/g, '');
+            const kinds = parseCommute(contactCommute(c).back);
+            const key = kinds.length ? kinds.map(k => k.key).join('+') : 'none';
+            (groups[key] = groups[key] || []).push(name + (g ? `(${g})` : ''));
+        });
+        const label = key => key === 'none' ? '❔ 미입력' : key.split('+').map(k => COMMUTE_TYPES[k].icon + ' ' + COMMUTE_TYPES[k].label).join(' 또는 ');
+        const order = Object.keys(groups).sort((a, b) => groups[b].length - groups[a].length);
+        const text = '[대연초 야구부 하교방법별 명단]\n' + order.map(k => `${label(k)} (${groups[k].length}명)\n${groups[k].join(', ')}`).join('\n\n');
+        sendActivityLog("복사", currentRole, `하교방법별 명단 ${list.length}명 복사`);
+        copyText(text, `🏠 하교방법별 명단(${list.length}명)이 복사되었습니다.\n안전귀가 확인에 활용하세요.`);
     }
 
     // 선수 목록에서 학부모(아버님/어머님/기타) 번호만 중복 없이 뽑아 배열로 반환
@@ -4065,6 +4203,8 @@
     function copyAllContactPhonesOnly() {
         const gradeSelect = document.getElementById('contactGradeSelect');
         const searchInput = document.getElementById('contactSearchInput');
+        const commuteSelect = document.getElementById('contactCommuteSelect');
+        if (commuteSelect) commuteSelect.value = 'all';
         if (searchInput) searchInput.value = '';
         if (gradeSelect) gradeSelect.value = 'all';
         renderEmergencyContacts();
@@ -4075,6 +4215,8 @@
     function copyGradePhones(grade) {
         const gradeSelect = document.getElementById('contactGradeSelect');
         const searchInput = document.getElementById('contactSearchInput');
+        const commuteSelect = document.getElementById('contactCommuteSelect');
+        if (commuteSelect) commuteSelect.value = 'all';
         if (searchInput) searchInput.value = '';
         if (gradeSelect) gradeSelect.value = grade;
         renderEmergencyContacts();
@@ -4314,15 +4456,15 @@
             if (serverRole === 'super') {
                 localStorage.setItem('daeyeon_auth_expire', Date.now() + (4 * 60 * 60 * 1000));
                 loggedInRole = 'super';
-                alert('👑 [최고관리자] 로그인 완료 (4시간)');
+                alert('👑 [대표님] 로그인 완료 (4시간)');
             } else if (serverRole === 'sub') {
                 localStorage.setItem('daeyeon_auth_expire', Date.now() + (2 * 60 * 60 * 1000));
                 loggedInRole = 'sub';
-                alert('🛠️ [보조관리자] 로그인 완료 (2시간)');
+                alert('🧢 [코치진] 로그인 완료 (2시간)');
             } else if (serverRole === 'general') {
                 localStorage.setItem('daeyeon_auth_expire', Date.now() + (1 * 60 * 60 * 1000));
                 loggedInRole = 'general';
-                alert('📋 [일반관리자] 로그인 완료 (1시간)');
+                alert('📋 [총무님] 로그인 완료 (1시간)');
             } else {
                 alert('비밀번호가 틀렸습니다.');
                 return;
@@ -4356,7 +4498,7 @@
             adminBtn.textContent = '🔓 로그아웃';
             adminBtn.classList.add('logged-in');
             adminBar.style.display = 'flex';
-            roleText.textContent = ({ dev: '개발자', super: '최고관리자 (대표)', sub: '보조관리자', general: '일반관리자 (총무)' })[currentRole] || currentRole.toUpperCase();
+            roleText.textContent = ({ dev: '개발자', super: '대표님', sub: '코치진', general: '총무님' })[currentRole] || currentRole.toUpperCase();
             roleText.className = 'admin-role-pill ' + currentRole;
             document.getElementById('btnSheetLink').style.display = isSuperOrDev() ? 'inline-flex' : 'none';
             document.getElementById('btnToggleUniform').style.display = isSuperOrDev() ? 'inline-block' : 'none';
@@ -4387,10 +4529,10 @@
         }
     }
 
-    // 비밀번호 관리: 최고관리자/개발자만 열 수 있고, 변경은 항상 서버(구글 시트)에 저장되어
+    // 비밀번호 관리: 대표님/개발자만 열 수 있고, 변경은 항상 서버(구글 시트)에 저장되어
     // 특정 기기가 아니라 모든 접속자에게 동일하게 적용된다.
     async function openPasswordManageModal() {
-        if (!isSuperOrDev()) { alert('최고관리자만 비밀번호를 변경할 수 있습니다.'); return; }
+        if (!isSuperOrDev()) { alert('대표님만 비밀번호를 변경할 수 있습니다.'); return; }
 
         // 개발자 모드에서는 입력 중인 비밀번호를 마스킹하지 않고 그대로 보여준다 (테스트 편의용).
         const isDev = (currentRole === 'dev');
@@ -4405,21 +4547,21 @@
                 바꿀 등급만 새 비밀번호를 입력하고, 나머지는 비워두면 그대로 유지됩니다.
             </p>
             <div class="form-group">
-                <label>현재 최고관리자 비밀번호 * (변경 권한 확인용)</label>
-                <input type="${pwInputType}" id="pwCurrentSuper" placeholder="현재 최고관리자 비밀번호">
+                <label>현재 대표님 비밀번호 * (변경 권한 확인용)</label>
+                <input type="${pwInputType}" id="pwCurrentSuper" placeholder="현재 대표님 비밀번호">
             </div>
             <div class="form-group">
-                <label>👑 최고관리자 새 비밀번호 (4~20자, 선택)</label>
+                <label>👑 대표님 새 비밀번호 (4~20자, 선택)</label>
                 ${curValRow('pwCurValSuper', '현재 값:')}
                 <input type="${pwInputType}" id="pwNewSuper" placeholder="변경하지 않으려면 비워두세요">
             </div>
             <div class="form-group">
-                <label>🛠️ 보조관리자 새 비밀번호 (4~20자, 선택)</label>
+                <label>🧢 코치진 새 비밀번호 (4~20자, 선택)</label>
                 ${curValRow('pwCurValSub', '현재 값:')}
                 <input type="${pwInputType}" id="pwNewSub" placeholder="변경하지 않으려면 비워두세요">
             </div>
             <div class="form-group">
-                <label>📋 일반관리자 새 비밀번호 (4~20자, 선택)</label>
+                <label>📋 총무님 새 비밀번호 (4~20자, 선택)</label>
                 ${curValRow('pwCurValGeneral', '현재 값:')}
                 <input type="${pwInputType}" id="pwNewGeneral" placeholder="변경하지 않으려면 비워두세요">
             </div>
@@ -4454,13 +4596,13 @@
         const newSub = document.getElementById('pwNewSub').value.trim();
         const newGeneral = document.getElementById('pwNewGeneral').value.trim();
 
-        if (!curPw) { alert('현재 최고관리자 비밀번호를 입력해 주세요.'); return; }
+        if (!curPw) { alert('현재 대표님 비밀번호를 입력해 주세요.'); return; }
 
         const updates = {};
         const labels = [];
-        if (newSuper) { updates.super = newSuper; labels.push('최고관리자'); }
-        if (newSub) { updates.sub = newSub; labels.push('보조관리자'); }
-        if (newGeneral) { updates.general = newGeneral; labels.push('일반관리자'); }
+        if (newSuper) { updates.super = newSuper; labels.push('대표님'); }
+        if (newSub) { updates.sub = newSub; labels.push('코치진'); }
+        if (newGeneral) { updates.general = newGeneral; labels.push('총무님'); }
 
         if (labels.length === 0) { alert('변경할 비밀번호를 하나 이상 입력해 주세요.'); return; }
 
