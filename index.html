@@ -4545,6 +4545,8 @@
     }
 
     // 초기화 실행
+    // 예전 버전이 기기에 저장해 둔 비상연락망 사본 삭제 (이제는 서버에서 권한 확인 후 그때그때만 받음)
+    try { localStorage.removeItem('daeyeon_emergency_contacts'); } catch (e) {}
     if (isAuthValid()) {
         startSessionCountdown();
     }
