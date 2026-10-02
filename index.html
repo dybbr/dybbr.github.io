@@ -26,7 +26,7 @@
         // ★ Code.gs 의 API_KEY 와 반드시 같은 값으로 맞춰 주세요.
         const API_KEY = "dybbr2026hacohadrone";
 
-        const APP_VERSION = "v2.18.1 · b261002";
+        const APP_VERSION = "v2.18.2 · b261002";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1361,7 +1361,7 @@
                        onkeydown="if(event.key==='Enter' || event.key===' ' || event.code==='Space') { event.preventDefault(); handleLogin(); }">
                 <span style="font-size: 11px; color: #64748b; line-height: 1.6; margin-top: 8px;">
                     • <b>대표님</b>: 모든 기능 (비상연락망, 유니폼 접수·발주, 비밀번호 관리, 일정·공지 관리 등)<br>
-                    • <b>총무님</b>: 비상연락망 + 비공개 정보 열람 + 일정·공지 관리<br>
+                    • <b>총무님</b>: 비상연락망 + 비공개 정보 열람 + 일정·공지 관리 + 총무님 비밀번호 변경<br>
                     • <b>코치진</b>: 비공개 정보 열람
                 </span>
             </div>
@@ -1843,7 +1843,7 @@
             dev: '모든 관리자 기능 + 보안 활동 로그, 비밀번호 확인까지 사용할 수 있습니다.',
             super: '모든 기능을 사용할 수 있습니다. (비상연락망, 유니폼 접수·발주, 비밀번호 관리, 구글 시트 편집, 일정·공지 관리, 선수 사진 등록)',
             sub: '비공개 정보(사진·생년월일·신장·몸무게)를 볼 수 있습니다.',
-            general: '학부모 비상연락망과 비공개 정보(사진·생년월일·신장·몸무게)를 볼 수 있고, 일정·공지를 관리할 수 있습니다.'
+            general: '학부모 비상연락망과 비공개 정보(사진·생년월일·신장·몸무게)를 볼 수 있고, 일정·공지 관리와 총무님 비밀번호 변경을 할 수 있습니다.'
         })[currentRole] || '';
         const bar = document.getElementById('adminBar');
         const anyOps = bar && Array.from(bar.querySelectorAll('button')).some(b => b.style.display !== 'none');
@@ -4506,7 +4506,7 @@
             document.getElementById('btnToggleUniform').style.display = isSuperOrDev() ? 'inline-block' : 'none';
             document.getElementById('btnViewOrders').style.display = isSuperOrDev() ? 'inline-block' : 'none';
             document.getElementById('btnViewLogs').style.display = currentRole === 'dev' ? 'inline-block' : 'none';
-            document.getElementById('btnManagePw').style.display = isSuperOrDev() ? 'inline-block' : 'none';
+            document.getElementById('btnManagePw').style.display = (isSuperOrDev() || currentRole === 'general') ? 'inline-block' : 'none';   // 총무님은 본인 비밀번호만
             document.getElementById('btnEmergencyContacts').style.display = (isSuperOrDev() || currentRole === 'general') ? 'inline-flex' : 'none';   // 대표님·총무님
         } else {
             // 일반 학부모/사용자인 경우 우측 상단 관리자 로그인 버튼을 숨김 (관리자 비번 인증 시에만 노출)
@@ -4534,6 +4534,7 @@
     // 비밀번호 관리: 대표님/개발자만 열 수 있고, 변경은 항상 서버(구글 시트)에 저장되어
     // 특정 기기가 아니라 모든 접속자에게 동일하게 적용된다.
     async function openPasswordManageModal() {
+        if (currentRole === 'general') { openGeneralPasswordModal(); return; }
         if (!isSuperOrDev()) { alert('대표님만 비밀번호를 변경할 수 있습니다.'); return; }
 
         // 개발자 모드에서는 입력 중인 비밀번호를 마스킹하지 않고 그대로 보여준다 (테스트 편의용).
@@ -4589,6 +4590,60 @@
                 if (subEl) subEl.textContent = '현재 값을 불러오지 못했습니다.';
                 if (generalEl) generalEl.textContent = '현재 값을 불러오지 못했습니다.';
             }
+        }
+    }
+
+    // 총무님 전용: 본인(총무님) 비밀번호만 변경
+    function openGeneralPasswordModal() {
+        document.getElementById('pwModalTitle').textContent = '🔑 총무님 비밀번호 변경';
+        document.getElementById('pwModalBody').innerHTML = `
+            <p style="font-size: 12px; color: #64748b; line-height: 1.5; margin-bottom: 12px;">
+                총무님 비밀번호만 바꿀 수 있습니다. 바꾸면 모든 기기에 바로 적용되니, 같은 비밀번호를 쓰는 분께 꼭 알려주세요.
+            </p>
+            <div class="form-group">
+                <label>현재 총무님 비밀번호 *</label>
+                <input type="password" id="pwGenCurrent" placeholder="현재 비밀번호" inputmode="numeric" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label>📋 새 비밀번호 (4~20자) *</label>
+                <input type="password" id="pwGenNew" placeholder="새 비밀번호" inputmode="numeric" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label>새 비밀번호 확인 *</label>
+                <input type="password" id="pwGenNew2" placeholder="한 번 더 입력" inputmode="numeric" autocomplete="off">
+            </div>
+        `;
+        document.getElementById('pwModalBtns').innerHTML = `
+            <button class="btn-cancel" onclick="closeModal('passwordModal')">취소</button>
+            <button class="btn-save" id="btnSavePw" onclick="executeChangeGeneralPassword()">저장</button>
+        `;
+        document.getElementById('passwordModal').style.display = 'flex';
+        setTimeout(() => document.getElementById('pwGenCurrent').focus(), 50);
+    }
+
+    async function executeChangeGeneralPassword() {
+        const cur = document.getElementById('pwGenCurrent').value.trim();
+        const n1 = document.getElementById('pwGenNew').value.trim();
+        const n2 = document.getElementById('pwGenNew2').value.trim();
+        if (!cur) { alert('현재 비밀번호를 입력해 주세요.'); return; }
+        if (n1.length < 4 || n1.length > 20) { alert('새 비밀번호는 4~20자로 입력해 주세요.'); return; }
+        if (n1 !== n2) { alert('새 비밀번호와 확인이 서로 다릅니다.'); return; }
+        if (n1 === cur) { alert('현재 비밀번호와 다른 비밀번호를 입력해 주세요.'); return; }
+        const btn = document.getElementById('btnSavePw');
+        btn.disabled = true; btn.textContent = '저장 중...';
+        try {
+            const res = await apiGetJson('action=changeAdminPw&currentPw=' + encodeURIComponent(cur) + '&newGeneral=' + encodeURIComponent(n1));
+            if (res && res.result === 'success') {
+                sendActivityLog("비밀번호변경", currentRole, "총무님 본인 비밀번호 변경");
+                alert('✅ 총무님 비밀번호가 변경되었습니다.\n(모든 기기에 즉시 적용됩니다)');
+                closeModal('passwordModal');
+            } else {
+                alert('❌ ' + (res && res.message ? res.message : '비밀번호 변경에 실패했습니다.'));
+            }
+        } catch (err) {
+            alert('❌ 서버 연결 오류: ' + err.message);
+        } finally {
+            btn.disabled = false; btn.textContent = '저장';
         }
     }
 
