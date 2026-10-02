@@ -41,10 +41,12 @@
         // ★ Code.gs / index.html 의 API_KEY 와 반드시 같은 값으로 맞춰 주세요.
         const API_KEY = "dybbr2026hacohadrone";
 
-        // 캐시 지연 없는 100% 실시간 gviz CSV URL 생성기
-        function getRealtimeCsvUrl(gid) {
-            return `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&gid=${gid}&headers=1&tq=${encodeURIComponent('select *')}&_t=${Date.now()}`;
+        // 🔐 로그인 토큰 (index.html 에서 로그인하면 같은 기기 localStorage 에 저장됨)
+        function getToken() { try { return localStorage.getItem('daeyeon_token') || ''; } catch (e) { return ''; } }
+        function apiGetUrl(params) {
+            return GOOGLE_SCRIPT_UNIFORM_API_URL + '?key=' + encodeURIComponent(API_KEY) + '&token=' + encodeURIComponent(getToken()) + '&' + params + '&_t=' + Date.now();
         }
+        function apiGetJson(params) { return fetch(apiGetUrl(params)).then(function (r) { return r.json(); }); }
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
@@ -591,14 +593,14 @@
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(Object.assign({ key: API_KEY }, payload))
+            body: JSON.stringify(Object.assign({ key: API_KEY, token: getToken() }, payload))
         });
     }
 
     // 🔒 [보안 인증 검증] 메인에서 인증되지 않았거나 세션 만료 시 메인으로 자동 리다이렉트
     (function checkAuth() {
         const authExpire = localStorage.getItem('daeyeon_auth_expire');
-        if (!authExpire || Date.now() > parseInt(authExpire, 10)) {
+        if (!authExpire || Date.now() > parseInt(authExpire, 10) || !getToken()) {
             alert('🔒 보안 인증이 필요합니다. 메인 화면으로 이동합니다.');
             window.location.href = 'index.html';
         }
@@ -725,115 +727,68 @@
         }
 
         try {
-            const realtimeUrl = getRealtimeCsvUrl(ROSTER_GID);
-            const response = await fetch(realtimeUrl, { cache: 'no-store' });
+            // 👥 명단은 서버가 역할에 맞게 걸러서 JSON으로 내려준다 (시트 직접 접근 아님)
+            const resJson = await apiGetJson('action=getRoster');
+            if (!resJson || resJson.result !== 'success' || !Array.isArray(resJson.players)) {
+                notice.textContent = (resJson && resJson.message) ? resJson.message : "선수단 데이터를 읽어오지 못했습니다. 메인에서 다시 로그인해 주세요.";
+                return;
+            }
 
-            if (!response.ok) throw new Error("실시간 시트 응답 실패: " + response.status);
+            const parsedList = resJson.players.map((row, rowIdx) => {
+                const no = (!isNaN(parseInt(row.no, 10)) && parseInt(row.no, 10) > 0) ? parseInt(row.no, 10) : 0;
+                const name = String(row.name || '').trim();
+                if (!name) return null;
+                return {
+                    id: row.id || (rowIdx + 1),
+                    no: no,
+                    name: name,
+                    grade: String(row.grade || '').trim(),
+                    pos: row.pos || '-',
+                    bt: row.bt || '-',
+                    birth: String(row.birth || '').trim(),
+                    height: String(row.height || '').trim(),
+                    weight: String(row.weight || '').trim(),
+                    visible: row.visible !== false,
+                    hidePhoto: !!row.hidePhoto,
+                    hideBirth: !!row.hideBirth,
+                    hideHeight: !!row.hideHeight,
+                    hideWeight: !!row.hideWeight,
+                    photoLink: String(row.photoLink || '').trim()
+                };
+            }).filter(Boolean);
 
-            const csvText = await response.text();
-
-            Papa.parse(csvText, {
-                header: false,
-                skipEmptyLines: 'greedy',
-                complete: function(results) {
-                    if (!results.data || results.data.length < 2) {
-                        notice.textContent = "선수단 데이터를 읽어오지 못했습니다.";
-                        return;
-                    }
-
-                    const headerRow = results.data[0].map(h => String(h || '').trim());
-                    const findIdx = (...names) => {
-                        for (let n of names) {
-                            const idx = headerRow.findIndex(h => h === n || h.replace(/\s+/g, '') === n.replace(/\s+/g, ''));
-                            if (idx !== -1) return idx;
-                        }
-                        return -1;
-                    };
-
-                    const idxSeq = findIdx('순번');
-                    const idxNo = findIdx('배번', '등번호', '번호');
-                    const idxName = findIdx('이름', '선수이름', '성명', '지도자명');
-                    const idxGrade = findIdx('구분', '학년', '직책');
-                    const idxPos = findIdx('포지션', '역할');
-                    const idxBt = findIdx('투타', '투/타');
-                    const idxBirth = findIdx('생년월일', '생일');
-                    const idxHeight = findIdx('키', '신장');
-                    const idxWeight = findIdx('몸무게', '체중');
-                    const idxVisible = findIdx('노출여부');
-                    const idxPhoto = findIdx('사진공개', '사진노출');
-                    const idxBirthOpen = findIdx('생년월일공개', '생일공개');
-                    const idxHeightOpen = findIdx('키공개');
-                    const idxWeightOpen = findIdx('몸무게공개');
-                    const idxPhotoLink = findIdx('사진링크', '드라이브사진', '사진URL');
-
-                    const parsedList = results.data.slice(1).map((row, rowIdx) => {
-                        const getVal = (colIdx, fallbackIdx) => {
-                            const target = colIdx !== -1 ? colIdx : fallbackIdx;
-                            return (target !== undefined && target < row.length) ? String(row[target] || '').trim() : '';
-                        };
-
-                        const name = getVal(idxName, 2);
-                        if (!name) return null;
-
-                        const rawNo = getVal(idxNo, 1);
-                        const parsedNo = parseInt(rawNo, 10);
-                        const no = (!isNaN(parsedNo) && parsedNo > 0) ? parsedNo : 0;
-                        const grade = getVal(idxGrade, 3);
-                        const visibleVal = getVal(idxVisible, 9);
-
-                        return {
-                            id: parseInt(getVal(idxSeq, 0), 10) || (rowIdx + 1),
-                            no: no,
-                            name: name,
-                            grade: grade,
-                            pos: getVal(idxPos, 4) || '-',
-                            bt: getVal(idxBt, 5) || '-',
-                            birth: getVal(idxBirth, 6),
-                            height: getVal(idxHeight, 7),
-                            weight: getVal(idxWeight, 8),
-                            visible: visibleVal.toUpperCase() !== 'OFF',
-                            hidePhoto: isOff(getVal(idxPhoto, 10)),
-                            hideBirth: isOff(getVal(idxBirthOpen, 11)),
-                            hideHeight: isOff(getVal(idxHeightOpen, 12)),
-                            hideWeight: isOff(getVal(idxWeightOpen, 13)),
-                            photoLink: getVal(idxPhotoLink, 14)
-                        };
-                    }).filter(Boolean);
-
-                    // 전체 정렬 로직 (메인과 동일)
-                    allRosterPlayers = parsedList.filter(p => isSuperOrDev || p.visible !== false).sort((a, b) => {
-                        const rankA = getStaffRank(a);
-                        const rankB = getStaffRank(b);
-                        if (rankA !== rankB) return rankA - rankB;
-                        if (rankA < 10) {
-                            if (a.no && b.no && a.no !== b.no) return a.no - b.no;
-                            if (a.no && !b.no) return -1;
-                            if (!a.no && b.no) return 1;
-                            return a.name.localeCompare(b.name, 'ko');
-                        }
-                        if (a.no && !b.no) return -1;
-                        if (!a.no && b.no) return 1;
-                        if (a.no && b.no && a.no !== b.no) return a.no - b.no;
-                        return a.name.localeCompare(b.name, 'ko');
-                    });
-
-                    // 선수 타겟 매칭 (배번 우선, 이후 이름 매칭)
-                    const p = allRosterPlayers.find(item => {
-                        if (item.no && String(item.no) === targetParam) return true;
-                        if (item.name === targetParam) return true;
-                        return false;
-                    });
-
-                    if (!p) {
-                        notice.textContent = `'${targetParam}' 선수 정보를 찾을 수 없습니다. (숨김 상태이거나 등록되지 않은 선수)`;
-                        return;
-                    }
-
-                    currentPlayer = p;
-                    renderPlayerCard(p);
-                    renderNavBar(p);
+            // 전체 정렬 로직 (메인과 동일). 서버가 이미 역할에 맞게 숨김 선수를 걸렀다.
+            allRosterPlayers = parsedList.sort((a, b) => {
+                const rankA = getStaffRank(a);
+                const rankB = getStaffRank(b);
+                if (rankA !== rankB) return rankA - rankB;
+                if (rankA < 10) {
+                    if (a.no && b.no && a.no !== b.no) return a.no - b.no;
+                    if (a.no && !b.no) return -1;
+                    if (!a.no && b.no) return 1;
+                    return a.name.localeCompare(b.name, 'ko');
                 }
+                if (a.no && !b.no) return -1;
+                if (!a.no && b.no) return 1;
+                if (a.no && b.no && a.no !== b.no) return a.no - b.no;
+                return a.name.localeCompare(b.name, 'ko');
             });
+
+            // 선수 타겟 매칭 (배번 우선, 이후 이름 매칭)
+            const p = allRosterPlayers.find(item => {
+                if (item.no && String(item.no) === targetParam) return true;
+                if (item.name === targetParam) return true;
+                return false;
+            });
+
+            if (!p) {
+                notice.textContent = `'${targetParam}' 선수 정보를 찾을 수 없습니다. (숨김 상태이거나 등록되지 않은 선수)`;
+                return;
+            }
+
+            currentPlayer = p;
+            renderPlayerCard(p);
+            renderNavBar(p);
         } catch (error) {
             console.error("데이터 로드 에러:", error);
             notice.textContent = "선수 정보를 불러오는 데 실패했습니다: " + error.message;
