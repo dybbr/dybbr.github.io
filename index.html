@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.20.1 · b261003";
+        const APP_VERSION = "v2.20.3 · b261003";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -220,9 +220,10 @@
             #lockOverlay .lock-icon-badge { font-size: 30px; margin-bottom: 4px; }
             #lockOverlay .lock-desc { margin-bottom: 14px; }
         }
-        /* 키보드가 올라온 상태(자동 감지): 보이는 영역에 맞춰 더 압축 */
-        #lockOverlay.kb-open { align-items: flex-start; padding-top: 8px; padding-bottom: 8px; overflow-y: auto; }
-        #lockOverlay.kb-open .lock-card { padding-top: 14px; padding-bottom: 14px; }
+        /* 키보드가 올라온 상태(자동 감지): 보이는 영역에 맞춰 압축하고 키패드 바로 위(약 10px 여백)에 붙임
+           (margin-top:auto 로 아래쪽에 붙이되, 창이 더 길면 위에서부터 스크롤되어 잘리지 않음) */
+        #lockOverlay.kb-open { align-items: flex-start; padding-top: 8px; padding-bottom: 10px; overflow-y: auto; }
+        #lockOverlay.kb-open .lock-card { padding-top: 14px; padding-bottom: 14px; margin-top: auto; }
         #lockOverlay.kb-open .lock-icon-badge { display: none; }
         #lockOverlay.kb-open .lock-title { font-size: 16px; margin-bottom: 4px; }
         #lockOverlay.kb-open .lock-desc { font-size: 11.5px; margin-bottom: 10px; line-height: 1.4; }
@@ -1005,6 +1006,7 @@
         @media (pointer: coarse) {
             .ui-zoom-ctrl { display: flex; }
             body:has(.modal[style*="flex"]) .ui-zoom-ctrl { display: none; }   /* 팝업창이 열려 있으면 줌 버튼 숨김 (닫기 버튼 가림 방지) */
+            html:not(.is-authenticated) .ui-zoom-ctrl { display: none; }       /* 잠금화면(로그인 전)에서는 줌 버튼 숨김 (잠금창 가림 방지) */
             .container { padding-bottom: 90px !important; }
         }
         .pw-cur-val { font-size: 12px; color: #0369a1; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 6px; padding: 4px 8px; margin-bottom: 6px; font-family: ui-monospace, Menlo, Consolas, monospace; word-break: break-all; }
@@ -4346,6 +4348,10 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.20.3', d: '2026-10-03', t: '잠금창 키패드 위치 조정 · 줌 버튼 숨김', items: [
+            '키패드가 올라오면 잠금창을 키패드 바로 위(약 10px 여백)에 붙여 표시',
+            '로그인 전 잠금화면에서는 화면크기 조절 버튼(+ 100% −)을 숨겨 잠금창 가림 방지 (로그인 후에는 그대로 표시)'
+        ] },
         { v: 'v2.20.1', d: '2026-10-03', t: '휴대폰 잠금창 키보드 가림 수정', items: [
             '휴대폰에서는 잠금창을 화면 위쪽에 띄워 숫자 키패드가 올라와도 로그인 버튼이 보이게 함',
             '키패드가 올라오면 자동 감지해 잠금창을 보이는 영역에 맞추고 아이콘·안내문을 줄임 (앱·모바일 브라우저 공통)'
