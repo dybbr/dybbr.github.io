@@ -1215,7 +1215,6 @@
             <button id="btnEmergencyContacts" class="btn-emergency-contact" onclick="openEmergencyContactsModal()">🚨 학부모 비상연락망</button>
             <button id="btnToggleUniform" class="btn-toggle-uniform" style="display: none;" onclick="toggleUniformFeature()">👕 접수기능: ON</button>
             <button id="btnViewOrders" class="btn-orders-view" style="display: none;" onclick="openOrdersSummaryModal()">📋 유니폼 접수 & 발주 집계</button>
-            <button id="btnViewLogs" class="btn-manage-pw" style="display: none; background: #4338ca;" onclick="openLogsModal()">📜 보안 활동 로그</button>
             <button id="btnManagePw" class="btn-manage-pw" style="display: none;" onclick="openPasswordManageModal()">🔑 비밀번호 관리</button>
             <button id="btnSheetLink" class="btn-sheet-link" style="display: none;" onclick="window.open(GOOGLE_SHEET_EDIT_URL, '_blank')">📊 구글 시트 편집창 열기</button>
         </div>
@@ -1230,6 +1229,14 @@
                     <button type="button" class="btn-sched-admin" onclick="showMainTab('schedule'); openEventEditor(null)">＋ 일정 추가</button>
                     <button type="button" class="btn-sched-admin alt" onclick="showMainTab('schedule'); openEventImport()">📋 단톡방 공지 붙여넣기로 일정 추가</button>
                     <button type="button" class="btn-sched-admin" style="background:#0f766e;" onclick="showMainTab('notice'); openNoticeEditor(null)">✏️ 새 공지 작성</button>
+                </div>
+            </div>
+
+            <!-- 🛠 개발 (개발자 로그인 시에만 표시) -->
+            <div class="admin-group" id="adminGroupDev" style="display: none;">
+                <div class="admin-group-title">개발</div>
+                <div class="admin-bar-btns">
+                    <button id="btnViewLogs" class="btn-manage-pw" style="background: #4338ca;" onclick="openLogsModal()">📜 보안 활동 로그</button>
                 </div>
             </div>
         </div>
@@ -1873,7 +1880,7 @@
         const desc = document.getElementById('adminRoleDesc');
         if (!desc) return;
         desc.textContent = ({
-            dev: '모든 관리자 기능 + 보안 활동 로그, 비밀번호 확인까지 사용할 수 있습니다.',
+            dev: '모든 관리자 기능 + 비밀번호 확인, 아래 "개발" 메뉴(보안 활동 로그)까지 사용할 수 있습니다.',
             super: '모든 기능을 사용할 수 있습니다. (비상연락망, 유니폼 접수·발주, 비밀번호 관리, 구글 시트 편집, 일정·공지 관리, 선수 사진 등록)',
             sub: '비공개 정보(사진·생년월일·신장·몸무게)를 볼 수 있습니다.',
             general: '학부모 비상연락망과 비공개 정보(사진·생년월일·신장·몸무게)를 볼 수 있고, 일정·공지 관리와 총무님 비밀번호 변경을 할 수 있습니다.'
@@ -1883,6 +1890,8 @@
         document.getElementById('adminOpsEmpty').style.display = anyOps ? 'none' : 'block';
         if (bar) bar.style.display = anyOps ? 'flex' : 'none';
         document.getElementById('adminGroupContent').style.display = canEditSchedule() ? '' : 'none';
+        const devGroup = document.getElementById('adminGroupDev');
+        if (devGroup) devGroup.style.display = (currentRole === 'dev') ? '' : 'none';   // 개발 카테고리는 개발자만
     }
     function editorAuthorName() { return currentRole === 'super' ? '대표님' : currentRole === 'general' ? '총무님' : currentRole === 'dev' ? '관리자' : ''; }
 
@@ -4232,7 +4241,7 @@
     // 보안 활동 로그 (개발자 전용 화면)
     // ==========================================================
     async function openLogsModal() {
-        if (!isSuperOrDev()) return;
+        if (currentRole !== 'dev') return;   // 보안 활동 로그는 개발자 전용
         document.getElementById('logsModal').style.display = 'flex';
         loadSecurityLogs();
     }
@@ -4318,7 +4327,6 @@
             document.getElementById('btnSheetLink').style.display = isSuperOrDev() ? 'inline-flex' : 'none';
             document.getElementById('btnToggleUniform').style.display = isSuperOrDev() ? 'inline-block' : 'none';
             document.getElementById('btnViewOrders').style.display = isSuperOrDev() ? 'inline-block' : 'none';
-            document.getElementById('btnViewLogs').style.display = isSuperOrDev() ? 'inline-block' : 'none';
             document.getElementById('btnManagePw').style.display = (isSuperOrDev() || currentRole === 'general') ? 'inline-block' : 'none';   // 총무님은 본인 비밀번호만
             document.getElementById('btnEmergencyContacts').style.display = (isSuperOrDev() || currentRole === 'general') ? 'inline-flex' : 'none';   // 대표님·총무님
         } else {
