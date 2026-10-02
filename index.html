@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.20.0 · b261003";
+        const APP_VERSION = "v2.20.1 · b261003";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -42,7 +42,7 @@
     </script>
 
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
     <title>대연초 야구부 명단</title>
 
     <!-- 📱 앱 설치(PWA) / 안드로이드 APK(TWA) 설정 -->
@@ -212,6 +212,21 @@
             transition: background 0.15s;
         }
         .btn-lock-submit:hover { background: var(--kbo-sub-blue); }
+
+        /* 📱 휴대폰: 잠금창을 화면 위쪽에 띄워 숫자 키패드가 올라와도 로그인 버튼이 가려지지 않게 */
+        @media (max-width: 600px), (pointer: coarse) and (max-height: 1000px) {
+            #lockOverlay { align-items: flex-start; padding-top: max(14px, 5vh); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+            #lockOverlay .lock-card { padding: 20px 18px 18px; }
+            #lockOverlay .lock-icon-badge { font-size: 30px; margin-bottom: 4px; }
+            #lockOverlay .lock-desc { margin-bottom: 14px; }
+        }
+        /* 키보드가 올라온 상태(자동 감지): 보이는 영역에 맞춰 더 압축 */
+        #lockOverlay.kb-open { align-items: flex-start; padding-top: 8px; padding-bottom: 8px; overflow-y: auto; }
+        #lockOverlay.kb-open .lock-card { padding-top: 14px; padding-bottom: 14px; }
+        #lockOverlay.kb-open .lock-icon-badge { display: none; }
+        #lockOverlay.kb-open .lock-title { font-size: 16px; margin-bottom: 4px; }
+        #lockOverlay.kb-open .lock-desc { font-size: 11.5px; margin-bottom: 10px; line-height: 1.4; }
+        #lockOverlay.kb-open #apkDownloadBox { display: none !important; }
 
         .lock-toggle-box {
             margin-top: 16px;
@@ -2776,6 +2791,39 @@
         } catch (e) {}
     })();
 
+    // ==========================================================
+    // ⌨️ 잠금창 키보드 대응
+    //   - 휴대폰 숫자 키패드가 화면을 "덮는" 방식(앱·삼성인터넷 등)이면 잠금창 아래쪽 로그인 버튼이 가려진다.
+    //   - 보이는 영역(visualViewport)을 감지해 잠금창을 그 영역에 맞추고(kb-open), 로그인 버튼을 키보드 위로 올린다.
+    // ==========================================================
+    (function lockKeyboardFit() {
+        const ov = document.getElementById('lockOverlay');
+        if (!ov) return;
+        const vv = window.visualViewport;
+        let baseH = window.innerHeight;
+        const showBtn = () => {
+            const btn = document.getElementById('lockSubmitBtn');
+            if (btn && ov.style.display !== 'none') {
+                const r = btn.getBoundingClientRect();
+                const visibleBottom = vv ? vv.offsetTop + vv.height : window.innerHeight;
+                if (r.bottom > visibleBottom - 8) ov.scrollTop += (r.bottom - visibleBottom + 16);
+            }
+        };
+        const fit = () => {
+            const visH = vv ? vv.height : window.innerHeight;
+            if (!vv || visH > baseH) baseH = Math.max(baseH, window.innerHeight);
+            const kbOpen = (baseH - visH) > 120 || (window.innerHeight - visH) > 120;
+            ov.classList.toggle('kb-open', kbOpen);
+            if (vv && kbOpen) { ov.style.top = vv.offsetTop + 'px'; ov.style.height = vv.height + 'px'; ov.style.bottom = 'auto'; }
+            else { ov.style.top = ''; ov.style.height = ''; ov.style.bottom = ''; }
+            if (kbOpen) showBtn();
+        };
+        if (vv) { vv.addEventListener('resize', fit); vv.addEventListener('scroll', fit); }
+        window.addEventListener('resize', fit);
+        ov.addEventListener('focusin', () => setTimeout(() => { fit(); showBtn(); }, 350));
+        ov.addEventListener('focusout', () => setTimeout(fit, 350));
+    })();
+
     function formatPhone(numStr) {
         const cleaned = String(numStr).replace(/[^0-9]/g, '');
         if (cleaned.length === 11) return cleaned.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
@@ -4298,6 +4346,10 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.20.1', d: '2026-10-03', t: '휴대폰 잠금창 키보드 가림 수정', items: [
+            '휴대폰에서는 잠금창을 화면 위쪽에 띄워 숫자 키패드가 올라와도 로그인 버튼이 보이게 함',
+            '키패드가 올라오면 자동 감지해 잠금창을 보이는 영역에 맞추고 아이콘·안내문을 줄임 (앱·모바일 브라우저 공통)'
+        ] },
         { v: 'v2.20.0', d: '2026-10-03', t: '업데이트 히스토리 (개발자 전용)', items: [
             '개발자로 로그인하면 우측 상단 버전 표시를 눌러 업데이트 히스토리를 볼 수 있음',
             '관리자 탭 > 개발 메뉴에 "업데이트 히스토리" 버튼 추가'
