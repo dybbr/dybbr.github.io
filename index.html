@@ -26,7 +26,7 @@
         // ★ Code.gs 의 API_KEY 와 반드시 같은 값으로 맞춰 주세요.
         const API_KEY = "dybbr2026hacohadrone";
 
-        const APP_VERSION = "v2.18.0 · b261001";
+        const APP_VERSION = "v2.18.1 · b261002";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1361,7 +1361,7 @@
                        onkeydown="if(event.key==='Enter' || event.key===' ' || event.code==='Space') { event.preventDefault(); handleLogin(); }">
                 <span style="font-size: 11px; color: #64748b; line-height: 1.6; margin-top: 8px;">
                     • <b>대표님</b>: 모든 기능 (비상연락망, 유니폼 접수·발주, 비밀번호 관리, 일정·공지 관리 등)<br>
-                    • <b>총무님</b>: 비공개 정보 열람 + 일정·공지 관리<br>
+                    • <b>총무님</b>: 비상연락망 + 비공개 정보 열람 + 일정·공지 관리<br>
                     • <b>코치진</b>: 비공개 정보 열람
                 </span>
             </div>
@@ -1642,7 +1642,7 @@
             <div id="contactsListContent"></div>
         </div>
         <div class="modal-btns" style="justify-content: space-between;">
-            <button class="btn-sheet-link" onclick="window.open(GOOGLE_SHEET_CONTACTS_URL, '_blank')">📊 시트 원본</button>
+            <button class="btn-sheet-link" id="btnContactsSheet" onclick="window.open(GOOGLE_SHEET_CONTACTS_URL, '_blank')">📊 시트 원본</button>
             <button class="btn-save" onclick="closeModal('emergencyContactsModal')">닫기</button>
         </div>
     </div>
@@ -1843,7 +1843,7 @@
             dev: '모든 관리자 기능 + 보안 활동 로그, 비밀번호 확인까지 사용할 수 있습니다.',
             super: '모든 기능을 사용할 수 있습니다. (비상연락망, 유니폼 접수·발주, 비밀번호 관리, 구글 시트 편집, 일정·공지 관리, 선수 사진 등록)',
             sub: '비공개 정보(사진·생년월일·신장·몸무게)를 볼 수 있습니다.',
-            general: '비공개 정보(사진·생년월일·신장·몸무게)를 볼 수 있고, 일정·공지를 관리할 수 있습니다.'
+            general: '학부모 비상연락망과 비공개 정보(사진·생년월일·신장·몸무게)를 볼 수 있고, 일정·공지를 관리할 수 있습니다.'
         })[currentRole] || '';
         const bar = document.getElementById('adminBar');
         const anyOps = bar && Array.from(bar.querySelectorAll('button')).some(b => b.style.display !== 'none');
@@ -3935,6 +3935,8 @@
     // 학부모 비상연락망
     // ==========================================================
     async function openEmergencyContactsModal() {
+        if (!(isSuperOrDev() || currentRole === 'general')) { alert('비상연락망은 대표님·총무님만 볼 수 있습니다.'); return; }
+        document.getElementById('btnContactsSheet').style.visibility = isSuperOrDev() ? 'visible' : 'hidden';   // 시트 원본은 대표님만
         document.getElementById('emergencyContactsModal').style.display = 'flex';
         const content = document.getElementById('contactsListContent');
         sendActivityLog("열람", currentRole, "학부모 비상연락망 열람");
@@ -4505,7 +4507,7 @@
             document.getElementById('btnViewOrders').style.display = isSuperOrDev() ? 'inline-block' : 'none';
             document.getElementById('btnViewLogs').style.display = currentRole === 'dev' ? 'inline-block' : 'none';
             document.getElementById('btnManagePw').style.display = isSuperOrDev() ? 'inline-block' : 'none';
-            document.getElementById('btnEmergencyContacts').style.display = isSuperOrDev() ? 'inline-flex' : 'none';
+            document.getElementById('btnEmergencyContacts').style.display = (isSuperOrDev() || currentRole === 'general') ? 'inline-flex' : 'none';   // 대표님·총무님
         } else {
             // 일반 학부모/사용자인 경우 우측 상단 관리자 로그인 버튼을 숨김 (관리자 비번 인증 시에만 노출)
             adminBtn.style.display = 'none';
