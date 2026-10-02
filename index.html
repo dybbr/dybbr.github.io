@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.19.0 · b261003";
+        const APP_VERSION = "v2.19.1 · b261003";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -2427,14 +2427,25 @@
             const used = {};
             const ev = { date: ymdOf(d), start: '', end: '', type: '기타', title: '', place: '', opponent: '', grades: '전체', target: '', meet: '', dress: '', memo: '' };
 
-            const tm = head.match(/(\d{1,2}):(\d{2})\s*(?:[~\-–]\s*(\d{1,2}):(\d{2}))?/) || all.match(/(\d{1,2}):(\d{2})\s*(?:[~\-–]\s*(\d{1,2}):(\d{2}))?/);
-            if (tm) { ev.start = ('0' + tm[1]).slice(-2) + ':' + tm[2]; if (tm[3]) ev.end = ('0' + tm[3]).slice(-2) + ':' + tm[4]; }
+            // 시간: 첫 줄의 시간대를 모두 찾는다 ("08:00~10:30 5학년 / 10:30~13:00 6학년" → 시작 08:00, 종료 13:00)
+            const pad2 = v => ('0' + v).slice(-2);
+            let tms = Array.from(head.matchAll(/(\d{1,2}):(\d{2})\s*(?:[~\-–]\s*(\d{1,2}):(\d{2}))?/g));
+            if (!tms.length) { const tm1 = all.match(/(\d{1,2}):(\d{2})\s*(?:[~\-–]\s*(\d{1,2}):(\d{2}))?/); if (tm1) tms = [tm1]; }
+            if (tms.length) {
+                const f = tms[0], l = tms[tms.length - 1];
+                ev.start = pad2(f[1]) + ':' + f[2];
+                if (l[3]) ev.end = pad2(l[3]) + ':' + l[4];
+                else if (tms.length > 1) ev.end = pad2(l[1]) + ':' + l[2];
+            }
+            const multiSlot = tms.length >= 2;   // 첫 줄에 시간대가 2개 이상 = 시간대별 학년 나눔
 
-            if (/대회|리그|회장기|전국|토너먼트|결승|준결승/.test(all)) ev.type = '대회';
-            else if (/연습\s*시합|연습\s*경기|친선|평가전|\bVS\b|vs/i.test(all)) ev.type = '연습시합';
-            else if (/관람|행사|워크숍|야유회|회식|총회|설명회/.test(all)) ev.type = '행사';
-            else if (/휴식|쉽니다|휴무/.test(all)) ev.type = '휴식';
-            else if (/훈련|연습|집합/.test(all)) ev.type = '훈련';
+            // 구분: "그 외 선수들은 휴식" 같은 줄은 판정에서 뺀다 (본 일정의 구분이 아니므로)
+            const typeText = bl.filter(l => !/^그\s*외/.test(l.trim())).join('\n');
+            if (/대회|리그|회장기|전국|토너먼트|결승|준결승|승리\s*시|패배\s*시|승자|패자/.test(typeText)) ev.type = '대회';   // 승리시/패배시 = 대진표 → 대회
+            else if (/연습\s*시합|연습\s*경기|친선|평가전|\bVS\b|vs/i.test(typeText)) ev.type = '연습시합';
+            else if (/관람|행사|워크숍|야유회|회식|총회|설명회/.test(typeText)) ev.type = '행사';
+            else if (/휴식|쉽니다|휴무/.test(typeText)) ev.type = '휴식';
+            else if (/훈련|연습|집합/.test(typeText)) ev.type = '훈련';
 
             bl.forEach((ln, idx) => {
                 const t = ln.trim();
@@ -2451,8 +2462,15 @@
             });
 
             // 제목: 첫 줄에서 날짜/시간을 뺀 나머지
-            let title = head.replace(dateRe, '').replace(slashRe, '').replace(/\d{1,2}:\d{2}\s*([~\-–]\s*\d{1,2}:\d{2})?/, '').replace(/[\(\)（）]/g, ' ').replace(/\s+/g, ' ').trim();
-            title = title.replace(/^[-·,]\s*/, '');
+            let title = head.replace(dateRe, '').replace(slashRe, '').replace(/\d{1,2}:\d{2}\s*([~\-–]\s*\d{1,2}:\d{2})?/g, '');
+            if (multiSlot) {
+                // 시간대별 학년 공지: 첫 줄은 "시간+학년" 표라서 제목이 아님 → 학년·구분기호를 지우고, 남는 게 없으면 둘째 줄을 제목으로
+                title = title.replace(/((?:[1-6]\s*[,.·\s]\s*)*[1-6])\s*학년/g, '').replace(/[\/|,·]/g, ' ');
+                if (!ev.target) ev.target = head.replace(dateRe, '').replace(slashRe, '').replace(/[\(\)（）]/g, ' ').replace(/\s+/g, ' ').trim();
+            }
+            title = title.replace(/[-=~_]{2,}/g, ' ');   // "-----2일-----" 같은 구분선 장식 제거
+            title = title.replace(/[\(\)（）]/g, ' ').replace(/\s+/g, ' ').trim();
+            title = title.replace(/^[-·,\/>→]+\s*/, '').replace(/\s*[-·,\/]$/, '').trim();
             if (!title && bl[1] && !used[1] && !/\d{1,2}:\d{2}/.test(bl[1])) { title = bl[1].trim(); used[1] = true; }
             if (/^(연습시합|연습경기)$/.test(title)) title = '';
             const place2 = title.match(/^(.*?)\s*[\(（]?\s*(밀양|기장|부산|김해|양산|창원)\s*[\)）]?$/);
@@ -2473,11 +2491,12 @@
         return out;
     }
     // "6학년 +민준", "4,3,2학년", "3.4학년" → "6" / "2,3,4"
+    //   한 줄에 학년이 여러 번 나오면 모두 합친다: "08:00 5학년 / 10:30 6학년" → "5,6"
     function gradesFromText(t) {
-        const m = String(t).match(/((?:[1-6]\s*[,.·\s]\s*)*[1-6])\s*학년/);
-        if (!m) return '';
         const set = {};
-        m[1].split(/[^1-6]+/).filter(Boolean).forEach(g => set[g] = true);
+        for (const m of String(t).matchAll(/((?:[1-6]\s*[,.·\s]\s*)*[1-6])\s*학년/g)) {
+            m[1].split(/[^1-6]+/).filter(Boolean).forEach(g => set[g] = true);
+        }
         return Object.keys(set).sort().join(',');
     }
 
