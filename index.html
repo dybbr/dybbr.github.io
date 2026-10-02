@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.20.3 · b261003";
+        const APP_VERSION = "v2.20.4 · b261003";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -213,9 +213,9 @@
         }
         .btn-lock-submit:hover { background: var(--kbo-sub-blue); }
 
-        /* 📱 휴대폰: 잠금창을 화면 위쪽에 띄워 숫자 키패드가 올라와도 로그인 버튼이 가려지지 않게 */
+        /* 📱 휴대폰: 처음엔 화면 중앙, 키패드가 올라오면(kb-open) 키패드 바로 위로 이동 */
         @media (max-width: 600px), (pointer: coarse) and (max-height: 1000px) {
-            #lockOverlay { align-items: flex-start; padding-top: max(14px, 5vh); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+            #lockOverlay { overflow-y: auto; -webkit-overflow-scrolling: touch; }
             #lockOverlay .lock-card { padding: 20px 18px 18px; }
             #lockOverlay .lock-icon-badge { font-size: 30px; margin-bottom: 4px; }
             #lockOverlay .lock-desc { margin-bottom: 14px; }
@@ -4348,6 +4348,9 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.20.4', d: '2026-10-03', t: '잠금창 처음 위치 중앙으로', items: [
+            '휴대폰 잠금창이 처음엔 화면 중앙에 뜨고, 비밀번호 칸을 눌러 키패드가 올라오면 키패드 바로 위로 이동'
+        ] },
         { v: 'v2.20.3', d: '2026-10-03', t: '잠금창 키패드 위치 조정 · 줌 버튼 숨김', items: [
             '키패드가 올라오면 잠금창을 키패드 바로 위(약 10px 여백)에 붙여 표시',
             '로그인 전 잠금화면에서는 화면크기 조절 버튼(+ 100% −)을 숨겨 잠금창 가림 방지 (로그인 후에는 그대로 표시)'
