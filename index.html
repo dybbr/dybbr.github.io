@@ -3032,7 +3032,7 @@
         }
 
         if (res && res.locked) {
-            alert('⏱️ 로그인 시도가 많습니다. 잠시 후 다시 시도해 주세요.');
+            alert('⏱️ ' + (res.message || '로그인 시도가 많습니다. 잠시 후 다시 시도해 주세요.'));
         } else {
             sendActivityLog('인증실패', '미상', '로그인 실패');   // ← 입력한 비번/번호는 더 이상 기록하지 않는다
             alert('❌ 등록된 휴대폰 번호 또는 관리자 비밀번호가 올바르지 않습니다.');
@@ -4293,7 +4293,7 @@
 
         // 관리자 로그인 창에서는 관리자/개발자만 허용 (학부모/익명은 잠금화면에서)
         if (!res || res.result !== 'success' || !['super', 'sub', 'general', 'dev'].includes(res.role)) {
-            if (res && res.locked) alert('⏱️ 로그인 시도가 많습니다. 잠시 후 다시 시도해 주세요.');
+            if (res && res.locked) alert('⏱️ ' + (res.message || '로그인 시도가 많습니다. 잠시 후 다시 시도해 주세요.'));
             else alert('비밀번호가 틀렸습니다.');
             return;
         }
