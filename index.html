@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.24.0 · b261004";
+        const APP_VERSION = "v2.24.1 · b261004";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -722,6 +722,8 @@
         .btn-edit-info { position: absolute; bottom: 38px; right: 8px; background: rgba(2, 132, 199, 0.9); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.4); padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; cursor: pointer; z-index: 4; backdrop-filter: blur(4px); }
         .card-info { padding: 12px 10px; display: flex; flex-direction: column; gap: 4px; }
         .card-name-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; width: 100%; }
+        .card-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+        .card-meta .pos-chips { justify-content: flex-start; }
         .card-name { font-weight: 800; color: var(--text-title); display: flex; align-items: baseline; gap: 3px; }
         .card-name-no { color: var(--kbo-red); font-size: 14px; font-weight: 800; }
         .card-extra { font-size: 11px; color: #64748b; background: #f8fafc; border-radius: 6px; padding: 5px 6px; margin-top: 2px; display: flex; flex-direction: column; gap: 2px; border: 1px solid #f1f5f9; }
@@ -3971,7 +3973,6 @@
                 cardPhotoHtml = `
                     <div class="card-photo-box" style="background:#f1f5f9; display:flex; flex-direction:column; align-items:center; justify-content:center;">
                         <span class="card-no-badge">${noBadgeText}</span>
-                        <div class="card-pos">${posBadge}</div>
                         <div style="font-size:32px; opacity:0.35;">👤</div>
                         <span style="margin-top:6px; font-size:11px; font-weight:800; color:#64748b; background:rgba(255,255,255,0.9); padding:3px 8px; border-radius:12px; border:1px solid #cbd5e1;">🔒 사진 비공개</span>
                         ${uploadBtnHtml}
@@ -3983,7 +3984,6 @@
                 cardPhotoHtml = `
                     <div class="card-photo-box">
                         <span class="card-no-badge">${noBadgeText}</span>
-                        <div class="card-pos">${posBadge}</div>
                         <img class="card-img" src="${photoUrl}" alt="" loading="lazy" onerror="handleImgError(this)">
                         ${adminPhotoBadge}
                         ${uploadBtnHtml}
@@ -4002,7 +4002,7 @@
                             </span>
                             ${getGradeBadge(p.grade)}
                         </div>
-                        <div class="card-meta">${getBtBadge(p.bt, p.grade)}</div>
+                        <div class="card-meta">${posBadge}${getBtBadge(p.bt, p.grade)}</div>
                         <div class="card-extra">
                             <div>🎂 ${formatBirth(p)}</div>
                             <div>📏 ${formatPhys(p)}</div>
@@ -4849,6 +4849,10 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.24.1', d: '2026-10-04', t: '이미지형 포지션 위치 이동', items: [
+            '이미지형 카드에서 포지션 칩을 사진 위에서 사진 아래 정보칸(투/타 옆)으로 옮겨 배번·얼굴을 가리지 않게 함',
+            '선수 상세 페이지도 사진 위 포지션을 빼고, 아래 "포지션 / 역할" 칸에 색 칩으로 표시'
+        ] },
         { v: 'v2.24.0', d: '2026-10-04', t: '배지·숫자 색 정리', items: [
             '포지션을 종류별 색으로: 투수=마운드 흙색, 포수=장비 파랑, 내야수=내야 흙색, 외야수=잔디 초록, 지명타자=보라 (여러 포지션은 칩을 나눠 표시)',
             '학년은 고학년일수록 진한 남색으로 (6학년이 가장 진함)',
