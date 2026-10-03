@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.24.4 · b261004";
+        const APP_VERSION = "v2.24.5 · b261004";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -562,7 +562,8 @@
             background: var(--kbo-sub-blue);
             color: #ffffff;
         }
-        .grade-select { display: none; }   /* 학년 드롭다운은 휴대폰에서만 보임 */
+        .gsel-wrap { display: none; }   /* 학년 선택창은 휴대폰에서만 보임 */
+        .view-btn .vb-ico { width: 15px; height: 15px; display: block; flex: 0 0 auto; }
 
         .admin-bar {
             display: none;
@@ -1085,23 +1086,30 @@
             #listContainer .bt-tag { padding: 1px 6px; }
             #listContainer .table-thumb-wrap .admin-private-badge { white-space: nowrap; font-size: 8.5px !important; padding: 0 3px; }
 
-            /* 📱 필터 영역 1줄: [학년 드롭다운] [검색창] [☰|▦] */
+            /* 📱 필터 영역 1줄: [학년 선택] [검색창] [목록|사진카드] — 모두 높이 44px */
             #rosterSection .control-card { padding: 12px; }
             #rosterSection .control-top { flex-direction: row; flex-wrap: nowrap; align-items: center; gap: 8px; }
             #gradeFilters { display: none; }
-            .grade-select {
-                display: block; flex: 0 0 auto; max-width: 106px;
-                padding: 9px 24px 9px 11px; border: 1px solid #d1d5db; border-radius: 999px;
-                font-size: 13.5px; font-weight: 700; color: #0b2240; background-color: #ffffff;
-                appearance: none; -webkit-appearance: none; outline: none;
-                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%230b2240' stroke-width='2'%3E%3Cpath d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
-                background-repeat: no-repeat; background-position: right 9px center;
+            .gsel-wrap { display: block; position: relative; flex: 0 0 auto; }
+            .gsel-btn {
+                display: flex; align-items: center; gap: 7px; height: 44px; padding: 0 12px 0 14px;
+                border: 1px solid #d1d5db; border-radius: 999px; background: #ffffff;
+                font-size: 14px; font-weight: 800; color: #0b2240; white-space: nowrap; cursor: pointer;
             }
+            .gsel-menu {
+                display: none; position: absolute; top: 50px; left: 0; z-index: 60; width: 220px;
+                grid-template-columns: 1fr 1fr; gap: 4px; padding: 6px;
+                background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 10px 30px rgba(15,23,42,0.18);
+            }
+            .gsel-wrap.open .gsel-menu { display: grid; }
+            .gsel-menu button { border: none; background: #f8fafc; border-radius: 10px; padding: 11px 8px; font-size: 14px; font-weight: 700; color: #334155; cursor: pointer; }
+            .gsel-menu button.on { background: #0b2240; color: #ffffff; }
             #rosterSection .control-right { flex: 1; min-width: 0; flex-wrap: nowrap; justify-content: flex-end; gap: 8px; }
             #rosterSection .search-box { flex: 1; min-width: 0; }
-            #rosterSection .search-box input { width: 100%; box-sizing: border-box; padding: 9px 10px 9px 12px; border-radius: 999px; font-size: 13.5px; }
+            #rosterSection .search-box input { width: 100%; height: 44px; box-sizing: border-box; padding: 0 10px 0 13px; border-radius: 999px; font-size: 13.5px; }
             #rosterSection .view-switch { flex: 0 0 auto; border-radius: 999px; }
-            #rosterSection .view-btn { padding: 8px 11px; font-size: 15px; }
+            #rosterSection .view-btn { height: 44px; padding: 0 14px; }
+            #rosterSection .view-btn .vb-ico { width: 22px; height: 22px; }
             #rosterSection .view-btn .vb-label { display: none; }
         }
 
@@ -1458,8 +1466,10 @@
     .filter-btn, .view-btn, .search-box input { background: #1b2638; border-color: #2a374e; }
     .filter-btn:hover { background: #2a374e; }
     ::placeholder { color: #6f7b91; }
-    .grade-select { background-color: #1b2638; border-color: #2a374e; color: #dde3ec;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%23dde3ec' stroke-width='2'%3E%3Cpath d='M2 4l4 4 4-4'/%3E%3C/svg%3E"); }
+    .gsel-btn { background: #1b2638; border-color: #2a374e; color: #dde3ec; }
+    .gsel-menu { background: #151e2e; border-color: #2a374e; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .gsel-menu button { background: #1b2638; color: #bcc6d4; }
+    .gsel-menu button.on { background: #23395d; color: #f1f4f9; }
 
     /* 학년·포지션·투타 칩: 반투명 바탕 + 파스텔 글씨 */
     .grade-staff { background: rgba(148,163,184,.15); color: #c3cbd8; }
@@ -1670,16 +1680,19 @@
     <div id="rosterSection">
     <div class="control-card">
         <div class="control-top">
-            <select class="grade-select" id="gradeSelect" aria-label="학년 선택" onchange="setGrade(this.value, document.querySelector('#gradeFilters .filter-btn[data-grade=\'' + this.value + '\']'))">
-                <option value="all">전체</option>
-                <option value="staff">코칭스태프</option>
-                <option value="6">6학년</option>
-                <option value="5">5학년</option>
-                <option value="4">4학년</option>
-                <option value="3">3학년</option>
-                <option value="2">2학년</option>
-                <option value="1">1학년</option>
-            </select>
+            <div class="gsel-wrap" id="gradeSelWrap">
+                <button type="button" class="gsel-btn" id="gradeSelBtn" onclick="toggleGradeMenu(event)" aria-haspopup="listbox" aria-expanded="false"><span id="gradeSelLabel">전체</span><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M2 4l4 4 4-4"/></svg></button>
+                <div class="gsel-menu" id="gradeSelMenu" role="listbox">
+                    <button type="button" data-grade="all" class="on" onclick="pickGrade('all')">전체</button>
+                    <button type="button" data-grade="staff" class="" onclick="pickGrade('staff')">코칭스태프</button>
+                    <button type="button" data-grade="6" class="" onclick="pickGrade('6')">6학년</button>
+                    <button type="button" data-grade="5" class="" onclick="pickGrade('5')">5학년</button>
+                    <button type="button" data-grade="4" class="" onclick="pickGrade('4')">4학년</button>
+                    <button type="button" data-grade="3" class="" onclick="pickGrade('3')">3학년</button>
+                    <button type="button" data-grade="2" class="" onclick="pickGrade('2')">2학년</button>
+                    <button type="button" data-grade="1" class="" onclick="pickGrade('1')">1학년</button>
+                </div>
+            </div>
             <div class="grade-filters" id="gradeFilters">
                 <button class="filter-btn active" data-grade="all" onclick="setGrade('all', this)">전체</button>
                 <button class="filter-btn staff-tab" data-grade="staff" onclick="setGrade('staff', this)">코칭스태프</button>
@@ -1696,8 +1709,8 @@
                     <input type="text" id="searchInput" placeholder="이름·등번호 검색" oninput="handleSearchInput(this.value)">
                 </div>
                 <div class="view-switch">
-                    <button class="view-btn" id="btnListView" onclick="switchView('list')">☰ <span class="vb-label">리스트형</span></button>
-                    <button class="view-btn" id="btnCardView" onclick="switchView('card')">▦ <span class="vb-label">이미지형</span></button>
+                    <button class="view-btn" id="btnListView" onclick="switchView('list')" aria-label="리스트형"><svg class="vb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.2" cy="6" r="1.5" fill="currentColor" stroke="none"/><circle cx="4.2" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="4.2" cy="18" r="1.5" fill="currentColor" stroke="none"/></svg><span class="vb-label">리스트형</span></button>
+                    <button class="view-btn" id="btnCardView" onclick="switchView('card')" aria-label="이미지형"><svg class="vb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="12" cy="10" r="3.2"/><path d="M6.5 19c1-3 3.2-4.5 5.5-4.5s4.5 1.5 5.5 4.5"/></svg><span class="vb-label">이미지형</span></button>
                 </div>
             </div>
         </div>
@@ -3796,10 +3809,42 @@
         selectedGrade = grade;
         document.querySelectorAll('#gradeFilters .filter-btn').forEach(b => b.classList.remove('active'));
         if (btn) btn.classList.add('active');
-        const gradeSel = document.getElementById('gradeSelect');
-        if (gradeSel && gradeSel.value !== grade) gradeSel.value = grade;
+        syncGradeMenu(grade);
         render();
     }
+
+    // 📱 휴대폰 학년 선택창: 누르면 바로 적용되고 닫힘 (브라우저 기본 선택창의 '완료' 단계 없음)
+    function syncGradeMenu(grade) {
+        const menu = document.getElementById('gradeSelMenu');
+        if (!menu) return;
+        menu.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.grade === grade));
+        const on = menu.querySelector('button.on');
+        const label = document.getElementById('gradeSelLabel');
+        if (on && label) label.textContent = on.textContent;
+    }
+    function closeGradeMenu() {
+        const wrap = document.getElementById('gradeSelWrap');
+        if (!wrap) return;
+        wrap.classList.remove('open');
+        const btn = document.getElementById('gradeSelBtn');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+    }
+    function toggleGradeMenu(e) {
+        if (e) e.stopPropagation();
+        const wrap = document.getElementById('gradeSelWrap');
+        const open = !wrap.classList.contains('open');
+        wrap.classList.toggle('open', open);
+        document.getElementById('gradeSelBtn').setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    function pickGrade(grade) {
+        setGrade(grade, document.querySelector('#gradeFilters .filter-btn[data-grade="' + grade + '"]'));
+        closeGradeMenu();
+    }
+    document.addEventListener('click', function (e) {
+        const wrap = document.getElementById('gradeSelWrap');
+        if (wrap && wrap.classList.contains('open') && !wrap.contains(e.target)) closeGradeMenu();
+    });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeGradeMenu(); });
 
     function handleSearchInput(val) {
         sessionStorage.setItem('daeyeon_search_query', val);
@@ -4885,6 +4930,10 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.24.5', d: '2026-10-04', t: '휴대폰 학년 선택 바로 적용, 보기 버튼 아이콘', items: [
+            '휴대폰 학년 선택창을 누르면 바로 적용되고 닫히도록 변경 (완료 버튼 없음)',
+            '리스트형·이미지형 버튼을 직접 그린 아이콘(목록선·인물카드)으로 바꾸고 휴대폰에서 누르기 쉽게 크게'
+        ] },
         { v: 'v2.24.4', d: '2026-10-04', t: '휴대폰 리스트형 포지션·투타 자리 바꿈, 필터 1줄로', items: [
             '휴대폰 리스트형에서 2줄은 투타·생년월일, 3줄은 포지션·신장/체중으로 순서 변경',
             '휴대폰에서 학년 버튼을 드롭다운으로 바꾸고 검색창·보기 전환과 한 줄로 합쳐 필터 영역을 줄임'
