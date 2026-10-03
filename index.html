@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.22.0 · b261004";
+        const APP_VERSION = "v2.23.0 · b261004";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1038,6 +1038,40 @@
         }
         .pw-cur-val { font-size: 12px; color: #0369a1; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 6px; padding: 4px 8px; margin-bottom: 6px; font-family: ui-monospace, Menlo, Consolas, monospace; word-break: break-all; }
     
+        /* 📱 휴대폰 세로(폭 600px 이하)에서만: 리스트형을 가로 스크롤 없는 2줄 행으로
+           1줄: 등번호 | 사진 | 이름 · 학년 · 투타
+           2줄:        |      | 포지션 · 생년월일 · 신장/체중
+           (태블릿·PC는 기존 표 그대로) */
+        @media (max-width: 600px) {
+            #listContainer { overflow-x: visible; }
+            #listContainer table { min-width: 0; display: block; }
+            #listContainer thead { display: none; }
+            #listContainer tbody { display: block; }
+            #listContainer tr.clickable-row {
+                display: grid;
+                grid-template-columns: 30px 42px minmax(0, 1fr) auto auto;
+                grid-template-areas: "no photo name grade bt" "no photo pos birth phys";
+                column-gap: 7px; row-gap: 5px; align-items: center;
+                padding: 9px 10px 9px 6px;
+                border-bottom: 1px solid var(--card-border);
+            }
+            #listContainer tr.clickable-row:last-child { border-bottom: none; }
+            #listContainer tr.clickable-row > td { padding: 0; border: none; text-align: left; min-width: 0; }
+            #listContainer tr.clickable-row > td:nth-child(1) { grid-area: no; text-align: center; font-size: 15px; }
+            #listContainer tr.clickable-row > td:nth-child(2) { grid-area: photo; }
+            #listContainer tr.clickable-row > td:nth-child(3) { grid-area: name; font-size: 15px; line-height: 1.25; overflow-wrap: anywhere; }
+            #listContainer tr.clickable-row > td:nth-child(4) { grid-area: grade; text-align: right; }
+            #listContainer tr.clickable-row > td:nth-child(5) { grid-area: pos; }
+            #listContainer tr.clickable-row > td:nth-child(6) { grid-area: bt; text-align: right; }
+            #listContainer tr.clickable-row > td:nth-child(7) { grid-area: birth; text-align: right; font-size: 11.5px !important; white-space: nowrap; }
+            #listContainer tr.clickable-row > td:nth-child(8) { grid-area: phys; text-align: right; font-size: 11.5px !important; white-space: nowrap; }
+            #listContainer .table-thumb-wrap { width: 40px; height: 40px; }
+            #listContainer .grade-tag { font-size: 11px; padding: 2px 7px; }
+            #listContainer .pos-tag { white-space: normal; line-height: 1.35; }
+            #listContainer .bt-tag { padding: 1px 6px; }
+            #listContainer .table-thumb-wrap .admin-private-badge { white-space: nowrap; font-size: 8.5px !important; padding: 0 3px; }
+        }
+
     /* 🌙 다크모드 (나이트 게임) — 기기 다크모드일 때만 적용, 라이트 화면은 그대로 */
     @media (prefers-color-scheme: dark) {
     body { background-color: #0e1522; color: #dde3ec; }
@@ -4770,6 +4804,11 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.23.0', d: '2026-10-04', t: '휴대폰 리스트형 최적화', items: [
+            '휴대폰 세로 화면(폭 600px 이하)에서 리스트형을 가로 스크롤 없이 한 화면에 보이게 2줄 행으로 변경',
+            '1줄: 등번호·사진·이름·학년·투타 / 2줄: 포지션·생년월일·신장/체중',
+            '태블릿·PC는 기존 표 모양 그대로'
+        ] },
         { v: 'v2.22.0', d: '2026-10-04', t: '다크모드 (나이트 게임 테마)', items: [
             '기기가 다크모드면 사이트도 자동으로 어두운 "나이트 게임" 테마로 바뀜 (라이트 모드 화면은 그대로)',
             '브라우저가 색을 억지로 뒤집지 않게 다크모드 지원을 알려 줌 → 눈부시게 튀던 빨강·초록 배지 해결',
