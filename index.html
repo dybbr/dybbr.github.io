@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.24.5 · b261004";
+        const APP_VERSION = "v2.24.6 · b261004";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -3178,7 +3178,8 @@
             return { key: 'P:' + (ph || (u.name + u.role)), name: `${u.name} ${u.role || ''}`.trim() };
         }
         const roleName = ({ dev: '개발자', super: '대표님', sub: '코치진', general: '총무님' })[currentRole];
-        if (roleName) return { key: 'A:' + currentRole + ':' + getDeviceClientId(), name: '관리자 (' + roleName + ')' };
+        // 관리자는 기기와 상관없이 역할당 1명으로 기록 (휴대폰·태블릿·PC에서 각각 열어도 중복으로 세지 않음)
+        if (roleName) return { key: 'A:' + currentRole, name: '관리자 (' + roleName + ')' };
         return { key: 'G:' + getDeviceClientId(), name: '일반 열람자' };
     }
     function recordNoticeView(id) {
@@ -3193,6 +3194,25 @@
         if (n) n.views = (Number(n.views) || 0) + 1;
         postApi({ action: 'viewNotice', id: id, viewerKey: v.key, viewerName: v.name }).catch(() => {});
     }
+    // 읽은 사람 목록 정리: 같은 사람이 여러 기기에서 읽어 생긴 중복을 이름 기준으로 하나로 합침.
+    // (예전 표기 '관리자 (대표)'는 '관리자 (대표님)'과 같은 사람으로 봄)
+    // 로그인하지 않은 '일반 열람자'는 서로 다른 사람일 수 있어 합치지 않고 인원수로 표시.
+    function mergeNoticeReaders(list) {
+        const alias = { '관리자 (대표)': '관리자 (대표님)' };
+        const out = [], byName = {};
+        list.forEach(r => {
+            const name = alias[String(r.name || '').trim()] || String(r.name || '').trim() || '일반 열람자';
+            const isGuest = name === '일반 열람자';
+            if (byName[name]) {
+                if (isGuest) byName[name].count++;
+                if (String(r.time || '') < String(byName[name].time || '')) byName[name].time = r.time;
+                return;
+            }
+            byName[name] = { name: name, time: r.time, count: 1 };
+            out.push(byName[name]);
+        });
+        return out;
+    }
     async function toggleNoticeReaders(id) {
         const box = document.getElementById('ntReaders-' + id);
         if (!box) return;
@@ -3201,10 +3221,10 @@
         box.innerHTML = '<div class="form-hint">불러오는 중...</div>';
         try {
             const res = await apiGetJson('action=getNoticeReaders&id=' + encodeURIComponent(id));
-            const list = (res && res.readers) || [];
+            const list = mergeNoticeReaders((res && res.readers) || []);
             box.innerHTML = list.length
-                ? `<div class="nt-readers-title">읽은 사람 ${list.length}명</div><div class="nt-reader-chips">` +
-                  list.map(r => `<span class="nt-reader" title="${escapeHtml(r.time)}">${escapeHtml(r.name)}</span>`).join('') + '</div>'
+                ? `<div class="nt-readers-title">읽은 사람 ${list.reduce((s, r) => s + r.count, 0)}명</div><div class="nt-reader-chips">` +
+                  list.map(r => `<span class="nt-reader" title="${escapeHtml(r.time)}">${escapeHtml(r.name)}${r.count > 1 ? ' ' + r.count + '명' : ''}</span>`).join('') + '</div>'
                 : '<div class="form-hint">아직 읽은 사람이 없습니다.</div>';
         } catch (err) {
             box.innerHTML = '<div class="form-hint">목록을 불러오지 못했습니다.</div>';
@@ -4930,6 +4950,10 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.24.6', d: '2026-10-04', t: '공지 읽은 사람 중복 정리', items: [
+            '같은 관리자가 여러 기기에서 읽어 두 번 이상 나오던 것을 한 번만 표시',
+            '앞으로 관리자는 기기와 상관없이 역할당 한 번만 읽음으로 기록'
+        ] },
         { v: 'v2.24.5', d: '2026-10-04', t: '휴대폰 학년 선택 바로 적용, 보기 버튼 아이콘', items: [
             '휴대폰 학년 선택창을 누르면 바로 적용되고 닫히도록 변경 (완료 버튼 없음)',
             '리스트형·이미지형 버튼을 직접 그린 아이콘(목록선·인물카드)으로 바꾸고 휴대폰에서 누르기 쉽게 크게'
