@@ -247,6 +247,7 @@
         .u { font-size: 0.85em; color: #94a3b8; margin-left: 1px; }
         .sep { color: #cbd5e1; margin: 0 4px; }
         .card-pos .pos-chips, .profile-pos-badge .pos-chips { justify-content: flex-end; max-width: 140px; }
+        .spec-value .pos-chips { justify-content: flex-end; }
         @media (max-width: 600px) { #listContainer .pos-chips { justify-content: flex-start; } }
 
         .hidden-badge {
@@ -1022,7 +1023,6 @@
             <div style="position: relative;">
                 ${photoHtml}
                 <span class="profile-no-badge">${noBadgeText}</span>
-                <div class="profile-pos-badge">${getPosBadge(p.pos, p.grade)}</div>
             </div>
             <div class="profile-body">
                 <div class="name-row">
@@ -1033,7 +1033,7 @@
                 <div class="spec-list">
                     <div class="spec-item">
                         <span class="spec-label">⚾ 포지션 / 역할</span>
-                        <span class="spec-value">${escapeHtml(p.pos)}</span>
+                        <span class="spec-value">${getPosBadge(p.pos, p.grade)}</span>
                     </div>
                     <div class="spec-item">
                         <span class="spec-label">🧤 투 / 타</span>
