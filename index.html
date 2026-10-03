@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.21.0 · b261003";
+        const APP_VERSION = "v2.22.0 · b261004";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -48,6 +48,7 @@
     <!-- 📱 앱 설치(PWA) / 안드로이드 APK(TWA) 설정 -->
     <link rel="manifest" href="manifest.webmanifest">
     <meta name="theme-color" content="#0b2240">
+    <meta name="color-scheme" content="light dark">
     <link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -895,7 +896,7 @@
         .cal-cell.selected { background: #eff6ff; box-shadow: inset 0 0 0 2px #93c5fd; }
         .cal-num { font-size: 12px; font-weight: 800; color: #334155; width: 22px; height: 22px; line-height: 22px; text-align: center; border-radius: 50%; margin: 0 auto 1px; }
         .cal-cell.today .cal-num { background: var(--kbo-red); color: #ffffff !important; }
-        .cal-chip { font-size: 10px; font-weight: 700; line-height: 1.35; padding: 1px 3px; border-radius: 4px; border-left: 3px solid; white-space: nowrap; overflow: hidden; text-overflow: clip; }
+        .cal-chip { font-size: 10px; font-weight: 700; line-height: 1.35; padding: 1px 3px; border-radius: 4px; border-left: 3px solid; white-space: nowrap; overflow: hidden; text-overflow: clip; background: var(--bg); color: var(--c); border-left-color: var(--c); }
         .cal-chip .chip-time { font-weight: 800; margin-right: 2px; }
         .cal-more { font-size: 10px; font-weight: 800; color: #64748b; padding-left: 3px; }
         @media (max-width: 520px) {
@@ -1036,6 +1037,395 @@
             .container { padding-bottom: 90px !important; }
         }
         .pw-cur-val { font-size: 12px; color: #0369a1; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 6px; padding: 4px 8px; margin-bottom: 6px; font-family: ui-monospace, Menlo, Consolas, monospace; word-break: break-all; }
+    
+    /* 🌙 다크모드 (나이트 게임) — 기기 다크모드일 때만 적용, 라이트 화면은 그대로 */
+    @media (prefers-color-scheme: dark) {
+    body { background-color: #0e1522; color: #dde3ec; }
+    #lockOverlay { background: rgba(11,34,64,0.78); }
+    .lock-card { background: #151e2e; box-shadow: 0 20px 45px rgba(0,0,0,0.55); border-top: 6px solid #9b273a; }
+    .lock-title { color: #dde3ec; }
+    .lock-desc { color: #97a3b7; }
+    .lock-input-group label { color: #dde3ec; }
+    .lock-text-input { border: 2px solid #58697e; outline: none; }
+    .lock-text-input:focus { border-color: #2e486b; box-shadow: 0 0 0 3px rgba(0,0,0,0.15); }
+    .lock-select-input { border: 2px solid #58697e; outline: none; background: #1b2638; }
+    .btn-lock-submit { background: #22354f; color: #f1f4f9; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.375); }
+    .btn-lock-submit:hover { background: #22344f; }
+    .bk-bubble { background: #151e2e; border: 2px solid #234164; color: #8db8e7; }
+    .bk-bubble::after { background: #151e2e; border-right: 2px solid #234164; border-bottom: 2px solid #234164; }
+    .bk-msg { color: #6f7b91; }
+    .lock-toggle-box { border-top: 1px dashed #2a374e; }
+    .lock-toggle-box a { color: #97a3b7; }
+    header { background-color: #22354f; color: #f1f4f9; border-bottom: 5px solid #9b273a; box-shadow: 0 4px 10px rgba(0,0,0,0.225); }
+    .session-timer-badge { background: rgba(255,255,255,0.15); color: #f1f4f9; border: 1px solid rgba(255,255,255,0.25); }
+    .btn-screen-lock { background: #953939; border: 1px solid #912e2e; color: #f1f4f9; }
+    .btn-screen-lock:hover { background: #893333; }
+    .user-identity-badge { background: rgba(5,150,105,0.3); border: 1px solid rgba(5,150,105,0.6); color: #8ee6c6; box-shadow: 0 2px 5px rgba(0,0,0,0.225); }
+    .user-identity-badge:hover { background: rgba(5,150,105,0.45); }
+    .admin-toggle-btn { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); color: #f1f4f9; }
+    .admin-toggle-btn.logged-in { background: #302331; color: #e78d9c; border-color: #a72f2f; }
+    .app-version-tag { color: rgba(255,255,255,0.45); }
+    .app-version-tag.dev-clickable { color: rgba(255,255,255,0.85); }
+    .app-version-tag.dev-clickable:hover { color: #f1f4f9; }
+    .hist-summary { color: #97a3b7; }
+    .hist-item { border: 1px solid #2a374e; background: #151e2e; }
+    .hist-item.current { border-color: #3538a1; background: #1f2346; }
+    .hist-ver { color: #f1f4f9; background: #22354f; }
+    .hist-item.current .hist-ver { background: #3c3797; }
+    .hist-date { color: #6f7b91; }
+    .hist-now { color: #928de7; background: #1b2846; }
+    .hist-title { color: #dde3ec; }
+    .hist-item li { color: #bcc6d4; }
+    .hist-note { color: #6f7b91; }
+    .btn-uniform-cta { background: #a2762c; color: #f1f4f9; border: 1px solid #a76922; box-shadow: 0 3px 6px rgba(0,0,0,0.3); }
+    .btn-uniform-cta:hover { background: #9c6629; }
+    .control-card { background: #151e2e; border: 1px solid #2a374e; box-shadow: 0 2px 5px rgba(0,0,0,0.045); }
+    .filter-btn { background: #151e2e; border: 1px solid #33425c; color: #bcc6d4; }
+    .filter-btn:hover { background: #1b2638; }
+    .filter-btn.active { background: #22354f; color: #f1f4f9; border-color: #2e486b; }
+    .filter-btn.staff-tab.active { background: #383838; border-color: #4c4c4c; }
+    .search-box input { border: 1px solid #33425c; outline: none; }
+    .view-switch { border: 1px solid #33425c; }
+    .view-btn { background: #151e2e; border: none; color: #97a3b7; }
+    .view-btn.active { background: #22344f; color: #f1f4f9; }
+    .admin-bar.super { background: #302331; border: 1px solid #a72f2f; color: #e78d8d; }
+    .admin-bar.dev { background: #1f2346; border: 1px solid #2d2a64; color: #b08de7; }
+    .admin-bar.sub { background: #1b2c46; border: 1px solid #233f64; color: #8da2e7; }
+    .admin-bar.general { background: #1b3837; border: 1px solid #235945; color: #99e6b6; }
+    .btn-emergency-contact { background: #953939; color: #f1f4f9; border: none; box-shadow: 0 2px 5px rgba(220,38,38,0.15); }
+    .btn-emergency-contact:hover { background: #893333; }
+    .btn-sheet-link { background: #1d6c53; color: #f1f4f9; border: none; }
+    .btn-sheet-link:hover { background: #224f42; }
+    .btn-toggle-uniform { background: #525252; color: #f1f4f9; border: none; }
+    .btn-orders-view { background: #59329d; color: #f1f4f9; border: none; }
+    .btn-manage-pw { background: #236a8e; color: #f1f4f9; border: none; }
+    .table-wrap { background: #151e2e; border: 1px solid #2a374e; box-shadow: 0 2px 6px rgba(0,0,0,0.045); }
+    #listContainer th { background-color: #1b2638; color: #bcc6d4; border-bottom: 2px solid #2a374e; }
+    #listContainer td { border-bottom: 1px solid #2a374e; }
+    tr.is-hidden { background-color: #1b2638 !important; }
+    .td-no { color: #dde3ec; }
+    .table-thumb-wrap { background: #1b2638; border: 1px solid #58697e; }
+    .td-name { color: #dde3ec; }
+    .grade-staff { background: #383838; color: #f1f4f9; }
+    .grade-6 { background: #302331; color: #e78d8d; }
+    .grade-5 { background: #444333; color: #e6b699; }
+    .grade-4 { background: #1b2846; color: #9995e0; }
+    .grade-3 { background: #1b3838; color: #99e6b6; }
+    .grade-2 { background: #252346; color: #be8de7; }
+    .grade-1 { background: #1b3046; color: #99cae6; }
+    .pos-tag { color: #f1f4f9 !important; background: #525252; }
+    .pos-manager { background: #824d25; }
+    .pos-coach { background: #525252; }
+    .pos-pitcher { background: #8c4629; }
+    .pos-catcher { background: #1e5752; }
+    .pos-infield { background: #365098; }
+    .pos-outfield { background: #245f3a; }
+    .pos-dh { background: #59329d; }
+    .pos-etc { background: #32349d; }
+    .pos-none { background: #525252; }
+    .bt-rr { background: #1b2c46; color: #8da5e7; border-color: #233f64; }
+    .bt-rl { background: #1b383c; color: #99e6d0; border-color: #3a9c6f; }
+    .bt-ll { background: #302331; color: #e78d8d; border-color: #532a34; }
+    .bt-lr { background: #303631; color: #e6c699; border-color: #aa9b2c; }
+    .bt-staff { background: #1b2638; color: #bcc6d4; border-color: #58697e; }
+    .bt-none { background: #1b2638; color: #6f7b91; border-color: #2a374e; }
+    .hidden-badge { background: #525252; color: #f1f4f9; }
+    .text-private { color: #6f7b91; }
+    .admin-private-badge { background: #302331; color: #e89292; }
+    .player-card { background: #151e2e; border: 1px solid #2a374e; box-shadow: 0 2px 6px rgba(0,0,0,0.045); }
+    .player-card.is-hidden { background: #1b2638; }
+    .card-photo-box { background: #1b2638; }
+    .card-no-badge { background: rgba(11,34,64,0.92); color: #f1f4f9; border: 1px solid rgba(255,255,255,0.4); }
+    .btn-upload-photo { background: rgba(15,23,42,0.85); color: #f1f4f9; border: 1px solid rgba(255,255,255,0.4); }
+    .btn-edit-info { background: rgba(2,132,199,0.9); color: #f1f4f9; border: 1px solid rgba(255,255,255,0.4); }
+    .card-name { color: #dde3ec; }
+    .card-name-no { color: #e78d9c; }
+    .card-extra { color: #97a3b7; background: #1b2638; border: 1px solid #2a374e; }
+    .modal-content { background: #151e2e; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+    .form-group label { color: #bcc6d4; }
+    .form-group input, .form-group select, .form-group textarea { border: 1px solid #2a374e; outline: none; }
+    .chk-open-row { color: #dde3ec; }
+    .modal-btns { border-top: 1px solid #2a374e; }
+    .btn-cancel { background: #1b2638; border: 1px solid #2a374e; }
+    .btn-save { background: #22354f; color: #f1f4f9; border: none; }
+    .uniform-item-row { border-bottom: 1px solid #2a374e; }
+    .uniform-item-name { color: #dde3ec; }
+    .order-modal-tabs { border-bottom: 2px solid #2a374e; }
+    .order-tab-btn { background: none; border: none; color: #97a3b7; border-bottom: 2px solid transparent; }
+    .order-tab-btn.active { color: #dde3ec; border-bottom-color: #2e486b; }
+    .order-card { background: #151e2e; border: 1px solid #2a374e; border-left: 4px solid #2e486b; }
+    .order-card-header { border-bottom: 1px solid #2a374e; }
+    .order-player-title { color: #dde3ec; }
+    .order-date-text { color: #6f7b91; }
+    .order-meta-bar { color: #bcc6d4; background: #1b2638; border: 1px solid #2a374e; }
+    .order-table { border: 1px solid #2a374e; }
+    .order-table th { background: #1b2638; color: #bcc6d4; }
+    .order-table td { border-bottom: 1px solid #2a374e; color: #dde3ec; }
+    .size-badge { background: #1b2c46; color: #8da5e7; border: 1px solid #233f64; }
+    .summary-box { background: #1b2638; border: 1px solid #2a374e; }
+    .summary-title { color: #dde3ec; }
+    .summary-item-badge { background: #151e2e; border: 1px solid #58697e; color: #bcc6d4; }
+    .contact-card { background: #151e2e; border: 1px solid #2a374e; border-left: 4px solid #ad3939; }
+    .contact-header { border-bottom: 1px solid #2a374e; }
+    .contact-player-name { color: #dde3ec; }
+    .contact-row { background: #1b2638; border: 1px solid #2a374e; }
+    .role-father { background: #1b2c46; color: #8da5e7; }
+    .role-mother { background: #30233c; color: #e78db5; }
+    .role-other { background: #444333; color: #e6b699; }
+    .role-student { background: #1b3837; color: #99e6b6; }
+    .contact-phone-text { color: #dde3ec; }
+    .btn-call { background: #1d6c53; color: #f1f4f9; }
+    .btn-sms { background: #236a8e; color: #f1f4f9; }
+    .contact-car-box { color: #8da2e7; background: #1b2c46; border: 1px solid #233f64; }
+    .car-num-tag { background: #151e2e; border: 1px solid #2d68a9; color: #8da5e7; }
+    .contact-address-box { color: #bcc6d4; background: #1b2638; border: 1px solid #2a374e; }
+    .contact-sibling { color: #ae8de7; background: #1f2346; border: 1px solid #2c2a64; }
+    .contact-sibling.addr { color: #99cae6; background: #1b2638; border-color: #234964; }
+    .commute-cell { background: #1b2638; border: 1px solid #2a374e; color: #bcc6d4; }
+    .commute-cell b { color: #97a3b7; }
+    .commute-chip.car { color: #e7b48d; }
+    .commute-chip.subway { color: #8da5e7; }
+    .commute-chip.bus { color: #99e6d0; }
+    .commute-chip.walk { color: #bcc6d4; }
+    .commute-chip.academy { color: #ae8de7; }
+    .contact-memo-box { color: #e6b699; background: #303431; border: 1px solid #a9902d; }
+    .btn-map { color: #99cae6; background: #151e2e; border: 1px solid #234964; }
+    .contact-phone-none { color: #6f7b91; }
+    .commute-summary { color: #bcc6d4; background: #1b2638; border: 1px solid #2a374e; }
+    .commute-summary b { color: #dde3ec; }
+    .contact-quick-bar { background: #302331; border: 1px solid #532a34; }
+    .btn-quick-action { background: #151e2e; border: 1px solid #58697e; color: #bcc6d4; }
+    .log-item-card { background: #151e2e; border: 1px solid #2a374e; }
+    .log-type-unlock { background: #1b3838; color: #99e6b6; }
+    .log-type-lock { background: #302331; color: #e78d8d; }
+    .log-type-admin { background: #1f2346; color: #b08de7; }
+    .log-type-contact { background: #1b2c46; color: #8da2e7; }
+    .log-type-order { background: #444333; color: #e6b699; }
+    .log-type-photo { background: #1b3046; color: #99cae6; }
+    .main-tabs { background: #151e2e; border: 1px solid #2a374e; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .main-tab { border: none; background: transparent; color: #97a3b7; }
+    .main-tab.active { background: #22354f; color: #f1f4f9; box-shadow: 0 2px 6px rgba(0,0,0,0.375); }
+    .tab-dot { background: #912d3d; box-shadow: 0 0 0 2px rgba(255,255,255,0.5); }
+    .next-event-banner { background: #151e2e; border: 1px solid #2a374e; border-left: 5px solid var(--ev, var(--kbo-blue)); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .next-event-banner .neb-label { color: #f1f4f9; background: var(--ev, var(--kbo-blue)); }
+    .next-event-banner .neb-what { color: #dde3ec; }
+    .next-event-banner .neb-where { color: #97a3b7; }
+    .next-event-banner .neb-arrow { color: #6f7b91; }
+    .admin-panel { background: #151e2e; border: 1px solid #2a374e; box-shadow: 0 2px 10px rgba(0,0,0,0.075); }
+    .admin-panel-head h2 { color: #dde3ec; }
+    .admin-role-pill { background: #1f2346; color: #b08de7; }
+    .admin-role-pill.super { background: #302331; color: #e78d8d; }
+    .admin-role-pill.sub { background: #1b2c46; color: #8da2e7; }
+    .admin-role-pill.general { background: #1b3837; color: #99e6b6; }
+    .admin-role-desc { color: #97a3b7; }
+    .admin-group { border-top: 1px solid #2a374e; }
+    .admin-group-title { color: #6f7b91; }
+    .admin-empty { color: #6f7b91; }
+    .sched-card { background: #151e2e; border: 1px solid #2a374e; box-shadow: 0 2px 10px rgba(0,0,0,0.075); }
+    .cal-nav-btn { border: none; background: transparent; color: #bcc6d4; }
+    .cal-nav-btn:active { background: #1b2638; }
+    .cal-today-btn { border: 1px solid #58697e; background: #151e2e; color: #bcc6d4; }
+    .cal-title { color: #dde3ec; }
+    .cal-views { background: #1b2638; }
+    .cal-view-btn { border: none; background: transparent; color: #97a3b7; }
+    .cal-view-btn.active { background: #151e2e; color: #dde3ec; box-shadow: 0 1px 3px rgba(0,0,0,0.18); }
+    .cal-filter { border: 1px solid #2a374e; background: #151e2e; color: #bcc6d4; }
+    .cal-filter.active { background: #22354f; border-color: #2e486b; color: #f1f4f9; }
+    .cal-filter.mine.active { background: #912d3d; border-color: #9b273a; }
+    .btn-sched-admin { border: none; background: #22354f; color: #f1f4f9; }
+    .btn-sched-admin.alt { background: #1b2846; color: #9995e0; border: 1px solid #233364; }
+    .cal-legend { border-top: 1px solid #2a374e; color: #97a3b7; }
+    .cal-dow { border-top: 1px solid #2a374e; }
+    .cal-dow div { color: #97a3b7; }
+    .cal-dow .sun, .cal-cell.sun .cal-num { color: #e78d8d; }
+    .cal-dow .sat, .cal-cell.sat .cal-num { color: #8da9e7; }
+    .cal-grid { border-top: 1px solid #2a374e; }
+    .cal-cell { border: none; border-right: 1px solid #2a374e; border-bottom: 1px solid #2a374e; background: #151e2e; }
+    .cal-cell.out { background: #1b2638; }
+    .cal-cell.selected { background: #1b2c46; box-shadow: inset 0 0 0 2px rgba(147,197,253,0.5); }
+    .cal-num { color: #bcc6d4; }
+    .cal-cell.today .cal-num { background: #912d3d; color: #f1f4f9 !important; }
+    .cal-more { color: #97a3b7; }
+    .day-panel { border-top: 1px solid #2a374e; background: #151e2e; }
+    .day-panel-title { color: #dde3ec; }
+    .day-panel-title .dday { color: #f1f4f9; background: #525252; }
+    .day-panel-title .dday.today { background: #912d3d; }
+    .btn-day-add { border: 1px dashed #33425c; background: #151e2e; color: #bcc6d4; }
+    .sched-empty { color: #6f7b91; }
+    .ev-card { background: #151e2e; border: 1px solid #2a374e; border-left: 5px solid var(--ev); }
+    .ev-card:active { background: #1b2638; }
+    .ev-time small { color: #6f7b91; }
+    .ev-title { color: #dde3ec; }
+    .ev-vs { color: #e78d9c; }
+    .ev-line { color: #bcc6d4; }
+    .week-strip { border-top: 1px solid #2a374e; }
+    .week-strip-day .wd { color: #97a3b7; }
+    .week-strip-day .dn { color: #dde3ec; }
+    .week-strip-day.sun .wd, .week-strip-day.sun .dn { color: #e78d8d; }
+    .week-strip-day.sat .wd, .week-strip-day.sat .dn { color: #8da9e7; }
+    .week-strip-day.today .dn { background: #912d3d; color: #f1f4f9; }
+    .week-day-head { color: #bcc6d4; }
+    .week-day-head.sun { color: #e78d8d; }
+    .week-day-head.sat { color: #8da9e7; }
+    .week-day-head .today-pill { background: #912d3d; color: #f1f4f9; }
+    .agenda { border-top: 1px solid #2a374e; }
+    .agenda-date { background: #151e2e; color: #bcc6d4; }
+    .agenda-date .dday { color: #f1f4f9; background: #525252; }
+    .agenda-date .dday.today { background: #912d3d; }
+    .agenda-date .dday.soon { background: #a1552d; }
+    .agenda-past-toggle { border: none; background: transparent; color: #97a3b7; }
+    .ev-detail-title { color: #dde3ec; }
+    .ev-detail-row { border-bottom: 1px solid #2a374e; color: #dde3ec; }
+    .ev-detail-row .k { color: #97a3b7; }
+    .grade-checks label { border: 1px solid #2a374e; color: #bcc6d4; }
+    .form-hint { color: #6f7b91; }
+    .import-item { border: 1px solid #2a374e; border-left: 5px solid var(--ev); background: #151e2e; }
+    .import-item .ii-body { color: #bcc6d4; }
+    .import-item .ii-body b { color: #dde3ec; }
+    .import-item .ii-edit { border: 1px solid #58697e; background: #151e2e; }
+    .import-item.warn { background: #303431; }
+    .notice-head h2 { color: #dde3ec; }
+    .nt-card { background: #151e2e; border: 1px solid #2a374e; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .nt-card.pinned { border-color: #58697e; box-shadow: 0 2px 10px rgba(0,0,0,0.12); }
+    .nt-pin { color: #dde3ec; }
+    .nt-new { color: #f1f4f9; background: #912d3d; }
+    .nt-date { color: #6f7b91; }
+    .nt-title { color: #dde3ec; }
+    .nt-title .chev { color: #6f7b91; }
+    .nt-preview { color: #97a3b7; }
+    .nt-body { color: #dde3ec; }
+    .nt-list li { background: #1b2638; }
+    .nt-num { background: #22354f; color: #f1f4f9; }
+    .nt-admin { border-top: 1px solid #2a374e; }
+    .nt-admin button { border: 1px solid #58697e; background: #151e2e; color: #bcc6d4; }
+    .nt-admin button.danger { color: #e78d8d; border-color: #532a34; background: #302331; }
+    .nt-author { color: #6f7b91; }
+    .nt-views { color: #97a3b7; }
+    .nt-readers { background: #1b2638; border: 1px solid #2a374e; }
+    .nt-readers-title { color: #bcc6d4; }
+    .nt-reader { color: #bcc6d4; background: #151e2e; border: 1px solid #58697e; }
+    .ui-zoom-ctrl { background: rgba(11,34,64,0.95); border: 1px solid rgba(255,255,255,0.25); box-shadow: 0 4px 14px rgba(0,0,0,0.375); }
+    .ui-zoom-ctrl button { border: none; background: transparent; color: #f1f4f9; }
+    .pw-cur-val { color: #99cae6; background: #1b2638; border: 1px solid #234964; }
+    /* 인라인 스타일 */
+    [style*="border-top:1px dashed #e2e8f0"] { border-top: 1px dashed #2a374e !important; }
+    [style*="border-top: 1px dashed #e2e8f0"] { border-top: 1px dashed #2a374e !important; }
+    [style*="background: #f1f5f9"] { background: #1b2638 !important; }
+    [style*="background:#f1f5f9"] { background: #1b2638 !important; }
+    [style*="border: 1px solid #cbd5e1"] { border: 1px solid #58697e !important; }
+    [style*="border:1px solid #cbd5e1"] { border: 1px solid #58697e !important; }
+    [style*="color: #0b2240"] { color: #dde3ec !important; }
+    [style*="color:#0b2240"] { color: #dde3ec !important; }
+    [style*="color: #94a3b8"] { color: #6f7b91 !important; }
+    [style*="color:#94a3b8"] { color: #6f7b91 !important; }
+    [style*="background:#0f766e"] { background: #1e5752 !important; }
+    [style*="background: #0f766e"] { background: #1e5752 !important; }
+    [style*="background: #4338ca"] { background: #48428c !important; }
+    [style*="background:#4338ca"] { background: #48428c !important; }
+    [style*="color:#64748b"] { color: #97a3b7 !important; }
+    [style*="color: #64748b"] { color: #97a3b7 !important; }
+    [style*="color:var(--kbo-blue)"] { color: #dde3ec !important; }
+    [style*="color: var(--kbo-blue)"] { color: #dde3ec !important; }
+    [style*="background: #f8fafc"] { background: #1b2638 !important; }
+    [style*="background:#f8fafc"] { background: #1b2638 !important; }
+    [style*="border:1px solid var(--card-border)"] { border: 1px solid #2a374e !important; }
+    [style*="border: 1px solid var(--card-border)"] { border: 1px solid #2a374e !important; }
+    [style*="background: #f59e0b"] { background: #a2762c !important; }
+    [style*="background:#f59e0b"] { background: #a2762c !important; }
+    [style*="border:2px dashed #cbd5e1"] { border: 2px dashed #58697e !important; }
+    [style*="border: 2px dashed #cbd5e1"] { border: 2px dashed #58697e !important; }
+    [style*="border-color: #0284c7"] { border-color: #1c6e99 !important; }
+    [style*="border-color:#0284c7"] { border-color: #1c6e99 !important; }
+    [style*="color: #0284c7"] { color: #8dc8e7 !important; }
+    [style*="color:#0284c7"] { color: #8dc8e7 !important; }
+    [style*="border-color:#fecaca"] { border-color: #532a34 !important; }
+    [style*="border-color: #fecaca"] { border-color: #532a34 !important; }
+    [style*="color: #b91c1c"] { color: #e78d8d !important; }
+    [style*="color:#b91c1c"] { color: #e78d8d !important; }
+    [style*="background: #fff5f5"] { background: #302331 !important; }
+    [style*="background:#fff5f5"] { background: #302331 !important; }
+    [style*="background: #0284c7"] { background: #236a8e !important; }
+    [style*="background:#0284c7"] { background: #236a8e !important; }
+    [style*="color: #991b1b"] { color: #e78d8d !important; }
+    [style*="color:#991b1b"] { color: #e78d8d !important; }
+    [style*="color: #0369a1"] { color: #99cae6 !important; }
+    [style*="color:#0369a1"] { color: #99cae6 !important; }
+    [style*="color: #475569"] { color: #bcc6d4 !important; }
+    [style*="color:#475569"] { color: #bcc6d4 !important; }
+    [style*="background:rgba(255,255,255,0.9)"] { background: rgba(21,30,46,0.9) !important; }
+    [style*="background: rgba(255,255,255,0.9)"] { background: rgba(21,30,46,0.9) !important; }
+    [style*="background: #ef4444"] { background: #9d3131 !important; }
+    [style*="background:#ef4444"] { background: #9d3131 !important; }
+    [style*="color:#ffffff"] { color: #f1f4f9 !important; }
+    [style*="color: #ffffff"] { color: #f1f4f9 !important; }
+    [style*="color: #1e40af"] { color: #8da2e7 !important; }
+    [style*="color:#1e40af"] { color: #8da2e7 !important; }
+    [style*="color: white"] { color: #f1f4f9 !important; }
+    [style*="color:white"] { color: #f1f4f9 !important; }
+    [style*="color:#c8102e"] { color: #e78d9c !important; }
+    [style*="color: #c8102e"] { color: #e78d9c !important; }
+    [style*="color: #15803d"] { color: #99e6b6 !important; }
+    [style*="color:#15803d"] { color: #99e6b6 !important; }
+    [style*="border:1px solid #fecaca"] { border: 1px solid #532a34 !important; }
+    [style*="border: 1px solid #fecaca"] { border: 1px solid #532a34 !important; }
+    [style*="color:#ef4444"] { color: #e89292 !important; }
+    [style*="color: #ef4444"] { color: #e89292 !important; }
+    [style*="color:#0f172a"] { color: #dde3ec !important; }
+    [style*="color: #0f172a"] { color: #dde3ec !important; }
+
+    /* --- 수동 다듬기 --- */
+    :root { color-scheme: dark; --bg-gray: #0e1522; --card-border: #2a374e; --text-title: #dde3ec; --text-sub: #97a3b7; }
+    body { background-color: #0e1522; color: #dde3ec; }
+    header { background-color: #0b1525; border-bottom: 3px solid #9c3a47; box-shadow: none; }
+    .header-subtitle { color: #8d9ab0; }
+    #btnUniformCTA { filter: saturate(.75) brightness(.9); }
+    img { filter: brightness(.92); }
+    img[src*="fill='%23e2e8f0'"] { content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%231b2638'/%3E%3Cpath d='M32 32 C32 18 42 12 50 12 C58 12 68 18 68 32 C68 40 58 48 50 48 C42 48 32 40 32 32 Z' fill='%23435270'/%3E%3Cpath d='M44 14 C48 10 56 10 65 14 C74 18 84 18 86 21 C86 24 75 25 65 24 Z' fill='%235b7fb8'/%3E%3Cpath d='M20 92 C20 66 34 56 50 56 C66 56 80 66 80 92 Z' fill='%23333f57'/%3E%3C/svg%3E"); filter: none; }
+    .bk-img { filter: brightness(.95); }
+    .td-no { color: #7aa5ea; }
+    .td-name, .card-name { color: #dde3ec; }
+    #listContainer td { color: #97a3b7; }
+    .main-tab.active, .filter-btn.active, .filter-btn.staff-tab.active, .view-btn.active {
+        background: #23395d; border-color: #23395d; color: #dde3ec; box-shadow: none; }
+    input, select, textarea { color-scheme: dark; background-color: #1b2638; color: #dde3ec; }
+    .filter-btn, .view-btn, .search-box input { background: #1b2638; border-color: #2a374e; }
+    .filter-btn:hover { background: #2a374e; }
+    ::placeholder { color: #6f7b91; }
+
+    /* 학년·포지션·투타 칩: 반투명 바탕 + 파스텔 글씨 */
+    .grade-staff { background: rgba(148,163,184,.15); color: #c3cbd8; }
+    .grade-6 { background: rgba(239,108,108,.15); color: #eaa3a3; }
+    .grade-5 { background: rgba(245,181,70,.15); color: #e9c47e; }
+    .grade-4 { background: rgba(129,140,248,.17); color: #adb6f2; }
+    .grade-3 { background: rgba(74,200,120,.14); color: #97d3ab; }
+    .grade-2 { background: rgba(186,140,245,.16); color: #cdb0f2; }
+    .grade-1 { background: rgba(56,182,240,.15); color: #8fcbe8; }
+    .pos-manager { background: rgba(245,181,70,.15); color: #e9c47e !important; }
+    .pos-coach { background: rgba(148,163,184,.15); color: #c3cbd8 !important; }
+    .pos-pitcher { background: rgba(240,120,60,.16); color: #efab86 !important; }
+    .pos-catcher { background: rgba(45,190,170,.15); color: #87d2c6 !important; }
+    .pos-infield { background: rgba(80,140,245,.17); color: #a3c0f3 !important; }
+    .pos-outfield { background: rgba(74,200,120,.14); color: #97d3ab !important; }
+    .pos-dh { background: rgba(150,110,245,.17); color: #c3adf3 !important; }
+    .pos-etc { background: rgba(129,140,248,.17); color: #adb6f2 !important; }
+    .pos-none { background: rgba(148,163,184,.10); color: #7f8a9c !important; }
+    .bt-rr { background: transparent; color: #a3c0f3; border-color: rgba(80,140,245,.45); }
+    .bt-rl { background: transparent; color: #97d3ab; border-color: rgba(74,200,120,.45); }
+    .bt-ll { background: transparent; color: #eaa3a3; border-color: rgba(239,108,108,.45); }
+    .bt-lr { background: transparent; color: #e9c47e; border-color: rgba(245,181,70,.45); }
+    .bt-staff { background: transparent; color: #c3cbd8; border-color: rgba(148,163,184,.45); }
+    .bt-none { background: transparent; color: #7f8a9c; border-color: rgba(148,163,184,.45); }
+    .bt-etc { background: transparent; color: #c3cbd8; border-color: rgba(148,163,184,.45); }
+    /* 일정·공지: 종류별 색(동적 변수)을 어두운 바탕에 맞게 */
+    .cal-chip { background: color-mix(in srgb, var(--c) 22%, #151e2e); color: color-mix(in srgb, var(--c) 50%, #ffffff); border-left-color: var(--c); }
+    .ev-type { background: color-mix(in srgb, var(--ev) 22%, #151e2e); color: color-mix(in srgb, var(--ev) 50%, #ffffff); }
+    .ev-time, .ev-detail-date { color: color-mix(in srgb, var(--ev) 55%, #ffffff); }
+    .next-event-banner .neb-when { color: color-mix(in srgb, var(--ev, #3b6fb6) 55%, #ffffff); }
+    .next-event-banner .neb-label { filter: saturate(.85) brightness(.92); }
+    .nt-cat { background: color-mix(in srgb, var(--c) 22%, #151e2e); color: color-mix(in srgb, var(--c) 50%, #ffffff); }
+    .nt-cat[style*="--c:#ffffff"] { background: #9b2c2c; color: #ffffff; }
+
+    }
     </style>
 </head>
 <body>
@@ -2158,7 +2548,7 @@
             const chips = evs.slice(0, 3).map(ev => {
                 const mt = typeMeta(ev.type);
                 const label = ev.opponent || ((ev.title && ev.title !== ev.type) ? ev.title : ev.type);
-                return `<div class="cal-chip" style="background:${mt.bg};color:${mt.c};border-left-color:${mt.c}">${ev.start ? '<span class="chip-time">' + escapeHtml(ev.start) + '</span>' : ''}${escapeHtml(label)}</div>`;
+                return `<div class="cal-chip" style="--c:${mt.c};--bg:${mt.bg}">${ev.start ? '<span class="chip-time">' + escapeHtml(ev.start) + '</span>' : ''}${escapeHtml(label)}</div>`;
             }).join('');
             const more = evs.length > 3 ? `<div class="cal-more">+${evs.length - 3}</div>` : '';
             html += `<button type="button" class="${cls}" onclick="selectCalDate('${ds}')"><span class="cal-num">${d.getDate()}</span>${chips}${more}</button>`;
@@ -4380,6 +4770,12 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.22.0', d: '2026-10-04', t: '다크모드 (나이트 게임 테마)', items: [
+            '기기가 다크모드면 사이트도 자동으로 어두운 "나이트 게임" 테마로 바뀜 (라이트 모드 화면은 그대로)',
+            '브라우저가 색을 억지로 뒤집지 않게 다크모드 지원을 알려 줌 → 눈부시게 튀던 빨강·초록 배지 해결',
+            '학년·포지션·투타 배지는 반투명 바탕 + 파스텔 글씨로 톤 다운, 순검정·순백 대신 짙은 남색·연한 회백색 사용',
+            '일정·공지·팝업·잠금화면·선수 상세 화면까지 모두 적용, 사진 없는 선수의 기본 그림도 어두운 버전으로'
+        ] },
         { v: 'v2.21.0', d: '2026-10-03', t: '부캉이 마스코트 추가', items: [
             '잠금화면 맨 위 ⚾ 아이콘을 부캉이(야구모자 쓴 상어)로 교체 — 키패드가 올라오면 예전처럼 숨김',
             '헤더 제목 옆에 작은 부캉이 (누르면 폴짝)',
