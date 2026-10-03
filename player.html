@@ -9,6 +9,7 @@
     <!-- 📱 앱 설치(PWA) / 안드로이드 APK(TWA) 설정 -->
     <link rel="manifest" href="manifest.webmanifest">
     <meta name="theme-color" content="#0b2240">
+    <meta name="color-scheme" content="light dark">
     <link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 
@@ -451,6 +452,136 @@
             .ui-zoom-ctrl { display: flex; }
             .container { padding-bottom: 90px !important; }
         }
+    
+    /* 🌙 다크모드 (나이트 게임) — 기기 다크모드일 때만 적용, 라이트 화면은 그대로 */
+    @media (prefers-color-scheme: dark) {
+    body { background-color: #0e1522; color: #dde3ec; }
+    header { background-color: #22354f; color: #f1f4f9; border-bottom: 4px solid #9b273a; box-shadow: 0 4px 10px rgba(0,0,0,0.225); }
+    .btn-back { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); color: #f1f4f9; }
+    .profile-card { background: #151e2e; border: 1px solid #2a374e; box-shadow: 0 4px 16px rgba(0,0,0,0.09); }
+    .profile-photo-wrap { background: #1b2638; }
+    .profile-no-badge { background: rgba(11,34,64,0.92); color: #f1f4f9; border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 2px 6px rgba(0,0,0,0.375); }
+    .btn-upload-photo { background: rgba(15,23,42,0.85); color: #f1f4f9; border: 1px solid rgba(255,255,255,0.4); }
+    .btn-upload-photo:hover { background: #236a8e; }
+    .btn-edit-info { background: rgba(2,132,199,0.9); color: #f1f4f9; border: 1px solid rgba(255,255,255,0.4); }
+    .btn-edit-info:hover { background: #1d5573; }
+    .grade-staff { background: #383838; color: #f1f4f9; }
+    .grade-6 { background: #302331; color: #e78d8d; }
+    .grade-5 { background: #444333; color: #e6b699; }
+    .grade-4 { background: #1b2846; color: #9995e0; }
+    .grade-3 { background: #1b3838; color: #99e6b6; }
+    .grade-2 { background: #252346; color: #be8de7; }
+    .grade-1 { background: #1b3046; color: #99cae6; }
+    .pos-tag { color: #f1f4f9 !important; background: #525252; }
+    .pos-manager { background: #824d25; }
+    .pos-coach { background: #525252; }
+    .pos-pitcher { background: #8c4629; }
+    .pos-catcher { background: #1e5752; }
+    .pos-infield { background: #365098; }
+    .pos-outfield { background: #245f3a; }
+    .pos-dh { background: #59329d; }
+    .pos-etc { background: #32349d; }
+    .pos-none { background: #525252; }
+    .bt-rr { background: #1b2c46; color: #8da5e7; border-color: #233f64; }
+    .bt-rl { background: #1b383c; color: #99e6d0; border-color: #3a9c6f; }
+    .bt-ll { background: #302331; color: #e78d8d; border-color: #532a34; }
+    .bt-lr { background: #303631; color: #e6c699; border-color: #aa9b2c; }
+    .bt-staff { background: #1b2638; color: #bcc6d4; border-color: #58697e; }
+    .bt-none { background: #1b2638; color: #6f7b91; border-color: #2a374e; }
+    .bt-etc { background: #252346; color: #be8de7; border-color: #3a2a64; }
+    .hidden-badge { background: #525252; color: #f1f4f9; }
+    .name-row { border-bottom: 1px solid #2a374e; }
+    .player-name { color: #dde3ec; }
+    .spec-item { background: #1b2638; border: 1px solid #2a374e; }
+    .spec-label { color: #97a3b7; }
+    .spec-value { color: #dde3ec; }
+    .text-private { color: #6f7b91; }
+    .admin-private-badge { background: #302331; color: #e89292; }
+    .nav-btn { background: #151e2e; border: 1px solid #2a374e; color: #bcc6d4; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
+    .nav-btn:hover { background: #1b2638; }
+    .status-box { background: #151e2e; color: #97a3b7; border: 1px solid #2a374e; }
+    .modal-content { background: #151e2e; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+    .btn-cancel { background: #1b2638; border: 1px solid #2a374e; }
+    .btn-save { background: #236a8e; color: #f1f4f9; border: none; }
+    .form-group label { color: #bcc6d4; }
+    .form-group input, .form-group select { border: 1px solid #2a374e; outline: none; }
+    .chk-open-row { color: #dde3ec; }
+    .ui-zoom-ctrl { background: rgba(11,34,64,0.95); border: 1px solid rgba(255,255,255,0.25); box-shadow: 0 4px 14px rgba(0,0,0,0.375); }
+    .ui-zoom-ctrl button { border: none; background: transparent; color: #f1f4f9; }
+    /* 인라인 스타일 */
+    [style*="color: #64748b"] { color: #97a3b7 !important; }
+    [style*="color:#64748b"] { color: #97a3b7 !important; }
+    [style*="background:#f1f5f9"] { background: #1b2638 !important; }
+    [style*="background: #f1f5f9"] { background: #1b2638 !important; }
+    [style*="border: 2px dashed #cbd5e1"] { border: 2px dashed #58697e !important; }
+    [style*="border:2px dashed #cbd5e1"] { border: 2px dashed #58697e !important; }
+    [style*="color: #94a3b8"] { color: #6f7b91 !important; }
+    [style*="color:#94a3b8"] { color: #6f7b91 !important; }
+    [style*="border-color: #0284c7"] { border-color: #1c6e99 !important; }
+    [style*="border-color:#0284c7"] { border-color: #1c6e99 !important; }
+    [style*="color: #0284c7"] { color: #8dc8e7 !important; }
+    [style*="color:#0284c7"] { color: #8dc8e7 !important; }
+    [style*="border-color: #fecaca"] { border-color: #532a34 !important; }
+    [style*="border-color:#fecaca"] { border-color: #532a34 !important; }
+    [style*="color:#b91c1c"] { color: #e78d8d !important; }
+    [style*="color: #b91c1c"] { color: #e78d8d !important; }
+    [style*="background: #fff5f5"] { background: #302331 !important; }
+    [style*="background:#fff5f5"] { background: #302331 !important; }
+    [style*="background: rgba(255,255,255,0.9)"] { background: rgba(21,30,46,0.9) !important; }
+    [style*="background:rgba(255,255,255,0.9)"] { background: rgba(21,30,46,0.9) !important; }
+    [style*="border: 1px solid #cbd5e1"] { border: 1px solid #58697e !important; }
+    [style*="border:1px solid #cbd5e1"] { border: 1px solid #58697e !important; }
+    [style*="background:#ef4444"] { background: #9d3131 !important; }
+    [style*="background: #ef4444"] { background: #9d3131 !important; }
+    [style*="color: #ffffff"] { color: #f1f4f9 !important; }
+    [style*="color:#ffffff"] { color: #f1f4f9 !important; }
+    [style*="background:var(--kbo-blue)"] { background: #22354f !important; }
+    [style*="background: var(--kbo-blue)"] { background: #22354f !important; }
+
+    /* --- 수동 다듬기 --- */
+    :root { color-scheme: dark; --bg-gray: #0e1522; --card-border: #2a374e; --text-title: #dde3ec; --text-sub: #97a3b7; }
+    body { background-color: #0e1522; color: #dde3ec; }
+    header { background-color: #0b1525; border-bottom: 3px solid #9c3a47; box-shadow: none; }
+    .header-subtitle { color: #8d9ab0; }
+    #btnUniformCTA { filter: saturate(.75) brightness(.9); }
+    img { filter: brightness(.92); }
+    img[src*="fill='%23e2e8f0'"] { content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%231b2638'/%3E%3Cpath d='M32 32 C32 18 42 12 50 12 C58 12 68 18 68 32 C68 40 58 48 50 48 C42 48 32 40 32 32 Z' fill='%23435270'/%3E%3Cpath d='M44 14 C48 10 56 10 65 14 C74 18 84 18 86 21 C86 24 75 25 65 24 Z' fill='%235b7fb8'/%3E%3Cpath d='M20 92 C20 66 34 56 50 56 C66 56 80 66 80 92 Z' fill='%23333f57'/%3E%3C/svg%3E"); filter: none; }
+    .bk-img { filter: brightness(.95); }
+    .td-no { color: #7aa5ea; }
+    .td-name, .card-name { color: #dde3ec; }
+    #listContainer td { color: #97a3b7; }
+    .main-tab.active, .filter-btn.active, .filter-btn.staff-tab.active, .view-btn.active {
+        background: #23395d; border-color: #23395d; color: #dde3ec; box-shadow: none; }
+    input, select, textarea { color-scheme: dark; background-color: #1b2638; color: #dde3ec; }
+    .filter-btn, .view-btn, .search-box input { background: #1b2638; border-color: #2a374e; }
+    .filter-btn:hover { background: #2a374e; }
+    ::placeholder { color: #6f7b91; }
+
+    /* 학년·포지션·투타 칩: 반투명 바탕 + 파스텔 글씨 */
+    .grade-staff { background: rgba(148,163,184,.15); color: #c3cbd8; }
+    .grade-6 { background: rgba(239,108,108,.15); color: #eaa3a3; }
+    .grade-5 { background: rgba(245,181,70,.15); color: #e9c47e; }
+    .grade-4 { background: rgba(129,140,248,.17); color: #adb6f2; }
+    .grade-3 { background: rgba(74,200,120,.14); color: #97d3ab; }
+    .grade-2 { background: rgba(186,140,245,.16); color: #cdb0f2; }
+    .grade-1 { background: rgba(56,182,240,.15); color: #8fcbe8; }
+    .pos-manager { background: rgba(245,181,70,.15); color: #e9c47e !important; }
+    .pos-coach { background: rgba(148,163,184,.15); color: #c3cbd8 !important; }
+    .pos-pitcher { background: rgba(240,120,60,.16); color: #efab86 !important; }
+    .pos-catcher { background: rgba(45,190,170,.15); color: #87d2c6 !important; }
+    .pos-infield { background: rgba(80,140,245,.17); color: #a3c0f3 !important; }
+    .pos-outfield { background: rgba(74,200,120,.14); color: #97d3ab !important; }
+    .pos-dh { background: rgba(150,110,245,.17); color: #c3adf3 !important; }
+    .pos-etc { background: rgba(129,140,248,.17); color: #adb6f2 !important; }
+    .pos-none { background: rgba(148,163,184,.10); color: #7f8a9c !important; }
+    .bt-rr { background: transparent; color: #a3c0f3; border-color: rgba(80,140,245,.45); }
+    .bt-rl { background: transparent; color: #97d3ab; border-color: rgba(74,200,120,.45); }
+    .bt-ll { background: transparent; color: #eaa3a3; border-color: rgba(239,108,108,.45); }
+    .bt-lr { background: transparent; color: #e9c47e; border-color: rgba(245,181,70,.45); }
+    .bt-staff { background: transparent; color: #c3cbd8; border-color: rgba(148,163,184,.45); }
+    .bt-none { background: transparent; color: #7f8a9c; border-color: rgba(148,163,184,.45); }
+    .bt-etc { background: transparent; color: #c3cbd8; border-color: rgba(148,163,184,.45); }
+    }
     </style>
 </head>
 <body>
