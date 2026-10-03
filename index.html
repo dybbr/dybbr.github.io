@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.24.6 · b261004";
+        const APP_VERSION = "v2.25.0 · b261004";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -808,6 +808,18 @@
         .log-item-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; font-size: 12px; display: flex; flex-direction: column; gap: 2px; }
         .log-header-row { display: flex; justify-content: space-between; align-items: center; }
         .log-type-tag { font-weight: 800; font-size: 11px; padding: 2px 6px; border-radius: 4px; }
+        /* 🗑 로그 삭제 (개발자 전용) */
+        .log-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 8px; padding: 8px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; }
+        .log-tools label { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; color: #334155; cursor: pointer; }
+        .log-tools select, .log-tools button { height: 30px; border: 1px solid #d1d5db; border-radius: 6px; background: #ffffff; font-size: 12px; font-weight: 700; color: #334155; padding: 0 8px; cursor: pointer; }
+        .log-tools .log-tools-spacer { flex: 1; }
+        .log-tools button.danger, .log-del-btn { color: #b91c1c; border-color: #fecaca; background: #fff5f5; }
+        .log-tools button:disabled { opacity: 0.45; cursor: default; }
+        .log-item-card { position: relative; }
+        .log-item-card.log-selectable { padding-left: 34px; }
+        .log-check { position: absolute; left: 10px; top: 10px; width: 16px; height: 16px; margin: 0; cursor: pointer; }
+        .log-del-btn { border: 1px solid #fecaca; border-radius: 6px; width: 28px; height: 24px; font-size: 13px; line-height: 1; cursor: pointer; margin-left: 6px; flex: 0 0 auto; }
+        .log-item-card.is-checked { border-color: #fca5a5; background: #fff7f7; }
         .log-type-unlock  { background: #dcfce7; color: #166534; }
         .log-type-lock    { background: #fee2e2; color: #991b1b; }
         .log-type-admin   { background: #ede9fe; color: #5b21b6; }
@@ -1271,6 +1283,11 @@
     .contact-quick-bar { background: #302331; border: 1px solid #532a34; }
     .btn-quick-action { background: #151e2e; border: 1px solid #58697e; color: #bcc6d4; }
     .log-item-card { background: #151e2e; border: 1px solid #2a374e; }
+    .log-tools { background: #1b2638; border-color: #2a374e; }
+    .log-tools label { color: #bcc6d4; }
+    .log-tools select, .log-tools button { background: #151e2e; border-color: #33425c; color: #bcc6d4; }
+    .log-tools button.danger, .log-del-btn { background: #2a1b22; border-color: #6b2a35; color: #f19aa6; }
+    .log-item-card.is-checked { background: #2a1b22; border-color: #6b2a35; }
     .log-type-unlock { background: #1b3838; color: #99e6b6; }
     .log-type-lock { background: #302331; color: #e78d8d; }
     .log-type-admin { background: #1f2346; color: #b08de7; }
@@ -2247,6 +2264,18 @@
         <p style="font-size: 11px; color: #64748b; margin-bottom: 8px;">
             구글 시트에 실시간 기록된 최근 100건의 기기별 접속, 잠금, 주문 등의 활동 내역입니다.
         </p>
+        <div class="log-tools" id="logTools">
+            <label><input type="checkbox" id="logCheckAll" onchange="toggleAllLogChecks(this.checked)"> 전체 선택</label>
+            <button type="button" class="danger" id="logDelSelBtn" onclick="deleteSelectedLogs()" disabled>선택 삭제</button>
+            <span class="log-tools-spacer"></span>
+            <select id="logDelDays" aria-label="삭제 기간">
+                <option value="7">7일 지난 로그</option>
+                <option value="30" selected>30일 지난 로그</option>
+                <option value="90">90일 지난 로그</option>
+            </select>
+            <button type="button" class="danger" onclick="deleteOldLogs()">기간 삭제</button>
+            <button type="button" class="danger" onclick="deleteAllLogs()">전체 삭제</button>
+        </div>
         <div class="modal-scroll-body" id="logsListContent">
             <div style="text-align: center; padding: 40px; color: #94a3b8;">로그 데이터를 불러오는 중...</div>
         </div>
@@ -4950,6 +4979,10 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.25.0', d: '2026-10-04', t: '활동 로그 삭제 (개발자 전용)', items: [
+            '활동 로그 창에 항목별 삭제, 체크박스 선택 삭제, 기간(7·30·90일 지난 로그) 삭제, 전체 삭제 추가',
+            '서버에서도 개발자 로그인만 삭제 허용하고, 삭제한 기록은 로그에 남김'
+        ] },
         { v: 'v2.24.6', d: '2026-10-04', t: '공지 읽은 사람 중복 정리', items: [
             '같은 관리자가 여러 기기에서 읽어 두 번 이상 나오던 것을 한 번만 표시',
             '앞으로 관리자는 기기와 상관없이 역할당 한 번만 읽음으로 기록'
@@ -5146,15 +5179,86 @@
         try {
             const res = await fetch(apiGetUrl('action=getLogs'), { cache: 'no-store' });
             const json = await res.json();
+            const checkAll = document.getElementById('logCheckAll');
+            if (checkAll) checkAll.checked = false;
+            updateLogDelBtn();
             if (!json || !json.logs || json.logs.length === 0) { content.innerHTML = '<div style="text-align:center; padding:40px;">로그 없음</div>'; return; }
-            content.innerHTML = json.logs.map(log => `
-                <div class="log-item-card">
-                    <div class="log-header-row"><span class="log-type-tag log-type-unlock">[${escapeHtml(log.eventType)}] ${escapeHtml(log.role)}</span><span style="font-size:11px; color:#94a3b8;">${escapeHtml(log.date)}</span></div>
+            content.innerHTML = json.logs.map(log => {
+                const delKey = (log.row && log.sig) ? `${Number(log.row)}:${String(log.sig).replace(/[^0-9a-f]/gi, '')}` : '';
+                return `
+                <div class="log-item-card${delKey ? ' log-selectable' : ''}">
+                    ${delKey ? `<input type="checkbox" class="log-check" data-key="${delKey}" onchange="onLogCheck(this)" aria-label="이 로그 선택">` : ''}
+                    <div class="log-header-row"><span class="log-type-tag log-type-unlock">[${escapeHtml(log.eventType)}] ${escapeHtml(log.role)}</span><span style="display:inline-flex; align-items:center;"><span style="font-size:11px; color:#94a3b8;">${escapeHtml(log.date)}</span>${delKey ? `<button type="button" class="log-del-btn" title="이 로그 삭제" onclick="deleteOneLog('${delKey}')">🗑</button>` : ''}</span></div>
                     <div style="font-size:11px; color:#475569;">📱 <b>${escapeHtml(log.device)}</b>${log.screenRes && log.screenRes !== '-' ? ` · ${escapeHtml(log.screenRes)}` : ''}${log.lang && log.lang !== '-' ? ` · ${escapeHtml(log.lang)}` : ''}</div>
                     <div style="font-size:12px; color:#0f172a; font-weight:600; margin-top:2px;">${escapeHtml(log.details)}</div>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
         } catch (err) { content.innerHTML = '<div style="text-align:center; padding:40px; color:red;">불러오기 실패</div>'; }
+    }
+
+    // 🗑 로그 삭제 (개발자 전용) — 서버(deleteLogs)도 개발자 토큰을 다시 확인한다
+    function checkedLogKeys() {
+        return [...document.querySelectorAll('#logsListContent .log-check:checked')].map(c => c.dataset.key);
+    }
+    function updateLogDelBtn() {
+        const btn = document.getElementById('logDelSelBtn');
+        if (!btn) return;
+        const n = checkedLogKeys().length;
+        btn.disabled = n === 0;
+        btn.textContent = n ? `선택 삭제 (${n})` : '선택 삭제';
+    }
+    function onLogCheck(cb) {
+        const card = cb.closest('.log-item-card');
+        if (card) card.classList.toggle('is-checked', cb.checked);
+        const all = document.querySelectorAll('#logsListContent .log-check');
+        const checkAll = document.getElementById('logCheckAll');
+        if (checkAll) checkAll.checked = all.length > 0 && checkedLogKeys().length === all.length;
+        updateLogDelBtn();
+    }
+    function toggleAllLogChecks(on) {
+        document.querySelectorAll('#logsListContent .log-check').forEach(c => {
+            c.checked = on;
+            const card = c.closest('.log-item-card');
+            if (card) card.classList.toggle('is-checked', on);
+        });
+        updateLogDelBtn();
+    }
+    async function requestDeleteLogs(params) {
+        if (currentRole !== 'dev') { alert('개발자만 로그를 삭제할 수 있습니다.'); return; }
+        const extra = '&clientId=' + encodeURIComponent(getDeviceClientId()) +
+            '&device=' + encodeURIComponent(getDeviceInfo()) +
+            '&screenRes=' + encodeURIComponent(`${window.screen.width}x${window.screen.height}`) +
+            '&lang=' + encodeURIComponent(navigator.language || '-');
+        const content = document.getElementById('logsListContent');
+        content.innerHTML = '<div style="text-align:center; padding:40px;">삭제하는 중...</div>';
+        try {
+            const res = await apiGetJson('action=deleteLogs&' + params + extra);
+            if (!res || res.result !== 'success') alert((res && res.message) || '삭제하지 못했습니다.');
+            else if (!res.deleted) alert('삭제할 로그가 없습니다. (그 사이 바뀐 로그는 지우지 않습니다)');
+        } catch (err) {
+            alert('삭제 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+        }
+        loadSecurityLogs();
+    }
+    function deleteOneLog(key) {
+        if (!confirm('이 로그 1건을 삭제할까요?\n삭제한 로그는 되돌릴 수 없습니다.')) return;
+        requestDeleteLogs('mode=rows&items=' + encodeURIComponent(key));
+    }
+    function deleteSelectedLogs() {
+        const keys = checkedLogKeys();
+        if (!keys.length) return;
+        if (!confirm(`선택한 로그 ${keys.length}건을 삭제할까요?\n삭제한 로그는 되돌릴 수 없습니다.`)) return;
+        requestDeleteLogs('mode=rows&items=' + encodeURIComponent(keys.join(',')));
+    }
+    function deleteOldLogs() {
+        const days = parseInt(document.getElementById('logDelDays').value, 10) || 30;
+        if (!confirm(`${days}일이 지난 로그를 모두 삭제할까요?\n(화면에 보이지 않는 오래된 로그도 포함, 되돌릴 수 없습니다)`)) return;
+        requestDeleteLogs('mode=before&days=' + days);
+    }
+    function deleteAllLogs() {
+        if (!confirm('로그를 전부 삭제할까요?\n화면에 보이지 않는 오래된 로그까지 모두 지워지며 되돌릴 수 없습니다.')) return;
+        if (!confirm('정말 전체 삭제할까요? 한 번 더 확인합니다.')) return;
+        requestDeleteLogs('mode=all');
     }
 
     // ==========================================================
