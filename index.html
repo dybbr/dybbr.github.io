@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.23.0 · b261004";
+        const APP_VERSION = "v2.24.0 · b261004";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -671,37 +671,45 @@
         .table-thumb { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
         .td-name { font-weight: 800; color: #111827; font-size: 15px; }
 
-        .grade-tag { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 12px; font-weight: 700; white-space: nowrap !important; }
-        .grade-staff { background: #0f172a; color: #ffffff; }
-        .grade-6 { background: #fee2e2; color: #991b1b; }
-        .grade-5 { background: #fef3c7; color: #92400e; }
-        .grade-4 { background: #e0e7ff; color: #3730a3; }
-        .grade-3 { background: #dcfce7; color: #166534; }
-        .grade-2 { background: #f3e8ff; color: #6b21a8; }
-        .grade-1 { background: #e0f2fe; color: #0369a1; }
+        /* 🎨 학년: 고학년일수록 진한 남색 (순서가 있는 값이라 한 가지 색의 진하기로 표현) */
+        .grade-tag { display: inline-block; padding: 3px 9px; border-radius: 12px; font-size: 12px; font-weight: 800; white-space: nowrap !important; border: 1px solid transparent; }
+        .grade-staff { background: #ffffff; color: #0b2240; border-color: #0b2240; }
+        .grade-6 { background: #0b2240; color: #ffffff; }
+        .grade-5 { background: #27467a; color: #ffffff; }
+        .grade-4 { background: #4b6a9b; color: #ffffff; }
+        .grade-3 { background: #c5d3e8; color: #0b2240; }
+        .grade-2 { background: #dce5f2; color: #1e3a66; }
+        .grade-1 { background: #eef3f9; color: #27467a; border-color: #d3deee; }
 
-        .pos-tag { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 700; color: #ffffff !important; background: #64748b; }
-        .pos-manager  { background: #b45309; }
-        .pos-coach    { background: #475569; }
-        .pos-pitcher  { background: #c2410c; }
-        .pos-catcher  { background: #0f766e; }
-        .pos-infield  { background: #1d4ed8; }
-        .pos-outfield { background: #15803d; }
-        .pos-dh       { background: #7c3aed; }
-        .pos-etc      { background: #6366f1; }
-        .pos-none     { background: #94a3b8; }
+        /* 🎨 포지션: 야구장에서 따온 색 — 투수=마운드 흙, 포수=장비 파랑, 내야=내야 흙, 외야=잔디, 지명타자=보라. 여러 개면 칩을 나눠서 */
+        .pos-chips { display: inline-flex; flex-wrap: wrap; gap: 3px; justify-content: center; vertical-align: middle; }
+        .pos-tag { display: inline-block; padding: 2px 7px; border-radius: 5px; font-size: 11px; font-weight: 800; white-space: nowrap; border: 1px solid #dbe2ea; color: #475569; background: #f1f5f9; }
+        .pos-pitcher  { background: #fdeee8; color: #b3401a; border-color: #f4cdbd; }
+        .pos-catcher  { background: #e9f0fb; color: #1e4f9c; border-color: #c6d7f1; }
+        .pos-infield  { background: #fbf3e2; color: #8a5a12; border-color: #ead5a6; }
+        .pos-outfield { background: #e8f5ec; color: #1f7a3d; border-color: #bde1c7; }
+        .pos-dh       { background: #f2edfb; color: #5b3aa5; border-color: #dacef2; }
+        .pos-manager, .pos-coach { background: #eef2f7; color: #0b2240; border-color: #d3dce8; }
+        .pos-etc      { background: #f1f5f9; color: #475569; border-color: #dbe2ea; }
+        .pos-none     { background: #f8fafc; color: #94a3b8; border-color: #e2e8f0; }
 
-        .bt-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; border: 1px solid transparent; }
-        .bt-rr { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
-        .bt-rl { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
-        .bt-ll { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
-        .bt-lr { background: #fefce8; color: #a16207; border-color: #fef08a; }
-        .bt-staff { background: #f8fafc; color: #475569; border-color: #cbd5e1; }
-        .bt-none { background: #f1f5f9; color: #94a3b8; border-color: #e2e8f0; }
+        /* 🎨 투/타: 기본은 회색 테두리, 왼손(좌)이 들어가면 남색으로 강조 */
+        .bt-tag { display: inline-block; padding: 2px 8px; border-radius: 5px; font-size: 11px; font-weight: 700; white-space: nowrap; border: 1px solid #dbe2ea; background: #ffffff; color: #64748b; }
+        .bt-rr, .bt-etc { background: #ffffff; color: #64748b; border-color: #dbe2ea; }
+        .bt-rl, .bt-ll, .bt-lr { background: #ffffff; color: #0b2240; border-color: #0b2240; font-weight: 800; }
+        .bt-staff { background: #f8fafc; color: #64748b; border-color: #e2e8f0; }
+        .bt-none { background: #f8fafc; color: #a3adbb; border-color: #e9eef4; }
+
+        /* 🎨 생년월일·신장/체중: 숫자는 진하게, 단위(cm·kg)와 구분선은 흐리게 */
+        .td-meta { color: #334155; font-size: 13px; font-variant-numeric: tabular-nums; }
+        .u { font-size: 0.85em; color: #94a3b8; margin-left: 1px; }
+        .sep { color: #cbd5e1; margin: 0 4px; }
+        .card-pos .pos-chips, .profile-pos-badge .pos-chips { justify-content: flex-end; max-width: 140px; }
+        @media (max-width: 600px) { #listContainer .pos-chips { justify-content: flex-start; } }
 
         .hidden-badge { display: inline-block; background: #64748b; color: #ffffff; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; margin-left: 4px; }
-        .text-private { color: #94a3b8; font-weight: 700; font-size: 12px; }
-        .admin-private-badge { display: inline-block; background: #fee2e2; color: #ef4444; font-size: 10px; font-weight: 800; padding: 1px 4px; border-radius: 3px; margin-left: 3px; }
+        .text-private { color: #a3adbb; font-weight: 600; font-size: 12px; }
+        .admin-private-badge { display: inline-block; background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; font-size: 10px; font-weight: 800; padding: 0 4px; border-radius: 4px; margin-left: 3px; }
 
         .roster-grid { display: none; grid-template-columns: repeat(auto-fill, minmax(175px, 1fr)); gap: 14px; }
         .player-card { background: #ffffff; border: 1px solid var(--card-border); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 2px 6px rgba(0,0,0,0.03); position: relative; cursor: pointer; }
@@ -1038,9 +1046,10 @@
         }
         .pw-cur-val { font-size: 12px; color: #0369a1; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 6px; padding: 4px 8px; margin-bottom: 6px; font-family: ui-monospace, Menlo, Consolas, monospace; word-break: break-all; }
     
-        /* 📱 휴대폰 세로(폭 600px 이하)에서만: 리스트형을 가로 스크롤 없는 2줄 행으로
-           1줄: 등번호 | 사진 | 이름 · 학년 · 투타
-           2줄:        |      | 포지션 · 생년월일 · 신장/체중
+        /* 📱 휴대폰 세로(폭 600px 이하)에서만: 리스트형을 가로 스크롤 없는 3줄 행으로
+           1줄: 등번호 | 사진 | 이름 ........ 학년
+           2줄:        |      | 포지션 칩 .... 투타
+           3줄:        |      | 생년월일 ..... 신장/체중 (작고 흐리게)
            (태블릿·PC는 기존 표 그대로) */
         @media (max-width: 600px) {
             #listContainer { overflow-x: visible; }
@@ -1049,10 +1058,10 @@
             #listContainer tbody { display: block; }
             #listContainer tr.clickable-row {
                 display: grid;
-                grid-template-columns: 30px 42px minmax(0, 1fr) auto auto;
-                grid-template-areas: "no photo name grade bt" "no photo pos birth phys";
-                column-gap: 7px; row-gap: 5px; align-items: center;
-                padding: 9px 10px 9px 6px;
+                grid-template-columns: 30px 42px minmax(0, 1fr) auto;
+                grid-template-areas: "no photo name grade" "no photo pos bt" "no photo birth phys";
+                column-gap: 8px; row-gap: 4px; align-items: center;
+                padding: 8px 10px 8px 6px;
                 border-bottom: 1px solid var(--card-border);
             }
             #listContainer tr.clickable-row:last-child { border-bottom: none; }
@@ -1063,7 +1072,7 @@
             #listContainer tr.clickable-row > td:nth-child(4) { grid-area: grade; text-align: right; }
             #listContainer tr.clickable-row > td:nth-child(5) { grid-area: pos; }
             #listContainer tr.clickable-row > td:nth-child(6) { grid-area: bt; text-align: right; }
-            #listContainer tr.clickable-row > td:nth-child(7) { grid-area: birth; text-align: right; font-size: 11.5px !important; white-space: nowrap; }
+            #listContainer tr.clickable-row > td:nth-child(7) { grid-area: birth; text-align: left; font-size: 11.5px !important; white-space: nowrap; }
             #listContainer tr.clickable-row > td:nth-child(8) { grid-area: phys; text-align: right; font-size: 11.5px !important; white-space: nowrap; }
             #listContainer .table-thumb-wrap { width: 40px; height: 40px; }
             #listContainer .grade-tag { font-size: 11px; padding: 2px 7px; }
@@ -1458,6 +1467,33 @@
     .next-event-banner .neb-label { filter: saturate(.85) brightness(.92); }
     .nt-cat { background: color-mix(in srgb, var(--c) 22%, #151e2e); color: color-mix(in srgb, var(--c) 50%, #ffffff); }
     .nt-cat[style*="--c:#ffffff"] { background: #9b2c2c; color: #ffffff; }
+
+    /* 🎨 배지·숫자 색 (다크) */
+    .grade-staff { background: transparent; color: #c9d4e6; border-color: #5a6f93; }
+    .grade-6 { background: #7aa0dc; color: #0b1525; }
+    .grade-5 { background: #557cb9; color: #f3f6fb; }
+    .grade-4 { background: #3a5a8e; color: #e3eaf6; }
+    .grade-3 { background: #2a4167; color: #c3d0e6; }
+    .grade-2 { background: #213450; color: #a8b8d3; }
+    .grade-1 { background: #1a2840; color: #8fa2c2; border-color: #2c3d5a; }
+    .pos-tag { color: #b8c2d1 !important; background: rgba(148,163,184,.12); border-color: rgba(148,163,184,.28); }
+    .pos-pitcher  { background: rgba(225,105,65,.16); color: #f0ae90 !important; border-color: rgba(225,105,65,.34); }
+    .pos-catcher  { background: rgba(90,140,230,.16); color: #a9c4f2 !important; border-color: rgba(90,140,230,.34); }
+    .pos-infield  { background: rgba(215,165,80,.15); color: #e4c78f !important; border-color: rgba(215,165,80,.32); }
+    .pos-outfield { background: rgba(80,190,120,.14); color: #98d6ac !important; border-color: rgba(80,190,120,.32); }
+    .pos-dh       { background: rgba(150,120,235,.16); color: #c6b5f2 !important; border-color: rgba(150,120,235,.34); }
+    .pos-manager, .pos-coach { background: rgba(148,163,184,.14); color: #d3dbe8 !important; border-color: rgba(148,163,184,.30); }
+    .pos-etc { background: rgba(148,163,184,.12); color: #b8c2d1 !important; border-color: rgba(148,163,184,.28); }
+    .pos-none { background: transparent; color: #6f7b91 !important; border-color: rgba(148,163,184,.20); }
+    .card-pos .pos-tag, .profile-pos-badge .pos-tag { background-color: rgba(14,21,34,.88); }
+    .bt-tag, .bt-rr, .bt-etc, .bt-staff { background: transparent; color: #aab5c6; border-color: #3a4760; }
+    .bt-rl, .bt-ll, .bt-lr { background: transparent; color: #c4d6f5; border-color: #7aa5ea; }
+    .bt-none { background: transparent; color: #6f7b91; border-color: #2a374e; }
+    .td-meta, #listContainer td.td-meta { color: #c9d2df; }
+    .u { color: #6f7b91; }
+    .sep { color: #3d4a62; }
+    .text-private { color: #6f7b91; }
+    .admin-private-badge { background: #1b2638; color: #97a3b7; border-color: #2a374e; }
 
     }
     </style>
@@ -3625,18 +3661,27 @@
         return `<span class="grade-tag grade-${g}">${g}학년</span>`;
     }
 
+    // 포지션 종류 → 색 (야구장 색: 투수=마운드 흙, 포수=장비, 내야=흙, 외야=잔디)
+    function posKind(t) {
+        if (t.includes('감독') || t.includes('총괄')) return 'manager';
+        if (t.includes('코치')) return 'coach';
+        if (t.includes('투수')) return 'pitcher';
+        if (t.includes('포수')) return 'catcher';
+        if (t.includes('내야') || t.includes('1루') || t.includes('2루') || t.includes('3루') || t.includes('유격')) return 'infield';
+        if (t.includes('외야') || t.includes('좌익') || t.includes('중견') || t.includes('우익')) return 'outfield';
+        if (t.includes('지명') || t.toUpperCase().includes('DH')) return 'dh';
+        return 'etc';
+    }
+    // "투수, 내야수"처럼 여러 개면 하나씩 나눠서 종류별 색 칩으로 표시
     function getPosBadge(pos, grade) {
         if (!pos || pos === '-' || pos === '정보없음' || pos === '미정') return '<span class="pos-tag pos-none">미정</span>';
         const p = String(pos).trim();
-        const e = escapeHtml(p);
-        if (grade === '감독' || p.includes('감독') || p.includes('총괄')) return `<span class="pos-tag pos-manager">${e}</span>`;
-        if (grade === '코치' || p.includes('코치')) return `<span class="pos-tag pos-coach">${e}</span>`;
-        if (p.includes('투수')) return `<span class="pos-tag pos-pitcher">${e}</span>`;
-        if (p.includes('포수')) return `<span class="pos-tag pos-catcher">${e}</span>`;
-        if (p.includes('내야') || p.includes('1루') || p.includes('2루') || p.includes('3루') || p.includes('유격')) return `<span class="pos-tag pos-infield">${e}</span>`;
-        if (p.includes('외야') || p.includes('좌익') || p.includes('중견') || p.includes('우익')) return `<span class="pos-tag pos-outfield">${e}</span>`;
-        if (p.includes('지명') || p.toUpperCase().includes('DH')) return `<span class="pos-tag pos-dh">${e}</span>`;
-        return `<span class="pos-tag pos-etc">${e}</span>`;
+        if (isStaff(grade) || p.includes('감독') || p.includes('코치') || p.includes('총괄')) {
+            const k = (grade === '감독' || p.includes('감독') || p.includes('총괄')) ? 'manager' : 'coach';
+            return `<span class="pos-tag pos-${k}">${escapeHtml(p)}</span>`;
+        }
+        const parts = p.split(/[,，/·]+/).map(s => s.trim()).filter(Boolean);
+        return '<span class="pos-chips">' + parts.map(t => `<span class="pos-tag pos-${posKind(t)}">${escapeHtml(t)}</span>`).join('') + '</span>';
     }
 
     function getBtBadge(bt, grade) {
@@ -3673,23 +3718,23 @@
 
         if (currentRole === 'guest') {
             if (hHidden && wHidden) return '<span class="text-private">비공개</span>';
-            const hStr = hHidden ? '<span class="text-private">비공개</span>' : (h ? `${h}cm` : '-');
-            const wStr = wHidden ? '<span class="text-private">비공개</span>' : (w ? `${w}kg` : '-');
+            const hStr = hHidden ? '<span class="text-private">비공개</span>' : (h ? `${h}<span class="u">cm</span>` : '-');
+            const wStr = wHidden ? '<span class="text-private">비공개</span>' : (w ? `${w}<span class="u">kg</span>` : '-');
             if (hStr === '-' && wStr === '-') return '-';
-            return `${hStr} / ${wStr}`;
+            return `${hStr}<span class="sep">/</span>${wStr}`;
         } else {
             const showBadge = (currentRole === 'super' || currentRole === 'sub' || currentRole === 'general' || currentRole === 'dev');
             if (hHidden && wHidden && !h && !w) {
                 return showBadge ? '<span class="admin-private-badge">비공개</span>' : '<span class="text-private">비공개</span>';
             }
-            let hStr = h ? `${h}cm` : (hHidden ? '' : '-');
+            let hStr = h ? `${h}<span class="u">cm</span>` : (hHidden ? '' : '-');
             if (hHidden && showBadge) hStr += '<span class="admin-private-badge">비공개</span>';
 
-            let wStr = w ? `${w}kg` : (wHidden ? '' : '-');
+            let wStr = w ? `${w}<span class="u">kg</span>` : (wHidden ? '' : '-');
             if (wHidden && showBadge) wStr += '<span class="admin-private-badge">비공개</span>';
 
             if (!hStr && !wStr) return '<span class="admin-private-badge">비공개</span>';
-            if (hStr && wStr) return `${hStr} / ${wStr}`;
+            if (hStr && wStr) return `${hStr}<span class="sep">/</span>${wStr}`;
             return hStr || wStr || '-';
         }
     }
@@ -3903,8 +3948,8 @@
                     <td>${getGradeBadge(p.grade)}</td>
                     <td>${getPosBadge(p.pos, p.grade)}</td>
                     <td>${getBtBadge(p.bt, p.grade)}</td>
-                    <td style="color: #475569; font-size: 13px;">${formatBirth(p)}</td>
-                    <td style="color: #475569; font-size: 13px;">${formatPhys(p)}</td>
+                    <td class="td-meta">${formatBirth(p)}</td>
+                    <td class="td-meta">${formatPhys(p)}</td>
                 </tr>
             `;
         }).join('');
@@ -4804,6 +4849,14 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.24.0', d: '2026-10-04', t: '배지·숫자 색 정리', items: [
+            '포지션을 종류별 색으로: 투수=마운드 흙색, 포수=장비 파랑, 내야수=내야 흙색, 외야수=잔디 초록, 지명타자=보라 (여러 포지션은 칩을 나눠 표시)',
+            '학년은 고학년일수록 진한 남색으로 (6학년이 가장 진함)',
+            '투/타는 회색 테두리, 왼손(좌)이 들어가면 남색으로 강조',
+            '생년월일·신장/체중은 숫자를 진하게, cm·kg 단위와 구분선은 흐리게 / 비공개 표시는 회색으로 차분하게',
+            '휴대폰 리스트형은 3줄로 정리: 이름·학년 / 포지션·투타 / 생년월일·신장체중',
+            '다크모드도 같은 색 체계로 맞춤'
+        ] },
         { v: 'v2.23.0', d: '2026-10-04', t: '휴대폰 리스트형 최적화', items: [
             '휴대폰 세로 화면(폭 600px 이하)에서 리스트형을 가로 스크롤 없이 한 화면에 보이게 2줄 행으로 변경',
             '1줄: 등번호·사진·이름·학년·투타 / 2줄: 포지션·생년월일·신장/체중',
