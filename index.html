@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.27.2 · b261005";
+        const APP_VERSION = "v2.27.3 · b261005";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1199,6 +1199,10 @@
         }
         .ui-zoom-ctrl button:active { background: rgba(255,255,255,0.18); }
         .ui-zoom-ctrl button:disabled { opacity: 0.35; }
+        /* 접힘 상태: 현재 %만 보임 → 누르면 ＋/－가 펼쳐지고 3초 뒤 다시 접힘 · 길게 누르면 100% (v2.27.3) */
+        .ui-zoom-ctrl:not(.open) #uiZoomIn, .ui-zoom-ctrl:not(.open) #uiZoomOut { display: none; }
+        .ui-zoom-ctrl:not(.open) { opacity: 0.82; }
+        .ui-zoom-ctrl.open .zoom-level { background: rgba(255,255,255,0.12); }   /* %는 항상 맨 아래 고정 → 펼쳐져도 손가락 밑 버튼이 안 바뀜 */
         .ui-zoom-ctrl .zoom-level {
             width: 42px; height: 24px; font-size: 10px; font-weight: 800; letter-spacing: -0.2px;
             border-top: 1px solid rgba(255,255,255,0.2); border-bottom: 1px solid rgba(255,255,255,0.2);
@@ -1724,11 +1728,11 @@
 </head>
 <body>
 
-<!-- 🔍 화면 크기 조절 (+ / 현재% / -) : 현재%를 누르면 100%로 되돌림 -->
+<!-- 🔍 화면 크기 조절: 평소엔 현재%만 보임 → 누르면 ＋/－ 펼침(3초 뒤 접힘) · 길게 누르면 100% -->
 <div class="ui-zoom-ctrl" id="uiZoomCtrl" aria-label="화면 크기 조절">
     <button type="button" id="uiZoomIn" onclick="changeUiZoom(1)" aria-label="크게">＋</button>
-    <button type="button" class="zoom-level" id="uiZoomLevel" onclick="resetUiZoom()" title="100%로 되돌리기">100%</button>
     <button type="button" id="uiZoomOut" onclick="changeUiZoom(-1)" aria-label="작게">－</button>
+    <button type="button" class="zoom-level" id="uiZoomLevel" onclick="toggleUiZoomCtrl()" title="누르면 ＋/－ 펼침 · 길게 누르면 100%">100%</button>
 </div>
 <script>
     // 화면 크기 단계 (60% ~ 130%). 기기마다 따로 저장됨 (localStorage).
@@ -1754,8 +1758,21 @@
         }
         idx = Math.max(0, Math.min(UI_ZOOM_STEPS.length - 1, idx + dir));
         applyUiZoom(UI_ZOOM_STEPS[idx]);
+        zoomCtrlOpen();   // 조작 중엔 접히지 않게 타이머 연장
     }
-    function resetUiZoom() { applyUiZoom(1); }
+    // 🔍 접힘/펼침: 평소엔 현재 %만, 누르면 ＋/－ 펼침 → 3초 동안 조작이 없으면 접힘. 길게(0.6초) 누르면 100%로 되돌림 (v2.27.3)
+    var _zoomFoldTimer = null, _zoomPressTimer = null, _zoomLongPressed = false;
+    function zoomCtrlOpen() { var c = document.getElementById('uiZoomCtrl'); if (!c) return; c.classList.add('open'); clearTimeout(_zoomFoldTimer); _zoomFoldTimer = setTimeout(function () { c.classList.remove('open'); }, 3000); }
+    function zoomCtrlFold() { var c = document.getElementById('uiZoomCtrl'); if (c) c.classList.remove('open'); clearTimeout(_zoomFoldTimer); }
+    function toggleUiZoomCtrl() { if (_zoomLongPressed) { _zoomLongPressed = false; return; } var c = document.getElementById('uiZoomCtrl'); if (!c) return; if (c.classList.contains('open')) zoomCtrlFold(); else zoomCtrlOpen(); }
+    function resetUiZoom() { applyUiZoom(1); zoomCtrlOpen(); }
+    (function () {
+        var lv = document.getElementById('uiZoomLevel'); if (!lv) return;
+        var start = function () { clearTimeout(_zoomPressTimer); _zoomPressTimer = setTimeout(function () { _zoomLongPressed = true; resetUiZoom(); }, 600); };
+        var stop = function () { clearTimeout(_zoomPressTimer); };
+        lv.addEventListener('pointerdown', start); lv.addEventListener('pointerup', stop); lv.addEventListener('pointerleave', stop); lv.addEventListener('pointercancel', stop);
+        lv.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+    })();
     applyUiZoom(getUiZoom());
 </script>
 
@@ -5444,6 +5461,10 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.27.3', d: '2026-10-05', t: '화면 배율 버튼 접기', items: [
+            '오른쪽 아래 화면 배율 버튼은 평소 현재 %만 보이고, 누르면 ＋/－가 펼쳐졌다가 3초 뒤 다시 접힘 (길게 누르면 100%로)',
+            '상세보기 이전·목록·다음 버튼은 가로 폭을 전부 사용'
+        ]},
         { v: 'v2.27.2', d: '2026-10-05', t: '긴 이름 정리 (카드·상세보기 버튼)', items: [
             '이미지형 카드: 이름이 길면 살짝 줄이고, 그래도 넘치면 이름 앞 번호를 접고(사진 위 배지에 있음) 더 줄여 한 줄에 맞춤 — 카드 높이가 들쭉날쭉하지 않음',
             '상세보기 아래 이전/다음 버튼: 번호 줄 + 이름 줄(길면 말줄임)로, 목록 버튼은 두 줄로 꺾이지 않게, 휴대폰 확대/축소 버튼 밑에 숨지 않게 자리 비움'
