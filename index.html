@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.26.0 · b261005";
+        const APP_VERSION = "v2.26.1 · b261005";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -820,7 +820,7 @@
         .card-info { padding: 12px 10px; display: flex; flex-direction: column; gap: 4px; }
         .card-name-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; width: 100%; }
         .card-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
-        .card-meta .pos-chips { justify-content: flex-start; }
+        .card-meta .pos-chips { display: contents; }   /* 투타·포지션 칩이 한 줄에서 같이 흐르도록 */
         .card-name { font-weight: 800; color: var(--text-title); display: flex; align-items: baseline; gap: 3px; }
         .card-name-no { color: var(--kbo-red); font-size: 14px; font-weight: 800; }
         .card-extra { font-size: 11px; color: #64748b; background: #f8fafc; border-radius: 6px; padding: 5px 6px; margin-top: 2px; display: flex; flex-direction: column; gap: 2px; border: 1px solid #f1f5f9; }
@@ -4512,7 +4512,7 @@
                             </span>
                             ${getGradeBadge(p.grade)}
                         </div>
-                        <div class="card-meta">${posBadge}${getBtBadge(p.bt, p.grade)}</div>
+                        <div class="card-meta">${getBtBadge(p.bt, p.grade)}${posBadge}</div>
                         <div class="card-extra">
                             <div>🎂 ${formatBirth(p)}</div>
                             <div>📏 ${formatPhys(p)}</div>
@@ -5359,6 +5359,9 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.26.1', d: '2026-10-05', t: '이미지형 카드 투타·포지션 한 줄 정리', items: [
+            '이미지형 카드에서 투타 칩을 포지션 칩보다 앞에 두고, 투타·포지션이 한 줄에서 같이 흐르도록 변경 (포지션이 많아도 세로로 길어지지 않음)'
+        ]},
         { v: 'v2.26.0', d: '2026-10-05', t: '부캉이 꾸미기 10가지', items: [
             '말풍선 멘트: 헤더 부캉이가 아침·경기 당일·비 오는 날·승리 후·밤 등 상황에 맞는 말을 함 (부캉이를 누르면 다시)',
             '표정 세트: 경기 결과(승·패)·경기 당일·밤 10시~아침 6시·겨울에 따라 표정이 바뀜',
