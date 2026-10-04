@@ -359,6 +359,18 @@
             cursor: pointer;
         }
         .nav-btn:hover { background: #f1f5f9; }
+
+        /* 휴대폰: 사진 높이를 화면의 1/3 정도로 줄여 사진+정보+이동 버튼이 한 화면에 들어오게 */
+        @media (max-width: 600px) {
+            .profile-photo-wrap { aspect-ratio: auto; height: clamp(180px, calc(34vh / var(--ui-zoom, 1)), 360px); }
+            .container { margin-top: 12px; }
+            .profile-body { padding: 14px 14px; gap: 10px; }
+            .name-row { padding-bottom: 8px; }
+            .player-name { font-size: 21px; }
+            .spec-list { gap: 6px; }
+            .spec-item { padding: 8px 12px; }
+            .profile-nav-bar { margin-top: 10px; }
+        }
         .nav-btn.disabled {
             opacity: 0.4;
             pointer-events: none;
