@@ -147,9 +147,16 @@
         .profile-img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
-            object-position: top center;
+            object-fit: contain;      /* 사진을 자르지 않고 전부 보여줌 (v2.27.1) */
+            object-position: center;
             display: block;
+            position: relative;
+            z-index: 1;
+        }
+        /* 사진 비율이 틀과 다를 때 남는 자리는 같은 사진을 흐리게 깔아 채움 */
+        .profile-img-bg {
+            position: absolute; left: -24px; top: -24px; width: calc(100% + 48px); height: calc(100% + 48px);
+            object-fit: cover; filter: blur(18px) saturate(1.1); opacity: .55; pointer-events: none;
         }
 
         .profile-no-badge {
@@ -1002,6 +1009,7 @@
             const adminPhotoBadge = (p.hidePhoto && canViewPhoto) ? `<span class="admin-private-badge" style="position:absolute; bottom:12px; left:14px; background:#ef4444; color:#ffffff; font-size:11px; padding:3px 8px; border-radius:4px; z-index:3;">🔒 사진 비공개</span>` : '';
             photoHtml = `
                 <div class="profile-photo-wrap">
+                    <img class="profile-img-bg" src="${photoUrl}" alt="" aria-hidden="true" onerror="this.remove()">
                     <img class="profile-img" src="${photoUrl}" alt="${escapeHtml(p.name)}" onerror="handleImgError(this)">
                     ${adminPhotoBadge}
                     ${uploadBtnHtml}
