@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.27.1 · b261005";
+        const APP_VERSION = "v2.27.2 · b261005";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -874,7 +874,8 @@
         .card-name-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; width: 100%; }
         .card-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
         .card-meta .pos-chips { display: contents; }   /* 투타·포지션 칩이 한 줄에서 같이 흐르도록 */
-        .card-name { font-weight: 800; color: var(--text-title); display: flex; align-items: baseline; gap: 3px; }
+        .card-name { font-weight: 800; color: var(--text-title); display: flex; align-items: baseline; gap: 3px; min-width: 0; white-space: nowrap; overflow: hidden; }   /* 긴 이름: fitCardNames()가 한 줄에 맞춰 줄임 (v2.27.2) */
+        .card-name > span { white-space: nowrap; }
         .card-name-no { color: var(--kbo-red); font-size: 14px; font-weight: 800; }
         .card-extra { font-size: 11px; color: #64748b; background: #f8fafc; border-radius: 6px; padding: 5px 6px; margin-top: 2px; display: flex; flex-direction: column; gap: 2px; border: 1px solid #f1f5f9; }
 
@@ -4587,7 +4588,25 @@
                 </div>
             `;
         }).join('');
+        fitCardNames();
     }
+
+    // 🦈 긴 이름(킬브라이드 이든 등)이 카드 이름 줄을 3줄로 꺾지 않게: ① 살짝 축소 → ② 번호(No.) 접기(사진 위 배지에 이미 있음) → ③ 더 축소(최소 13px) → ④ 그래도 안 되면 2줄 (v2.27.2)
+    function fitCardNames() {
+        document.querySelectorAll('#cardContainer .card-name').forEach(el => {
+            const nn = el.querySelector('.card-name-no');
+            el.style.fontSize = ''; el.style.whiteSpace = ''; el.style.flexWrap = ''; if (nn) nn.style.display = ''; el.querySelectorAll('span').forEach(x => x.style.whiteSpace = '');
+            if (!el.clientWidth) return;                                   // 숨겨진 상태(리스트형)면 다음 전환 때
+            const over = () => el.scrollWidth > el.clientWidth + 1;
+            if (!over()) return;
+            const base = parseFloat(getComputedStyle(el).fontSize) || 16; let sz = base;
+            while (over() && sz > base - 2) { sz -= 0.5; el.style.fontSize = sz + 'px'; }
+            if (over() && nn) { nn.style.display = 'none'; sz = base; el.style.fontSize = ''; }
+            while (over() && sz > 13) { sz -= 0.5; el.style.fontSize = sz + 'px'; }
+            if (over()) { el.style.whiteSpace = 'normal'; el.style.flexWrap = 'wrap'; el.querySelectorAll('span').forEach(x => x.style.whiteSpace = 'normal'); }
+        });
+    }
+    (function () { let t; window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(fitCardNames, 120); }); if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitCardNames); })();
 
     // ==========================================================
     // 유니폼 주문 현황 / 발주 집계
@@ -5425,6 +5444,10 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.27.2', d: '2026-10-05', t: '긴 이름 정리 (카드·상세보기 버튼)', items: [
+            '이미지형 카드: 이름이 길면 살짝 줄이고, 그래도 넘치면 이름 앞 번호를 접고(사진 위 배지에 있음) 더 줄여 한 줄에 맞춤 — 카드 높이가 들쭉날쭉하지 않음',
+            '상세보기 아래 이전/다음 버튼: 번호 줄 + 이름 줄(길면 말줄임)로, 목록 버튼은 두 줄로 꺾이지 않게, 휴대폰 확대/축소 버튼 밑에 숨지 않게 자리 비움'
+        ]},
         { v: 'v2.27.1', d: '2026-10-05', t: '상세 프로필 사진 안 잘리게', items: [
             '상세 프로필에서 사진을 자르지 않고 전부 보여주고, 남는 자리는 같은 사진을 흐리게 깔아 채움 (휴대폰 한 화면 유지)'
         ]},
