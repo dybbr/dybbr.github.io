@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.25.0 · b261004";
+        const APP_VERSION = "v2.25.1 · b261004";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -182,6 +182,8 @@
             transition: border-color 0.15s, box-shadow 0.15s;
             box-sizing: border-box;
         }
+        /* 입력값은 넓게(2px) 띄우되 안내 문구는 붙여서 11자리 예시가 잘리지 않게 */
+        #lockPasswordInput::placeholder { letter-spacing: 0; font-size: 14px; font-weight: 600; }
         .lock-text-input:focus {
             border-color: var(--kbo-blue);
             box-shadow: 0 0 0 3px rgba(11, 34, 64, 0.1);
@@ -1601,7 +1603,7 @@
         <div id="firstRegFields" style="display: none; margin-bottom: 16px; text-align: left;">
             <div class="lock-input-group">
                 <label>자녀 선수 이름 * (명단 대조 확인)</label>
-                <input type="text" id="regPlayerNameInput" class="lock-text-input" placeholder="예: 오승환 (공식 명단 이름)" oninput="resetRegPick()">
+                <input type="text" id="regPlayerNameInput" class="lock-text-input" placeholder="예: 김승원 (공식 명단 이름)" oninput="resetRegPick()">
             </div>
 
             <div class="lock-input-group">
@@ -3488,7 +3490,7 @@
             title.textContent = "📝 최초 학부모/선수 등록";
             desc.textContent = "자녀 이름·생년월일과 보호자 관계를 입력해 주세요.";
             link.textContent = "이미 등록하셨나요? (기존 번호로 로그인)";
-            input.placeholder = "휴대폰 번호 입력 (예: 01012345678)";
+            input.placeholder = "휴대폰 번호 (예: 01012345678)";
             btn.textContent = "💾 등록 및 입장하기";
         } else {
             regFields.style.display = 'none';
@@ -4979,6 +4981,9 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.25.1', d: '2026-10-04', t: '최초 등록 화면 예시 문구 정리', items: [
+            '자녀 이름 예시를 김승원으로, 휴대폰 번호 예시(01012345678)가 11자리 모두 보이도록 수정'
+        ] },
         { v: 'v2.25.0', d: '2026-10-04', t: '활동 로그 삭제 (개발자 전용)', items: [
             '활동 로그 창에 항목별 삭제, 체크박스 선택 삭제, 기간(7·30·90일 지난 로그) 삭제, 전체 삭제 추가',
             '서버에서도 개발자 로그인만 삭제 허용하고, 삭제한 기록은 로그에 남김'
