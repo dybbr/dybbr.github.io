@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.27.0 · b261005";
+        const APP_VERSION = "v2.27.1 · b261005";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -5425,6 +5425,9 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.27.1', d: '2026-10-05', t: '상세 프로필 사진 안 잘리게', items: [
+            '상세 프로필에서 사진을 자르지 않고 전부 보여주고, 남는 자리는 같은 사진을 흐리게 깔아 채움 (휴대폰 한 화면 유지)'
+        ]},
         { v: 'v2.27.0', d: '2026-10-05', t: '당겨서 새로고침 — 부캉이 투구', items: [
             '휴대폰에서 페이지 맨 위를 아래로 당기면 마운드가 열리고, 당기는 만큼 부캉이가 와인드업',
             '놓으면 레그킥 → 스트라이드 → 릴리스, 공이 포수 미트에 꽂히는 동안 명단·일정·공지를 다시 불러옴',
