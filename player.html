@@ -375,6 +375,13 @@
             border: 1px solid var(--card-border);
         }
 
+        /* 🦈 길 잃은 부캉이 (v2.26.0) — 없는 선수·명단 로드 실패 */
+        .lost-box .bk-lost { display: block; width: 120px; height: 120px; margin: 0 auto 2px; background: url("data:image/webp;base64,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") center / contain no-repeat; }
+        .lost-box b { display: block; font-size: 16px; color: var(--text-title); }
+        .lost-box p { color: var(--text-sub); font-size: 13px; font-weight: 600; margin: 6px 0 12px; line-height: 1.5; }
+        .lost-box .btn-home { display: inline-block; background: var(--kbo-blue); color: #ffffff; border-radius: 10px; padding: 9px 16px; font-weight: 800; font-size: 13px; text-decoration: none; }
+        .pos-ico { margin-right: 2px; font-size: .95em; }
+
         /* 모달 팝업 */
         .modal {
             display: none;
@@ -592,6 +599,8 @@
     .sep { color: #3d4a62; }
     .text-private { color: #6f7b91; }
     .admin-private-badge { background: #1b2638; color: #97a3b7; border-color: #2a374e; }
+    .lost-box b { color: #dde3ec; }
+    .lost-box p { color: #97a3b7; }
     }
     </style>
 </head>
@@ -806,15 +815,18 @@
         return 'etc';
     }
     // "투수, 내야수"처럼 여러 개면 하나씩 나눠서 종류별 색 칩으로 표시
+    // 🦈 포지션 칩 앞 작은 아이콘 (index.html 과 동일)
+    const POS_ICON = { pitcher: '⚾', catcher: '🥅', infield: '🧤', outfield: '🏃', dh: '🎯', manager: '🧢', coach: '🧢', etc: '' };
+    function posIcon(k) { return POS_ICON[k] ? `<span class="pos-ico" aria-hidden="true">${POS_ICON[k]}</span>` : ''; }
     function getPosBadge(pos, grade) {
         if (!pos || pos === '-' || pos === '정보없음' || pos === '미정') return '<span class="pos-tag pos-none">미정</span>';
         const p = String(pos).trim();
         if (isStaff(grade) || p.includes('감독') || p.includes('코치') || p.includes('총괄')) {
             const k = (grade === '감독' || p.includes('감독') || p.includes('총괄')) ? 'manager' : 'coach';
-            return `<span class="pos-tag pos-${k}">${escapeHtml(p)}</span>`;
+            return `<span class="pos-tag pos-${k}">${posIcon(k)}${escapeHtml(p)}</span>`;
         }
         const parts = p.split(/[,，/·]+/).map(s => s.trim()).filter(Boolean);
-        return '<span class="pos-chips">' + parts.map(t => `<span class="pos-tag pos-${posKind(t)}">${escapeHtml(t)}</span>`).join('') + '</span>';
+        return '<span class="pos-chips">' + parts.map(t => { const k = posKind(t); return `<span class="pos-tag pos-${k}">${posIcon(k)}${escapeHtml(t)}</span>`; }).join('') + '</span>';
     }
 
     function getBtBadge(bt, grade) {
@@ -868,12 +880,18 @@
         return 10;
     }
 
+    // 🦈 길 잃은 부캉이: 없는 선수 / 명단 로드 실패
+    function showLost(msg) {
+        const notice = document.getElementById('statusNotice');
+        notice.style.display = 'block';
+        notice.innerHTML = `<div class="lost-box"><span class="bk-lost" role="img" aria-label="길 잃은 부캉이"></span><b>길을 잃었캉…</b><p>${escapeHtml(msg)}</p><a href="index.html" class="btn-home">명단으로 돌아가기</a></div>`;
+    }
     async function loadPlayerDetail() {
         const targetParam = getTargetParam();
         const notice = document.getElementById('statusNotice');
 
         if (!targetParam) {
-            notice.textContent = "선수 정보가 지정되지 않았습니다.";
+            showLost('어떤 선수를 볼지 정해지지 않았어요. 명단에서 선수를 골라 주세요.');
             return;
         }
 
@@ -881,7 +899,7 @@
             // 👥 명단은 서버가 역할에 맞게 걸러서 JSON으로 내려준다 (시트 직접 접근 아님)
             const resJson = await apiGetJson('action=getRoster');
             if (!resJson || resJson.result !== 'success' || !Array.isArray(resJson.players)) {
-                notice.textContent = (resJson && resJson.message) ? resJson.message : "선수단 데이터를 읽어오지 못했습니다. 메인에서 다시 로그인해 주세요.";
+                showLost((resJson && resJson.message) ? resJson.message : "선수단 데이터를 읽어오지 못했어요. 메인에서 다시 로그인해 주세요.");
                 return;
             }
 
@@ -933,7 +951,7 @@
             });
 
             if (!p) {
-                notice.textContent = `'${targetParam}' 선수 정보를 찾을 수 없습니다. (숨김 상태이거나 등록되지 않은 선수)`;
+                showLost(`'${targetParam}' 선수 페이지가 없어요. (숨김 상태이거나 등록되지 않은 선수)`);
                 return;
             }
 
@@ -942,7 +960,7 @@
             renderNavBar(p);
         } catch (error) {
             console.error("데이터 로드 에러:", error);
-            notice.textContent = "선수 정보를 불러오는 데 실패했습니다: " + error.message;
+            showLost("선수 정보를 불러오지 못했어요: " + error.message);
         }
     }
 
