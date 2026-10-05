@@ -167,10 +167,7 @@
         .jsy.d1 { font-size: calc(var(--s, 44px) * .44); }
         .jsy.d2 { font-size: calc(var(--s, 44px) * .33); }
         .jsy.d3 { font-size: calc(var(--s, 44px) * .26); }
-        .jsy.c-sky { background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M31 5 L7 17 L1 39 L21 45 L21 96 L79 96 L79 45 L99 39 L93 17 L69 5 Q50 15 31 5 Z' fill='%2329a8e0' stroke='%230b2240' stroke-width='3' stroke-linejoin='round'/><path d='M34 7 L21 45 M66 7 L79 45' fill='none' stroke='rgba%280,0,0,.2%29' stroke-width='1.6'/><path d='M31 5 Q50 15 69 5' fill='none' stroke='%230b2240' stroke-width='2.2'/></svg>"); color: #0b2240; }
-        .jsy.c-navy { background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M31 5 L7 17 L1 39 L21 45 L21 96 L79 96 L79 45 L99 39 L93 17 L69 5 Q50 15 31 5 Z' fill='%230b2240' stroke='%232a4a7a' stroke-width='3' stroke-linejoin='round'/><path d='M34 7 L21 45 M66 7 L79 45' fill='none' stroke='rgba%28255,255,255,.22%29' stroke-width='1.6'/><path d='M31 5 Q50 15 69 5' fill='none' stroke='%232a4a7a' stroke-width='2.2'/></svg>"); color: #ffffff; }
-        .jsy.c-red { background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M31 5 L7 17 L1 39 L21 45 L21 96 L79 96 L79 45 L99 39 L93 17 L69 5 Q50 15 31 5 Z' fill='%23e0202a' stroke='%230b2240' stroke-width='3' stroke-linejoin='round'/><path d='M34 7 L21 45 M66 7 L79 45' fill='none' stroke='rgba%280,0,0,.18%29' stroke-width='1.6'/><path d='M31 5 Q50 15 69 5' fill='none' stroke='%230b2240' stroke-width='2.2'/></svg>"); color: #ffffff; }
-        .jsy.c-white { background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M31 5 L7 17 L1 39 L21 45 L21 96 L79 96 L79 45 L99 39 L93 17 L69 5 Q50 15 31 5 Z' fill='%23ffffff' stroke='%230b2240' stroke-width='3' stroke-linejoin='round'/><path d='M34 7 L21 45 M66 7 L79 45' fill='none' stroke='rgba%280,0,0,.18%29' stroke-width='1.6'/><path d='M31 5 Q50 15 69 5' fill='none' stroke='%230b2240' stroke-width='2.2'/></svg>"); color: #0b2240; }
+        .jsy.txt { font-size: calc(var(--s, 44px) * .24); letter-spacing: -.06em; }
         .jsy .nmx { position: absolute; top: calc(var(--s, 44px) * .2); left: 0; right: 0; text-align: center; font-size: calc(var(--s, 44px) * .13); font-weight: 800; letter-spacing: .02em; line-height: 1; white-space: nowrap; overflow: hidden; }
         .jsy.hasnm { padding-top: calc(var(--s, 44px) * .36); }
         .profile-jsy { position: absolute; top: 10px; left: 10px; z-index: 3; }
@@ -854,24 +851,46 @@
         return g.includes('감독') || g.includes('코치') || g.includes('지도자');
     }
 
-    // 👕 학년별 유니폼 색 (v2.28.0) — 서버 설정(getSettings.jerseyColors) → localStorage 캐시 → 기본값
-    const JERSEY_COLORS_DEFAULT = { '6': 'red', '5': 'sky', '4': 'white', '3': 'white', '2': 'white', '1': 'white' };
-    const JERSEY_COLOR_KEYS = ['red', 'navy', 'sky', 'white'];
+    // 👕 학년별·코치진 유니폼 색 (v2.29.0) — 서버 설정(getSettings.jerseyColors) → localStorage 캐시 → 기본값
+    //   값은 '#rrggbb'. 예전 값(red/navy/sky/white)도 받아서 색 코드로 바꿈. 유니폼 그림은 색마다 CSS 클래스를 한 번 만들어 재사용.
+    const JERSEY_NAMED = { red: '#e0202a', navy: '#0b2240', sky: '#29a8e0', white: '#ffffff' };
+    const JERSEY_COLORS_DEFAULT = { '6': '#e0202a', '5': '#29a8e0', '4': '#ffffff', '3': '#ffffff', '2': '#ffffff', '1': '#ffffff', 'staff': '#0b2240' };
+    function normJerseyColor(v) { v = String(v || '').trim().toLowerCase(); if (JERSEY_NAMED[v]) return JERSEY_NAMED[v]; return /^#[0-9a-f]{6}$/.test(v) ? v : ''; }
     let jerseyColors = Object.assign({}, JERSEY_COLORS_DEFAULT);
-    try { const c = JSON.parse(localStorage.getItem('daeyeon_jersey_colors') || 'null'); if (c && typeof c === 'object') Object.keys(JERSEY_COLORS_DEFAULT).forEach(k => { if (JERSEY_COLOR_KEYS.indexOf(c[k]) !== -1) jerseyColors[k] = c[k]; }); } catch (e) {}
     function applyJerseyColors(c) {
         if (!c || typeof c !== 'object') return;
-        Object.keys(JERSEY_COLORS_DEFAULT).forEach(k => { if (JERSEY_COLOR_KEYS.indexOf(c[k]) !== -1) jerseyColors[k] = c[k]; });
+        Object.keys(JERSEY_COLORS_DEFAULT).forEach(k => { const v = normJerseyColor(c[k]); if (v) jerseyColors[k] = v; });
         try { localStorage.setItem('daeyeon_jersey_colors', JSON.stringify(jerseyColors)); } catch (e) {}
     }
-    function jerseyColorFor(grade) { const g = String(grade || '').trim(); return jerseyColors[g] || 'white'; }
-    // 등번호 배지 HTML. 번호가 없으면 '' (호출 쪽에서 글자 배지로 대체)
+    try { applyJerseyColors(JSON.parse(localStorage.getItem('daeyeon_jersey_colors') || 'null')); } catch (e) {}
+    function jerseyLum(hex) { return [1, 3, 5].map(i => parseInt(hex.substr(i, 2), 16) / 255).map(v => v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4)).reduce((a, v, i) => a + v * [.2126, .7152, .0722][i], 0); }
+    const _jerseyCls = {};
+    function jerseyClass(hex) {   // 색마다 유니폼 그림 CSS 클래스를 한 번만 만든다
+        hex = normJerseyColor(hex) || '#ffffff';
+        const cls = 'jc-' + hex.slice(1);
+        if (_jerseyCls[cls]) return cls;
+        const L = jerseyLum(hex), out = L < .05 ? '#2a4a7a' : '#0b2240', seam = L < .2 ? 'rgba(255,255,255,.22)' : 'rgba(0,0,0,.18)';
+        const svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M31 5 L7 17 L1 39 L21 45 L21 96 L79 96 L79 45 L99 39 L93 17 L69 5 Q50 15 31 5 Z' fill='" + hex + "' stroke='" + out + "' stroke-width='3' stroke-linejoin='round'/><path d='M34 7 L21 45 M66 7 L79 45' fill='none' stroke='" + seam + "' stroke-width='1.6'/><path d='M31 5 Q50 15 69 5' fill='none' stroke='" + out + "' stroke-width='2.2'/></svg>";
+        let st = document.getElementById('jerseyStyles');
+        if (!st) { st = document.createElement('style'); st.id = 'jerseyStyles'; document.head.appendChild(st); }
+        st.appendChild(document.createTextNode('.jsy.' + cls + '{background-image:url("data:image/svg+xml,' + encodeURIComponent(svg) + '");color:' + (L > .42 ? '#0b2240' : '#ffffff') + '}\n'));
+        _jerseyCls[cls] = true;
+        return cls;
+    }
+    function jerseyColorFor(grade) { const g = String(grade || '').trim(); return isStaff(g) ? jerseyColors.staff : (jerseyColors[g] || '#ffffff'); }
+    // 유니폼 배지 HTML: 번호가 있으면 번호, 코치진은 번호가 없으면 '감독'/'코치' 글자, 그 외 번호 없으면 '' (호출 쪽에서 글자 배지로 대체)
+    function jerseyBadgeRaw(label, hex, size, nm, extraClass, title) {
+        const t = String(label), d = /^\d+$/.test(t) ? (t.length >= 3 ? 'd3' : t.length === 2 ? 'd2' : 'd1') : 'txt';
+        const nmHtml = nm ? `<span class="nmx">${escapeHtml(String(nm).slice(0, 6))}</span>` : '';
+        return `<span class="jsy ${d} ${jerseyClass(hex)}${nm ? ' hasnm' : ''}${extraClass ? ' ' + extraClass : ''}" style="--s:${size}px" title="${escapeHtml(title || '')}">${nmHtml}${escapeHtml(t)}</span>`;
+    }
     function jerseyBadge(p, size, withName, extraClass) {
-        const no = parseInt(p && p.no, 10);
-        if (!(no > 0)) return '';
-        const d = no >= 100 ? 'd3' : no >= 10 ? 'd2' : 'd1';
-        const nm = withName && p.name ? `<span class="nmx">${escapeHtml(String(p.name).slice(0, 6))}</span>` : '';
-        return `<span class="jsy ${d} c-${jerseyColorFor(p.grade)}${withName ? ' hasnm' : ''}${extraClass ? ' ' + extraClass : ''}" style="--s:${size}px" title="등번호 ${no}">${nm}${no}</span>`;
+        if (!p) return '';
+        const no = parseInt(p.no, 10), staff = isStaff(p.grade);
+        let label = no > 0 ? String(no) : '';
+        if (!label && staff) label = (String(p.grade || '') + String(p.pos || '')).indexOf('감독') !== -1 ? '감독' : '코치';
+        if (!label) return '';
+        return jerseyBadgeRaw(label, jerseyColorFor(p.grade), size, (withName && no > 0) ? p.name : '', extraClass, no > 0 ? '등번호 ' + no : label);   // 번호 없는 코치진은 이름 대신 감독/코치 글자만
     }
 
     // 상세보기는 서버 설정을 한 번 받아 색을 맞춤 (캐시가 있으면 먼저 그리고 나중에 갱신)
