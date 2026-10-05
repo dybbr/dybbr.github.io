@@ -943,7 +943,7 @@
     // 👕 학년별·코치진 유니폼 색 (v2.29.0) — 서버 설정(getSettings.jerseyColors) → localStorage 캐시 → 기본값
     //   값은 '#rrggbb'. 예전 값(red/navy/sky/white)도 받아서 색 코드로 바꿈. 유니폼 그림은 색마다 CSS 클래스를 한 번 만들어 재사용.
     const JERSEY_NAMED = { red: '#e0202a', navy: '#0b2240', sky: '#29a8e0', white: '#ffffff' };
-    const JERSEY_COLORS_DEFAULT = { '6': '#e0202a', '5': '#29a8e0', '4': '#ffffff', '3': '#ffffff', '2': '#ffffff', '1': '#ffffff', 'staff': '#0b2240' };
+    const JERSEY_COLORS_DEFAULT = { '6': '#e0202a', '5': '#29a8e0', '4': '#ffffff', '3': '#ffffff', '2': '#ffffff', '1': '#ffffff', 'staff': '#0b2240', 'head': '#0b2240' };   // head = 감독님 (v2.32.0)
     function normJerseyColor(v) { v = String(v || '').trim().toLowerCase(); if (JERSEY_NAMED[v]) return JERSEY_NAMED[v]; return /^#[0-9a-f]{6}$/.test(v) ? v : ''; }
     let jerseyColors = Object.assign({}, JERSEY_COLORS_DEFAULT);
     function applyJerseyColors(c) {
@@ -966,7 +966,11 @@
         _jerseyCls[cls] = true;
         return cls;
     }
-    function jerseyColorFor(grade) { const g = String(grade || '').trim(); return isStaff(g) ? jerseyColors.staff : (jerseyColors[g] || '#ffffff'); }
+    function jerseyColorFor(grade, pos) {   // 감독님은 따로(head), 나머지 코치진은 staff, 선수는 학년 색
+        const g = String(grade || '').trim();
+        if (!isStaff(g)) return jerseyColors[g] || '#ffffff';
+        return (g + String(pos || '')).indexOf('감독') !== -1 ? (jerseyColors.head || jerseyColors.staff) : jerseyColors.staff;
+    }
     // 유니폼 배지 HTML: 번호가 있으면 번호, 코치진은 번호가 없으면 '감독'/'코치' 글자, 그 외 번호 없으면 '' (호출 쪽에서 글자 배지로 대체)
     function jerseyBadgeRaw(label, hex, size, nm, extraClass, title) {
         const t = String(label), d = /^\d+$/.test(t) ? (t.length >= 3 ? 'd3' : t.length === 2 ? 'd2' : 'd1') : 'txt';
@@ -979,7 +983,7 @@
         let label = no > 0 ? String(no) : '';
         if (!label && staff) label = (String(p.grade || '') + String(p.pos || '')).indexOf('감독') !== -1 ? '감독' : '코치';
         if (!label) return '';
-        return jerseyBadgeRaw(label, jerseyColorFor(p.grade), size, (withName && no > 0) ? p.name : '', extraClass, no > 0 ? '등번호 ' + no : label);   // 번호 없는 코치진은 이름 대신 감독/코치 글자만
+        return jerseyBadgeRaw(label, jerseyColorFor(p.grade, p.pos), size, (withName && no > 0) ? p.name : '', extraClass, no > 0 ? '등번호 ' + no : label);   // 번호 없는 코치진은 이름 대신 감독/코치 글자만
     }
 
     // 상세보기는 서버 설정을 한 번 받아 색을 맞춤 (캐시가 있으면 먼저 그리고 나중에 갱신)
