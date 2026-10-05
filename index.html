@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.31.0 · b261005";
+        const APP_VERSION = "v2.31.1 · b261005";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -4205,7 +4205,7 @@
     const JERSEY_TEAM = [['빨강', '#e0202a'], ['남색', '#0b2240'], ['하늘', '#29a8e0'], ['흰색', '#ffffff']];
     const JERSEY_HUES = [['빨', 0, 82], ['주', 26, 90], ['노', 50, 92], ['초', 130, 62], ['파', 205, 78], ['남', 228, 70], ['보', 275, 62], ['흰', -1, 0]];
     function jerseyHsl(h, s, l) { s /= 100; l /= 100; const k = n => (n + h / 30) % 12, a = s * Math.min(l, 1 - l), f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1))); return '#' + [f(0), f(8), f(4)].map(x => Math.round(x * 255).toString(16).padStart(2, '0')).join(''); }
-    function jerseyShades(i) { const h = JERSEY_HUES[i]; if (h[1] < 0) return ['#ffffff', '#e5e7eb', '#c4c8cf', '#9aa1ad', '#6b7280', '#4b5160', '#2a2f3a', '#0f1115']; return [14, 22, 31, 40, 50, 62, 75, 88].map(l => jerseyHsl(h[1], h[2], l)); }
+    function jerseyShades(i) { const h = JERSEY_HUES[i]; if (h[1] < 0) return ['#0f1115', '#2a2f3a', '#4b5160', '#6b7280', '#9aa1ad', '#c4c8cf', '#e5e7eb', '#ffffff']; return [14, 22, 31, 40, 50, 62, 75, 88].map(l => jerseyHsl(h[1], h[2], l)); }
     let jerseyEdit = null;   // { key, hex, hue }
     function renderJerseyPanel() {
         const panel = document.getElementById('jerseyPanel'), grp = document.getElementById('adminGroupJersey');
@@ -4219,8 +4219,8 @@
             if (editing) {
                 html += `<div class="jsy-sheet" onclick="event.stopPropagation()">` +
                     `<div class="jsy-lbl">팀 유니폼 색</div><div class="jsy-team">${JERSEY_TEAM.map(t => `<button type="button" class="${hex === t[1] ? 'on' : ''}" style="background:${t[1]}" title="${t[0]}" onclick="pickJerseyColor('${t[1]}')"></button>`).join('')}</div>` +
-                    `<div class="jsy-lbl">① 색 (무지개 7 + 흰색)</div><div class="jsy-hue">${JERSEY_HUES.map((h, i) => `<button type="button" class="${i === jerseyEdit.hue ? 'on' : ''}${h[1] < 0 ? ' w' : ''}" style="background:${h[1] < 0 ? '#ffffff' : jerseyHsl(h[1], h[2], 50)}" onclick="pickJerseyHue(${i})">${h[0]}</button>`).join('')}</div>` +
-                    `<div class="jsy-lbl">② 밝기 (어두움 → 밝음)</div><div class="jsy-shade">${jerseyShades(jerseyEdit.hue).map(c => `<button type="button" class="${c === hex ? 'on' : ''}" style="background:${c}" onclick="pickJerseyColor('${c}')"></button>`).join('')}</div>` +
+                    `<div class="jsy-lbl">① 색 (누르면 바로 바뀌어요)</div><div class="jsy-hue">${JERSEY_HUES.map((h, i) => `<button type="button" class="${i === jerseyEdit.hue ? 'on' : ''}${h[1] < 0 ? ' w' : ''}" style="background:${h[1] < 0 ? '#ffffff' : jerseyHsl(h[1], h[2], 50)}" onclick="pickJerseyHue(${i})">${h[0]}</button>`).join('')}</div>` +
+                    `<div class="jsy-lbl">② 밝기 조절 (어두움 → 밝음)</div><div class="jsy-shade">${jerseyShades(jerseyEdit.hue).map(c => `<button type="button" class="${c === hex ? 'on' : ''}" style="background:${c}" onclick="pickJerseyColor('${c}')"></button>`).join('')}</div>` +
                     `<div class="jsy-btns"><button type="button" onclick="openJerseyEdit('${k}')">취소</button><button type="button" class="ok" onclick="saveJerseyEdit()">저장</button></div></div>`;
             }
             return html;
@@ -4235,7 +4235,8 @@
         const msg = document.getElementById('jerseyPanelMsg'); if (msg) msg.textContent = '';
         renderJerseyPanel();
     }
-    function pickJerseyHue(i) { if (!jerseyEdit) return; jerseyEdit.hue = i; renderJerseyPanel(); }
+    // ①을 누르면 그 색의 중간 밝기(②의 5번째, 흰색은 맨 오른쪽 흰색)가 바로 골라짐 → ②는 밝기 조절용 (v2.31.1)
+    function pickJerseyHue(i) { if (!jerseyEdit) return; jerseyEdit.hue = i; const sh = jerseyShades(i); jerseyEdit.hex = JERSEY_HUES[i][1] < 0 ? sh[sh.length - 1] : sh[4]; renderJerseyPanel(); }
     function pickJerseyColor(hex) { if (!jerseyEdit) return; jerseyEdit.hex = normJerseyColor(hex) || jerseyEdit.hex; renderJerseyPanel(); }
     async function saveJerseyEdit() {
         if (!jerseyEdit || !(currentRole === 'super' || currentRole === 'dev')) return;
@@ -5901,6 +5902,10 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.31.1', d: '2026-10-05', t: '유니폼 색 고르기 쉽게', items: [
+            '관리자 ▸ 유니폼 색: ① 색을 누르면 그 색의 중간 밝기가 바로 골라짐 (②는 밝기 조절용) — 흰색을 누르면 흰색',
+            '② 밝기 줄의 흰색·회색도 다른 색처럼 어두움 → 밝음 순서로 정리'
+        ]},
         { v: 'v2.31.0', d: '2026-10-05', t: '모든 알림·확인 창을 부캉이가', items: [
             '남아 있던 알림창을 모두 부캉이 말풍선으로: 복사 결과, 로그인·로그아웃, 입력 확인(날짜·제목·비밀번호 등), 권한·접수 기간 안내, 학부모 최초 등록 결과, 보안 로그 삭제 결과',
             '안내는 팻말 든 부캉이(❗), 화면 잠금·세션 만료는 자는 부캉이 — 잠금화면에선 가운데 큰 부캉이가 직접 말함',
