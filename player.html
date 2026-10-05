@@ -472,6 +472,15 @@
         }
         .ui-zoom-ctrl button:active { background: rgba(255,255,255,0.18); }
         .ui-zoom-ctrl button:disabled { opacity: 0.35; }
+        /* 🔊 효과음 켜기/끄기 (v2.33.0) — 화면 크기 버튼 묶음 맨 위, 컴퓨터에서는 이 버튼만 보임 */
+        .ui-zoom-ctrl #sfxToggle { height: 34px; font-size: 16px; border-bottom: 1px solid rgba(255,255,255,0.2); }
+        .ui-zoom-ctrl #sfxToggle.off { opacity: 0.6; }
+        @media (pointer: fine) {
+            .ui-zoom-ctrl { display: flex; opacity: 0.85; }
+            .ui-zoom-ctrl #uiZoomIn, .ui-zoom-ctrl #uiZoomOut, .ui-zoom-ctrl .zoom-level { display: none; }
+            .ui-zoom-ctrl #sfxToggle { border-bottom: 0; }
+            body:has(.modal[style*="flex"]) .ui-zoom-ctrl { display: none; }
+        }
         /* 접힘 상태: 현재 %만 보임 → 누르면 ＋/－가 펼쳐지고 3초 뒤 다시 접힘 · 길게 누르면 100% (v2.27.3) */
         .ui-zoom-ctrl:not(.open) #uiZoomIn, .ui-zoom-ctrl:not(.open) #uiZoomOut { display: none; }
         .ui-zoom-ctrl:not(.open) { opacity: 0.82; }
@@ -735,7 +744,8 @@
 <div class="bk-ask" id="bkAsk" hidden role="dialog" aria-modal="true" aria-labelledby="bkAskText" onclick="if (event.target === this) bkAskClose(false)"><div class="bk-ask-card"><div class="bk-ask-top"><span class="bk-img bk-ask-img" aria-hidden="true"></span><div class="bk-ask-bub"><b id="bkAskText"></b><small id="bkAskSub" hidden></small></div></div><div class="bk-ask-btns"><button type="button" id="bkAskNo" onclick="bkAskClose(false)">취소</button><button type="button" id="bkAskYes" onclick="bkAskClose(true)">확인</button></div></div></div>
 
 <!-- 🔍 화면 크기 조절: 평소엔 현재%만 보임 → 누르면 ＋/－ 펼침(3초 뒤 접힘) · 길게 누르면 100% -->
-<div class="ui-zoom-ctrl" id="uiZoomCtrl" aria-label="화면 크기 조절">
+<div class="ui-zoom-ctrl" id="uiZoomCtrl" aria-label="화면 크기 조절 · 효과음">
+    <button type="button" id="sfxToggle" onclick="toggleSfx()" aria-label="효과음 켜기/끄기" aria-pressed="true">🔊</button>
     <button type="button" id="uiZoomIn" onclick="changeUiZoom(1)" aria-label="크게">＋</button>
     <button type="button" id="uiZoomOut" onclick="changeUiZoom(-1)" aria-label="작게">－</button>
     <button type="button" class="zoom-level" id="uiZoomLevel" onclick="toggleUiZoomCtrl()" title="누르면 ＋/－ 펼침 · 길게 누르면 100%">100%</button>
@@ -1384,6 +1394,79 @@
     }
 
     // ==========================================================
+    // 🔊 부캉이 효과음 (v2.33.0) — 파일 없이 브라우저에서 바로 합성 (Web Audio)
+    //   bkSfx('done'|'fail'|'info'|'ask'|'sleep'|'tap'|'whoosh'|'thump'|'fanfare')
+    //   - 처음엔 켜짐, 기기마다 🔊/🔇 버튼으로 끄고 켬 (localStorage 'daeyeon_sfx' = 'off')
+    //   - 휴대폰은 화면을 한 번 누른 뒤부터 소리가 남 (브라우저 규칙) → 첫 터치 때 오디오를 깨워 둠
+    // ==========================================================
+    var bkAudio = null, bkAudioOut = null, bkNoiseBuf = null;
+    function bkSfxOn() { try { return localStorage.getItem('daeyeon_sfx') !== 'off'; } catch (e) { return true; } }
+    function bkAc() {
+        if (!bkAudio) {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            if (!AC) return null;
+            bkAudio = new AC(); bkAudioOut = bkAudio.createGain(); bkAudioOut.gain.value = 0.7; bkAudioOut.connect(bkAudio.destination);
+        }
+        if (bkAudio.state === 'suspended') { try { bkAudio.resume(); } catch (e) {} }
+        return bkAudio;
+    }
+    function bkSfxUnlock() { if (bkSfxOn()) bkAc(); }
+    ['pointerdown', 'touchend', 'keydown'].forEach(ev => document.addEventListener(ev, bkSfxUnlock, { passive: true, capture: true }));
+    function bkTone(o) {   // { type, f0, f1, t, dur, gain, attack, lp }
+        const c = bkAudio, osc = c.createOscillator(), g = c.createGain(), st = c.currentTime + (o.t || 0);
+        osc.type = o.type || 'sine'; osc.frequency.setValueAtTime(o.f0, st);
+        if (o.f1) osc.frequency.exponentialRampToValueAtTime(o.f1, st + o.dur);
+        g.gain.setValueAtTime(0.0001, st); g.gain.exponentialRampToValueAtTime(o.gain || 0.3, st + (o.attack || 0.006));
+        g.gain.exponentialRampToValueAtTime(0.0001, st + o.dur);
+        let node = osc;
+        if (o.lp) { const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = o.lp; osc.connect(f); node = f; }
+        node.connect(g); g.connect(bkAudioOut); osc.start(st); osc.stop(st + o.dur + 0.03);
+    }
+    function bkNoise(o) {   // { t, dur, gain, type, f0, f1, q, attack }
+        const c = bkAudio;
+        if (!bkNoiseBuf) { bkNoiseBuf = c.createBuffer(1, c.sampleRate, c.sampleRate); const d = bkNoiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+        const s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain(), st = c.currentTime + (o.t || 0);
+        s.buffer = bkNoiseBuf; f.type = o.type || 'bandpass'; f.Q.value = o.q || 1; f.frequency.setValueAtTime(o.f0, st);
+        if (o.f1) f.frequency.exponentialRampToValueAtTime(o.f1, st + o.dur);
+        g.gain.setValueAtTime(0.0001, st); g.gain.exponentialRampToValueAtTime(o.gain, st + (o.attack || 0.005)); g.gain.exponentialRampToValueAtTime(0.0001, st + o.dur);
+        s.connect(f); f.connect(g); g.connect(bkAudioOut); s.start(st); s.stop(st + o.dur + 0.03);
+    }
+    const BK_SFX = {
+        tap() { bkTone({ f0: 620, f1: 1450, dur: 0.11, gain: 0.32 }); bkTone({ type: 'triangle', f0: 1450, f1: 1700, t: 0.05, dur: 0.07, gain: 0.08 }); },
+        done() { [[1047, 0], [1319, 0.08], [1568, 0.16]].forEach(([f, t], i) => { bkTone({ type: 'triangle', f0: f, t, dur: i === 2 ? 0.32 : 0.14, gain: 0.22 }); bkTone({ f0: f * 2, t, dur: 0.1, gain: 0.04 }); }); bkTone({ f0: 3136, t: 0.22, dur: 0.18, gain: 0.04 }); },
+        fail() { bkTone({ type: 'triangle', f0: 392, f1: 370, dur: 0.18, gain: 0.25 }); bkTone({ type: 'triangle', f0: 294, f1: 220, t: 0.19, dur: 0.38, gain: 0.26 }); bkTone({ f0: 147, f1: 110, t: 0.19, dur: 0.38, gain: 0.12 }); },
+        info() { bkTone({ f0: 1180, f1: 900, dur: 0.07, gain: 0.3 }); bkNoise({ type: 'highpass', f0: 2500, dur: 0.025, gain: 0.07 }); },
+        ask() { bkTone({ f0: 523, dur: 0.08, gain: 0.25 }); bkTone({ f0: 700, f1: 1050, t: 0.09, dur: 0.2, gain: 0.25 }); },
+        sleep() { [[784, 0], [659, 0.32], [523, 0.64]].forEach(([f, t], i) => bkTone({ f0: f, t, dur: i === 2 ? 0.7 : 0.34, gain: 0.16, attack: 0.03 })); },
+        whoosh() { bkNoise({ type: 'bandpass', f0: 450, f1: 3200, q: 1.4, dur: 0.3, gain: 0.5, attack: 0.13 }); },
+        thump() { bkTone({ f0: 170, f1: 55, dur: 0.16, gain: 0.7, attack: 0.002 }); bkNoise({ type: 'lowpass', f0: 1600, dur: 0.07, gain: 0.45, attack: 0.002 }); bkNoise({ type: 'highpass', f0: 3500, dur: 0.02, gain: 0.12, attack: 0.001 }); },
+        fanfare() {   // 따-따-따 따~안 (브라스 느낌: 톱니파 + 저역 필터) + 스네어
+            [[523, 0, 0.13], [523, 0.15, 0.08], [659, 0.25, 0.13], [784, 0.4, 0.13]].forEach(([f, t, d]) => { bkTone({ type: 'sawtooth', f0: f, t, dur: d, gain: 0.12, lp: 2400 }); bkTone({ type: 'square', f0: f / 2, t, dur: d, gain: 0.04, lp: 1200 }); });
+            [1047, 1319, 1568].forEach(f => { bkTone({ type: 'sawtooth', f0: f, t: 0.56, dur: 0.9, gain: 0.08, attack: 0.02, lp: 3000 }); });
+            bkTone({ type: 'square', f0: 262, t: 0.56, dur: 0.9, gain: 0.05, lp: 900 });
+            [0, 0.15, 0.25, 0.4].forEach(t => bkNoise({ type: 'highpass', f0: 1800, t, dur: 0.07, gain: 0.12 }));
+            bkNoise({ type: 'bandpass', f0: 3000, q: 0.7, t: 0.56, dur: 0.5, gain: 0.18 });
+            bkTone({ f0: 2093, t: 0.62, dur: 0.5, gain: 0.04 });
+        }
+    };
+    function bkSfx(name) {
+        if (!bkSfxOn() || !BK_SFX[name]) return;
+        try { const c = bkAc(); if (!c || c.state !== 'running') return; BK_SFX[name](); } catch (e) {}
+    }
+    function toggleSfx() {
+        const on = !bkSfxOn();
+        try { localStorage.setItem('daeyeon_sfx', on ? 'on' : 'off'); } catch (e) {}
+        updateSfxBtn();
+        if (on) { bkAc(); setTimeout(() => bkSfx('tap'), 30); }
+    }
+    function updateSfxBtn() {
+        const b = document.getElementById('sfxToggle'); if (!b) return;
+        const on = bkSfxOn(); b.textContent = on ? '🔊' : '🔇'; b.title = on ? '효과음 켜짐 (누르면 끔)' : '효과음 꺼짐 (누르면 켬)';
+        b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.classList.toggle('off', !on);
+    }
+    updateSfxBtn();
+
+    // ==========================================================
     // 🦈 부캉이 알림 (v2.30.0 저장 알림 → v2.31.0 모든 알림·확인 창)
     //   bkNotify(상태, 멘트, 작은 글씨 설명, { ms })
     //     상태: 'saving' 저장 중(갸웃갸웃) · 'done' 완료(응원 폴짝) · 'fail' 실패(길 잃은 얼굴)
@@ -1423,6 +1506,7 @@
         if (anchor) { bknClear(anchor); void anchor.offsetWidth; anchor.classList.add('bkn-' + state); }
         void el.offsetWidth;
         el.classList.add('on', state);
+        bkSfx({ done: 'done', fail: 'fail', info: 'info', sleep: 'sleep' }[state]);   // 🔊 저장 중엔 소리 없음
         bkNoteFollow();
         const ms = (opts && opts.ms) || (state === 'saving' ? 30000 : state === 'fail' ? 5500 : state === 'info' ? (sub ? 4500 : 3200) : (sub ? 3800 : 2600));
         bkNoteTimer = setTimeout(bkNoteHide, ms);
@@ -1468,6 +1552,7 @@
         yes.textContent = opts.ok || '확인'; no.textContent = opts.cancel || '취소';
         yes.classList.toggle('danger', !!opts.danger);
         box.hidden = false; void box.offsetWidth; box.classList.add('on');
+        bkSfx('ask');
         setTimeout(() => { try { no.focus({ preventScroll: true }); } catch (e) {} }, 60);
         return new Promise(res => { bkAskResolve = res; });
     }
