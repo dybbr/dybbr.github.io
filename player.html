@@ -159,6 +159,21 @@
             object-fit: cover; filter: blur(18px) saturate(1.1); opacity: .55; pointer-events: none;
         }
 
+        /* 👕 유니폼 등판 등번호 배지 (v2.28.0) — 색은 학년별 설정(관리자 ▸ 학년별 유니폼 색)을 따름 */
+        .jsy { display: inline-flex; align-items: center; justify-content: center; width: var(--s, 44px); height: var(--s, 44px); position: relative; vertical-align: middle;
+            background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M31 5 L7 17 L1 39 L21 45 L21 96 L79 96 L79 45 L99 39 L93 17 L69 5 Q50 15 31 5 Z' fill='%23ffffff' stroke='%230b2240' stroke-width='3' stroke-linejoin='round'/><path d='M34 7 L21 45 M66 7 L79 45' fill='none' stroke='rgba%280,0,0,.18%29' stroke-width='1.6'/><path d='M31 5 Q50 15 69 5' fill='none' stroke='%230b2240' stroke-width='2.2'/></svg>") center / 100% 100% no-repeat;
+            filter: drop-shadow(0 2px 3px rgba(0,0,0,.3)); font-weight: 800; font-style: normal; font-synthesis: none; color: #0b2240; line-height: 1; letter-spacing: 0;
+            padding-top: calc(var(--s, 44px) * .2); font-size: calc(var(--s, 44px) * .36); font-family: "Noto Sans KR", -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif; }
+        .jsy.d1 { font-size: calc(var(--s, 44px) * .44); }
+        .jsy.d2 { font-size: calc(var(--s, 44px) * .33); }
+        .jsy.d3 { font-size: calc(var(--s, 44px) * .26); }
+        .jsy.c-sky { background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M31 5 L7 17 L1 39 L21 45 L21 96 L79 96 L79 45 L99 39 L93 17 L69 5 Q50 15 31 5 Z' fill='%2329a8e0' stroke='%230b2240' stroke-width='3' stroke-linejoin='round'/><path d='M34 7 L21 45 M66 7 L79 45' fill='none' stroke='rgba%280,0,0,.2%29' stroke-width='1.6'/><path d='M31 5 Q50 15 69 5' fill='none' stroke='%230b2240' stroke-width='2.2'/></svg>"); color: #0b2240; }
+        .jsy.c-navy { background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M31 5 L7 17 L1 39 L21 45 L21 96 L79 96 L79 45 L99 39 L93 17 L69 5 Q50 15 31 5 Z' fill='%230b2240' stroke='%232a4a7a' stroke-width='3' stroke-linejoin='round'/><path d='M34 7 L21 45 M66 7 L79 45' fill='none' stroke='rgba%28255,255,255,.22%29' stroke-width='1.6'/><path d='M31 5 Q50 15 69 5' fill='none' stroke='%232a4a7a' stroke-width='2.2'/></svg>"); color: #ffffff; }
+        .jsy.c-red { background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M31 5 L7 17 L1 39 L21 45 L21 96 L79 96 L79 45 L99 39 L93 17 L69 5 Q50 15 31 5 Z' fill='%23e0202a' stroke='%230b2240' stroke-width='3' stroke-linejoin='round'/><path d='M34 7 L21 45 M66 7 L79 45' fill='none' stroke='rgba%280,0,0,.18%29' stroke-width='1.6'/><path d='M31 5 Q50 15 69 5' fill='none' stroke='%230b2240' stroke-width='2.2'/></svg>"); color: #ffffff; }
+        .jsy.c-white { background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M31 5 L7 17 L1 39 L21 45 L21 96 L79 96 L79 45 L99 39 L93 17 L69 5 Q50 15 31 5 Z' fill='%23ffffff' stroke='%230b2240' stroke-width='3' stroke-linejoin='round'/><path d='M34 7 L21 45 M66 7 L79 45' fill='none' stroke='rgba%280,0,0,.18%29' stroke-width='1.6'/><path d='M31 5 Q50 15 69 5' fill='none' stroke='%230b2240' stroke-width='2.2'/></svg>"); color: #0b2240; }
+        .jsy .nmx { position: absolute; top: calc(var(--s, 44px) * .2); left: 0; right: 0; text-align: center; font-size: calc(var(--s, 44px) * .13); font-weight: 800; letter-spacing: .02em; line-height: 1; white-space: nowrap; overflow: hidden; }
+        .jsy.hasnm { padding-top: calc(var(--s, 44px) * .36); }
+        .profile-jsy { position: absolute; top: 10px; left: 10px; z-index: 3; }
         .profile-no-badge {
             position: absolute;
             top: 14px;
@@ -839,6 +854,32 @@
         return g.includes('감독') || g.includes('코치') || g.includes('지도자');
     }
 
+    // 👕 학년별 유니폼 색 (v2.28.0) — 서버 설정(getSettings.jerseyColors) → localStorage 캐시 → 기본값
+    const JERSEY_COLORS_DEFAULT = { '6': 'red', '5': 'sky', '4': 'white', '3': 'white', '2': 'white', '1': 'white' };
+    const JERSEY_COLOR_KEYS = ['red', 'navy', 'sky', 'white'];
+    let jerseyColors = Object.assign({}, JERSEY_COLORS_DEFAULT);
+    try { const c = JSON.parse(localStorage.getItem('daeyeon_jersey_colors') || 'null'); if (c && typeof c === 'object') Object.keys(JERSEY_COLORS_DEFAULT).forEach(k => { if (JERSEY_COLOR_KEYS.indexOf(c[k]) !== -1) jerseyColors[k] = c[k]; }); } catch (e) {}
+    function applyJerseyColors(c) {
+        if (!c || typeof c !== 'object') return;
+        Object.keys(JERSEY_COLORS_DEFAULT).forEach(k => { if (JERSEY_COLOR_KEYS.indexOf(c[k]) !== -1) jerseyColors[k] = c[k]; });
+        try { localStorage.setItem('daeyeon_jersey_colors', JSON.stringify(jerseyColors)); } catch (e) {}
+    }
+    function jerseyColorFor(grade) { const g = String(grade || '').trim(); return jerseyColors[g] || 'white'; }
+    // 등번호 배지 HTML. 번호가 없으면 '' (호출 쪽에서 글자 배지로 대체)
+    function jerseyBadge(p, size, withName, extraClass) {
+        const no = parseInt(p && p.no, 10);
+        if (!(no > 0)) return '';
+        const d = no >= 100 ? 'd3' : no >= 10 ? 'd2' : 'd1';
+        const nm = withName && p.name ? `<span class="nmx">${escapeHtml(String(p.name).slice(0, 6))}</span>` : '';
+        return `<span class="jsy ${d} c-${jerseyColorFor(p.grade)}${withName ? ' hasnm' : ''}${extraClass ? ' ' + extraClass : ''}" style="--s:${size}px" title="등번호 ${no}">${nm}${no}</span>`;
+    }
+
+    // 상세보기는 서버 설정을 한 번 받아 색을 맞춤 (캐시가 있으면 먼저 그리고 나중에 갱신)
+    function refreshJerseyColorsFromServer() {
+        if (!getToken || !getToken()) return;
+        apiGetJson('action=getSettings').then(j => { if (j && j.jerseyColors) { const before = JSON.stringify(jerseyColors); applyJerseyColors(j.jerseyColors); if (JSON.stringify(jerseyColors) !== before && typeof renderPlayerCard === 'function' && currentPlayer) renderPlayerCard(currentPlayer); } }).catch(() => {});
+    }
+
     function getGradeBadge(grade) {
         const g = escapeHtml(grade);
         if (isStaff(grade)) return `<span class="grade-tag grade-staff">${g}</span>`;
@@ -998,6 +1039,7 @@
             }
 
             currentPlayer = p;
+            refreshJerseyColorsFromServer();   // 👕 학년별 유니폼 색 최신값
             renderPlayerCard(p);
             renderNavBar(p);
         } catch (error) {
@@ -1083,7 +1125,7 @@
         card.innerHTML = `
             <div style="position: relative;">
                 ${photoHtml}
-                <span class="profile-no-badge">${noBadgeText}</span>
+                ${jerseyBadge(p, 58, true, 'profile-jsy') || `<span class="profile-no-badge">${noBadgeText}</span>`}
             </div>
             <div class="profile-body">
                 <div class="name-row">
