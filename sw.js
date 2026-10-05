@@ -26,6 +26,7 @@ self.addEventListener('fetch', function (event) {
     if (req.method !== 'GET') return;                                  // POST(사진 등록/주문 등)는 그대로 통과
     const url = new URL(req.url);
     if (url.origin !== self.location.origin) return;                   // 외부(구글) 요청은 그대로 통과
+    if (url.pathname.indexOf('/audio/') === 0) return;                 // 🎵 배경음악 mp3는 브라우저가 직접 받으며 재생 (캐시에 안 담음)
 
     event.respondWith(
         fetch(req, { cache: 'no-store' }).then(function (res) {
