@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.31.1 · b261005";
+        const APP_VERSION = "v2.31.2 · b261005";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1142,7 +1142,9 @@
         .jsy-hue button { aspect-ratio: 1; border-radius: 10px; border: 2px solid #e2e8f0; cursor: pointer; padding: 0 0 2px; display: flex; align-items: flex-end; justify-content: center; font-size: 10px; font-weight: 800; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.5); }
         .jsy-hue button.w { color: #0b2240; text-shadow: none; }
         .jsy-hue button.on, .jsy-shade button.on { border-color: #0b2240; box-shadow: 0 0 0 2px #fff inset; }
-        .jsy-shade button { aspect-ratio: 1; border-radius: 10px; border: 2px solid #e2e8f0; cursor: pointer; padding: 0; }
+        .jsy-shade button { aspect-ratio: 1; border-radius: 10px; border: 2px solid #e2e8f0; cursor: pointer; padding: 0 0 2px; display: flex; align-items: flex-end; justify-content: center;
+            font-size: 10px; font-weight: 900; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.45); font-family: inherit; }
+        .jsy-shade button.lt { color: #0b2240; text-shadow: none; }   /* 팀: 밝은 칸은 남색 글씨 */
         .jsy-btns { display: flex; gap: 8px; margin-top: 12px; }
         .jsy-btns button { flex: 1; padding: 9px; border-radius: 10px; font-weight: 800; font-size: 13px; border: 1px solid #e2e8f0; background: #fff; color: #0b2240; cursor: pointer; }
         .jsy-btns button.ok { background: #0b2240; color: #fff; border-color: #0b2240; }
@@ -4203,9 +4205,12 @@
     // 관리자 ▸ 학년별 유니폼 색: 줄을 누르면 아래에 색 선택 창(팀 4색 + 무지개 7색·흰색 × 밝기 8단계)
     const JERSEY_ROWS = [['6', '6학년', '6'], ['5', '5학년', '5'], ['4', '4학년', '4'], ['3', '3학년', '3'], ['2', '2학년', '2'], ['1', '1학년', '1'], ['staff', '코치진', '코치']];
     const JERSEY_TEAM = [['빨강', '#e0202a'], ['남색', '#0b2240'], ['하늘', '#29a8e0'], ['흰색', '#ffffff']];
+    // 팀 유니폼 색은 64색 안의 가장 비슷한 칸에 넣어 둠 (v2.31.2): 빨 5번째=빨강, 남 1번째=남색, 파 5번째=하늘 (흰색은 흰 줄 맨 끝)
+    const JERSEY_TEAM_SLOT = { 0: [[4, '#e0202a']], 5: [[0, '#0b2240']], 4: [[4, '#29a8e0']] };
+    function isJerseyTeam(c) { return JERSEY_TEAM.some(t => t[1] === c); }
     const JERSEY_HUES = [['빨', 0, 82], ['주', 26, 90], ['노', 50, 92], ['초', 130, 62], ['파', 205, 78], ['남', 228, 70], ['보', 275, 62], ['흰', -1, 0]];
     function jerseyHsl(h, s, l) { s /= 100; l /= 100; const k = n => (n + h / 30) % 12, a = s * Math.min(l, 1 - l), f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1))); return '#' + [f(0), f(8), f(4)].map(x => Math.round(x * 255).toString(16).padStart(2, '0')).join(''); }
-    function jerseyShades(i) { const h = JERSEY_HUES[i]; if (h[1] < 0) return ['#0f1115', '#2a2f3a', '#4b5160', '#6b7280', '#9aa1ad', '#c4c8cf', '#e5e7eb', '#ffffff']; return [14, 22, 31, 40, 50, 62, 75, 88].map(l => jerseyHsl(h[1], h[2], l)); }
+    function jerseyShades(i) { const h = JERSEY_HUES[i]; if (h[1] < 0) return ['#0f1115', '#2a2f3a', '#4b5160', '#6b7280', '#9aa1ad', '#c4c8cf', '#e5e7eb', '#ffffff']; const sh = [14, 22, 31, 40, 50, 62, 75, 88].map(l => jerseyHsl(h[1], h[2], l)); (JERSEY_TEAM_SLOT[i] || []).forEach(([k, c]) => { sh[k] = c; }); return sh; }
     let jerseyEdit = null;   // { key, hex, hue }
     function renderJerseyPanel() {
         const panel = document.getElementById('jerseyPanel'), grp = document.getElementById('adminGroupJersey');
@@ -4218,9 +4223,8 @@
             let html = `<div class="jsy-row${editing ? ' on' : ''}" onclick="openJerseyEdit('${k}')"><b>${name}</b>${jerseyBadgeRaw(sample, hex, 38, '', '', name)}<span class="jsy-hex">${hex}</span><button type="button" class="jsy-chg">${editing ? '닫기' : '색 바꾸기'}</button></div>`;
             if (editing) {
                 html += `<div class="jsy-sheet" onclick="event.stopPropagation()">` +
-                    `<div class="jsy-lbl">팀 유니폼 색</div><div class="jsy-team">${JERSEY_TEAM.map(t => `<button type="button" class="${hex === t[1] ? 'on' : ''}" style="background:${t[1]}" title="${t[0]}" onclick="pickJerseyColor('${t[1]}')"></button>`).join('')}</div>` +
                     `<div class="jsy-lbl">① 색 (누르면 바로 바뀌어요)</div><div class="jsy-hue">${JERSEY_HUES.map((h, i) => `<button type="button" class="${i === jerseyEdit.hue ? 'on' : ''}${h[1] < 0 ? ' w' : ''}" style="background:${h[1] < 0 ? '#ffffff' : jerseyHsl(h[1], h[2], 50)}" onclick="pickJerseyHue(${i})">${h[0]}</button>`).join('')}</div>` +
-                    `<div class="jsy-lbl">② 밝기 조절 (어두움 → 밝음)</div><div class="jsy-shade">${jerseyShades(jerseyEdit.hue).map(c => `<button type="button" class="${c === hex ? 'on' : ''}" style="background:${c}" onclick="pickJerseyColor('${c}')"></button>`).join('')}</div>` +
+                    `<div class="jsy-lbl">② 밝기 조절 (어두움 → 밝음)</div><div class="jsy-shade">${jerseyShades(jerseyEdit.hue).map(c => `<button type="button" class="${c === hex ? 'on' : ''}${isJerseyTeam(c) ? ' team' : ''}${jerseyLum(c) > 0.42 ? ' lt' : ''}" style="background:${c}" title="${isJerseyTeam(c) ? '팀 유니폼 색' : c}" onclick="pickJerseyColor('${c}')">${isJerseyTeam(c) ? '팀' : ''}</button>`).join('')}</div>` +
                     `<div class="jsy-btns"><button type="button" onclick="openJerseyEdit('${k}')">취소</button><button type="button" class="ok" onclick="saveJerseyEdit()">저장</button></div></div>`;
             }
             return html;
@@ -5902,6 +5906,10 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.31.2', d: '2026-10-05', t: '팀 유니폼 색을 64색에 합침', items: [
+            '관리자 ▸ 유니폼 색: 위쪽 "팀 유니폼 색" 칸을 없애고, 팀 색(빨강·남색·하늘·흰색)을 ② 밝기 줄의 비슷한 칸에 넣어 "팀" 표시 — 빨 5번째=빨강, 남 1번째=남색, 파 5번째=하늘, 흰 맨 끝=흰색',
+            '① 빨강·파랑을 누르면 바로 팀 빨강·팀 하늘이 골라짐'
+        ]},
         { v: 'v2.31.1', d: '2026-10-05', t: '유니폼 색 고르기 쉽게', items: [
             '관리자 ▸ 유니폼 색: ① 색을 누르면 그 색의 중간 밝기가 바로 골라짐 (②는 밝기 조절용) — 흰색을 누르면 흰색',
             '② 밝기 줄의 흰색·회색도 다른 색처럼 어두움 → 밝음 순서로 정리'
