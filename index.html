@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.27.3 · b261005";
+        const APP_VERSION = "v2.28.0 · b261005";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -866,6 +866,22 @@
         .player-card.is-hidden { opacity: 0.65; background: #f8fafc; }
         .card-photo-box { width: 100%; aspect-ratio: 4 / 5; background: #e2e8f0; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         .card-img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
+        /* 👕 유니폼 등판 등번호 배지 (v2.28.0) — 색은 학년별 설정(관리자 ▸ 학년별 유니폼 색)을 따름 */
+        .jsy { display: inline-flex; align-items: center; justify-content: center; width: var(--s, 44px); height: var(--s, 44px); position: relative; vertical-align: middle;
+            background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M31 5 L7 17 L1 39 L21 45 L21 96 L79 96 L79 45 L99 39 L93 17 L69 5 Q50 15 31 5 Z' fill='%23ffffff' stroke='%230b2240' stroke-width='3' stroke-linejoin='round'/><path d='M34 7 L21 45 M66 7 L79 45' fill='none' stroke='rgba%280,0,0,.18%29' stroke-width='1.6'/><path d='M31 5 Q50 15 69 5' fill='none' stroke='%230b2240' stroke-width='2.2'/></svg>") center / 100% 100% no-repeat;
+            filter: drop-shadow(0 2px 3px rgba(0,0,0,.3)); font-weight: 800; font-style: normal; font-synthesis: none; color: #0b2240; line-height: 1; letter-spacing: 0;
+            padding-top: calc(var(--s, 44px) * .2); font-size: calc(var(--s, 44px) * .36); font-family: "Noto Sans KR", -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif; }
+        .jsy.d1 { font-size: calc(var(--s, 44px) * .44); }
+        .jsy.d2 { font-size: calc(var(--s, 44px) * .33); }
+        .jsy.d3 { font-size: calc(var(--s, 44px) * .26); }
+        .jsy.c-sky { background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M31 5 L7 17 L1 39 L21 45 L21 96 L79 96 L79 45 L99 39 L93 17 L69 5 Q50 15 31 5 Z' fill='%2329a8e0' stroke='%230b2240' stroke-width='3' stroke-linejoin='round'/><path d='M34 7 L21 45 M66 7 L79 45' fill='none' stroke='rgba%280,0,0,.2%29' stroke-width='1.6'/><path d='M31 5 Q50 15 69 5' fill='none' stroke='%230b2240' stroke-width='2.2'/></svg>"); color: #0b2240; }
+        .jsy.c-navy { background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M31 5 L7 17 L1 39 L21 45 L21 96 L79 96 L79 45 L99 39 L93 17 L69 5 Q50 15 31 5 Z' fill='%230b2240' stroke='%232a4a7a' stroke-width='3' stroke-linejoin='round'/><path d='M34 7 L21 45 M66 7 L79 45' fill='none' stroke='rgba%28255,255,255,.22%29' stroke-width='1.6'/><path d='M31 5 Q50 15 69 5' fill='none' stroke='%232a4a7a' stroke-width='2.2'/></svg>"); color: #ffffff; }
+        .jsy.c-red { background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M31 5 L7 17 L1 39 L21 45 L21 96 L79 96 L79 45 L99 39 L93 17 L69 5 Q50 15 31 5 Z' fill='%23e0202a' stroke='%230b2240' stroke-width='3' stroke-linejoin='round'/><path d='M34 7 L21 45 M66 7 L79 45' fill='none' stroke='rgba%280,0,0,.18%29' stroke-width='1.6'/><path d='M31 5 Q50 15 69 5' fill='none' stroke='%230b2240' stroke-width='2.2'/></svg>"); color: #ffffff; }
+        .jsy.c-white { background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M31 5 L7 17 L1 39 L21 45 L21 96 L79 96 L79 45 L99 39 L93 17 L69 5 Q50 15 31 5 Z' fill='%23ffffff' stroke='%230b2240' stroke-width='3' stroke-linejoin='round'/><path d='M34 7 L21 45 M66 7 L79 45' fill='none' stroke='rgba%280,0,0,.18%29' stroke-width='1.6'/><path d='M31 5 Q50 15 69 5' fill='none' stroke='%230b2240' stroke-width='2.2'/></svg>"); color: #0b2240; }
+        .jsy .nmx { position: absolute; top: calc(var(--s, 44px) * .2); left: 0; right: 0; text-align: center; font-size: calc(var(--s, 44px) * .13); font-weight: 800; letter-spacing: .02em; line-height: 1; white-space: nowrap; overflow: hidden; }
+        .jsy.hasnm { padding-top: calc(var(--s, 44px) * .36); }
+        .card-jsy { position: absolute; top: 6px; left: 6px; z-index: 3; }
+        #listContainer .td-no .jsy { --s: 30px; }
         .card-no-badge { position: absolute; top: 8px; left: 8px; background: rgba(11, 34, 64, 0.92); color: #ffffff; font-size: 12px; font-weight: 800; padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.4); z-index: 2; }
         .card-pos { position: absolute; top: 8px; right: 8px; z-index: 2; }
         .btn-upload-photo { position: absolute; bottom: 8px; right: 8px; background: rgba(15, 23, 42, 0.85); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.4); padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; cursor: pointer; z-index: 4; backdrop-filter: blur(4px); }
@@ -1027,6 +1043,14 @@
         .admin-role-desc { font-size: 12px; color: #64748b; line-height: 1.6; margin: 8px 0 4px; }
         .admin-group { border-top: 1px solid #f1f5f9; margin-top: 12px; padding-top: 12px; }
         .admin-group-title { font-size: 12px; font-weight: 800; color: #94a3b8; margin-bottom: 8px; letter-spacing: 0.3px; }
+        .jsy-panel { display: flex; flex-direction: column; gap: 6px; }
+        .jsy-row { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border: 1px solid #e2e8f0; border-radius: 10px; background: #fff; }
+        .jsy-row b { width: 46px; font-size: 13px; color: #0b2240; }
+        .jsy-sw { display: flex; gap: 8px; flex: 1; justify-content: flex-end; }
+        .jsy-sw button { display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 10px; border: 2px solid transparent; background: transparent; cursor: pointer; opacity: .5; padding: 0; }
+        .jsy-sw button.on { border-color: #0b2240; background: rgba(11,34,64,.06); opacity: 1; }
+        .jsy-sw button:disabled { cursor: default; }
+        .jsy-panel-msg { font-size: 11px; color: #64748b; margin-top: 6px; min-height: 14px; }
         #adminSection .admin-bar { padding: 0; margin: 0; background: transparent !important; border: none !important; }
         .admin-empty { display: none; font-size: 12px; color: #94a3b8; font-weight: 700; padding: 6px 0; }
         .app-section.active { display: block; }
@@ -1236,7 +1260,8 @@
             #listContainer tr.clickable-row:last-child { border-bottom: none; }
             #listContainer tr.clickable-row > td { padding: 0; border: none; text-align: left; min-width: 0; }
             #listContainer tr.clickable-row > td:nth-child(1) { grid-area: no; text-align: center; font-size: 13px; line-height: 1; white-space: nowrap; letter-spacing: -0.3px; }
-            #listContainer tr.clickable-row > td.td-no:not(.no-empty)::before { content: "No."; font-size: 9.5px; font-weight: 700; opacity: 0.7; margin-right: 1px; }
+            #listContainer tr.clickable-row > td.td-no:not(.no-empty):not(.has-jsy)::before { content: "No."; font-size: 9.5px; font-weight: 700; opacity: 0.7; margin-right: 1px; }
+            #listContainer tr.clickable-row > td.td-no .jsy { --s: 32px; }
             #listContainer tr.clickable-row > td.td-no.no-empty { visibility: hidden; }
             #listContainer tr.clickable-row > td:nth-child(2) { grid-area: photo; text-align: center; }
             #listContainer tr.clickable-row > td:nth-child(3) { grid-area: name; font-size: 15px; line-height: 1.25; overflow-wrap: anywhere; }
@@ -1464,6 +1489,9 @@
     .admin-role-pill.general { background: #1b3837; color: #99e6b6; }
     .admin-role-desc { color: #97a3b7; }
     .admin-group { border-top: 1px solid #2a374e; }
+    .jsy-row { background: #151e2e; border-color: #2a374e; }
+    .jsy-row b { color: #dde3ec; }
+    .jsy-sw button.on { border-color: #7aa5ea; background: rgba(122,165,234,.12); }
     .admin-group-title { color: #6f7b91; }
     .admin-empty { color: #6f7b91; }
     .sched-card { background: #151e2e; border: 1px solid #2a374e; box-shadow: 0 2px 10px rgba(0,0,0,0.075); }
@@ -2009,6 +2037,13 @@
     </div>
 
                 <div class="admin-empty" id="adminOpsEmpty">이 등급에서 쓸 수 있는 운영 기능이 없습니다.</div>
+            </div>
+
+            <div class="admin-group" id="adminGroupJersey" style="display: none;">
+                <div class="admin-group-title">👕 학년별 유니폼 색 (등번호 배지)</div>
+                <p class="admin-role-desc" style="margin-bottom: 8px;">학년마다 셔츠를 누르면 바로 저장되고 모든 기기에 반영됩니다. 진급해도 설정은 학년 기준으로 유지돼요.</p>
+                <div class="jsy-panel" id="jerseyPanel"></div>
+                <div class="jsy-panel-msg" id="jerseyPanelMsg"></div>
             </div>
 
             <div class="admin-group" id="adminGroupContent">
@@ -2704,6 +2739,7 @@
     function updateAdminPanel() {
         const desc = document.getElementById('adminRoleDesc');
         if (!desc) return;
+        renderJerseyPanel();   // 👕 학년별 유니폼 색 (대표님·개발자)
         desc.textContent = ({
             dev: '모든 관리자 기능 + 비밀번호 확인, 아래 "개발" 메뉴(보안 활동 로그)까지 사용할 수 있습니다.',
             super: '모든 기능을 사용할 수 있습니다. (비상연락망, 유니폼 접수·발주, 비밀번호 관리, 구글 시트 편집, 일정·공지 관리, 선수 사진 등록)',
@@ -3987,6 +4023,56 @@
         return activeUser.children.some(c => (p.no && c.no) ? (c.no === p.no) : (c.name === p.name));
     }
 
+    // 👕 학년별 유니폼 색 (v2.28.0) — 서버 설정(getSettings.jerseyColors) → localStorage 캐시 → 기본값
+    const JERSEY_COLORS_DEFAULT = { '6': 'red', '5': 'sky', '4': 'white', '3': 'white', '2': 'white', '1': 'white' };
+    const JERSEY_COLOR_KEYS = ['red', 'navy', 'sky', 'white'];
+    let jerseyColors = Object.assign({}, JERSEY_COLORS_DEFAULT);
+    try { const c = JSON.parse(localStorage.getItem('daeyeon_jersey_colors') || 'null'); if (c && typeof c === 'object') Object.keys(JERSEY_COLORS_DEFAULT).forEach(k => { if (JERSEY_COLOR_KEYS.indexOf(c[k]) !== -1) jerseyColors[k] = c[k]; }); } catch (e) {}
+    function applyJerseyColors(c) {
+        if (!c || typeof c !== 'object') return;
+        Object.keys(JERSEY_COLORS_DEFAULT).forEach(k => { if (JERSEY_COLOR_KEYS.indexOf(c[k]) !== -1) jerseyColors[k] = c[k]; });
+        try { localStorage.setItem('daeyeon_jersey_colors', JSON.stringify(jerseyColors)); } catch (e) {}
+    }
+    function jerseyColorFor(grade) { const g = String(grade || '').trim(); return jerseyColors[g] || 'white'; }
+    // 등번호 배지 HTML. 번호가 없으면 '' (호출 쪽에서 글자 배지로 대체)
+    function jerseyBadge(p, size, withName, extraClass) {
+        const no = parseInt(p && p.no, 10);
+        if (!(no > 0)) return '';
+        const d = no >= 100 ? 'd3' : no >= 10 ? 'd2' : 'd1';
+        const nm = withName && p.name ? `<span class="nmx">${escapeHtml(String(p.name).slice(0, 6))}</span>` : '';
+        return `<span class="jsy ${d} c-${jerseyColorFor(p.grade)}${withName ? ' hasnm' : ''}${extraClass ? ' ' + extraClass : ''}" style="--s:${size}px" title="등번호 ${no}">${nm}${no}</span>`;
+    }
+
+    function renderJerseyPanel() {
+        const panel = document.getElementById('jerseyPanel'), grp = document.getElementById('adminGroupJersey');
+        if (!panel || !grp) return;
+        const can = (currentRole === 'super' || currentRole === 'dev');
+        grp.style.display = can ? '' : 'none';
+        if (!can) return;
+        const sample = { '6': 38, '5': 47, '4': 39, '3': 44, '2': 25, '1': 9 };
+        panel.innerHTML = ['6', '5', '4', '3', '2', '1'].map(g => `<div class="jsy-row"><b>${g}학년</b><div class="jsy-sw">` +
+            JERSEY_COLOR_KEYS.map(c => `<button type="button" class="${jerseyColors[g] === c ? 'on' : ''}" onclick="setJerseyColor('${g}','${c}')" aria-label="${g}학년 ${c}">${jerseyBadge({ no: sample[g], grade: g, name: '' }, 32).replace('c-' + jerseyColorFor(g), 'c-' + c)}</button>`).join('') + `</div></div>`).join('');
+    }
+    async function setJerseyColor(grade, color) {
+        if (!(currentRole === 'super' || currentRole === 'dev')) return;
+        if (JERSEY_COLOR_KEYS.indexOf(color) === -1) return;
+        const prev = Object.assign({}, jerseyColors);
+        jerseyColors[grade] = color; try { localStorage.setItem('daeyeon_jersey_colors', JSON.stringify(jerseyColors)); } catch (e) {}
+        renderJerseyPanel(); render();
+        const msg = document.getElementById('jerseyPanelMsg'); if (msg) msg.textContent = '저장 중…';
+        try {
+            await postApi({ action: 'setJerseyColors', colors: jerseyColors });   // no-cors라 응답은 못 읽음 → 설정을 다시 받아 확인
+            const j = await fetchSettings();
+            if (!j || !j.jerseyColors || j.jerseyColors[grade] !== color) throw new Error('서버에 반영되지 않았어요 (권한 또는 네트워크)');
+            if (msg) msg.textContent = '저장됨 ✓ (' + grade + '학년 → ' + ({ red: '빨강', navy: '남색', sky: '하늘', white: '흰색' })[color] + ')';
+            sendActivityLog('유니폼색설정', currentRole, `${grade}학년 등번호 배지 색 → ${color}`);
+        } catch (err) {
+            jerseyColors = prev; try { localStorage.setItem('daeyeon_jersey_colors', JSON.stringify(jerseyColors)); } catch (e) {}
+            renderJerseyPanel(); render();
+            if (msg) msg.textContent = '저장하지 못했어요: ' + err.message;
+        }
+    }
+
     function getGradeBadge(grade) {
         const g = escapeHtml(grade);
         if (isStaff(grade)) return `<span class="grade-tag grade-staff">${g}</span>`;
@@ -4169,6 +4255,7 @@
             if (json && typeof json.uniformActive === 'boolean') {
                 isUniformActive = json.uniformActive;
                 localStorage.setItem('daeyeon_uniform_active', isUniformActive ? 'true' : 'false');
+                if (json.jerseyColors) { const before = JSON.stringify(jerseyColors); applyJerseyColors(json.jerseyColors); if (JSON.stringify(jerseyColors) !== before && players.length) render(); renderJerseyPanel(); }
                 return json;
             }
         } catch (e) { console.warn('설정 불러오기 실패:', e); }
@@ -4536,7 +4623,7 @@
 
             return `
                 <tr class="clickable-row ${isHidden ? 'is-hidden' : ''}" data-path="${escapeHtml(playerPath)}">
-                    <td class="td-no${p.no ? '' : ' no-empty'}">${noDisplayText}</td>
+                    <td class="td-no${p.no ? ' has-jsy' : ' no-empty'}">${jerseyBadge(p, 30) || noDisplayText}</td>
                     <td>${photoCell}</td>
                     <td class="td-name">${escapeHtml(p.name)}${hiddenBadge}${nameStickers(p)}</td>
                     <td>${getGradeBadge(p.grade)}</td>
@@ -4566,7 +4653,7 @@
             if (p.hidePhoto && !canViewPhoto) {
                 cardPhotoHtml = `
                     <div class="card-photo-box" style="background:#f1f5f9; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                        <span class="card-no-badge">${noBadgeText}</span>${stickers}
+                        ${jerseyBadge(p, 46, false, 'card-jsy') || `<span class="card-no-badge">${noBadgeText}</span>`}${stickers}
                         <div style="font-size:32px; opacity:0.35;">👤</div>
                         <span style="margin-top:6px; font-size:11px; font-weight:800; color:#64748b; background:rgba(255,255,255,0.9); padding:3px 8px; border-radius:12px; border:1px solid #cbd5e1;">🔒 사진 비공개</span>
                         ${uploadBtnHtml}
@@ -4577,7 +4664,7 @@
                 const adminPhotoBadge = (p.hidePhoto && canViewPhoto) ? `<span style="position:absolute; bottom:8px; left:8px; background:#ef4444; color:#ffffff; font-size:10px; font-weight:800; padding:2px 6px; border-radius:4px; z-index:3;">🔒 사진 비공개</span>` : '';
                 cardPhotoHtml = `
                     <div class="card-photo-box">
-                        <span class="card-no-badge">${noBadgeText}</span>${stickers}
+                        ${jerseyBadge(p, 46, false, 'card-jsy') || `<span class="card-no-badge">${noBadgeText}</span>`}${stickers}
                         <img class="card-img" src="${photoUrl}" alt="" loading="lazy" onerror="handleImgError(this)">
                         ${adminPhotoBadge}
                         ${uploadBtnHtml}
@@ -5461,6 +5548,11 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.28.0', d: '2026-10-05', t: '유니폼 등번호 배지', items: [
+            '등번호를 유니폼 등판 모양 배지로 표시: 리스트형(사진 아래 32px), 이미지형(사진 왼쪽 위 46px), 상세보기(58px, 번호 위에 이름)',
+            '배지 색은 학년별로 정함 — 기본 6학년 빨강 · 5학년 하늘 · 4·3·2·1학년 흰색 (하늘·남색·빨강·흰색 4색)',
+            '관리자 탭 "학년별 유니폼 색"에서 대표님·개발자가 학년마다 색을 눌러 바꾸면 서버에 저장되고 모든 기기에 반영 (Apps Script v2.4.3)'
+        ]},
         { v: 'v2.27.3', d: '2026-10-05', t: '화면 배율 버튼 접기', items: [
             '오른쪽 아래 화면 배율 버튼은 평소 현재 %만 보이고, 누르면 ＋/－가 펼쳐졌다가 3초 뒤 다시 접힘 (길게 누르면 100%로)',
             '상세보기 이전·목록·다음 버튼은 가로 폭을 전부 사용'
