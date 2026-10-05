@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.33.0 · b261005";
+        const APP_VERSION = "v2.34.0 · b261005";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -429,11 +429,10 @@
         .card-bday-hat { position: absolute; top: -6px; right: -8px; width: 64px; height: 64px; z-index: 3; filter: drop-shadow(0 2px 3px rgba(0,0,0,.25)); pointer-events: none; }
         .name-bday { font-size: 13px; margin-left: 3px; }
 
-        /* 5️⃣ 학년별 유니폼 테두리 (이미지형 카드만) — 6학년 금, 5학년 은, 4학년 동, 3학년 하늘 */
-        .player-card.gb-6 { border: 2px solid #d4a017; box-shadow: 0 0 0 2px #fff3c4 inset, 0 2px 6px rgba(0,0,0,0.03); }
-        .player-card.gb-5 { border: 2px solid #9aa5b1; box-shadow: 0 0 0 2px #eef2f7 inset, 0 2px 6px rgba(0,0,0,0.03); }
-        .player-card.gb-4 { border: 2px solid #b87333; box-shadow: 0 0 0 2px #fbe9d7 inset, 0 2px 6px rgba(0,0,0,0.03); }
-        .player-card.gb-3 { border: 2px solid #3e9bea; box-shadow: 0 0 0 2px #e3f1fd inset, 0 2px 6px rgba(0,0,0,0.03); }
+        /* 5️⃣ 유니폼 색 테두리 (이미지형 카드만, v2.34.0) — 관리자 ▸ 학년별 유니폼 색 설정값을 그대로 따라감 (--jb = 그 선수의 유니폼 색)
+           jb-lt = 흰색처럼 아주 밝은 색(흰 카드 위에선 안 보이니 회색 선), jb-dk = 남색처럼 아주 어두운 색(어두운 화면에서 살짝 밝게) */
+        .player-card.jb { border: 2px solid var(--jb); box-shadow: 0 0 0 2px color-mix(in srgb, var(--jb) 22%, transparent) inset, 0 2px 6px rgba(0,0,0,0.03); }
+        .player-card.jb.jb-lt { border-color: #b9c0cc; box-shadow: 0 2px 6px rgba(0,0,0,0.03); }
 
         /* 6️⃣ 포지션 아이콘 */
         .pos-ico { margin-right: 2px; font-size: .95em; }
@@ -1866,10 +1865,9 @@
     header.szn-summer, .mini-head.szn-summer { background: linear-gradient(160deg, #13365a, #0b1525); }
     header.szn-fall, .mini-head.szn-fall { background: linear-gradient(160deg, #3d2114 0%, #0b1525 70%); }
     header.szn-winter, .mini-head.szn-winter { background: linear-gradient(160deg, #1d2c42, #0b1525); }
-    .player-card.gb-6 { box-shadow: 0 0 0 2px #3a3012 inset; }
-    .player-card.gb-5 { box-shadow: 0 0 0 2px #1b2638 inset; }
-    .player-card.gb-4 { box-shadow: 0 0 0 2px #3a2416 inset; }
-    .player-card.gb-3 { box-shadow: 0 0 0 2px #11304a inset; }
+    .player-card.jb { box-shadow: 0 0 0 2px color-mix(in srgb, var(--jb) 26%, transparent) inset; }
+    .player-card.jb.jb-lt { border-color: #e5e7eb; box-shadow: 0 0 0 2px rgba(255,255,255,.08) inset; }
+    .player-card.jb.jb-dk { border-color: color-mix(in srgb, var(--jb), #ffffff 40%); }
     .cf-box { background: #151e2e; }
     .cf-box b { color: #dde3ec; }
     .cf-box small { color: #97a3b7; }
@@ -5090,7 +5088,8 @@
             const noBadgeText = p.no ? `No.${p.no}` : '배번미정';
             const noNameText = p.no ? `<span class="card-name-no">No.${p.no}</span>` : '';
             const stickers = cardStickers(p);                                           // 🦈 NEW · 🎂 생일 모자/스티커
-            const gradeBorder = /^[3-6]$/.test(String(p.grade).trim()) ? ' gb-' + String(p.grade).trim() : '';   // 🦈 학년별 유니폼 테두리
+            const jbHex = normJerseyColor(jerseyColorFor(p.grade, p.pos)) || '#ffffff', jbL = jerseyLum(jbHex);   // 👕 유니폼 색 테두리 (v2.34.0) — 설정값 따라감
+            const gradeBorder = ' jb' + (jbL > .8 ? ' jb-lt' : '') + (jbL < .03 ? ' jb-dk' : '');
 
             const uploadBtnHtml = (isSuperOrDev() || isParentOfPlayer(p)) ? `<button type="button" class="btn-upload-photo" data-no="${p.no || 0}" data-name="${escapeHtml(p.name)}">📷 사진 변경</button>` : '';
             const editInfoBtnHtml = isParentOfPlayer(p) ? `<button type="button" class="btn-edit-info" data-no="${p.no || 0}" data-name="${escapeHtml(p.name)}">✏️ 정보 수정</button>` : '';
@@ -5120,7 +5119,7 @@
             }
 
             return `
-                <div class="player-card ${isHidden ? 'is-hidden' : ''}${gradeBorder}" data-path="${escapeHtml(playerPath)}">
+                <div class="player-card ${isHidden ? 'is-hidden' : ''}${gradeBorder}" style="--jb:${jbHex}" data-path="${escapeHtml(playerPath)}">
                     ${cardPhotoHtml}
                     <div class="card-info">
                         <div class="card-name-row">
@@ -6000,6 +5999,11 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.34.0', d: '2026-10-05', t: '이미지형 카드 테두리 = 유니폼 색', items: [
+            '이미지형 카드 테두리 색이 관리자 ▸ 학년별 유니폼 색 설정을 그대로 따라감 (예전: 6~3학년만 금·은·동·하늘 고정)',
+            '1·2학년, 코치진, 감독님 카드도 각자 유니폼 색 테두리 — 색을 바꾸면 테두리도 같이 바뀜',
+            '흰색 유니폼은 밝은 화면에서 회색 선, 남색처럼 아주 어두운 색은 어두운 화면에서 살짝 밝게 보이도록 조정'
+        ] },
         { v: 'v2.33.0', d: '2026-10-05', t: '부캉이 효과음', items: [
             '부캉이 효과음 추가 (파일 없이 브라우저에서 합성): 저장 완료 "띠링", 실패 "뿌웅", 안내 "톡", 확인 창 "뿅?", 잠금 자장가, 당겨서 새로고침 "휙·퍽", 부캉이 누르기 "뾱", 승리 축하 팡파레',
             '처음엔 켜져 있고, 오른쪽 아래 🔊 버튼으로 기기마다 끄고 켤 수 있음 (컴퓨터에서도 🔊 버튼만 보임) — 저장 중에는 소리 없음'
