@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.36.0 · b261005";
+        const APP_VERSION = "v2.36.1 · b261005";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -4155,8 +4155,8 @@
                 // (이름/생년월일이 명단과 안 맞으면 서버가 등록을 거부 → 번호가 안 들어가 로그인도 실패 → 안내)
                 const login = await serverLogin(cleanPhone);
                 if (applyLoginResult(login)) {
-                    sendActivityLog('최초등록', roleSelect, `${nameInput} (${roleSelect}) 등록 후 로그인`);
                     finishUnlock();
+                    setTimeout(() => sendActivityLog('최초등록', roleSelect, `${nameInput} (${roleSelect}) 등록 후 로그인`), 5000);   // v2.36.1: 명단 먼저
                     bkNotify('done', '등록 완료캉! 🎉', `${login.name || nameInput} 보호자님으로 등록됐어요 (1시간 동안 유지)`, { ms: 5000 });
                 } else {
                     bkNotify('fail', '앗, 등록이 안 됐캉…', '자녀 이름과 생년월일이 공식 명단과 똑같은지 확인해 주세요. 계속 안 되면 관리자에게 문의해 주세요', { ms: 8000 });
@@ -4181,8 +4181,8 @@
 
         if (applyLoginResult(res)) {
             const label = ({ dev: '개발자', super: '대표님', sub: '코치진', general: '총무님', parent: '보호자', guest: '일반 열람자' })[res.role] || res.role;
-            sendActivityLog('잠금해제', label, `${label} 로그인`);
             finishUnlock();
+            setTimeout(() => sendActivityLog('잠금해제', label, `${label} 로그인`), 5000);   // v2.36.1: 명단을 먼저 불러온 뒤 기록 (로그 저장이 명단 읽기와 겹쳐 느려지지 않게)
             return;
         }
 
@@ -6051,6 +6051,11 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.36.1', d: '2026-10-05', t: '로그인 속도 개선', items: [
+            '🎵를 켜 둔 기기도 화면을 여는 순간엔 음악 파일을 찾거나 받지 않음 — 화면을 누른 뒤에만 시작 (휴대폰에서 명단 불러오기와 겹쳐 느려지던 문제)',
+            '음악 파일 확인 요청을 100개 한꺼번에 → 20개씩 나눠서 보냄',
+            '로그인 기록(잠금해제·최초등록)은 명단을 먼저 불러온 뒤 5초 후에 저장 — 시트 쓰기가 명단 읽기와 겹치지 않게'
+        ] },
         { v: 'v2.36.0', d: '2026-10-05', t: '🎵 배경음악 셔플 재생', items: [
             '오른쪽 아래 🔊 위에 🎵 버튼: 누르면 배경음악 켜기/끄기 (처음엔 꺼짐, 기기마다 기억), 켜져 있으면 ⏭ 다음 곡 버튼',
             'audio 폴더의 001.mp3 ~ 100.mp3 중 실제로 있는 파일만 찾아 셔플 재생 (모든 곡을 한 번씩 튼 뒤 다시 섞음, 같은 곡 연달아 안 나옴)',
@@ -6887,6 +6892,6 @@
     loadGoogleSheetData();
 </script>
 
-<script src="bgm.js?v=2.36.0" defer></script>   <!-- 🎵 배경음악 (v2.36.0) -->
+<script src="bgm.js?v=2.36.1" defer></script>   <!-- 🎵 배경음악 (v2.36.0) -->
 </body>
 </html>
