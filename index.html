@@ -4235,7 +4235,7 @@
         const msg = document.getElementById('jerseyPanelMsg'); if (msg) msg.textContent = '';
         renderJerseyPanel();
     }
-    // ①을 누르면 그 색의 중간 밝기(②의 5번째, 흰색은 맨 오른쪽 흰색)가 바로 골라짐 → ②는 밝기 조절용 (v2.31.1)
+    // ①을 누르면 그 색의 중간 밝기(②의 5번째, 흰색은 맨 오른쪽 흰색)가 바로 골라짐 → ②는 밝기를 더 조절할 때만 (v2.31.1)
     function pickJerseyHue(i) { if (!jerseyEdit) return; jerseyEdit.hue = i; const sh = jerseyShades(i); jerseyEdit.hex = JERSEY_HUES[i][1] < 0 ? sh[sh.length - 1] : sh[4]; renderJerseyPanel(); }
     function pickJerseyColor(hex) { if (!jerseyEdit) return; jerseyEdit.hex = normJerseyColor(hex) || jerseyEdit.hex; renderJerseyPanel(); }
     async function saveJerseyEdit() {
