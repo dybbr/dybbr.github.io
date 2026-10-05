@@ -1,5 +1,6 @@
 // ==========================================================
-// 🎵 대연초 야구부 명단 - 배경음악 (v2.36.0) · index.html / player.html 공용
+// 🎵 대연초 야구부 명단 - 배경음악 (v2.36.1) · index.html / player.html 공용
+// v2.36.1: 화면을 열 때는 아무것도 받지 않음 — 🎵를 켜 둔 기기도 "화면을 누른 뒤"에만 음악 파일을 찾고 받음 (명단 로딩 속도 보호)
 // ==========================================================
 // - audio/001.mp3 ~ audio/100.mp3 중 "실제로 있는 파일만" 골라 셔플 재생 (파일 번호가 비어 있어도 됨)
 //   · audio/list.json 이 있으면 그 목록을 우선 사용: { "tracks": [ { "file": "001.mp3", "title": "곡 제목" }, ... ] }
@@ -73,13 +74,19 @@
             if (j && Array.isArray(j.tracks) && j.tracks.length) {
                 return j.tracks.map(function (t) { return typeof t === 'string' ? { file: t } : t; }).filter(function (t) { return t && /^[\w\-.가-힣 ]+\.mp3$/i.test(String(t.file || '')); });
             }
-            var ps = [];
-            for (var i = 1; i <= MAX_NO; i++) {
-                (function (f) {
-                    ps.push(fetch('audio/' + f, { method: 'HEAD', cache: 'no-cache' }).then(function (r) { return r.ok ? { file: f } : null; }).catch(function () { return null; }));
-                })(pad3(i) + '.mp3');
+            var found = [], start = 1;   // 20개씩 나눠서 확인 (한꺼번에 100개를 보내 휴대폰 통신을 막지 않게)
+            function batch() {
+                if (start > MAX_NO) return Promise.resolve(found);
+                var ps = [];
+                for (var i = start; i < start + 20 && i <= MAX_NO; i++) {
+                    (function (f) {
+                        ps.push(fetch('audio/' + f, { method: 'HEAD', cache: 'no-cache' }).then(function (r) { return r.ok ? { file: f } : null; }).catch(function () { return null; }));
+                    })(pad3(i) + '.mp3');
+                }
+                start += 20;
+                return Promise.all(ps).then(function (l) { found = found.concat(l.filter(Boolean)); return batch(); });
             }
-            return Promise.all(ps).then(function (l) { return l.filter(Boolean); });
+            return batch();
         }).then(function (l) {
             tracks = l || [];
             if (tracks.length) { try { sessionStorage.setItem(K_LIST, JSON.stringify(tracks)); } catch (e) {} }   // 빈 목록은 기억하지 않음 (파일을 올리면 바로 잡히게)
@@ -255,7 +262,7 @@
         var lab = document.createElement('div'); lab.className = 'bgm-label'; lab.id = 'bgmLabel'; lab.setAttribute('aria-live', 'polite');
         document.body.appendChild(lab);
         updateBtn();
-        if (isOn()) { var p = loadState(); if (p) { try { sessionStorage.setItem(K_STATE, JSON.stringify(p)); } catch (e) {} } begin(false); waitGesture(); }
+        if (isOn()) { var p = loadState(); if (p) { try { sessionStorage.setItem(K_STATE, JSON.stringify(p)); } catch (e) {} } waitGesture(); }   // 누른 뒤에만 시작 (화면 여는 순간엔 아무것도 안 받음)
     }
     window.toggleBgm = toggleBgm; window.nextBgm = nextBgm;
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount();
