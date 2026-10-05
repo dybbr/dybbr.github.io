@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.34.0 · b261005";
+        const APP_VERSION = "v2.35.0 · b261005";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1073,6 +1073,35 @@
         .log-type-contact { background: #eff6ff; color: #1e40af; }
         .log-type-order   { background: #fef3c7; color: #92400e; }
         .log-type-photo   { background: #e0f2fe; color: #0369a1; }
+        /* 👥 로그 분류 탭 + 접속 기록 (v2.35.0) */
+        .log-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 6px; }
+        .log-tabs button { height: 34px; border: 1px solid #d1d5db; border-radius: 8px; background: #ffffff; font-size: 12px; font-weight: 800; color: #475569; cursor: pointer; padding: 0 2px; white-space: nowrap; }
+        .log-tabs button.on { background: #0b2240; border-color: #0b2240; color: #ffffff; }
+        .acc-sum { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 8px; }
+        .acc-sum > div { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 4px; text-align: center; }
+        .acc-sum b { display: block; font-size: 18px; line-height: 1.2; color: #0b2240; }
+        .acc-sum span { font-size: 11px; color: #64748b; font-weight: 700; }
+        .acc-sum .on b { color: #15803d; }
+        .acc-sum .warn b { color: #b91c1c; }
+        .acc-filter { display: flex; align-items: center; justify-content: space-between; gap: 6px; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; border-radius: 8px; padding: 6px 8px; font-size: 12px; font-weight: 700; margin-bottom: 8px; }
+        .acc-filter button { flex: 0 0 auto; white-space: nowrap; border: 1px solid #bfdbfe; background: #ffffff; color: #1e40af; border-radius: 6px; height: 26px; font-size: 12px; font-weight: 800; cursor: pointer; padding: 0 8px; }
+        .acc-day { font-size: 12px; font-weight: 800; color: #475569; margin: 10px 2px 4px; }
+        .acc-row { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 7px 10px; margin-bottom: 5px; font-size: 12px; }
+        .acc-l1 { display: flex; align-items: center; gap: 6px; }
+        .acc-dot { width: 9px; height: 9px; border-radius: 50%; background: #94a3b8; flex: 0 0 auto; }
+        .acc-row.st-online .acc-dot { background: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,.22); }
+        .acc-row.st-unknown .acc-dot { background: #f59e0b; }
+        .acc-who { font-weight: 800; color: #0f172a; cursor: pointer; text-decoration: underline dotted #94a3b8; text-underline-offset: 3px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .acc-role { font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 10px; background: #eef2f7; color: #334155; flex: 0 0 auto; }
+        .acc-dur { margin-left: auto; font-size: 11px; font-weight: 800; color: #64748b; flex: 0 0 auto; }
+        .acc-l2 { margin-top: 2px; color: #334155; font-weight: 600; }
+        .acc-l2 .in { color: #15803d; font-weight: 800; }
+        .acc-l2 .out { color: #475569; font-weight: 800; }
+        .acc-row.st-online .acc-l2 .out { color: #15803d; }
+        .acc-row.st-unknown .acc-l2 .out { color: #b45309; }
+        .acc-l3 { margin-top: 1px; font-size: 11px; color: #64748b; }
+        .acc-row.acc-fail { background: #fff5f5; border-color: #fecaca; }
+        .acc-row.acc-fail .acc-who { color: #b91c1c; text-decoration: none; cursor: default; }
 
         @media (max-width: 600px) {
             header { padding: 10px 10px 14px; gap: 8px; }
@@ -1579,6 +1608,25 @@
     .log-type-contact { background: #1b2c46; color: #8da2e7; }
     .log-type-order { background: #444333; color: #e6b699; }
     .log-type-photo { background: #1b3046; color: #99cae6; }
+    .log-tabs button { background: #151e2e; border-color: #33425c; color: #bcc6d4; }
+    .log-tabs button.on { background: #557cb9; border-color: #557cb9; color: #ffffff; }
+    .acc-sum > div { background: #1b2638; border-color: #2a374e; }
+    .acc-sum b { color: #dbe4f0; }
+    .acc-sum span { color: #94a3b8; }
+    .acc-sum .on b { color: #6ee7a0; }
+    .acc-sum .warn b { color: #f19aa6; }
+    .acc-filter { background: #1b2c46; border-color: #33425c; color: #a8c2ec; }
+    .acc-filter button { background: #151e2e; border-color: #33425c; color: #a8c2ec; }
+    .acc-day { color: #94a3b8; }
+    .acc-row { background: #151e2e; border-color: #2a374e; }
+    .acc-who { color: #e2e8f0; }
+    .acc-role { background: #22304a; color: #bcc6d4; }
+    .acc-l2 { color: #bcc6d4; }
+    .acc-l2 .in, .acc-row.st-online .acc-l2 .out { color: #6ee7a0; }
+    .acc-l2 .out { color: #94a3b8; }
+    .acc-row.st-unknown .acc-l2 .out { color: #f5c26b; }
+    .acc-row.acc-fail { background: #2a1b22; border-color: #6b2a35; }
+    .acc-row.acc-fail .acc-who { color: #f19aa6; }
     .main-tabs { background: #151e2e; border: 1px solid #2a374e; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
     .main-tab { border: none; background: transparent; color: #97a3b7; }
     .main-tab.active { background: #22354f; color: #f1f4f9; box-shadow: 0 2px 6px rgba(0,0,0,0.375); }
@@ -2642,11 +2690,15 @@
             <span>📜 시스템 접속 및 활동 로그</span>
             <button class="btn-quick-action" onclick="loadSecurityLogs()">🔄 새로고침</button>
         </div>
-        <p style="font-size: 11px; color: #64748b; margin-bottom: 8px;">
-            구글 시트에 실시간 기록된 최근 100건의 기기별 접속, 잠금, 주문 등의 활동 내역입니다.
-        </p>
+        <div class="log-tabs" id="logTabs">
+            <button type="button" data-cat="access" class="on" onclick="setLogCat('access')">👥 접속</button>
+            <button type="button" data-cat="change" onclick="setLogCat('change')">✏️ 변경</button>
+            <button type="button" data-cat="view" onclick="setLogCat('view')">👀 열람·복사</button>
+            <button type="button" data-cat="all" onclick="setLogCat('all')">📋 전체</button>
+        </div>
+        <p id="logDesc" style="font-size: 11px; color: #64748b; margin-bottom: 8px;"></p>
         <div class="log-tools" id="logTools">
-            <label><input type="checkbox" id="logCheckAll" onchange="toggleAllLogChecks(this.checked)"> 전체 선택</label>
+            <label id="logCheckAllWrap"><input type="checkbox" id="logCheckAll" onchange="toggleAllLogChecks(this.checked)"> 전체 선택</label>
             <button type="button" class="danger" id="logDelSelBtn" onclick="deleteSelectedLogs()" disabled>선택 삭제</button>
             <span class="log-tools-spacer"></span>
             <select id="logDelDays" aria-label="삭제 기간">
@@ -5999,6 +6051,13 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.35.0', d: '2026-10-05', t: '보안 로그 분류 + 접속 기록', items: [
+            '보안 활동 로그 맨 위에 분류 탭: 👥 접속 · ✏️ 변경 · 👀 열람·복사 · 📋 전체 (처음엔 👥 접속)',
+            '👥 접속: 같은 기기의 들어옴(로그인)→나감(로그아웃·화면 잠금·자동 잠김)을 한 줄로 묶고 머문 시간 표시, 앱을 그냥 닫으면 "나감 기록 없음"/"접속 중(자동 잠김 예정)"으로 표시',
+            '오늘 접속 인원 · 지금 접속 중 · 오늘 인증실패 요약, 이름을 누르면 그 사람 기록만 보기, 연속 인증실패는 한 줄로 묶음',
+            '구글 시트에 "접속기록" 탭이 따로 생겨 접속 기록만 보관 (기존 접속 기록도 옮겨 담음) — 활동 로그를 전체 삭제해도 남음 (Apps Script v2.5.0)',
+            '변경·열람 탭은 서버에서 그 종류만 골라 최근 200건까지 보여줌 (복사가 많아도 밀려나지 않음)'
+        ] },
         { v: 'v2.34.0', d: '2026-10-05', t: '이미지형 카드 테두리 = 유니폼 색', items: [
             '이미지형 카드 테두리 색이 관리자 ▸ 학년별 유니폼 색 설정을 그대로 따라감 (예전: 6~3학년만 금·은·동·하늘 고정)',
             '1·2학년, 코치진, 감독님 카드도 각자 유니폼 색 테두리 — 색을 바꾸면 테두리도 같이 바뀜',
@@ -6270,21 +6329,124 @@
         document.getElementById('historyModal').style.display = 'flex';
     }
 
+    // 📜 로그 분류 (v2.35.0) — 👥 접속(시트 '접속기록' 탭) / ✏️ 변경 / 👀 열람·복사 / 📋 전체
+    const LOG_CAT_TYPES = {
+        change: ['비밀번호변경', '일정저장', '일정삭제', '일정가져오기', '공지저장', '공지삭제', '사진등록', '사진삭제', '선수정보수정', '주문접수', '유니폼접수설정', '유니폼색설정', '로그삭제'],
+        view: ['열람', '복사']
+    };
+    const LOG_CAT_DESC = {
+        access: '들어옴(로그인)과 나감(로그아웃·화면 잠금·자동 잠김)을 기기별로 한 줄씩 묶어 보여줍니다. 구글 시트 "접속기록" 탭에 따로 보관돼요 (최근 300건).',
+        change: '비밀번호·일정·공지·사진·선수 정보·유니폼 주문/설정 등 내용을 바꾼 기록입니다 (최근 200건).',
+        view: '비상연락망 열람, 번호 복사 기록입니다 (최근 200건).',
+        all: '모든 활동의 최근 100건입니다.'
+    };
+    let logCat = 'access', logWho = '';
+    function setLogCat(cat) {
+        logCat = cat; logWho = '';
+        document.querySelectorAll('#logTabs button').forEach(b => b.classList.toggle('on', b.dataset.cat === cat));
+        document.getElementById('logDesc').textContent = LOG_CAT_DESC[cat] || '';
+        const sel = cat !== 'access';   // 접속 탭은 줄을 묶어 보여주므로 기간·전체 삭제만
+        document.getElementById('logCheckAllWrap').style.display = sel ? '' : 'none';
+        document.getElementById('logDelSelBtn').style.display = sel ? '' : 'none';
+        loadSecurityLogs();
+    }
+
     async function openLogsModal() {
         if (currentRole !== 'dev') return;   // 보안 활동 로그는 개발자 전용
         document.getElementById('logsModal').style.display = 'flex';
-        loadSecurityLogs();
+        setLogCat('access');
     }
+
+    // ---- 👥 접속 기록: 같은 기기의 "들어옴 → 나감"을 한 줄로 ----
+    const ACC_IN = ['잠금해제', '최초등록'], ACC_OUT = ['로그아웃', '화면잠금', '세션만료'];
+    const ACC_OUT_LABEL = { '로그아웃': '로그아웃', '화면잠금': '화면 잠금', '세션만료': '자동 잠김 (시간 만료)' };
+    const ACC_TTL_MIN = { '개발자': 360, '대표님': 240, '코치진': 120, '총무님': 60, '보호자': 60, '일반 열람자': 10 };   // 서버 로그인 유지 시간과 같게
+    function accDate(v) { const m = String(v).match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})\D+(\d{1,2}):(\d{2}):(\d{2})/); return m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]) : null; }
+    function accWho(log) {   // 인증등급 칸: "역할 [누구]" → { who, label }
+        const m = String(log.role || '').match(/^(.*?)\s*\[(.*)\]\s*$/);
+        const label = (m ? m[1] : String(log.role || '')).trim() || '-';
+        const ident = m ? m[2].trim() : '';
+        const generic = !ident || ['관리자', '일반열람', '미인증'].includes(ident);
+        if (log.eventType === '최초등록') return { who: generic ? label : ident, label: '보호자' };
+        return { who: generic ? label : ident, label: generic ? '' : label };
+    }
+    const accHM = d => d ? String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') : '--:--';
+    function accDur(ms) { const m = Math.floor(ms / 60000); if (m < 1) return '1분 미만'; if (m < 60) return m + '분'; return Math.floor(m / 60) + '시간' + (m % 60 ? ' ' + (m % 60) + '분' : ''); }
+    function accDayKey(d) { return d ? `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}` : '날짜 없음'; }
+    function buildAccessRows(logs) {
+        const items = [], open = {}, now = Date.now();
+        logs.slice().reverse().forEach(log => {   // 오래된 것부터
+            const t = accDate(log.date), cid = log.clientId || '-', w = accWho(log);
+            if (ACC_IN.includes(log.eventType)) {
+                if (open[cid]) { open[cid].endType = 'relogin'; delete open[cid]; }
+                const s = { kind: 'session', who: w.who, label: w.label, start: t, end: null, endType: '', device: log.device, cid };
+                open[cid] = s; items.push(s);
+            } else if (ACC_OUT.includes(log.eventType)) {
+                const s = open[cid];
+                if (s) { s.end = t; s.endType = log.eventType; delete open[cid]; }
+                else items.push({ kind: 'session', who: (w.who && w.who !== '시스템') ? w.who : '알 수 없음', label: w.label, start: null, end: t, endType: log.eventType, device: log.device, cid });
+            } else if (log.eventType === '인증실패') {
+                const last = items[items.length - 1];
+                if (last && last.kind === 'fail' && last.cid === cid && t && last.end && (t - last.end) < 10 * 60000) { last.count++; last.end = t; }
+                else items.push({ kind: 'fail', who: '⚠ 인증실패', start: t, end: t, count: 1, device: log.device, cid });
+            }
+        });
+        items.forEach(s => {
+            if (s.kind !== 'session' || s.end || s.endType === 'relogin' || !s.start) return;
+            const ttl = (ACC_TTL_MIN[s.label] || ACC_TTL_MIN[s.who] || 60) * 60000;
+            s.expect = new Date(s.start.getTime() + ttl);
+            s.status = now < s.expect.getTime() ? 'online' : 'unknown';
+        });
+        return items.reverse();   // 최신순
+    }
+    function renderAccessLogs(logs) {
+        const content = document.getElementById('logsListContent');
+        const rows = buildAccessRows(logs), today = accDayKey(new Date());
+        const todayWho = new Set(rows.filter(r => r.kind === 'session' && r.start && accDayKey(r.start) === today).map(r => r.who));
+        const onlineN = rows.filter(r => r.status === 'online').length;
+        const failN = rows.filter(r => r.kind === 'fail' && accDayKey(r.start) === today).reduce((a, r) => a + r.count, 0);
+        let html = `<div class="acc-sum"><div><b>${todayWho.size}</b><span>오늘 접속 (명)</span></div><div class="on"><b>${onlineN}</b><span>지금 접속 중</span></div><div class="${failN ? 'warn' : ''}"><b>${failN}</b><span>오늘 인증실패</span></div></div>`;
+        const shown = logWho ? rows.filter(r => r.who === logWho) : rows;
+        if (logWho) html += `<div class="acc-filter"><span>👤 ${escapeHtml(logWho)} 기록만 보는 중</span><button type="button" onclick="setLogWho('')">✕ 전체 보기</button></div>`;
+        if (!shown.length) { content.innerHTML = html + '<div style="text-align:center; padding:30px;">접속 기록 없음</div>'; return; }
+        let day = '';
+        shown.forEach(r => {
+            const d = r.start || r.end, k = accDayKey(d);
+            if (k !== day) { day = k; html += `<div class="acc-day">📅 ${k}${k === today ? ' (오늘)' : ''}</div>`; }
+            if (r.kind === 'fail') {
+                html += `<div class="acc-row acc-fail"><div class="acc-l1"><span class="acc-dot" style="background:#ef4444"></span><span class="acc-who">⚠ 인증실패 ${r.count}회</span></div>` +
+                        `<div class="acc-l2">${accHM(r.start)}${r.count > 1 ? ' ~ ' + accHM(r.end) : ''} · 비밀번호/번호 틀림</div><div class="acc-l3">📱 ${escapeHtml(r.device || '-')}</div></div>`;
+                return;
+            }
+            const st = r.status || (r.end ? 'done' : (r.endType === 'relogin' ? 'unknown' : 'done'));
+            let out;
+            if (r.end) out = `<span class="out">${accHM(r.end)} ${escapeHtml(ACC_OUT_LABEL[r.endType] || r.endType)}</span>`;
+            else if (r.endType === 'relogin') out = `<span class="out">나감 기록 없음 (같은 기기에서 다시 로그인)</span>`;
+            else if (r.status === 'online') out = `<span class="out">접속 중 (${accHM(r.expect)} 자동 잠김 예정)</span>`;
+            else out = `<span class="out">나감 기록 없음 (앱을 그냥 닫은 듯)</span>`;
+            const inTxt = r.start ? `<span class="in">${accHM(r.start)} 들어옴</span> → ` : '<span class="in">들어온 기록 없음</span> → ';
+            const dur = (r.start && r.end) ? accDur(r.end - r.start) : (r.status === 'online' ? accDur(Date.now() - r.start) + '째' : '');
+            const whoArg = escapeHtml(JSON.stringify(r.who));
+            html += `<div class="acc-row st-${st}"><div class="acc-l1"><span class="acc-dot"></span><span class="acc-who" onclick="setLogWho(${whoArg})" title="이 사람 기록만 보기">${escapeHtml(r.who)}</span>${r.label ? `<span class="acc-role">${escapeHtml(r.label)}</span>` : ''}<span class="acc-dur">${dur}</span></div>` +
+                    `<div class="acc-l2">${inTxt}${out}</div><div class="acc-l3">📱 ${escapeHtml(r.device || '-')}</div></div>`;
+        });
+        content.innerHTML = html;
+    }
+    let _accLogs = [];
+    function setLogWho(w) { logWho = w || ''; renderAccessLogs(_accLogs); document.getElementById('logsListContent').scrollTop = 0; }
 
     async function loadSecurityLogs() {
         const content = document.getElementById('logsListContent');
         content.innerHTML = '<div style="text-align:center; padding:40px;">불러오는 중...</div>';
         try {
-            const res = await fetch(apiGetUrl('action=getLogs'), { cache: 'no-store' });
+            const q = logCat === 'access' ? 'action=getLogs&sheet=access'
+                    : (LOG_CAT_TYPES[logCat] ? 'action=getLogs&types=' + encodeURIComponent(LOG_CAT_TYPES[logCat].join(',')) : 'action=getLogs');
+            const res = await fetch(apiGetUrl(q), { cache: 'no-store' });
             const json = await res.json();
             const checkAll = document.getElementById('logCheckAll');
             if (checkAll) checkAll.checked = false;
             updateLogDelBtn();
+            if (logCat === 'access') { _accLogs = (json && json.logs) || []; renderAccessLogs(_accLogs); return; }
             if (!json || !json.logs || json.logs.length === 0) { content.innerHTML = '<div style="text-align:center; padding:40px;">로그 없음</div>'; return; }
             content.innerHTML = json.logs.map(log => {
                 const delKey = (log.row && log.sig) ? `${Number(log.row)}:${String(log.sig).replace(/[^0-9a-f]/gi, '')}` : '';
@@ -6328,7 +6490,7 @@
     }
     async function requestDeleteLogs(params) {
         if (currentRole !== 'dev') { bkNotify('info', '로그 삭제는 개발자만 할 수 있캉!'); return; }
-        const extra = '&clientId=' + encodeURIComponent(getDeviceClientId()) +
+        const extra = (logCat === 'access' ? '&sheet=access' : '') + '&clientId=' + encodeURIComponent(getDeviceClientId()) +
             '&device=' + encodeURIComponent(getDeviceInfo()) +
             '&screenRes=' + encodeURIComponent(`${window.screen.width}x${window.screen.height}`) +
             '&lang=' + encodeURIComponent(navigator.language || '-');
@@ -6357,11 +6519,11 @@
     }
     async function deleteOldLogs() {
         const days = parseInt(document.getElementById('logDelDays').value, 10) || 30;
-        if (!(await bkConfirm(`${days}일 지난 로그를 모두 삭제할까캉?`, { sub: '화면에 안 보이는 오래된 로그도 포함, 되돌릴 수 없어요', ok: '삭제', danger: true }))) return;
+        if (!(await bkConfirm(`${logCat === 'access' ? '접속기록 중 ' : ''}${days}일 지난 로그를 모두 삭제할까캉?`, { sub: '화면에 안 보이는 오래된 로그도 포함, 되돌릴 수 없어요', ok: '삭제', danger: true }))) return;
         requestDeleteLogs('mode=before&days=' + days);
     }
     async function deleteAllLogs() {
-        if (!(await bkConfirm('로그를 전부 삭제할까캉?', { sub: '화면에 안 보이는 오래된 로그까지 모두 지워지고 되돌릴 수 없어요', ok: '전부 삭제', danger: true }))) return;
+        if (!(await bkConfirm(logCat === 'access' ? '접속기록을 전부 삭제할까캉?' : '로그를 전부 삭제할까캉?', { sub: logCat === 'access' ? '"접속기록" 탭만 지워지고(다른 활동 로그는 그대로) 되돌릴 수 없어요' : '화면에 안 보이는 오래된 로그까지 모두 지워지고 되돌릴 수 없어요', ok: '전부 삭제', danger: true }))) return;
         if (!(await bkConfirm('정말 전부 지울까캉?', { sub: '한 번 더 확인해요', ok: '정말 전부 삭제', danger: true }))) return;
         requestDeleteLogs('mode=all');
     }
