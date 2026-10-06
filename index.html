@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.36.2 · b261006";
+        const APP_VERSION = "v2.37.0 · b261006";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -328,11 +328,28 @@
         .bk-v-winter { background-image: var(--bk-winter) !important; }
         .bk-v-sign { background-image: var(--bk-sign) !important; }
         .bk-v-lost { background-image: var(--bk-lost) !important; }
+        /* 🦈 상황별 부캉이 9종 (v2.37.0) — 파일로 따로 두고 그 상황이 될 때만 받음 (첫 화면 무게 그대로) */
+        :root {
+            --bk-megaphone: url("icons/bk/megaphone.webp"); --bk-calendar: url("icons/bk/calendar.webp"); --bk-umbrella: url("icons/bk/umbrella.webp");
+            --bk-summer: url("icons/bk/summer.webp"); --bk-camera: url("icons/bk/camera.webp"); --bk-uniform: url("icons/bk/uniform.webp");
+            --bk-heart: url("icons/bk/heart.webp"); --bk-surprise: url("icons/bk/surprise.webp"); --bk-search: url("icons/bk/search.webp");
+        }
+        .bk-v-megaphone { background-image: var(--bk-megaphone) !important; } .bk-v-calendar { background-image: var(--bk-calendar) !important; }
+        .bk-v-umbrella { background-image: var(--bk-umbrella) !important; } .bk-v-summer { background-image: var(--bk-summer) !important; }
+        .bk-v-camera { background-image: var(--bk-camera) !important; } .bk-v-uniform { background-image: var(--bk-uniform) !important; }
+        .bk-v-heart { background-image: var(--bk-heart) !important; } .bk-v-surprise { background-image: var(--bk-surprise) !important; }
+        .bk-v-search { background-image: var(--bk-search) !important; }
+        /* 빈 화면·불러오는 중: 일정=달력, 공지=메가폰, 검색 결과 없음=돋보기 */
+        .bk-state.bk-s-calendar .bk-img { background-image: var(--bk-calendar) !important; }
+        .bk-state.bk-s-megaphone .bk-img { background-image: var(--bk-megaphone) !important; }
+        .bk-state.bk-s-search .bk-img { background-image: var(--bk-search) !important; transform: none; }
         /* 무드: html.bk-mood-* 가 붙으면 헤더·로딩·잠금화면 부캉이가 그 표정으로 */
         html.bk-mood-win .bk-head, html.bk-mood-win .bk-mini, html.bk-mood-win .bk-state .bk-img { background-image: var(--bk-win); }
         html.bk-mood-sad .bk-head, html.bk-mood-sad .bk-mini, html.bk-mood-sad .bk-state .bk-img { background-image: var(--bk-sad); }
         html.bk-mood-cheer .bk-head, html.bk-mood-cheer .bk-mini, html.bk-mood-cheer .bk-state .bk-img { background-image: var(--bk-cheer); }
         html.bk-mood-sleep .bk-head, html.bk-mood-sleep .bk-mini, html.bk-mood-sleep .bk-state .bk-img, html.bk-mood-sleep .bk-lock { background-image: var(--bk-sleep); }
+        html.bk-mood-rain .bk-head, html.bk-mood-rain .bk-mini, html.bk-mood-rain .bk-state .bk-img { background-image: var(--bk-umbrella); }
+        html.bk-mood-summer .bk-head, html.bk-mood-summer .bk-mini, html.bk-mood-summer .bk-state .bk-img { background-image: var(--bk-summer); }
         html.bk-mood-winter .bk-head, html.bk-mood-winter .bk-mini, html.bk-mood-winter .bk-state .bk-img, html.bk-mood-winter .bk-lock { background-image: var(--bk-winter); }
         .bk-state.lost .bk-img { background-image: var(--bk-lost) !important; width: 110px; height: 110px; transform: none; }
         .bk-state.lost .bk-msg { color: #64748b; }
@@ -389,6 +406,11 @@
         .bk-note.info .bk-note-bub { border-color: #d97706; }
         .bk-note.sleep .bk-note-bub { border-color: #5b6f99; }
         .bk-note.info .bk-note-img, .bk-img.bkn-info { background-image: var(--bk-sign) !important; animation: bkHop .7s ease; position: relative; }
+        .bk-note[data-img="megaphone"] .bk-note-img, .bk-img.bkn-x-megaphone { background-image: var(--bk-megaphone) !important; }
+        .bk-note[data-img="calendar"] .bk-note-img, .bk-img.bkn-x-calendar { background-image: var(--bk-calendar) !important; }
+        .bk-note[data-img="camera"] .bk-note-img, .bk-img.bkn-x-camera { background-image: var(--bk-camera) !important; }
+        .bk-note[data-img="uniform"] .bk-note-img, .bk-img.bkn-x-uniform { background-image: var(--bk-uniform) !important; }
+        .bk-note[data-img="heart"] .bk-note-img, .bk-img.bkn-x-heart { background-image: var(--bk-heart) !important; }
         .bk-note.sleep .bk-note-img, .bk-img.bkn-sleep { background-image: var(--bk-sleep) !important; animation: bkNod 2.4s ease-in-out infinite; }
         .bk-note.info .bk-note-img::after, .bk-img.bkn-info::after, .bk-ask-img::after { content: '!'; position: absolute; left: 19%; width: 63%; top: 53%; height: 25%;
             display: flex; align-items: center; justify-content: center; font-weight: 900; line-height: 1; color: #c8102e; font-size: 14px; }
@@ -404,6 +426,8 @@
             transform: translateY(10px) scale(.97); transition: transform .22s cubic-bezier(.3, 1.4, .5, 1); }
         .bk-ask.on .bk-ask-card { transform: none; }
         .bk-ask-top { display: flex; align-items: flex-start; gap: 6px; }
+        .bk-ask.danger .bk-ask-img { background-image: var(--bk-surprise) !important; }
+        .bk-ask.danger .bk-ask-img::after { content: none !important; }
         .bk-ask-img { width: 64px; height: 66px; flex: 0 0 auto; background-image: var(--bk-sign); position: relative; filter: drop-shadow(0 3px 4px rgba(0,0,0,.2)); }
         .bk-ask-img::after { content: '?'; color: #0b2240; font-size: 17px; }
         .bk-ask-bub { position: relative; flex: 1; min-width: 0; margin-top: 6px; background: #f1f5fb; color: #0b2240; border: 2px solid #234164; border-radius: 14px;
@@ -3111,14 +3135,14 @@
 
         const list = visibleEvents();
         const title = document.getElementById('calTitle');
-        if (!schedLoaded && schedLoading) { body.innerHTML = bkState('loading', '일정을 불러오는 중...'); }
+        if (!schedLoaded && schedLoading) { body.innerHTML = bkState('loading bk-s-calendar', '일정을 불러오는 중...'); }
         if (calView === 'month') { title.textContent = `${calCursor.getFullYear()}년 ${calCursor.getMonth() + 1}월`; body.innerHTML = renderMonth(list); }
         else if (calView === 'week') {
             const ws = weekStartOf(calCursor), we = new Date(ws.getFullYear(), ws.getMonth(), ws.getDate() + 6);
             title.textContent = `${ws.getMonth() + 1}.${ws.getDate()} – ${we.getMonth() + 1}.${we.getDate()}`;
             body.innerHTML = renderWeek(list, ws);
         } else { title.textContent = calShowPast ? '전체 일정' : '다가오는 일정'; body.innerHTML = renderAgenda(list); }
-        if (!schedLoaded && schedLoading && !list.length) body.innerHTML = bkState('loading', '일정을 불러오는 중...');
+        if (!schedLoaded && schedLoading && !list.length) body.innerHTML = bkState('loading bk-s-calendar', '일정을 불러오는 중...');
     }
 
     function renderMonth(list) {
@@ -3191,7 +3215,7 @@
         const items = calShowPast ? list : list.filter(ev => ev.date >= today);
         let html = '<div class="agenda">';
         if (!calShowPast) html += `<button type="button" class="agenda-past-toggle" onclick="calShowPast=true;renderSchedule()">▲ 지난 일정도 보기</button>`;
-        if (!items.length) html += bkState('empty', '예정된 일정이 없습니다', '푹 쉬는 중이캉~');
+        if (!items.length) html += bkState('empty bk-s-calendar', '예정된 일정이 없습니다', '푹 쉬는 중이캉~');
         let lastDate = '';
         items.forEach(ev => {
             if (ev.date !== lastDate) {
@@ -3351,7 +3375,7 @@
             closeModal('eventEditModal');
             calSelected = ev.date; calCursor = dateOf(ev.date);
             renderSchedule();
-            bkNotify('done', '일정 저장 완료캉! ✓');
+            bkNotify('done', '일정 저장 완료캉! ✓', null, { img: 'calendar' });
         } catch (err) { bkNotify('fail', null, err.message); }
         finally { btn.disabled = false; btn.textContent = '저장'; }
     }
@@ -3380,7 +3404,7 @@
             closeModal('eventDetailModal');
             renderSchedule(); renderNextEventBanner();
             bkVerifyLater('event', [{ id: id }], 'delete');
-            bkNotify('done', '일정 삭제 완료캉! ✓');
+            bkNotify('done', '일정 삭제 완료캉! ✓', null, { img: 'calendar' });
         } catch (err) { bkNotify('fail', '앗, 삭제가 안 됐캉…', err.message); }
     }
 
@@ -3447,7 +3471,7 @@
             closeModal('eventImportModal');
             calSelected = list[0].date; calCursor = dateOf(list[0].date);
             renderSchedule();
-            bkNotify('done', `일정 ${list.length}개 저장 완료캉! ✓`);
+            bkNotify('done', `일정 ${list.length}개 저장 완료캉! ✓`, null, { img: 'calendar' });
         } catch (err) { bkNotify('fail', null, err.message); b.disabled = false; }
     }
 
@@ -3621,9 +3645,9 @@
         const cats = ['전체'].concat(Object.keys(NOTICE_CATS).filter(c => noticeList.some(n => n.category === c)));
         if (cats.indexOf(noticeCatFilter) === -1) noticeCatFilter = '전체';
         document.getElementById('noticeCats').innerHTML = cats.length > 2 ? cats.map(c => `<button type="button" class="cal-filter ${c === noticeCatFilter ? 'active' : ''}" onclick="noticeCatFilter='${c}';renderNotices()">${c}</button>`).join('') : '';
-        if (!noticeLoaded) { listEl.innerHTML = noticeLoading ? bkState('loading', '공지사항을 불러오는 중...') : bkState('empty', '공지사항이 없습니다', '조용하캉~'); return; }
+        if (!noticeLoaded) { listEl.innerHTML = noticeLoading ? bkState('loading bk-s-megaphone', '공지사항을 불러오는 중...') : bkState('empty bk-s-megaphone', '공지사항이 없습니다', '조용하캉~'); return; }
         const list = sortedNotices().filter(n => noticeCatFilter === '전체' || n.category === noticeCatFilter);
-        if (!list.length) { listEl.innerHTML = bkState('empty', '공지사항이 없습니다', '조용하캉~'); return; }
+        if (!list.length) { listEl.innerHTML = bkState('empty bk-s-megaphone', '공지사항이 없습니다', '조용하캉~'); return; }
         listEl.innerHTML = list.map(n => {
             const cm = noticeCatMeta(n.category);
             const opened = noticeOpenId === n.id;
@@ -3778,7 +3802,7 @@
             noticeOpenId = n.id;
             closeModal('noticeEditModal');
             renderNotices();
-            bkNotify('done', '공지 저장 완료캉! ✓');
+            bkNotify('done', '공지 저장 완료캉! ✓', null, { img: 'megaphone' });
         } catch (err) { bkNotify('fail', null, err.message); }
         finally { btn.disabled = false; btn.textContent = '저장'; }
     }
@@ -3787,7 +3811,7 @@
         if (!n) return;
         const pin = n.pinned !== 'Y';
         bkNotify('saving', pin ? '공지 고정하는 중이캉' : '고정 푸는 중이캉');
-        try { await saveNoticeToServer(Object.assign({}, n, { pinned: pin ? 'Y' : 'N' })); bkNotify('done', pin ? '공지 맨 위에 고정했캉! 📌' : '고정 풀었캉! ✓'); }
+        try { await saveNoticeToServer(Object.assign({}, n, { pinned: pin ? 'Y' : 'N' })); bkNotify('done', pin ? '공지 맨 위에 고정했캉! 📌' : '고정 풀었캉! ✓', null, { img: 'megaphone' }); }
         catch (err) { bkNotify('fail', null, err.message); }
     }
     async function deleteNotice(id) {
@@ -3800,7 +3824,7 @@
             sendActivityLog('공지삭제', currentRole, n.title);
             renderNotices();
             bkVerifyLater('notice', [{ id: id }], 'delete');
-            bkNotify('done', '공지 삭제 완료캉! ✓');
+            bkNotify('done', '공지 삭제 완료캉! ✓', null, { img: 'megaphone' });
         } catch (err) { bkNotify('fail', '앗, 삭제가 안 됐캉…', err.message); }
     }
 
@@ -4157,7 +4181,7 @@
                 if (applyLoginResult(login)) {
                     finishUnlock();
                     setTimeout(() => sendActivityLog('최초등록', roleSelect, `${nameInput} (${roleSelect}) 등록 후 로그인`), 5000);   // v2.36.1: 명단 먼저
-                    bkNotify('done', '등록 완료캉! 🎉', `${login.name || nameInput} 보호자님으로 등록됐어요 (1시간 동안 유지)`, { ms: 5000 });
+                    bkNotify('done', '등록 완료캉! 🎉', `${login.name || nameInput} 보호자님으로 등록됐어요 (1시간 동안 유지)`, { ms: 5000, img: 'heart' });
                 } else {
                     bkNotify('fail', '앗, 등록이 안 됐캉…', '자녀 이름과 생년월일이 공식 명단과 똑같은지 확인해 주세요. 계속 안 되면 관리자에게 문의해 주세요', { ms: 8000 });
                 }
@@ -4323,7 +4347,7 @@
             await postApi({ action: 'setJerseyColors', colors: jerseyColors });   // no-cors라 응답은 못 읽음 → 설정을 다시 받아 확인
             const j = await fetchSettings();
             if (!j || !j.jerseyColors || normJerseyColor(j.jerseyColors[key]) !== color) throw new Error('서버에 반영되지 않았어요 (권한 또는 네트워크)');
-            bkNotify('done', name + ' 유니폼 색 저장 완료캉! ✓');
+            bkNotify('done', name + ' 유니폼 색 저장 완료캉! ✓', null, { img: 'uniform' });
             sendActivityLog('유니폼색설정', currentRole, `${name} 유니폼 배지 색 → ${color}`);
         } catch (err) {
             jerseyColors = prev; try { localStorage.setItem('daeyeon_jersey_colors', JSON.stringify(jerseyColors)); } catch (e) {}
@@ -4556,7 +4580,7 @@
         try {
             await postApi({ action: 'setUniformActive', active: next });
             sendActivityLog("유니폼접수설정", currentRole, `유니폼 접수 상태 변경: [${next ? 'ON' : 'OFF'}]`);
-            bkNotify('done', `유니폼 접수 ${next ? 'ON' : 'OFF'} 저장 완료캉! ✓`);
+            bkNotify('done', `유니폼 접수 ${next ? 'ON' : 'OFF'} 저장 완료캉! ✓`, null, { img: 'uniform' });
         } catch (err) {
             bkNotify('fail', null, err.message);
         }
@@ -4631,9 +4655,11 @@
         const h = bkNow().getHours();
         const rg = latestResultGame();
         if (rg) { const r = parseResult(rg); if (r.k === 'win') return 'win'; if (r.k === 'lose') return 'sad'; }
+        if (bkWeather && bkWeather.rain && !bkWeather.snow) return 'rain';   // ☔ 비 오는 날은 우산 부캉이 (v2.37.0)
         if (schedLoaded && gamesOn(ymdOf(bkNow())).length) return 'cheer';
         if (h >= 22 || h < 6) return 'sleep';
         if (bkSeason() === 'winter') return 'winter';
+        if (bkSeason() === 'summer') return 'summer';   // ☀️ 6~8월은 부채·아이스크림 부캉이
         return '';
     }
     function applyBkMood() {
@@ -4861,7 +4887,8 @@
     //     휴대폰 기본 확인창 대신 부캉이가 묻는 확인 창 (버튼 두 개, 바깥·Esc = 취소)
     // ==========================================================
     var bkNoteTimer = null, bkNoteAnchor = null, bkNoteIsToast = false, bkAskResolve = null;
-    function bknClear(a) { if (a) a.classList.remove('bkn-saving', 'bkn-done', 'bkn-fail', 'bkn-info', 'bkn-sleep'); }
+    let bkNoteImg = '';   // 알림에 쓸 상황별 부캉이 그림 (v2.37.0) — bkNotify(..., { img: 'camera' })
+    function bknClear(a) { if (a) { a.classList.remove('bkn-saving', 'bkn-done', 'bkn-fail', 'bkn-info', 'bkn-sleep'); Array.from(a.classList).filter(c => c.indexOf('bkn-x-') === 0).forEach(c => a.classList.remove(c)); } }
     function bkNoteState(el) { return ['saving', 'done', 'fail', 'info', 'sleep'].find(s => el.classList.contains(s)) || ''; }
     function bkNoteSetAnchor(a) {
         const el = document.getElementById('bkNote');
@@ -4886,7 +4913,9 @@
         if (!wasOn && !anchor) { el.classList.add('toast'); el.style.left = ''; el.style.top = ''; void el.offsetWidth; }   // 위에서 내려오는 첫 장면
         bkNoteSetAnchor(anchor);
         el.classList.remove('saving', 'done', 'fail', 'info', 'sleep');
-        if (anchor) { bknClear(anchor); void anchor.offsetWidth; anchor.classList.add('bkn-' + state); }
+        bkNoteImg = (opts && opts.img && state !== 'fail') ? String(opts.img) : '';
+        if (bkNoteImg) el.dataset.img = bkNoteImg; else delete el.dataset.img;
+        if (anchor) { bknClear(anchor); void anchor.offsetWidth; anchor.classList.add('bkn-' + state); if (bkNoteImg) anchor.classList.add('bkn-x-' + bkNoteImg); }
         void el.offsetWidth;
         el.classList.add('on', state);
         bkSfx({ done: 'done', fail: 'fail', info: 'info', sleep: 'sleep' }[state]);   // 🔊 저장 중엔 소리 없음
@@ -4900,7 +4929,7 @@
         if (!el) return;
         el.classList.remove('on');
         const a = bkNoteAnchor;
-        setTimeout(() => { if (!el.classList.contains('on')) { bknClear(a); el.classList.remove('saving', 'done', 'fail', 'info', 'sleep'); } }, 400);
+        setTimeout(() => { if (!el.classList.contains('on')) { bknClear(a); el.classList.remove('saving', 'done', 'fail', 'info', 'sleep'); delete el.dataset.img; bkNoteImg = ''; } }, 400);
     }
     function bkNoteFollow() {
         const el = document.getElementById('bkNote');
@@ -4911,6 +4940,7 @@
             bkNoteSetAnchor(now);
             if (!now) return;
             if (st) now.classList.add('bkn-' + st);
+            if (st && bkNoteImg) now.classList.add('bkn-x-' + bkNoteImg);
         }
         const z = (typeof getUiZoom === 'function') ? getUiZoom() : 1;
         const r = bkNoteAnchor.getBoundingClientRect();
@@ -4934,6 +4964,7 @@
         const yes = document.getElementById('bkAskYes'), no = document.getElementById('bkAskNo');
         yes.textContent = opts.ok || '확인'; no.textContent = opts.cancel || '취소';
         yes.classList.toggle('danger', !!opts.danger);
+        box.classList.toggle('danger', !!opts.danger);   // 지우기 등 위험한 확인은 깜짝 놀란 부캉이
         box.hidden = false; void box.offsetWidth; box.classList.add('on');
         bkSfx('ask');
         setTimeout(() => { try { no.focus({ preventScroll: true }); } catch (e) {} }, 60);
@@ -5096,7 +5127,7 @@
         renderBdayBand();   // 🎂 오늘 생일 띠
         if (filtered.length === 0) {
             tableBody.innerHTML = ''; cardContainer.innerHTML = '';
-            notice.innerHTML = bkState('empty', '조건에 맞는 명단이 없습니다.', '어디 숨었캉?');
+            notice.innerHTML = bkState('empty bk-s-search', '조건에 맞는 명단이 없습니다.', '어디 숨었캉?');
             notice.style.display = 'block';
             return;
         }
@@ -5586,7 +5617,7 @@
             });
             sendActivityLog("주문접수", playerName, `${playerName}${playerNo ? ' No.' + playerNo : ''} (${playerGrade}학년) 유니폼 주문 신청 완료`);
             closeModal('uniformModal');
-            bkNotify('done', `${playerName} 선수 유니폼 신청 완료캉! ✓`, '접수 내역은 대표님·총무님이 확인해요');
+            bkNotify('done', `${playerName} 선수 유니폼 신청 완료캉! ✓`, '접수 내역은 대표님·총무님이 확인해요', { img: 'uniform' });
         } catch (err) {
             bkNotify('fail', '앗, 신청이 안 됐캉…', err.message);
         } finally {
@@ -5723,7 +5754,7 @@
         renderCommuteSummary(filtered);
 
         if (title) title.textContent = `🚨 학부모 비상연락망 (${filtered.length}명)`;
-        if (filtered.length === 0) { content.innerHTML = bkState('empty', '검색 결과가 없습니다.', '어디 숨었캉?'); return; }
+        if (filtered.length === 0) { content.innerHTML = bkState('empty bk-s-search', '검색 결과가 없습니다.', '어디 숨었캉?'); return; }
 
         const phoneRow = (roleCls, roleLabel, phone, extraStyle, phoneStyle) => {
             const d = digitsOnly(phone);
@@ -5978,7 +6009,7 @@
             sendActivityLog("사진등록", currentRole, `${uploadTargetPlayer.name} 사진 등록`);
             closeModal('photoUploadModal');
             loadGoogleSheetData();
-            bkNotify('done', `${uploadTargetPlayer.name} 사진 등록 완료캉! ✓`, '명단에 보이기까지 잠시 걸릴 수 있어요');
+            bkNotify('done', `${uploadTargetPlayer.name} 사진 등록 완료캉! ✓`, '명단에 보이기까지 잠시 걸릴 수 있어요', { img: 'camera' });
         } catch (err) { bkNotify('fail', '앗, 사진이 안 올라갔캉…', err.message); } finally { btn.disabled = false; btn.textContent = '구글 드라이브 등록'; }
     }
 
@@ -5990,7 +6021,7 @@
             sendActivityLog("사진삭제", currentRole, `${uploadTargetPlayer.name} 사진 삭제`);
             closeModal('photoUploadModal');
             loadGoogleSheetData();
-            bkNotify('done', '사진 삭제 완료캉! ✓');
+            bkNotify('done', '사진 삭제 완료캉! ✓', null, { img: 'camera' });
         } catch (err) { bkNotify('fail', '앗, 삭제가 안 됐캉…', err.message); }
     }
 
@@ -6035,7 +6066,7 @@
             sendActivityLog("선수정보수정", currentRole, `${infoEditTargetPlayer.name} 정보 수정`);
             closeModal('playerInfoEditModal');
             loadGoogleSheetData();
-            bkNotify('done', `${infoEditTargetPlayer.name} 정보 저장 완료캉! ✓`, '명단에 보이기까지 잠시 걸릴 수 있어요');
+            bkNotify('done', `${infoEditTargetPlayer.name} 정보 저장 완료캉! ✓`, '명단에 보이기까지 잠시 걸릴 수 있어요', { img: 'heart' });
         } catch (err) {
             bkNotify('fail', null, err.message);
         } finally {
@@ -6051,6 +6082,13 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.37.0', d: '2026-10-06', t: '상황별 부캉이 9종', items: [
+            '새 부캉이 그림 9종 추가: 메가폰·달력·우산·여름·카메라·유니폼·하트·깜짝·돋보기 (icons/bk 폴더, 그 상황이 될 때만 받음)',
+            '일정 화면(불러오는 중·일정 없음)과 일정 저장·삭제 알림은 달력 부캉이, 공지 화면과 공지 저장·고정·삭제 알림은 메가폰 부캉이',
+            '사진 등록·삭제는 카메라, 유니폼 신청·색·접수 설정은 유니폼, 보호자 등록·선수 정보 저장은 하트 부캉이가 알려줌',
+            '검색 결과 없음은 돋보기 부캉이, 지우기처럼 위험한 확인 창은 깜짝 놀란 부캉이',
+            '비 오는 날은 우산 부캉이, 6~8월은 부채·아이스크림 여름 부캉이 (승패 결과 표정이 우선)'
+        ] },
         { v: 'v2.36.2', d: '2026-10-06', t: '유니폼 색 설명 쉽게', items: [
             '관리자 ▸ 유니폼 색 설명: 색을 바꾸면 등번호 유니폼 색과 사진 테두리 색이 함께 바뀐다고 안내',
             '"진급해도 학년 기준 유지" → "학년이 올라가면 올라간 학년의 색으로 자동으로 바뀜" (예시 포함)'
