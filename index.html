@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.37.0 · b261006";
+        const APP_VERSION = "v2.37.1 · b261006";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -4018,6 +4018,18 @@
         return `${os} (${browser})`;
     }
 
+    // 로그에 남길·보여줄 역할 이름 (v2.37.1) — super/sub 같은 코드 대신 대표님·코치진처럼
+    const ROLE_KO = { dev: '개발자', super: '대표님', sub: '코치진', general: '총무님', parent: '보호자', guest: '일반 열람자', '미상': '미인증' };
+    // 로그 목록에 보일 짧은 이름: "super [관리자]" → "대표님", "보호자 [김승원 (어머님 · 010-****-1234)]" → "김승원 어머님"
+    function logWhoLabel(raw) {
+        const m = String(raw || '').match(/^(.*?)\s*\[(.*)\]\s*$/);
+        let label = (m ? m[1] : String(raw || '')).trim();
+        let ident = m ? m[2].trim() : '';
+        label = ROLE_KO[label] || label;
+        if (['관리자', '일반열람', '미인증'].includes(ident)) ident = '';
+        if (ident) return ident.replace(/\s*·\s*\d{2,3}-\*{4}-\d{4}/, '').replace(/\s*\(\s*\)/, '').replace(/\s*\(([^()]*)\)\s*$/, ' $1').trim() || label || '-';
+        return label || '-';
+    }
     function sendActivityLog(eventType, role, details) {
         if (!GOOGLE_SCRIPT_UNIFORM_API_URL || GOOGLE_SCRIPT_UNIFORM_API_URL.trim() === "") return;
         const user = getActiveUser();
@@ -4030,7 +4042,7 @@
             action: "logActivity",
             clientId: getDeviceClientId(),
             eventType: eventType,
-            role: (role || "-") + ` [${identityStr}]`,
+            role: user ? `${ROLE_KO[role] || role || '-'} [${identityStr}]` : (ROLE_KO[role] || role || '-'),   // v2.37.1: 관리자는 "대표님"처럼 짧게
             device: getDeviceInfo(),
             screenRes: `${window.screen.width}x${window.screen.height}`,
             lang: navigator.language || navigator.userLanguage || "-",
@@ -6082,6 +6094,11 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.37.1', d: '2026-10-06', t: '로그 이름 간단히', items: [
+            '보안 활동 로그에 "super [관리자]" 대신 대표님·총무님·코치진·개발자처럼 표시 (예전 로그도 같이 정리돼 보임)',
+            '보호자는 "김승원 어머님"처럼 이름만 (가린 전화번호는 표시에서 뺌, 글자 위에 손가락/마우스를 올리면 원래 기록이 보임)',
+            '앞으로 새로 쌓이는 로그도 시트에 "대표님"처럼 짧게 저장'
+        ] },
         { v: 'v2.37.0', d: '2026-10-06', t: '상황별 부캉이 9종', items: [
             '새 부캉이 그림 9종 추가: 메가폰·달력·우산·여름·카메라·유니폼·하트·깜짝·돋보기 (icons/bk 폴더, 그 상황이 될 때만 받음)',
             '일정 화면(불러오는 중·일정 없음)과 일정 저장·삭제 알림은 달력 부캉이, 공지 화면과 공지 저장·고정·삭제 알림은 메가폰 부캉이',
@@ -6418,9 +6435,11 @@
     function accDate(v) { const m = String(v).match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})\D+(\d{1,2}):(\d{2}):(\d{2})/); return m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]) : null; }
     function accWho(log) {   // 인증등급 칸: "역할 [누구]" → { who, label }
         const m = String(log.role || '').match(/^(.*?)\s*\[(.*)\]\s*$/);
-        const label = (m ? m[1] : String(log.role || '')).trim() || '-';
+        const raw = (m ? m[1] : String(log.role || '')).trim() || '-';
+        const label = ROLE_KO[raw] || raw;   // super → 대표님 (v2.37.1)
         const ident = m ? m[2].trim() : '';
         const generic = !ident || ['관리자', '일반열람', '미인증'].includes(ident);
+        if (!generic) return { who: logWhoLabel(log.role), label: log.eventType === '최초등록' ? '보호자' : label };
         if (log.eventType === '최초등록') return { who: generic ? label : ident, label: '보호자' };
         return { who: generic ? label : ident, label: generic ? '' : label };
     }
@@ -6507,7 +6526,7 @@
                 return `
                 <div class="log-item-card${delKey ? ' log-selectable' : ''}">
                     ${delKey ? `<input type="checkbox" class="log-check" data-key="${delKey}" onchange="onLogCheck(this)" aria-label="이 로그 선택">` : ''}
-                    <div class="log-header-row"><span class="log-type-tag log-type-unlock">[${escapeHtml(log.eventType)}] ${escapeHtml(log.role)}</span><span style="display:inline-flex; align-items:center;"><span style="font-size:11px; color:#94a3b8;">${escapeHtml(log.date)}</span>${delKey ? `<button type="button" class="log-del-btn" title="이 로그 삭제" onclick="deleteOneLog('${delKey}')">🗑</button>` : ''}</span></div>
+                    <div class="log-header-row"><span class="log-type-tag log-type-unlock" title="${escapeHtml(log.role)}">[${escapeHtml(log.eventType)}] ${escapeHtml(logWhoLabel(log.role))}</span><span style="display:inline-flex; align-items:center;"><span style="font-size:11px; color:#94a3b8;">${escapeHtml(log.date)}</span>${delKey ? `<button type="button" class="log-del-btn" title="이 로그 삭제" onclick="deleteOneLog('${delKey}')">🗑</button>` : ''}</span></div>
                     <div style="font-size:11px; color:#475569;">📱 <b>${escapeHtml(log.device)}</b>${log.screenRes && log.screenRes !== '-' ? ` · ${escapeHtml(log.screenRes)}` : ''}${log.lang && log.lang !== '-' ? ` · ${escapeHtml(log.lang)}` : ''}</div>
                     <div style="font-size:12px; color:#0f172a; font-weight:600; margin-top:2px;">${escapeHtml(log.details)}</div>
                 </div>`;
