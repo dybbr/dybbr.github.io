@@ -7,7 +7,7 @@
 //   - 구글 시트 / 앱스 스크립트 / 구글 드라이브 사진 등 외부 주소는 절대 건드리지 않는다
 //     (명단·비밀번호·주문 데이터가 캐시에 남아 옛날 값이 보이는 일을 막기 위함).
 // 사이트를 수정해서 올릴 때 이 파일은 바꿀 필요 없음. 캐시 구조를 바꿀 때만 버전을 올린다.
-const CACHE_NAME = 'daeyeon-roster-v1';
+const CACHE_NAME = 'daeyeon-roster-v2';   // v2 (2026-10-07): 주소 뒤 ?… 가 다른 페이지가 따로따로 쌓이던 저장본 정리
 
 self.addEventListener('install', function (event) {
     self.skipWaiting();
@@ -27,12 +27,15 @@ self.addEventListener('fetch', function (event) {
     const url = new URL(req.url);
     if (url.origin !== self.location.origin) return;                   // 외부(구글) 요청은 그대로 통과
     if (url.pathname.indexOf('/audio/') === 0) return;                 // 🎵 배경음악 mp3는 브라우저가 직접 받으며 재생 (캐시에 안 담음)
+    if (url.searchParams.has('vcheck')) return;                        // 🆕 새 버전 확인(맨 앞 몇 KB만 읽음)은 그대로 통과 — 저장 안 함
 
     event.respondWith(
         fetch(req, { cache: 'no-store' }).then(function (res) {
             if (res && res.ok) {
                 const copy = res.clone();
-                caches.open(CACHE_NAME).then(function (c) { c.put(req, copy); }).catch(function () {});
+                // 화면(페이지)은 주소 뒤 ?… 를 떼고 한 칸에만 저장 (player.html?path=… 마다 따로 쌓이지 않게)
+                const key = req.mode === 'navigate' ? url.origin + url.pathname : req;
+                caches.open(CACHE_NAME).then(function (c) { c.put(key, copy); }).catch(function () {});
             }
             return res;
         }).catch(function () {
