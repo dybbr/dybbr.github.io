@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.37.1 · b261006";
+        const APP_VERSION = "v2.38.0 · b261007";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -67,6 +67,8 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
         }
+        // 🆕 새 버전 알림에서 [새로고침]으로 들어온 경우 주소창의 ?r=… 표시를 지움 (v2.38.0)
+        try { if (/[?&]r=\d/.test(location.search)) history.replaceState(null, '', location.pathname + location.hash); } catch (e) {}
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
@@ -445,6 +447,22 @@
         .bk-ask-btns button:focus { outline: none; }
         .bk-ask-btns button:focus-visible { outline: 3px solid #29a8e0; outline-offset: 2px; }
         @media (prefers-reduced-motion: reduce) { .bk-ask, .bk-ask-card { transition: none; } .bkn-info, .bkn-sleep { animation: none !important; } }
+        /* 🆕 새 버전 알림 띠 (v2.38.0) — 화면 아래쪽, 메가폰 부캉이 + [새로고침] · 팝업창이 열려 있을 땐 숨었다가 닫으면 다시 보임 */
+        .bk-upd { position: fixed; z-index: 100001; left: 12px; right: 64px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0 auto; max-width: 440px;
+            display: flex; align-items: center; gap: 6px; padding: 7px 10px 7px 4px; background: #fff; color: #0b2240; border: 2px solid #234164; border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(11,34,64,.28); zoom: calc(1 / var(--ui-zoom, 1)); animation: bkUpdIn .35s cubic-bezier(.3, 1.4, .5, 1); }
+        .bk-upd[hidden] { display: none; }
+        body:has(.modal[style*="flex"]) .bk-upd, html:has(.bk-ask.on) .bk-upd { display: none; }
+        .bk-upd-img { width: 46px; height: 48px; flex: 0 0 auto; background-image: var(--bk-megaphone); filter: drop-shadow(0 2px 3px rgba(0,0,0,.25)); }
+        .bk-upd-txt { flex: 1; min-width: 0; line-height: 1.3; word-break: keep-all; overflow-wrap: anywhere; }
+        .bk-upd-txt b { display: block; font-size: 14.5px; font-weight: 800; white-space: nowrap; }
+        .bk-upd-txt small { display: block; font-size: 11.5px; font-weight: 600; color: #64748b; }
+        .bk-upd-txt small i { font-style: normal; white-space: nowrap; }
+        .bk-upd-go { flex: 0 0 auto; min-height: 40px; padding: 0 13px; border: 0; border-radius: 12px; background: #0b2240; color: #fff; font: inherit; font-size: 14px; font-weight: 800; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        .bk-upd-x { position: absolute; top: -10px; right: -10px; width: 26px; height: 26px; border: 2px solid #234164; border-radius: 50%; background: #fff; color: #234164; font-size: 12px; line-height: 1; font-weight: 800; cursor: pointer; padding: 0; -webkit-tap-highlight-color: transparent; }
+        .bk-upd-go:focus-visible, .bk-upd-x:focus-visible { outline: 3px solid #29a8e0; outline-offset: 2px; }
+        @keyframes bkUpdIn { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+        @media (prefers-reduced-motion: reduce) { .bk-upd { animation: none; } }
 
         /* 3️⃣ 생일 — 카드에 모자 부캉이, 명단 위에 축하 띠 */
         .bday-band { display: none; align-items: center; gap: 10px; background: linear-gradient(90deg, #fff3c4, #ffe0ec); border: 1px solid #f7d58b; border-radius: 12px; padding: 7px 12px; font-weight: 800; font-size: 13px; color: #7a4a00; margin-bottom: 12px; }
@@ -2104,6 +2122,7 @@
 <div class="mini-head" id="miniHead" aria-hidden="true" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })" title="맨 위로"><div class="szn-layer" id="sznMini" aria-hidden="true"></div><span class="bk-img bk-mini"></span><b>대연초 야구부 명단</b><small id="miniHeadSub">⬆ 맨 위로</small></div>
 <div class="bk-note" id="bkNote" role="status" aria-live="polite" onclick="bkNoteHide()"><span class="bk-img bk-note-img" aria-hidden="true"></span><div class="bk-note-bub"></div></div>
 <div class="bk-ask" id="bkAsk" hidden role="dialog" aria-modal="true" aria-labelledby="bkAskText" onclick="if (event.target === this) bkAskClose(false)"><div class="bk-ask-card"><div class="bk-ask-top"><span class="bk-img bk-ask-img" aria-hidden="true"></span><div class="bk-ask-bub"><b id="bkAskText"></b><small id="bkAskSub" hidden></small></div></div><div class="bk-ask-btns"><button type="button" id="bkAskNo" onclick="bkAskClose(false)">취소</button><button type="button" id="bkAskYes" onclick="bkAskClose(true)">확인</button></div></div></div>
+<div class="bk-upd" id="bkUpd" hidden role="status" aria-live="polite"><span class="bk-img bk-upd-img" aria-hidden="true"></span><div class="bk-upd-txt"><b>새 버전 나왔캉! 🎉</b><small>누르면 최신 화면으로 <i>(로그인 유지)</i></small></div><button type="button" class="bk-upd-go" onclick="bkUpdReload()">새로고침</button><button type="button" class="bk-upd-x" onclick="bkUpdLater()" aria-label="나중에" title="나중에 (1시간 뒤 다시 알림)">✕</button></div>
 
 <div class="container">
     <!-- 🦈 당겨서 새로고침 마운드 (휴대폰 터치로 명단을 아래로 당기면 열림) -->
@@ -4989,6 +5008,61 @@
         if (r) r(!!ok);
     }
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && bkAskResolve) bkAskClose(false); });
+
+    // ==========================================================
+    // 🆕 새 버전 알림 (v2.38.0)
+    //   화면을 새로고침 없이 오래 켜두면 예전 코드가 계속 돌아감 (예: 로그 이름이 옛날 형식으로 남음)
+    //   → 화면으로 돌아올 때 + 켜져 있는 동안, 10분에 한 번만 서버 index.html 의 맨 앞부분(버전 줄)만 읽어서
+    //     지금 화면보다 APP_VERSION 이 높으면 아래쪽에 부캉이 띠: [새로고침] = 최신 화면(로그인 유지), ✕ = 1시간 뒤 다시 알림
+    //   버전 번호(v2.38.0)만 비교하므로 사이트 수정 때 지금처럼 APP_VERSION 만 올리면 됨
+    // ==========================================================
+    var bkUpdNew = '', bkUpdSnooze = 0;
+    function bkVerNum(v) { const m = String(v || '').match(/v?(\d+)\.(\d+)\.(\d+)/); return m ? (+m[1]) * 1e6 + (+m[2]) * 1e3 + (+m[3]) : 0; }
+    function bkUpdShow() {
+        const el = document.getElementById('bkUpd');
+        if (!el || !bkUpdNew || Date.now() < bkUpdSnooze || !el.hidden) return;
+        el.title = '지금 ' + String(APP_VERSION).split(' ')[0] + ' → 새 버전 ' + bkUpdNew.split(' ')[0];
+        el.hidden = false;
+        if (typeof bkSfx === 'function') bkSfx('info');
+    }
+    function bkUpdLater() {
+        const el = document.getElementById('bkUpd'); if (el) el.hidden = true;
+        bkUpdSnooze = Date.now() + 60 * 60 * 1000;
+    }
+    function bkUpdReload() {
+        const el = document.getElementById('bkUpd'); if (el) el.hidden = true;
+        location.replace(location.pathname + '?r=' + Date.now() + location.hash);   // ?r= 로 중간 저장본(CDN) 건너뛰고 새로 받음
+    }
+    (function () {
+        let lastCheck = Date.now(), busy = false;
+        async function check() {
+            if (busy || document.hidden || navigator.onLine === false) return;
+            if (bkUpdNew) { bkUpdShow(); return; }                     // 이미 찾았으면 다시 받지 않고 띠만 (✕ 1시간 지나면 다시)
+            if (Date.now() - lastCheck < 10 * 60 * 1000) return;
+            busy = true; lastCheck = Date.now();
+            try {
+                const res = await fetch('index.html?vcheck=' + Math.floor(Date.now() / 60000), { cache: 'no-store' });
+                if (!res.ok) return;
+                let txt = '', m = null;
+                if (res.body && res.body.getReader) {                     // 맨 앞 몇 KB만 읽고 끊음 (전체 600KB 안 받음)
+                    const rd = res.body.getReader(), dec = new TextDecoder();
+                    while (!m && txt.length < 300000) {
+                        const r = await rd.read();
+                        if (r.done) break;
+                        txt += dec.decode(r.value, { stream: true });
+                        m = txt.match(/APP_VERSION\s*=\s*"([^"]+)"/);
+                    }
+                    rd.cancel().catch(() => {});
+                } else { txt = await res.text(); m = txt.match(/APP_VERSION\s*=\s*"([^"]+)"/); }
+                if (m && bkVerNum(m[1]) > bkVerNum(APP_VERSION)) { bkUpdNew = m[1]; bkUpdShow(); }
+            } catch (e) {} finally { busy = false; }
+        }
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) check(); });
+        window.addEventListener('pageshow', e => { if (e.persisted) check(); });
+        window.addEventListener('online', check);
+        setInterval(check, 5 * 60 * 1000);
+        window.bkUpdCheckNow = function () { lastCheck = 0; bkUpdNew = ''; bkUpdSnooze = 0; return check(); };   // 개발자 확인용 (콘솔)
+    })();
     function bkNoteAnchorEl() {
         const lock = document.getElementById('lockOverlay');
         if (lock && getComputedStyle(lock).display !== 'none') {   // 잠금화면: 가운데 큰 부캉이가 말함 (키보드가 올라와 숨었으면 위에서 내려옴)
@@ -6094,6 +6168,13 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.38.0', d: '2026-10-07', t: '새 버전 알림', items: [
+            '휴대폰에서 화면을 새로고침 없이 오래 켜두면 예전 화면이 계속 돌아가던 문제 → 새 버전이 올라오면 아래쪽에 메가폰 부캉이가 "새 버전 나왔캉!" 알림',
+            '[새로고침]을 누르면 바로 최신 화면으로 바뀜 (로그인은 그대로 유지), ✕를 누르면 1시간 뒤에 다시 알려줌',
+            '화면으로 돌아올 때와 켜져 있는 동안 10분에 한 번만, 서버 파일의 맨 앞 버전 줄만 살짝 읽어서 확인 (데이터 거의 안 씀)',
+            '팝업창(정보 수정 등)이 열려 있을 땐 알림을 숨겼다가 닫으면 다시 보여줌 — 작성 중인 내용이 날아가지 않게',
+            '서비스워커(sw.js) 정리: 버전 확인 요청은 저장하지 않고, 선수 상세 화면 등 주소가 다른 페이지가 하나씩 계속 쌓이던 저장본도 한 번 비움'
+        ] },
         { v: 'v2.37.1', d: '2026-10-06', t: '로그 이름 간단히', items: [
             '보안 활동 로그에 "super [관리자]" 대신 대표님·총무님·코치진·개발자처럼 표시 (예전 로그도 같이 정리돼 보임)',
             '보호자는 "김승원 어머님"처럼 이름만 (가린 전화번호는 표시에서 뺌, 글자 위에 손가락/마우스를 올리면 원래 기록이 보임)',
