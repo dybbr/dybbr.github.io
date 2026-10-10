@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.41.17 · b261010";
+        const APP_VERSION = "v2.41.18 · b261010";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1035,6 +1035,17 @@
         .btn-cancel { background: #f1f5f9; border: 1px solid var(--card-border); padding: 7px 12px; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; }
         .btn-save { background: var(--kbo-blue); color: #ffffff; border: none; padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; }
 
+        /* v2.41.18: 유니폼 신청 창 윗부분 — 설명 한 줄, 「대상 선수 선택」 옆에 고르기 칸, 학년·키·몸무게 한 줄 */
+        .uni-guide { font-size: 12px; margin: 0 0 10px; line-height: 1.4; }
+        #uniformModal .uni-player-row { flex-direction: row; align-items: center; gap: 8px; }
+        #uniformModal .uni-player-row > label { flex: 0 0 auto; white-space: nowrap; }
+        #uniformModal .uni-player-row > select { flex: 1 1 auto; min-width: 0; width: auto; }
+        .uni-body-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; border-radius: 8px; padding: 6px 10px; margin-bottom: 12px; }
+        .uni-body-row label { display: inline-flex; align-items: center; gap: 4px; min-width: 0; font-size: 12px; font-weight: 700; color: #64748b; white-space: nowrap; }
+        .uni-body-row input { width: 3.4em; min-width: 0; box-sizing: border-box; padding: 5px 3px; border: 1px solid var(--card-border); border-radius: 6px; font-size: 13px; font-weight: 800; text-align: center; }
+        .uni-body-row .ub-g input { width: 3.9em; border-color: transparent; background: transparent; padding-left: 0; padding-right: 0; }   /* 학년은 선수를 고르면 자동으로 채워지는 표시용 */
+        .uni-body-row .u { font-size: 11px; font-weight: 600; margin-left: -1px; }
+        .uni-body-row input::placeholder { color: #b6c0cc; font-weight: 500; }   /* 예시 숫자(153·46)가 실제 값처럼 보이지 않게 연하게 */
         .uniform-item-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 6px; border-bottom: 1px solid #f1f5f9; gap: 8px; font-size: 13px; }
         .uniform-item-name { flex: 1.1; display: flex; align-items: center; gap: 6px; font-weight: 700; color: #1e293b; font-size: 13px; }
         .uniform-item-size { flex: 1.2; padding: 6px 8px !important; font-size: 12px !important; }
@@ -2678,26 +2689,16 @@
     <div class="modal-content">
         <div class="modal-header">👕 유니폼 주문 신청</div>
         <div class="modal-scroll-body">
-            <p style="font-size: 12px; color: #64748b; margin-bottom: 12px; line-height: 1.4;">
-                선수를 선택하시면 학년과 체격이 자동 입력됩니다. 필요한 의류에 체크하고 사이즈를 선택해 주세요.
-            </p>
-            <div class="form-group">
-                <label>대상 선수 선택 *</label>
+            <!-- v2.41.18: 윗부분을 한 줄씩 — 설명 한 줄 / 대상 선수 + 고르기 / 학년·키·몸무게 -->
+            <p class="uni-guide" style="color: #64748b;">선수를 고르고 필요한 품목을 선택해 주세요.</p>
+            <div class="form-group uni-player-row">
+                <label for="ordPlayerSelect">대상 선수 선택 *</label>
                 <select id="ordPlayerSelect" style="font-weight: 800; color: var(--kbo-blue);" onchange="handleUniformPlayerChange(this.value)"></select>
             </div>
-            <div style="display: flex; gap: 8px; background: #f8fafc; border: 1px solid var(--card-border); border-radius: 8px; padding: 10px; margin-bottom: 12px;">
-                <div style="flex: 1;">
-                    <label style="font-size: 11px; font-weight: 700; color: #64748b;">학년</label>
-                    <input type="text" id="ordPlayerGrade" style="width: 100%; font-weight: 800;" placeholder="학년" readonly>
-                </div>
-                <div style="flex: 1.2;">
-                    <label style="font-size: 11px; font-weight: 700; color: #64748b;">키 (cm)</label>
-                    <input type="text" id="ordPlayerHeight" style="width: 100%;" placeholder="예: 153">
-                </div>
-                <div style="flex: 1.2;">
-                    <label style="font-size: 11px; font-weight: 700; color: #64748b;">몸무게 (kg)</label>
-                    <input type="text" id="ordPlayerWeight" style="width: 100%;" placeholder="예: 46">
-                </div>
+            <div class="uni-body-row" style="background: #f8fafc; border: 1px solid var(--card-border);">
+                <label class="ub-g">학년<input type="text" id="ordPlayerGrade" placeholder="-" readonly tabindex="-1"></label>
+                <label>키<input type="text" id="ordPlayerHeight" inputmode="decimal" placeholder="153"><span class="u">cm</span></label>
+                <label>몸무게<input type="text" id="ordPlayerWeight" inputmode="decimal" placeholder="46"><span class="u">kg</span></label>
             </div>
 
             <div class="form-group">
@@ -6039,7 +6040,7 @@
         select.innerHTML = '';
         const first = document.createElement('option');
         first.value = '';
-        first.textContent = '-- 선수를 선택해 주세요 --';
+        first.textContent = '선수를 골라 주세요';   // v2.41.18: 「대상 선수 선택」 옆 한 줄에 들어가게 짧게
         select.appendChild(first);
 
         // 학부모(로그인된 일반 사용자)는 본인 자녀(형제자매 포함)만 선택 가능. 관리자/개발자는 전체 선수 선택 가능.
@@ -6635,6 +6636,11 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.41.18', d: '2026-10-10', t: '유니폼 신청 창 윗부분 한 줄씩', items: [
+            '맨 위 설명을 한 줄로: 「선수를 고르고 필요한 품목을 선택해 주세요.」',
+            '「대상 선수 선택」 바로 옆에 선수 고르기 칸을 붙여 한 줄로 (안내 글자도 「선수를 골라 주세요」로 짧게)',
+            '학년 · 키(cm) · 몸무게(kg)를 작게 줄여 한 줄로 (키·몸무게는 숫자 자판이 열림)'
+        ] },
         { v: 'v2.41.17', d: '2026-10-10', t: '유니폼 주문 창 한 줄 배치', items: [
             '바지도 허리 · 기장 · 수량 칸을 이름 옆 한 줄에 나란히 (미니 태블릿)',
             '스마트폰도 품목마다 이름 · 사이즈 · 수량을 한 줄로 — 칸 여백과 화살표를 줄이고, 바지 이름은 「바지」 아래 작게 「허리/기장」',
