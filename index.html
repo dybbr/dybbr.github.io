@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.41.8 · b261010";
+        const APP_VERSION = "v2.41.9 · b261010";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -3651,7 +3651,7 @@
         const val = parts.join(' + ');
         document.getElementById('evDress').value = val;
         const pv = document.getElementById('evDressPrev');
-        if (pv) { pv.textContent = val || '안 정함'; pv.classList.toggle('empty', !val); }   // v2.41.6: 「복장」 이름표 오른쪽에 표시
+        if (pv) { pv.textContent = val || '아직 선택하지 않았어요'; pv.classList.toggle('empty', !val); }   // v2.41.6: 「복장」 이름표 오른쪽에 표시
     }
     // id: 기존 일정 수정 / defaultDate: 새 일정의 날짜 / draft+onSave: 붙여넣기 미리보기 항목 수정
     function openEventEditor(id, defaultDate, draft, onSave) {
@@ -6524,6 +6524,9 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.41.9', d: '2026-10-10', t: '복장 문구', items: [
+            '복장을 고르지 않았을 때 "안 정함" 대신 "아직 선택하지 않았어요"로 표시'
+        ] },
         { v: 'v2.41.8', d: '2026-10-10', t: '경기 결과·학년 한 줄씩', items: [
             '"경기 결과 / 점수 입력" 이름표를 두 줄로 줄여 아직·승리·패배·무승부 버튼 왼쪽에 → 한 줄 줄임',
             '대상 학년은 "학년" 이름표 옆에 전체·6·5·4·3·2·1 버튼을 나란히 (설명 문구 뺌), 버튼 높이 40px로 키움',
