@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.41.3 · b261010";
+        const APP_VERSION = "v2.41.4 · b261010";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -2447,7 +2447,7 @@
             <div class="form-group ev-inline"><label for="evTitle">제목</label><input type="text" id="evTitle" maxlength="60" placeholder="비우면 구분으로 표시 (예: 회장기)"></div>
             <div class="form-group ev-inline"><label for="evPlace">장소</label><input type="text" id="evPlace" maxlength="60" placeholder="예: 기장리틀구장"></div>
             <div class="form-group">
-                <label>대상 학년</label>
+                <label>대상 학년 <span class="lbl-hint">· 학부모님 화면 "우리 아이" 필터 기준</span></label>
                 <div class="grade-checks" id="evGrades">
                     <label><input type="checkbox" value="전체" onchange="onEvGradeAll(this)"> 전체</label>
                     <label><input type="checkbox" value="6"> 6</label>
@@ -2457,7 +2457,6 @@
                     <label><input type="checkbox" value="2"> 2</label>
                     <label><input type="checkbox" value="1"> 1</label>
                 </div>
-                <span class="form-hint">학부모님 화면의 "우리 아이" 필터 기준이에요</span>
             </div>
             <div class="form-group ev-inline"><label for="evTarget">참가선수</label><input type="text" id="evTarget" maxlength="80" placeholder="예: 6학년 + 민준, 승환"></div>
             <div class="form-group ev-inline"><label for="evMeet">집합·출발</label><input type="text" id="evMeet" maxlength="100" placeholder="예: 06:30 학교출발"></div>
@@ -6471,6 +6470,9 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.41.4', d: '2026-10-10', t: '대상 학년 안내 옆으로', items: [
+            '"학부모님 화면 우리 아이 필터 기준" 안내를 대상 학년 이름표 옆으로 옮겨서 한 줄 더 줄임'
+        ] },
         { v: 'v2.41.3', d: '2026-10-10', t: '일정 입력 창 세로 줄이기', items: [
             '"점수를 넣으면 승·패가 자동" 안내를 점수 (선택) 이름표 옆으로 옮겨서 한 줄 줄임',
             '제목 · 장소 · 참가선수 · 집합·출발 · 메모는 이름표를 입력칸 왼쪽에 나란히 → 칸마다 한 줄씩 줄어서 한 화면에 더 많이 보임'
