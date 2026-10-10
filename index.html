@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.41.22 · b261011";
+        const APP_VERSION = "v2.41.23 · b261011";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -4016,13 +4016,22 @@
             }
         });
         const baseDay = dateOf(ymdOf(base));
-        function resolveDate(mon, day) {
+        // v2.41.23: 「3일(토)」처럼 요일이 적혀 있으면 요일이 맞는 날짜를 고름 (10월 11일에 붙여넣은 「3일(토)」 → 11/3(화)가 아니라 10/3(토))
+        const DOW_IDX = { '일': 0, '월': 1, '화': 2, '수': 3, '목': 4, '금': 5, '토': 6 };
+        function resolveDate(mon, day, dow) {
+            const want = dow && DOW_IDX[dow] !== undefined ? DOW_IDX[dow] : null;
             if (mon) {
                 let d = new Date(base.getFullYear(), mon - 1, day);
                 if ((d - baseDay) / 86400000 < -120) d = new Date(base.getFullYear() + 1, mon - 1, day);
+                if (want !== null && d.getDay() !== want) {   // 해가 바뀌는 때(12월에 1월 공지 등) 요일이 맞는 해로
+                    const alt = [d.getFullYear() - 1, d.getFullYear() + 1].map(y => new Date(y, mon - 1, day))
+                        .find(x => x.getDay() === want && Math.abs(x - baseDay) / 86400000 < 240);
+                    if (alt) d = alt;
+                }
                 return d;
             }
-            const cands = [-1, 0, 1].map(k => new Date(base.getFullYear(), base.getMonth() + k, day)).filter(d => d.getDate() === day);
+            let cands = (want !== null ? [-1, 0, 1, 2] : [-1, 0, 1]).map(k => new Date(base.getFullYear(), base.getMonth() + k, day)).filter(d => d.getDate() === day);
+            if (want !== null) { const hit = cands.filter(d => d.getDay() === want); cands = hit.length ? hit : cands.filter(d => d.getMonth() !== (base.getMonth() + 2) % 12); }
             cands.sort((a, b) => {
                 const da = (a - baseDay) / 86400000, db = (b - baseDay) / 86400000;
                 const pa = da < -3 ? 1000 + Math.abs(da) : Math.abs(da), pb = db < -3 ? 1000 + Math.abs(db) : Math.abs(db);
@@ -4034,12 +4043,12 @@
         let lastMonth = null;
         blocks.forEach(bl => {
             const head = bl[0];
-            let mon = null, day = null, m;
-            if ((m = head.match(dateRe))) { mon = m[1] ? parseInt(m[1], 10) : null; day = parseInt(m[2], 10); }
-            else if ((m = head.match(slashRe))) { mon = parseInt(m[1], 10); day = parseInt(m[2], 10); }
+            let mon = null, day = null, dow = null, m;
+            if ((m = head.match(dateRe))) { mon = m[1] ? parseInt(m[1], 10) : null; day = parseInt(m[2], 10); dow = m[3] || m[4] || null; }
+            else if ((m = head.match(slashRe))) { mon = parseInt(m[1], 10); day = parseInt(m[2], 10); dow = m[3] || null; }
             if (!day) return;
             if (mon) lastMonth = mon; else if (lastMonth && out.length) mon = null;
-            const d = resolveDate(mon, day);
+            const d = resolveDate(mon, day, dow);
             if (!d) return;
             const all = bl.join('\n');
             const used = {};
@@ -6742,6 +6751,10 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.41.23', d: '2026-10-11', t: '텍스트 분석 날짜를 요일에 맞게', items: [
+            '「3일(토)」처럼 요일이 적힌 공지는 요일이 맞는 날짜로 잡음 — 예: 10월 11일에 붙여넣은 「3일(토)」 → 예전엔 11/3(화), 이제 10/3(토)',
+            '「1월 2일(토)」처럼 해가 바뀌는 때도 요일이 맞는 해로 · 요일이 없으면 예전처럼 가까운 날짜'
+        ] },
         { v: 'v2.41.22', d: '2026-10-11', t: '텍스트 분석 창 입력 칸 넓게', items: [
             '창을 아래로 키워서 공지 · 일정 내용을 붙여넣는 칸을 넓게 (화면 높이에 맞춰 늘어남)',
             '설명은 입력 칸 아래 상자에 세 줄로 정리: 📌 표시마다 일정 1개 / 날짜 · 시간 · 장소 · 상대 · 참가 학년 자동 / 저장 전 확인 · 수정',
