@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.43.3 · b261011";
+        const APP_VERSION = "v2.43.4 · b261011";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1529,7 +1529,8 @@
         #eventEditModal .ev-place-inp { display: flex; gap: 5px; min-width: 0; }
         #eventEditModal .ev-place-inp input { flex: 1 1 auto; }
         .ev-place-find { flex: 0 0 auto; border: 1px solid #0b2240; background: #0b2240; color: #fff; border-radius: 6px; padding: 0 10px; font-size: 12.5px; font-weight: 800; white-space: nowrap; cursor: pointer; }
-        .ev-place-chips { display: flex; gap: 5px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+        .ev-place-chips { display: flex; flex-direction: column; gap: 5px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }   /* v2.43.4: 두 줄 — 옆으로 밀면 두 줄이 같이 넘어감 */
+        .ev-place-chips .pcr { display: flex; gap: 5px; width: max-content; }
         .ev-place-chips::-webkit-scrollbar { display: none; }
         .ev-place-chips:empty { display: none; }
         .pl-chip { flex: 0 0 auto; padding: 3px 9px; border-radius: 999px; border: 1px solid #cbd5e1; background: #fff; font-size: 11.5px; line-height: 1.35; color: #334155; font-weight: 700; cursor: pointer; white-space: nowrap; }
@@ -1548,8 +1549,8 @@
         @container (max-width: 250px) { .ev-place-find { padding: 0 9px; } .ev-place-find .t { display: none; } .ev-place-card .pc-thumb { display: none; } }   /* 좁은 화면(큰 글씨): 🔍만 · 작은 지도 숨김 */
         /* 📍 장소 찾기 창 — 아래에서 올라오는 창 (넓은 화면은 가운데) */
         #placeSearchModal { z-index: 1002; align-items: flex-end; padding: 0; }
-        #placeSearchModal .modal-content { max-width: 460px; border-radius: 16px 16px 0 0; padding: 12px 12px 10px; max-height: calc(88vh / var(--ui-zoom, 1)); max-height: calc(90dvh / var(--ui-zoom, 1)); }
-        @media (min-width: 600px) { #placeSearchModal { align-items: center; padding: 10px; } #placeSearchModal .modal-content { border-radius: 14px; } }
+        #placeSearchModal .modal-content { max-width: 460px; border-radius: 16px 16px 0 0; padding: 12px 12px 10px; max-height: calc(88vh / var(--ui-zoom, 1)); max-height: calc(90dvh / var(--ui-zoom, 1)); height: calc(88vh / var(--ui-zoom, 1)); height: calc(90dvh / var(--ui-zoom, 1)); }   /* v2.43.4: 검색 창을 처음부터 크게 (자판이 올라오면 남은 화면의 90%) */
+        @media (min-width: 600px) { #placeSearchModal { align-items: center; padding: 10px; } #placeSearchModal .modal-content { border-radius: 14px; height: min(calc(90dvh / var(--ui-zoom, 1)), 720px); } }
         .ps-head { display: flex; justify-content: space-between; align-items: center; }
         .ps-x { border: 0; background: none; font-size: 18px; line-height: 1; color: #94a3b8; padding: 2px 6px; cursor: pointer; }
         .ps-bar { display: flex; gap: 5px; margin-bottom: 8px; }
@@ -1559,10 +1560,10 @@
         .ps-sec .ps-l { white-space: nowrap; }
         .ps-sec small { font-weight: 600; color: #94a3b8; font-size: 10.5px; }
         #psChips { margin-bottom: 8px; }
-        .ps-map { height: 128px; border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; margin-bottom: 6px; background: #eef1ea; }
+        .ps-map { height: 128px; height: clamp(140px, calc(24dvh / var(--ui-zoom, 1)), 230px); border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; margin-bottom: 6px; background: #eef1ea; }
         .ps-res { display: flex; flex-direction: column; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; }
         .ps-res:empty { display: none; }
-        .ps-msg { padding: 14px 10px; text-align: center; font-size: 12.5px; color: #64748b; line-height: 1.5; }
+        .ps-msg { padding: 14px 10px; text-align: center; font-size: 12.5px; color: #64748b; line-height: 1.5; word-break: keep-all; }
         .ps-r { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
         .ps-r:last-child { border-bottom: 0; }
         .ps-r.on { background: #fff7ed; }
@@ -3961,7 +3962,13 @@
     }
     function placeChipsHtml(fn, cur) {
         const c = venueNorm(cur), cb = venueNorm(venueBase(cur));
-        return placeChipNames().map(n => `<button type="button" class="pl-chip${(venueNorm(n) === c || venueNorm(n) === cb) ? ' on' : ''}" data-n="${escapeHtml(n)}" onclick="${fn}(this.dataset.n)">${findVenue(n) ? '<span class="pin">📍</span>' : ''}${escapeHtml(n)}</button>`).join('');
+        const names = placeChipNames();
+        if (!names.length) return '';
+        const chip = n => `<button type="button" class="pl-chip${(venueNorm(n) === c || venueNorm(n) === cb) ? ' on' : ''}" data-n="${escapeHtml(n)}" onclick="${fn}(this.dataset.n)">${findVenue(n) ? '<span class="pin">📍</span>' : ''}${escapeHtml(n)}</button>`;
+        // v2.43.4: 두 줄 — 많이 쓴 순서대로 짧은 줄에 하나씩 넣어 두 줄 길이를 비슷하게 (3곳 이하면 한 줄)
+        const rows = names.length <= 3 ? [names] : [[], []], len = [0, 0];
+        if (names.length > 3) names.forEach(n => { const r = len[1] < len[0] ? 1 : 0; rows[r].push(n); len[r] += String(n).length + 3; });
+        return rows.map(r => '<div class="pcr">' + r.map(chip).join('') + '</div>').join('');
     }
 
     // ---- 일정 수정 창: 장소 칸 ----
@@ -4020,7 +4027,7 @@
         document.getElementById('psChipsHead').hidden = psMode !== 'event';
         document.getElementById('psDirect').hidden = psMode !== 'event';
         psResults = []; psSel = -1;
-        document.getElementById('psRes').innerHTML = '';
+        document.getElementById('psRes').innerHTML = q ? '' : '<div class="ps-msg">🔎 구장 이름이나 동네 이름으로 찾아보세요<br><small>예: 기장 야구장 · 을숙도 · 대연초등학교</small></div>';
         document.getElementById('psResHead').hidden = true;
         document.getElementById('psMap').hidden = true;
         document.getElementById('placeSearchModal').style.display = 'flex';
@@ -7692,6 +7699,10 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.43.4', d: '2026-10-11', t: '장소 칩 두 줄 · 찾기 창 크게', items: [
+            '일정 추가 · 수정의 장소 칩(자주 쓰는 곳)을 두 줄로 — 옆으로 밀면 두 줄이 같이 넘어감',
+            '📍 장소 찾기 창을 처음부터 크게 (자판이 올라와도 남은 화면을 거의 다 씀) · 검색 결과 지도도 조금 크게'
+        ] },
         { v: 'v2.43.3', d: '2026-10-11', t: '영남리그 → 밀양', items: [
             '일정 텍스트 분석: 장소 없이 「영남리그」만 적힌 공지는 장소를 밀양 선샤인 스포츠파크로 채움 (구장 탭 이름 그대로)'
         ] },
