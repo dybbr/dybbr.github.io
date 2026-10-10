@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.41.10 · b261010";
+        const APP_VERSION = "v2.41.11 · b261010";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1420,14 +1420,37 @@
         #eventEditModal .grade-checks input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none; }
         #eventEditModal .grade-checks label:has(input:focus-visible) { outline: 3px solid #29a8e0; outline-offset: 1px; }
         #eventEditModal .ev-res-line > label { line-height: 1.25; }
+        #eventEditModal .ev-res-line > label .ev-l2 { display: block; }
         /* v2.41.10: 구분 칸은 좁게(116px), 상대팀 칸은 남는 폭 전부 — 긴 학교 이름도 보이게 */
-        #eventEditModal .ev-type-row { grid-template-columns: 116px minmax(0, 1fr); }
+        #eventEditModal .ev-type-row { grid-template-columns: 104px minmax(0, 1fr); }   /* v2.41.11: 116 → 104px */
         #eventEditModal .ev-type-row input { padding-left: 8px; padding-right: 6px; }
-        #eventEditModal .ev-type-row select { padding-left: 8px; padding-right: 4px; }
+        #eventEditModal .ev-type-row select { -webkit-appearance: none; appearance: none; padding-left: 6px; padding-right: 16px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2364748b' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 5px center; background-size: 10px 6px; }   /* 브라우저 기본 화살표(크고 자리 차지) 대신 작은 화살표 */
         #eventEditModal .ev-res-seg { grid-template-columns: repeat(4, minmax(0, 1fr)); }
         #eventEditModal .ev-res-seg button { min-height: 40px; min-width: 0; }
-        @media (max-width: 345px) { #eventEditModal .ev-res-seg button { font-size: 12px; padding: 0 1px; } #eventEditModal .ev-res-seg { gap: 3px; }
-            #eventEditModal .ev-sc-btn { width: 30px; } #eventEditModal .ev-sc-ctl input { width: 38px; } #eventEditModal .ev-score { gap: 4px; } }
+        /* v2.41.11: 좁을 때 맞춤을 휴대폰 화면 폭이 아니라 '일정 창 안의 실제 폭'으로 판단 (@container)
+           → 오른쪽 아래 화면 크기를 110~130%로 키워서 창 안이 좁아져도 버튼·점수 칸이 안 잘림 */
+        #eventEditModal .modal-scroll-body { container-type: inline-size; container-name: evbody; }
+        #eventEditModal .ev-score, #eventEditModal .ev-sc-side, #eventEditModal .ev-sc-ctl { min-width: 0; }
+        #eventEditModal .ev-sc-side { align-items: stretch; flex: 0 1 auto; }   /* 좁으면 −/＋·숫자 칸이 같이 줄어듦 */
+        #eventEditModal .ev-sc-who { text-align: center; }
+        #eventEditModal .ev-sc-ctl { justify-content: center; }
+        #eventEditModal .ev-sc-btn { flex: 0 1 34px; min-width: 24px; }
+        #eventEditModal .ev-sc-ctl input { flex: 0 1 44px; min-width: 28px; }
+        #eventEditModal .ev-sc-clear { flex: 0 0 auto; }
+        @container evbody (max-width: 300px) {
+            #eventEditModal .ev-res-seg button { font-size: 12.5px; padding: 0 1px; }
+            #eventEditModal .ev-res-seg { gap: 3px; }
+            #eventEditModal .ev-sc-btn { width: 28px; } #eventEditModal .ev-sc-ctl input { width: 34px; } #eventEditModal .ev-score { gap: 3px; } #eventEditModal .ev-sc-ctl { gap: 3px; }
+            #eventEditModal .grade-checks label { font-size: 12.5px; }
+        }
+        @container evbody (max-width: 250px) {   /* 아주 좁을 때: 경기 결과 이름표를 버튼 위 한 줄로 */
+            #eventEditModal .form-group.ev-inline.ev-res-line { grid-template-columns: minmax(0, 1fr); gap: 3px; }
+            #eventEditModal .form-group.ev-inline.ev-res-line > label { white-space: normal; }
+            #eventEditModal .ev-res-line > label .ev-l2 { display: inline; }
+            #eventEditModal .ev-res-line > label .ev-l2::before { content: ' · '; }
+        }
         .form-hint { font-size: 11px; color: #94a3b8; font-weight: 600; line-height: 1.5; }
         .import-item { display: flex; gap: 8px; align-items: flex-start; border: 1px solid #e2e8f0; border-left: 5px solid var(--ev); border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; background: #ffffff; }
         .import-item input[type="checkbox"] { width: auto; margin-top: 3px; }
@@ -2455,11 +2478,11 @@
             </div>
             <div id="evResultRow">
                 <div class="form-group ev-inline ev-res-line">
-                    <label>경기 결과<br>점수 입력</label>
+                    <label><span>경기 결과</span><span class="ev-l2">점수 입력</span></label>
                     <input type="hidden" id="evResult">
                     <div class="ev-res-seg" id="evResultSeg">
-                        <button type="button" data-v="" onclick="onEvResultTap('')">아직</button>
-                        <button type="button" data-v="승" onclick="onEvResultTap('승')">🏆 승리</button>
+                        <button type="button" data-v="" onclick="onEvResultTap('')">미정</button>
+                        <button type="button" data-v="승" onclick="onEvResultTap('승')">승리</button>
                         <button type="button" data-v="패" onclick="onEvResultTap('패')">패배</button>
                         <button type="button" data-v="무" onclick="onEvResultTap('무')">무승부</button>
                     </div>
@@ -6528,6 +6551,11 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.41.11', d: '2026-10-10', t: '구분 칸·결과 버튼 정리, 화면 크기 키워도 안 잘리게', items: [
+            '결과 버튼 "아직" → "미정", "🏆 승리" → "승리" (트로피 뺌)',
+            '구분 칸을 더 좁게(104px) — 브라우저 기본 큰 화살표 대신 작은 화살표를 직접 그림, 그만큼 상대팀 칸이 넓어짐',
+            '오른쪽 아래 화면 크기를 110~130%로 키웠을 때 승리·무승부 글자와 점수 칸이 잘리던 문제 수정 (휴대폰 폭이 아니라 일정 창 안의 실제 폭을 보고 맞춤)'
+        ] },
         { v: 'v2.41.10', d: '2026-10-10', t: '상대팀 칸 넓게', items: [
             '일정 입력 창에서 구분 칸 폭을 줄이고 상대팀(VS) 칸을 넓혀서 긴 학교 이름도 잘 보이게'
         ] },
