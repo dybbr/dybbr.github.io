@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.43.1 · b261011";
+        const APP_VERSION = "v2.43.2 · b261011";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -3885,7 +3885,10 @@
         const keys = v => venueNames(v).map(venueNorm);   // v2.43.0: 이름 + 다른 이름(별칭)
         const by = key => list.find(v => keys(v).indexOf(key) !== -1) || null;
         const n1 = venueNorm(full), n2 = venueNorm(full.replace(/[\(（\)）\[\]]/g, '')), n3 = venueNorm(venueBase(full));
-        const v = by(n1) || by(n2) || (n3.length >= 3 ? by(n3) : null);
+        // v2.43.2: 괄호 안에 등록된 구장(이름 · 다른 이름 · 카카오 장소명)이 적혀 있으면 그쪽이 먼저 — 「거제 하청야구장 (하청스포츠타운)」→ 하청스포츠타운
+        const inner = (full.match(/[\(（]([^\)）]+)[\)）]/) || [])[1] || '', n4 = venueNorm(inner);
+        const byIn = n4.length >= 3 ? (by(n4) || list.find(x => x.kname && venueNorm(x.kname) === n4) || null) : null;
+        const v = by(n1) || by(n2) || byIn || (n3.length >= 3 ? by(n3) : null);
         if (v) return v;
         const s2 = venueSfx(n2);
         if (s2.length >= 3) {
@@ -4196,10 +4199,9 @@
         const g = evs.filter(e => isGameEvent(e)).length;   // 구분을 안 정했으면 그 구장 일정이 훈련이 많은지 경기가 많은지로
         return evs.length && g * 2 < evs.length ? '훈련장' : '경기장';
     }
-    function venueRows() {   // 일정 많은 순
+    function venueRows() {   // v2.43.2: 시트 「구장」 탭의 줄 순서대로 (대표님이 정한 중요도 순서)
         return schedVenues.filter(v => v && v.name && (v.addr || venueLatLngNow(v)))
-            .map(v => { const evs = venueEvents(v); return { v: v, evs: evs, kind: venueKindOf(v, evs) }; })
-            .sort((a, b) => b.evs.length - a.evs.length || String(a.v.name).localeCompare(String(b.v.name), 'ko'));
+            .map(v => { const evs = venueEvents(v); return { v: v, evs: evs, kind: venueKindOf(v, evs) }; });
     }
     function renderVenues() {
         if (!document.getElementById('venueSection')) return;
@@ -4293,7 +4295,7 @@
         vnOverlays.forEach(o => { const c = o.getContent(); if (c && c.classList) c.classList.toggle('on', o._vi === i); o.setZIndex(o._vi === i ? 3 : 1); });
         const hit = vnPts.find(o => o.i === i);
         if (hit) { vnMapObj.setLevel(5); vnMapObj.setCenter(hit.ll); return; }
-        // 처음엔 일정이 많은 곳(앞쪽 6곳)이 다 보이게
+        // 처음엔 앞쪽 6곳(중요한 구장)이 다 보이게
         const b = new kakao.maps.LatLngBounds();
         vnPts.slice(0, 6).forEach(o => b.extend(o.ll));
         if (vnPts.length > 1) vnMapObj.setBounds(b, 36, 20, 12, 20); else { vnMapObj.setLevel(5); vnMapObj.setCenter(vnPts[0].ll); }
@@ -7689,6 +7691,10 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.43.2', d: '2026-10-11', t: '구장 순서 · 괄호 안 구장 이름', items: [
+            '🏟️ 구장 탭 번호 순서를 시트 「구장」 탭의 줄 순서대로 (학교 → 기장리틀 → 기장공원 → 거제 하청스포츠타운 → 거제 하청야구장 …)',
+            '장소에 「○○ (하청스포츠타운)」처럼 괄호 안에 등록된 구장 이름이 적혀 있으면 그 구장으로 연결'
+        ] },
         { v: 'v2.43.1', d: '2026-10-11', t: '구장 지도 끌기 고침', items: [
             '🏟️ 구장 탭 지도를 손가락으로 아래로 끌면 화면 새로고침(당겨서 새로고침)까지 같이 되던 문제 수정 — 이제 지도만 움직임'
         ] },
