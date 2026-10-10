@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.41.25 · b261011";
+        const APP_VERSION = "v2.41.26 · b261011";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1021,6 +1021,7 @@
         .card-extra { font-size: 11px; color: #64748b; background: #f8fafc; border-radius: 6px; padding: 5px 6px; margin-top: 2px; display: flex; flex-direction: column; gap: 2px; border: 1px solid #f1f5f9; }
 
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 999; align-items: center; justify-content: center; padding: 10px; }
+        #eventEditModal { z-index: 1001; }   /* v2.41.26: 일정 수정 창은 항상 맨 위 — 텍스트 분석 창에서 [수정]을 눌러도 뒤에 깔리지 않게 */
         .modal-content { background: #ffffff; width: 100%; max-width: 480px; max-height: 75vh; display: flex; flex-direction: column; border-radius: 14px; padding: 14px 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow: hidden; }
         .modal-content { max-height: calc(75vh / var(--ui-zoom, 1)); max-height: calc(80dvh / var(--ui-zoom, 1)); }   /* v2.41.12: 화면 크기(110~130%)를 키워도 팝업 창 위아래가 안 잘리게 — 배율만큼 나눔 */
         .modal-header { font-size: 17px; font-weight: 800; margin-bottom: 8px; flex-shrink: 0; }
@@ -6960,6 +6961,9 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.41.26', d: '2026-10-11', t: '텍스트 분석 [수정] 창이 뒤에 깔리던 문제', items: [
+            '텍스트 분석 결과에서 [수정]을 누르면 일정 수정 창이 분석 창 뒤에 열려서 고칠 수 없던 문제 수정 — 이제 수정 창이 맨 위에 뜸'
+        ] },
         { v: 'v2.41.25', d: '2026-10-11', t: '텍스트 분석 새로 만들기 — 기호 없어도 날짜로 일정 찾기', items: [
             '📌 ☘️ 같은 기호가 없어도 날짜가 나오면 일정을 나눔: 10/12 · 10.12(월) · 12일(월) · 10월 12일 · 2026.10.24 · 「월 10/12」처럼 요일이 앞에 와도',
             '한 줄에 날짜 여러 개(12일(월), 13일(화)) → 날마다 따로 · 기간(24~25일, 10/24 ~ 10/25) → 날마다 따로 + 메모에 기간',
