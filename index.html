@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.41.15 · b261010";
+        const APP_VERSION = "v2.41.16 · b261010";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1419,7 +1419,8 @@
         #eventEditModal .ev-date-wrap input::-webkit-datetime-edit { color: transparent; }
         .ev-date-txt { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 2px; pointer-events: none;
             font-size: 13.5px; color: #0f172a; white-space: nowrap; letter-spacing: -0.2px; }
-        .ev-date-txt .dow { color: #64748b; font-size: 12.5px; }
+        .ev-date-txt .dow { color: #64748b; font-size: 12.5px; margin-left: 2px; }
+        .ev-date-txt .dt { line-height: 1.2; }   /* v2.41.16: 날짜와 (토)를 한 줄 글자로 묶어서 같은 밑줄에 맞춤 (삼성 기기에서 (토)가 살짝 내려오던 것) */
         .ev-date-txt .dow.sat { color: #2563eb; }
         .ev-date-txt .dow.sun { color: #dc2626; }
         .ev-date-txt .ph { color: #94a3b8; }
@@ -1467,6 +1468,9 @@
         #eventEditModal .ev-score, #eventEditModal .ev-sc-side, #eventEditModal .ev-sc-ctl { min-width: 0; }
         #eventEditModal .ev-sc-side { align-items: stretch; flex: 0 1 auto; }   /* 좁으면 −/＋·숫자 칸이 같이 줄어듦 */
         #eventEditModal .ev-sc-who { text-align: center; }
+        /* v2.41.16: 점수 위 「우리 대연초」·상대팀 이름 높이 맞춤 (숫자·「…」가 섞인 이름만 줄이 높아져 위로 뜨던 것) +
+           상대팀 이름은 6글자에서 자르지 않고 다 보여줌 (긴 이름은 fitEvScoreLabel이 글자를 줄여서 맞춤, 그래도 넘치면 끝만 …) */
+        #eventEditModal .ev-sc-who { display: block; flex: 0 0 auto; line-height: 1.3; height: 1.3em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; contain: inline-size; }
         #eventEditModal .ev-sc-ctl { justify-content: center; }
         #eventEditModal .ev-sc-btn { flex: 0 1 34px; min-width: 24px; }
         #eventEditModal .ev-sc-ctl input { flex: 0 1 44px; min-width: 28px; }
@@ -3597,6 +3601,7 @@
         const game = BK_GAME_TYPES.indexOf(document.getElementById('evType').value) !== -1;
         document.getElementById('evResultRow').style.display = game ? '' : 'none';
         if (!game) { setEvResult(''); document.getElementById('evScoreUs').value = ''; document.getElementById('evScoreThem').value = ''; evScoreRaw = ''; }
+        else fitEvScoreLabel();
     }
     // 📅 날짜 칸은 "26.10.10 (토)"처럼 사이트가 직접 그림 (v2.41.7) — 브라우저 글자는 투명하게 두고 그 위에 겹침
     //   (삼성인터넷 등이 "2026. 10. 10."을 길게 써서 잘리던 문제, 칸을 누르면 날짜 선택 창은 그대로 열림)
@@ -3606,7 +3611,7 @@
         const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(document.getElementById('evDate').value || '');
         if (!m) { t.innerHTML = '<span class="ph">날짜 선택</span>'; return; }
         const w = new Date(+m[1], +m[2] - 1, +m[3]).getDay();
-        t.innerHTML = `${m[1].slice(2)}.${m[2]}.${m[3]} <span class="dow${w === 0 ? ' sun' : w === 6 ? ' sat' : ''}">(${'일월화수목금토'[w]})</span>`;
+        t.innerHTML = `<span class="dt">${m[1].slice(2)}.${m[2]}.${m[3]}<span class="dow${w === 0 ? ' sun' : w === 6 ? ' sat' : ''}">(${'일월화수목금토'[w]})</span></span>`;
     }
     // 📅 PC(마우스)에서는 날짜·시간 칸 어디를 눌러도 선택 창이 열리게 (휴대폰은 원래 칸을 누르면 열림) — v2.41.1
     function evPick(el) { try { if (el.showPicker && window.matchMedia && window.matchMedia('(pointer: fine)').matches) el.showPicker(); } catch (e) {} }
@@ -3645,8 +3650,23 @@
     function clearEvScore() { document.getElementById('evScoreUs').value = ''; document.getElementById('evScoreThem').value = ''; evScoreRaw = ''; }
     function syncEvScoreLabel() {
         const o = document.getElementById('evOpponent').value.trim().replace(/\s*\(.*$/, '');
-        document.getElementById('evScoreThemLbl').textContent = o ? (o.length > 6 ? o.slice(0, 6) + '…' : o) : '상대';
+        const lb = document.getElementById('evScoreThemLbl');   // v2.41.16: 6글자 자르기 없앰 → 이름을 다 보여줌
+        lb.innerHTML = `<span class="ev-sc-fit">${escapeHtml(o || '상대')}</span>`;
+        lb.title = o || '';
+        fitEvScoreLabel();
     }
+    // 긴 상대팀 이름은 칸에 들어갈 때까지 글자를 조금씩 줄임 (11px → 최소 8px). 그래도 길면 끝만 … — 창이 열리거나 화면 크기가 바뀌면 다시 맞춤
+    function fitEvScoreLabel() {
+        const lb = document.getElementById('evScoreThemLbl'), sp = lb && lb.firstElementChild;
+        if (!sp) return;
+        sp.style.fontSize = '';
+        if (!lb.clientWidth || lb.scrollWidth <= lb.clientWidth + 0.5) return;
+        let fs = parseFloat(getComputedStyle(lb).fontSize) || 11;
+        fs = Math.max(8, Math.floor(fs * lb.clientWidth / lb.scrollWidth * 2) / 2);
+        sp.style.fontSize = fs + 'px';
+        while (lb.scrollWidth > lb.clientWidth + 0.5 && fs > 8) { fs -= 0.5; sp.style.fontSize = fs + 'px'; }
+    }
+    (function () { try { const lb = document.getElementById('evScoreThemLbl'); if (lb && window.ResizeObserver) new ResizeObserver(() => fitEvScoreLabel()).observe(lb); } catch (e) {} })();
 
     // 👕 복장 고르기 (v2.40.0) — 유니폼 신청 품목(유니폼상의·바지·여름/겨울훈련티·바람막이·풀오버·겨울점퍼)을 상의·하의·이너·겉옷으로 나눔
     //   줄마다 하나씩 고르면 "아이보리 + 유니폼바지 + 바람막이"처럼 복장 문장이 자동으로 만들어짐 (같은 걸 한 번 더 누르면 해제)
@@ -3738,6 +3758,7 @@
         document.getElementById('eventEditTitle').textContent = onSave ? '📋 가져올 일정 확인' : (id ? '📅 일정 수정' : '📅 일정 추가');
         fillEventForm(ev);
         document.getElementById('eventEditModal').style.display = 'flex';
+        fitEvScoreLabel();   // v2.41.16: 창이 보인 뒤에 긴 상대팀 이름 글자 크기 맞춤
     }
     async function submitEventEditor() {
         const ev = readEventForm();
@@ -6601,6 +6622,11 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.41.16', d: '2026-10-10', t: '날짜 (토)·점수 위 이름 줄 맞춤', items: [
+            '삼성 미니 태블릿에서 날짜 칸의 (토)가 살짝 내려와 보이던 것 → 날짜와 같은 줄에 맞춤',
+            '점수 위 「우리 대연초」와 상대팀 이름 높이가 달라 보이던 것 맞춤 (숫자·「…」가 섞인 이름만 줄이 높아지던 문제)',
+            '상대팀 이름을 6글자에서 자르지 않고 다 보여줌 (예: 양정초 6학년). 칸보다 긴 이름은 글자를 조금 작게 줄여서 끝까지 보여줌'
+        ] },
         { v: 'v2.41.15', d: '2026-10-10', t: '일정 입력 창 칸 높이 맞춤 (삼성 태블릿)', items: [
             '삼성 미니 태블릿에서 날짜 칸이 시작·종료 칸보다 아래로 내려가고, 구분 칸이 상대팀 칸보다 위로 올라가 보이던 문제 수정',
             '원인: 칸 이름에 영문·기호(「날짜 *」 「상대팀 (VS)」)가 섞이면 삼성 기기에서 그 이름 줄만 조금 높아져서 아래 칸이 밀려 내려감',
