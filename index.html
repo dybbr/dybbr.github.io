@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.41.7 · b261010";
+        const APP_VERSION = "v2.41.8 · b261010";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1412,9 +1412,18 @@
         .ev-dress-head > label { flex: 0 0 auto; }
         #eventEditModal .ev-dress-head .ev-dress-prev { margin: 0; padding: 3px 9px; font-size: 12px; border-radius: 10px; min-width: 0; flex: 0 1 auto; }
         #eventEditModal .lbl-hint { font-size: 11px; font-weight: 600; color: #94a3b8; letter-spacing: -0.2px; }
-        #eventEditModal .grade-checks { display: grid; grid-template-columns: 1.45fr repeat(6, 1fr); gap: 4px; }
-        #eventEditModal .grade-checks label { justify-content: center; gap: 3px; padding: 6px 2px; min-width: 0; white-space: nowrap; font-size: 12.5px; }
-        #eventEditModal .grade-checks input { width: 15px; height: 15px; flex: 0 0 auto; }
+        #eventEditModal .grade-checks { display: grid; grid-template-columns: 1.5fr repeat(6, 1fr); gap: 4px; }
+        /* v2.41.8: 학년은 체크박스 대신 눌리는 버튼 (높이 40px), 고른 학년은 남색 */
+        #eventEditModal .grade-checks label { position: relative; justify-content: center; min-height: 40px; padding: 0 2px; min-width: 0; white-space: nowrap;
+            font-size: 13.5px; font-weight: 800; border: 1.5px solid #e2e8f0; border-radius: 10px; background: #fff; color: #475569; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        #eventEditModal .grade-checks label.on { background: #0b2240; border-color: #0b2240; color: #fff; }
+        #eventEditModal .grade-checks input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none; }
+        #eventEditModal .grade-checks label:has(input:focus-visible) { outline: 3px solid #29a8e0; outline-offset: 1px; }
+        #eventEditModal .ev-res-line > label { line-height: 1.25; }
+        #eventEditModal .ev-res-seg { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        #eventEditModal .ev-res-seg button { min-height: 40px; min-width: 0; }
+        @media (max-width: 345px) { #eventEditModal .ev-res-seg button { font-size: 12px; padding: 0 1px; } #eventEditModal .ev-res-seg { gap: 3px; }
+            #eventEditModal .ev-sc-btn { width: 30px; } #eventEditModal .ev-sc-ctl input { width: 38px; } #eventEditModal .ev-score { gap: 4px; } }
         .form-hint { font-size: 11px; color: #94a3b8; font-weight: 600; line-height: 1.5; }
         .import-item { display: flex; gap: 8px; align-items: flex-start; border: 1px solid #e2e8f0; border-left: 5px solid var(--ev); border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; background: #ffffff; }
         .import-item input[type="checkbox"] { width: auto; margin-top: 3px; }
@@ -1858,6 +1867,8 @@
     .ev-dsw { border-color: rgba(255,255,255,.35); }
     .ev-drow-k { color: #97a3b7; }
     .ev-date-txt { color: #e2e8f0; }
+    #eventEditModal .grade-checks label { background: #1b2638; border-color: #2a374e; color: #bcc6d4; }
+    #eventEditModal .grade-checks label.on { background: #29a8e0; border-color: #29a8e0; color: #0b1525; }
     .ev-date-txt .dow { color: #97a3b7; }
     .ev-date-txt .dow.sat { color: #6aa8ff; }
     .ev-date-txt .dow.sun { color: #ff7a7a; }
@@ -2439,8 +2450,8 @@
                 <div class="form-group"><label>상대팀 (VS)</label><input type="text" id="evOpponent" maxlength="40" placeholder="예: 양정초" oninput="syncEvScoreLabel()"></div>
             </div>
             <div id="evResultRow">
-                <div class="form-group">
-                    <label>경기 결과 및 점수 입력</label>
+                <div class="form-group ev-inline ev-res-line">
+                    <label>경기 결과<br>점수 입력</label>
                     <input type="hidden" id="evResult">
                     <div class="ev-res-seg" id="evResultSeg">
                         <button type="button" data-v="" onclick="onEvResultTap('')">아직</button>
@@ -2464,16 +2475,16 @@
                     </div>
                 </div>
             </div>
-            <div class="form-group">
-                <label>대상 학년 <span class="lbl-hint">· 학부모님 화면 "우리 아이" 필터 기준</span></label>
+            <div class="form-group ev-inline">
+                <label>학년</label>
                 <div class="grade-checks" id="evGrades">
-                    <label><input type="checkbox" value="전체" onchange="onEvGradeAll(this)"> 전체</label>
-                    <label><input type="checkbox" value="6"> 6</label>
-                    <label><input type="checkbox" value="5"> 5</label>
-                    <label><input type="checkbox" value="4"> 4</label>
-                    <label><input type="checkbox" value="3"> 3</label>
-                    <label><input type="checkbox" value="2"> 2</label>
-                    <label><input type="checkbox" value="1"> 1</label>
+                    <label><input type="checkbox" value="전체" onchange="onEvGradeAll(this)">전체</label>
+                    <label><input type="checkbox" value="6" onchange="onEvGradeOne(this)">6</label>
+                    <label><input type="checkbox" value="5" onchange="onEvGradeOne(this)">5</label>
+                    <label><input type="checkbox" value="4" onchange="onEvGradeOne(this)">4</label>
+                    <label><input type="checkbox" value="3" onchange="onEvGradeOne(this)">3</label>
+                    <label><input type="checkbox" value="2" onchange="onEvGradeOne(this)">2</label>
+                    <label><input type="checkbox" value="1" onchange="onEvGradeOne(this)">1</label>
                 </div>
             </div>
             <div class="form-group ev-inline"><label for="evTitle">제목</label><input type="text" id="evTitle" maxlength="60" placeholder="비우면 구분으로 표시 (예: 회장기)"></div>
@@ -3441,8 +3452,21 @@
     }
 
     // ---------------- 추가 / 수정 ----------------
+    // 🎯 학년 버튼 (v2.41.8) — 전체를 누르면 나머지 해제, 학년을 누르면 전체가 저절로 풀림 (아무것도 없으면 다시 전체)
+    function syncGradeChips() {
+        document.querySelectorAll('#evGrades label').forEach(l => { const i = l.querySelector('input'); l.classList.toggle('on', !!(i && i.checked)); });
+    }
+    function evGradeNoneLeft() { return !Array.from(document.querySelectorAll('#evGrades input')).some(i => i.checked); }
     function onEvGradeAll(cb) {
-        document.querySelectorAll('#evGrades input').forEach(i => { if (i !== cb) { i.checked = false; i.disabled = cb.checked; } });
+        if (cb.checked) document.querySelectorAll('#evGrades input').forEach(i => { if (i !== cb) i.checked = false; });
+        else if (evGradeNoneLeft()) cb.checked = true;
+        syncGradeChips();
+    }
+    function onEvGradeOne(cb) {
+        const all = document.querySelector('#evGrades input[value="전체"]');
+        if (cb.checked) all.checked = false;
+        else if (evGradeNoneLeft()) all.checked = true;
+        syncGradeChips();
     }
     function fillEventForm(ev) {
         document.getElementById('evDate').value = ev.date || '';
@@ -3469,8 +3493,9 @@
         const all = gs.indexOf('전체') !== -1;
         document.querySelectorAll('#evGrades input').forEach(i => {
             i.checked = all ? i.value === '전체' : gs.indexOf(i.value) !== -1;
-            i.disabled = all && i.value !== '전체';
+            i.disabled = false;
         });
+        syncGradeChips();
     }
     function readEventForm() {
         const grades = [];
@@ -6499,6 +6524,11 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.41.8', d: '2026-10-10', t: '경기 결과·학년 한 줄씩', items: [
+            '"경기 결과 / 점수 입력" 이름표를 두 줄로 줄여 아직·승리·패배·무승부 버튼 왼쪽에 → 한 줄 줄임',
+            '대상 학년은 "학년" 이름표 옆에 전체·6·5·4·3·2·1 버튼을 나란히 (설명 문구 뺌), 버튼 높이 40px로 키움',
+            '학년 버튼: 학년을 누르면 "전체"가 저절로 풀리고, 다 풀면 다시 "전체" (예전: 전체를 먼저 풀어야 학년을 고를 수 있었음)'
+        ] },
         { v: 'v2.41.7', d: '2026-10-10', t: '날짜 칸 짧게 + 요일', items: [
             '일정 입력 창 날짜를 "2026. 10. 10." 대신 "26.10.10 (토)"처럼 년도 2자리 + 요일로 표시 → 칸에서 안 잘림 (토요일 파랑, 일요일 빨강)',
             '날짜 칸을 누르면 날짜 선택 창은 예전처럼 열림, 저장되는 값은 그대로'
