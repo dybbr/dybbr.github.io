@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.41.24 · b261011";
+        const APP_VERSION = "v2.41.25 · b261011";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -2692,8 +2692,8 @@
                 <!-- v2.41.22: 창을 아래로 키워 입력 칸을 넓게, 설명은 칸 아래 상자로 보기 좋게 -->
                 <textarea id="importText" rows="9" placeholder="여기에 붙여넣으세요 (칸을 길게 누르면 붙여넣기)"></textarea>
                 <ul class="imp-guide">
-                    <li><span class="ig-i">✂️</span><span><b>📌 표시</b>마다 일정 1개로 나눠요</span></li>
-                    <li><span class="ig-i">🔎</span><span><b>날짜 · 시간 · 장소 · 상대 · 참가 학년</b>을 자동으로 찾아요</span></li>
+                    <li><span class="ig-i">✂️</span><span><b>날짜</b>(10/12 · 12일(월) · 10월 12일)가 나올 때마다 일정을 나눠요 — 📌 ☘️ 같은 기호는 없어도 돼요</span></li>
+                    <li><span class="ig-i">🔎</span><span><b>시간 · 장소 · 상대 · 참가 학년 · 집합 · 복장</b>을 자동으로 찾아요</span></li>
                     <li><span class="ig-i">✏️</span><span>저장 전에 하나씩 <b>확인하고 고칠 수</b> 있어요</span></li>
                 </ul>
             </div>
@@ -3946,7 +3946,7 @@
         const text = document.getElementById('importText').value;
         if (!text.trim()) { bkNotify('info', '공지 내용을 붙여넣어줘캉!'); return; }
         importDrafts = parseKakaoNotice(text, new Date()).map(ev => Object.assign(ev, { id: newId('E'), _on: true }));
-        if (!importDrafts.length) { bkNotify('info', '날짜를 못 찾았캉…', '"📌3일(토) 13:00"처럼 날짜(예: 3일(토), 9월 1일)가 들어간 공지를 붙여넣어 주세요', { ms: 6000 }); return; }
+        if (!importDrafts.length) { bkNotify('info', '날짜를 못 찾았캉…', '「10/12(월) 15:00 훈련」처럼 날짜(예: 10/12, 12일(월), 10월 12일)가 들어간 글을 붙여넣어 주세요', { ms: 6000 }); return; }
         document.getElementById('importInputBox').style.display = 'none';
         document.getElementById('btnImportBack').style.display = '';
         renderImportPreview();
@@ -3994,49 +3994,100 @@
         } catch (err) { bkNotify('fail', null, err.message); b.disabled = false; }
     }
 
-    // 카카오톡 공지 → 일정 목록. 📌/🔹/☆ 로 시작하는 줄을 기준으로 나눈다.
+    // 📋 텍스트 분석 (v2.41.25) — 공지 글에서 일정 찾기
+    //   ① 줄마다 날짜 · 시간 · 「이름 : 값」 · 목록(- · 1.) 여부를 살핌
+    //   ② 날짜로 시작하는 줄(앞에 붙은 기호·이모지 상관없음) / 「일시 : 날짜」 줄 / 날짜로 시작하는 목록 줄을 일정의 시작으로 삼아 묶음
+    //      「일시 :」 형식이면 바로 위 제목 줄([연습경기 안내] 등)을 그 일정 제목으로, 맨 위 머리말은 구분을 정하는 데만 씀
+    //   ③ 묶음마다 날짜(여러 날 · 기간 · 연도) · 시간(13:00 · 오후 3시 반) · 구분 · 상대 · 장소 · 학년 · 집합 · 복장 · 메모를 뽑음
+    //   ④ 맨 끝에 빈 줄 뒤 따로 적힌 안내(차량 지원 등)는 모든 일정 메모에
     function parseKakaoNotice(text, base) {
-        const lines = String(text).replace(/\r/g, '').split('\n');
-        const blocks = [];
-        let cur = null;
-        const dateRe = /(?:(\d{1,2})\s*월\s*)?(\d{1,2})\s*일\s*(?:[\(（]\s*([월화수목금토일])[^\)）]*[\)）]|\s*([월화수목금토일])요일)?/;
-        const slashRe = /(?:^|\s)(\d{1,2})\s*\/\s*(\d{1,2})(?:\s*[\(（]\s*([월화수목금토일])[^\)）]*[\)）])?/;
-        const dotRe = /(?:^|\s)(\d{1,2})\s*\.\s*(\d{1,2})\s*[\(（]\s*([월화수목금토일])[^\)）]*[\)）]/;   // v2.41.24: 「10.12(월)」
-        // v2.41.24: 📌 말고도 ☘️·✅·⚾·[ 등 아무 이모지/기호로 시작하든, 줄이 날짜(10/12 (월) · 12일(월) · 10월 12일)로 시작하면 새 일정으로 자름
-        //   「- 장소 : …」처럼 - · • 로 시작하는 줄은 세부 내용 / 맨 끝에 빈 줄 뒤 따로 적힌 안내(차량 지원 등)는 모든 일정 메모에
-        const BULLET_RE = /^(?:[-–](?![-–])|[·•▪◦※>]|ㄴ|└)/;
-        const leadStrip = t => t.replace(/^[^\p{L}\p{N}]+/u, '');
-        const startsWithDate = t => /^(?:\d{1,2}\s*월\s*)?\d{1,2}\s*일(?![가-힣])/.test(t) || /^\d{1,2}\s*\/\s*\d{1,2}(?!\d)/.test(t) || /^\d{1,2}\s*\.\s*\d{1,2}\s*[\(（]\s*[월화수목금토일]/.test(t);
-        const common = [];
-        let blank = false, footer = false;
-        lines.forEach(raw => {
-            const line = raw.trim();
-            if (!line) { blank = true; return; }
-            const marker = /^(📌|🔹|🔸|▶|■|●|◆|\*)/u.test(line);
-            const stripped = line.replace(/^(📌|🔹️?|🔸️?|▶️?|■|●|◆|\*)+\s*/u, '');
-            const bullet = BULLET_RE.test(line);
-            const hasDate = dateRe.test(stripped.slice(0, 16)) || slashRe.test(stripped.slice(0, 12)) || dotRe.test(stripped.slice(0, 14));
-            const dateHead = !bullet && startsWithDate(leadStrip(line));
-            if ((marker && hasDate) || (!cur && hasDate) || dateHead) { cur = [dateHead ? leadStrip(line) : stripped]; blocks.push(cur); footer = false; }
-            else if (cur && (footer || (blank && !bullet && cur.some(l => BULLET_RE.test(l))))) { footer = true; common.push(line); }
-            else if (cur) {
-                const clean = line.replace(/^☆\s*/, '');
-                const prev = cur.length > 1 ? cur[cur.length - 1] : null;
-                // "그 외선수들은" / "시합복은" 처럼 짧게 끊긴 줄은 다음 줄과 이어 붙임
-                if (prev && prev.length <= 12 && /[은는]$/.test(prev)) cur[cur.length - 1] = prev + ' ' + clean;
-                else cur.push(clean);
-            }
-            blank = false;
-        });
-        const baseDay = dateOf(ymdOf(base));
-        // v2.41.23: 「3일(토)」처럼 요일이 적혀 있으면 요일이 맞는 날짜를 고름 (10월 11일에 붙여넣은 「3일(토)」 → 11/3(화)가 아니라 10/3(토))
+        const pad2 = v => ('0' + v).slice(-2);
         const DOW_IDX = { '일': 0, '월': 1, '화': 2, '수': 3, '목': 4, '금': 5, '토': 6 };
-        function resolveDate(mon, day, dow) {
+        const baseDay = dateOf(ymdOf(base));
+        const src = String(text).replace(/\r/g, '').replace(/[\u200b\ufeff]/g, '')
+            .replace(/：/g, ':').replace(/[～〜]/g, '~').replace(/（/g, '(').replace(/）/g, ')');
+        const L = src.split('\n').map(s => s.trim());
+        const BULLET_RE = /^(?:[-–](?![-–])|[·•▪◦※>]|ㄴ|└|\d{1,2}\s*[.)]\s+(?!\d))/;
+        const lead = t => t.replace(/^(?:[^\p{L}\p{N}]+|\d{1,2}\s*[.)]\s+(?=\D))+/u, '');
+        const unBullet = t => t.replace(/^(?:[-–·•▪◦>]|ㄴ|└|\d{1,2}\s*[.)]\s+(?=\D))\s*/, '');
+        const MEET_RE = /집합|출발|도착|모임|픽업/;
+
+        // ── 날짜 찾기: 「2026.10.24」 「10월 12일」 「10/12」 「10.12(월)」 「12일」 + 요일 「(토)」 「토요일」 + 기간 「24~25일」 「10/24 ~ 10/25」
+        function findDates(s) {
+            const out = [], taken = [];
+            const free = (a, b) => !taken.some(([x, y]) => a < y && b > x);
+            const dowAt = p => { const w = s.slice(p).match(/^\s*\(\s*([월화수목금토일])(?:요일)?[^)\n]{0,6}\)|^\s*([월화수목금토일])요일/); return w ? { d: w[1] || w[2], n: w[0].length } : null; };
+            const add = (a, b, y, mo, d, to) => {
+                mo = mo ? +mo : null; d = +d;
+                if ((mo && (mo < 1 || mo > 12)) || d < 1 || d > 31 || !free(a, b)) return;
+                let j = b, dow = null; const w = dowAt(b); if (w) { dow = w.d; j = b + w.n; }
+                taken.push([a, j]);
+                out.push({ y: y ? +y : null, mon: mo, day: d, dow, i: a, j, to: to || null });
+            };
+            let m;
+            const each = (re, f) => { re.lastIndex = 0; while ((m = re.exec(s))) f(m); };
+            each(/(\d{1,2})\s*월\s*(\d{1,2})\s*일?\s*[~\-–]\s*(\d{1,2})\s*일/g, m => add(m.index, m.index + m[0].length, null, m[1], m[2], { mon: +m[1], day: +m[3] }));
+            // ※ 오래된 아이폰(iOS 16.3 이하)도 되도록 「앞 글자 확인」 정규식 대신 앞 글자를 같이 잡고 그만큼 건너뜀
+            each(/(^|[^\d월.\/:])(\d{1,2})\s*일?\s*[~\-–]\s*(\d{1,2})\s*일(?!간|차|정|째)/g, m => add(m.index + m[1].length, m.index + m[0].length, null, null, m[2], { mon: null, day: +m[3] }));
+            each(/(20\d{2})\s*[.\-\/년]\s*(\d{1,2})\s*[.\-\/월]\s*(\d{1,2})\s*일?/g, m => add(m.index, m.index + m[0].length, m[1], m[2], m[3]));
+            each(/(\d{1,2})\s*월\s*(\d{1,2})\s*일/g, m => add(m.index, m.index + m[0].length, null, m[1], m[2]));
+            each(/(^|[^\d:.\/])(\d{1,2})\s*\/\s*(\d{1,2})(?![\d:\/])/g, m => add(m.index + m[1].length, m.index + m[0].length, null, m[2], m[3]));
+            each(/(^|[^\d:.\/])(\d{1,2})\.(\d{1,2})(?![\d:])(?=\s*\(\s*[월화수목금토일]|\s*[월화수목금토일]요일)/g, m => add(m.index + m[1].length, m.index + m[0].length, null, m[2], m[3]));
+            each(/(^|[^\d월.\/:])(\d{1,2})\s*일(?!간|차|정|째|동안|반|부터\s*\d)/g, m => add(m.index + m[1].length, m.index + m[0].length, null, null, m[2]));
+            out.sort((a, b) => a.i - b.i);
+            // 「10/24(토) ~ 10/25(일)」 「10월 12일부터 14일까지」 → 기간으로 합침
+            for (let k = 0; k < out.length - 1; k++) {
+                const gap = s.slice(out[k].j, out[k + 1].i);
+                if (!out[k].to && /^\s*(?:~|-|–|부터|에서)\s*$/.test(gap)) { out[k].to = out[k + 1]; out[k].j = out[k + 1].j; out.splice(k + 1, 1); }
+            }
+            return out;
+        }
+        // 맨 앞 날짜 무리: 「12일(월), 13일(화), 15일(목)」 처럼 쉼표 · 가운뎃점 · 및 으로 이어진 날짜
+        function leadGroup(s, ds) {
+            if (!ds.length) return [];
+            const g = [ds[0]];
+            for (let k = 1; k < ds.length; k++) {
+                if (/^\s*(?:,|·|\/|및|와|과|그리고|、|&)?\s*$/.test(s.slice(ds[k - 1].j, ds[k].i))) g.push(ds[k]); else break;
+            }
+            return g;
+        }
+
+        // ── 시간 찾기: 「13:00」 「오후 3시 30분」 「3시반」 「15시」 「2:30pm」, 범위 「~」
+        function findTimes(s) {
+            const out = []; let m;
+            const re = /(오전|오후|낮|저녁|밤|아침|새벽|AM|PM|am|pm)?\s*(\d{1,2})\s*(?::\s*(\d{2})|시\s*(?:(\d{1,2})\s*분|(반))?)\s*(AM|PM|am|pm)?/g;
+            while ((m = re.exec(s))) {
+                const a = m.index + (m[0].length - m[0].trimStart().length), b = m.index + m[0].length;
+                if (/^\s*간/.test(s.slice(b))) continue;                       // 「2시간」
+                if (/[\d.\/]$/.test(s.slice(0, a))) continue;                   // 날짜 일부
+                let h = +m[2]; const mi = m[3] !== undefined ? +m[3] : m[4] ? +m[4] : m[5] ? 30 : 0;
+                if (h > 24 || mi > 59) continue;
+                const ap = (m[1] || m[6] || '').toLowerCase();
+                if (/오후|저녁|밤|pm/.test(ap) && h < 12) h += 12;
+                else if (/낮/.test(ap) && h < 6) h += 12;
+                else if (/오전|아침|새벽|am/.test(ap) && h === 12) h = 0;
+                else if (!ap && h >= 1 && h <= 6 && !(m[3] !== undefined && /^0/.test(m[2]))) h += 12;   // 「3시」 「2:30」 → 오후 (「07:30」처럼 0을 붙이면 그대로)
+                const near = s.slice(Math.max(0, a - 8), Math.min(s.length, b + 5));
+                out.push({ h, mi, ap: !!ap, i: a, j: b, meet: MEET_RE.test(near) });
+            }
+            for (let k = 0; k < out.length - 1; k++) {
+                if (/^\s*(?:~|-|–|부터)\s*$/.test(s.slice(out[k].j, out[k + 1].i)) && !out[k].endT) {
+                    const e = out[k + 1]; if (!e.ap && e.h < out[k].h && e.h < 12) e.h += 12;
+                    out[k].endT = e; out[k].j = e.j; out.splice(k + 1, 1);
+                }
+            }
+            return out;
+        }
+        const hhmm = t => pad2(t.h % 24) + ':' + pad2(t.mi);
+
+        // ── 날짜를 실제 날짜로: 요일이 있으면 요일이 맞는 날, 월이 없으면 앞에 나온 월 → 가까운 날 순서로
+        function resolveDate(mon, day, dow, yr) {
             const want = dow && DOW_IDX[dow] !== undefined ? DOW_IDX[dow] : null;
+            if (yr && mon) return new Date(yr, mon - 1, day);
             if (mon) {
                 let d = new Date(base.getFullYear(), mon - 1, day);
                 if ((d - baseDay) / 86400000 < -120) d = new Date(base.getFullYear() + 1, mon - 1, day);
-                if (want !== null && d.getDay() !== want) {   // 해가 바뀌는 때(12월에 1월 공지 등) 요일이 맞는 해로
+                if (want !== null && d.getDay() !== want) {
                     const alt = [d.getFullYear() - 1, d.getFullYear() + 1].map(y => new Date(y, mon - 1, day))
                         .find(x => x.getDay() === want && Math.abs(x - baseDay) / 86400000 < 240);
                     if (alt) d = alt;
@@ -4052,114 +4103,236 @@
             });
             return cands[0];
         }
+        let ctx = null;   // 앞에서 나온 월 { y, m } — 「10월 12일 … 13일(화)」의 13일은 10월
+        function resolveTok(t) {
+            let d = null;
+            if (t.mon) d = resolveDate(t.mon, t.day, t.dow, t.y);
+            else if (ctx) {
+                const want = t.dow && DOW_IDX[t.dow] !== undefined ? DOW_IDX[t.dow] : null;
+                for (const k of [0, 1]) {
+                    const c = new Date(ctx.y, ctx.m + k, t.day);
+                    if (c.getDate() !== t.day) continue;
+                    if (k === 1 && want === null) break;          // 요일이 없으면 같은 달로
+                    if (want === null || c.getDay() === want) { d = c; break; }
+                }
+                if (!d) d = resolveDate(null, t.day, t.dow);
+            } else d = resolveDate(null, t.day, t.dow);
+            if (d) ctx = { y: d.getFullYear(), m: d.getMonth() };
+            return d;
+        }
+        const header = [];
+        const hm = (L.find(s => s && !findDates(lead(s)).length && /(\d{1,2})\s*월/.test(s)) || '').match(/(\d{1,2})\s*월/);
+        if (hm) { const mo = +hm[1]; let y = base.getFullYear(); if ((new Date(y, mo - 1, 28) - baseDay) / 86400000 < -120) y++; ctx = { y, m: mo - 1 }; }   // 머리말의 「10월 2주차」
+
+        // ── ① 줄 살피기
+        const info = L.map(t => {
+            if (!t) return { blank: true };
+            const body = lead(t), bullet = BULLET_RE.test(t);
+            const kvm = unBullet(t).match(/^([^:\d\n]{1,14}?)\s*:\s*(.+)$/);
+            const kv = kvm ? { k: kvm[1].replace(/^[^\p{L}]+/u, '').trim(), v: kvm[2].trim() } : null;
+            const ds = findDates(body);
+            const marker = /^(📌|🔹|🔸|▶|■|●|◆|\*)/u.test(t);
+            const kvDate = !!(kv && /일시|날짜|일자|언제|기간|^때$/.test(kv.k) && findDates(kv.v).length);
+            // 「월 10/12」 「화(10/13)」 「수요일 10/14」 처럼 요일이 날짜 앞에 와도 날짜로 시작하는 줄로 봄
+            const wp = body.match(/^([월화수목금토일])(?:요일)?\s*\(?\s*(?=\d)/);
+            let dateLed = !!(ds.length && ds[0].i === 0);
+            if (!dateLed && wp && ds.length && ds[0].i === wp[0].length) { dateLed = true; if (!ds[0].dow) ds[0].dow = wp[1]; }
+            return { t, body, bullet, kv, ds, marker, kvDate, dateLed };
+        });
+        const EVENTISH = /vs|연습|훈련|경기|시합|대회|휴식|행사|\d{1,2}:\d{2}|\d\s*시|[가-힣]초(?:\s|$|\(|,)/i;
+        // ── ② 일정 시작 줄 정하기
+        const anchor = []; let open = false, bulletRun = false;
+        info.forEach((x, i) => {
+            if (x.blank) return;
+            let a = false, ba = false;
+            if (x.kvDate) a = true;
+            else if (!x.bullet && x.dateLed) a = true;
+            else if (x.bullet && x.dateLed && (!open || bulletRun || EVENTISH.test(x.body.slice(x.ds[0].j)))) { a = true; ba = true; }
+            else if (x.marker && x.ds.length && x.ds[0].i <= 14) a = true;
+            else if (!open && !x.bullet && x.ds.length && x.ds[0].i <= 14 && EVENTISH.test(x.body)) a = true;
+            if (a) { anchor[i] = true; open = true; bulletRun = ba; }
+        });
+        // 「일시 :」 줄 바로 위 제목 줄 → 그 일정의 제목
+        const titleFor = {}, isTitle = {};
+        info.forEach((x, i) => {
+            if (!anchor[i] || !x.kvDate) return;
+            let j = i - 1; while (j >= 0 && info[j].blank) j--;
+            if (j >= 0 && !anchor[j] && !info[j].kv && !info[j].bullet && info[j].t.length <= 40) { titleFor[i] = info[j].t; isTitle[j] = true; }
+        });
+
+        // ── 묶기
+        const blocks = [], common = [];
+        let cur = null, blank = false, footer = false;
+        info.forEach((x, i) => {
+            if (x.blank) { blank = true; return; }
+            if (isTitle[i]) { blank = false; return; }
+            if (anchor[i]) { cur = { i, x, lines: [], title: titleFor[i] || '', detail: false }; blocks.push(cur); footer = false; blank = false; return; }
+            if (!cur) { header.push(x.t); blank = false; return; }
+            if (footer || (blank && !x.bullet && !x.kv && cur.detail)) { footer = true; common.push(x.t); blank = false; return; }
+            const clean = x.t.replace(/^☆\s*/, '');
+            const prev = cur.lines.length ? cur.lines[cur.lines.length - 1] : null;
+            if (prev && prev.length <= 12 && /[은는]$/.test(prev) && !x.kv) cur.lines[cur.lines.length - 1] = prev + ' ' + clean;   // 「시합복은」+「빨강」
+            else cur.lines.push(clean);
+            if (x.bullet || x.kv) cur.detail = true;
+            blank = false;
+        });
+        // 머리말처럼 보이는 날짜 줄(「[10/12~10/16 일정 안내]」)만 있고 내용이 없으면 일정이 아님
+        const realBlocks = blocks.filter(b => !(blocks.length > 1 && !b.lines.length && /안내|일정|공지|주차|계획/.test(b.x.t) && (/^[\[【<(]/.test(b.x.t) || (b.x.ds[0] && b.x.ds[0].to))));
+        blocks.filter(b => realBlocks.indexOf(b) === -1).forEach(b => header.push(b.x.t));
+        const headerText = header.join('\n');
+
+        // ── ③ 묶음마다 항목 뽑기
         const out = [];
-        let lastMonth = null;
-        blocks.forEach(bl => {
-            const head = bl[0];
-            let mon = null, day = null, dow = null, m;
-            if ((m = head.match(dateRe))) { mon = m[1] ? parseInt(m[1], 10) : null; day = parseInt(m[2], 10); dow = m[3] || m[4] || null; }
-            else if ((m = head.match(slashRe)) || (m = head.match(dotRe))) { mon = parseInt(m[1], 10); day = parseInt(m[2], 10); dow = m[3] || null; }
-            if (!day) return;
-            if (mon) lastMonth = mon; else if (lastMonth && out.length) mon = null;
-            const d = resolveDate(mon, day, dow);
-            if (!d) return;
-            const all = bl.join('\n');
-            const used = {};
-            const ev = { date: ymdOf(d), start: '', end: '', type: '기타', title: '', place: '', opponent: '', grades: '전체', target: '', meet: '', dress: '', memo: '' };
+        const TYPE_RULES = [
+            ['대회', /대회|리그|회장기|협회장기|시장기|교육감기|연맹|전국|토너먼트|결승|준결승|예선|본선|승리\s*시|패배\s*시|승자|패자/],
+            ['연습시합', /연습\s*시합|연습\s*경기|친선|평가전|교류전|\bvs\b|vs\.|VS|상대\s*:/i],
+            ['행사', /관람|행사|워크숍|야유회|회식|총회|설명회|졸업|입학|시상|단합|캠프/],
+            ['휴식', /휴식|쉽니다|쉼$|휴무|휴관|훈련\s*없|없습니다/],
+            ['훈련', /훈련|연습|트레이닝|집합/]
+        ];
+        const typeOf = s => { for (const [k, re] of TYPE_RULES) if (re.test(s)) return k; return ''; };
+        const SCHOOL_RE = /([가-힣]{1,8}(?:초등학교|초|리틀야구단|리틀))(?:\s*([1-6])\s*학년)?/g;
+        const isOurs = s => /대연/.test(s);
+        const PLACE_WORD = /구장|경기장|운동장|야구장|체육관|연습장|그라운드|파크|^학교$|학교\s*운동장|기장|밀양|부산|김해|양산|창원|사직|해운대|강서|화명|대저|삼락|구덕/;
 
-            // 시간: 첫 줄의 시간대를 모두 찾는다 ("08:00~10:30 5학년 / 10:30~13:00 6학년" → 시작 08:00, 종료 13:00)
-            const pad2 = v => ('0' + v).slice(-2);
-            let tms = Array.from(head.matchAll(/(\d{1,2}):(\d{2})\s*(?:[~\-–]\s*(\d{1,2}):(\d{2}))?/g));
-            if (!tms.length) { const tm1 = all.match(/(\d{1,2}):(\d{2})\s*(?:[~\-–]\s*(\d{1,2}):(\d{2}))?/); if (tm1) tms = [tm1]; }
-            if (tms.length) {
-                const f = tms[0], l = tms[tms.length - 1];
-                ev.start = pad2(f[1]) + ':' + f[2];
-                if (l[3]) ev.end = pad2(l[3]) + ':' + l[4];
-                else if (tms.length > 1) ev.end = pad2(l[1]) + ':' + l[2];
+        realBlocks.forEach(bl => {
+            const x = bl.x, lines = bl.lines, used = {};
+            const dateSrc = x.kvDate ? x.kv.v : x.body;
+            const dsAll = findDates(dateSrc), grp = leadGroup(dateSrc, dsAll);
+            if (!grp.length) return;
+            const ev = { date: '', start: '', end: '', type: '기타', title: '', place: '', opponent: '', grades: '전체', target: '', meet: '', dress: '', memo: '' };
+            // 첫 줄에서 날짜를 뺀 나머지 (「일시 :」 형식이면 날짜 뒤 남은 말)
+            const pre = dateSrc.slice(0, grp[0].i).replace(/^[월화수목금토일](?:요일)?\s*\(?\s*$/, '');   // 「월 10/12」의 「월」
+            let rest = (pre + ' ' + dateSrc.slice(grp[grp.length - 1].j).replace(/^\s*\)/, '')).trim();
+            // 「오전 9시 학교 집합 후 이동, 김해 삼성초 연습경기」 → 집합 부분은 집합·출발 칸으로
+            let meetHead = '';
+            if (/[,，]/.test(rest)) {
+                const segs = rest.split(/\s*[,，]\s*/);
+                const mi = segs.findIndex(sg => MEET_RE.test(sg) && !/경기|시합|대회/.test(sg));
+                if (mi !== -1) { meetHead = segs[mi]; segs.splice(mi, 1); rest = segs.join(', '); }
             }
-            const multiSlot = tms.length >= 2;   // 첫 줄에 시간대가 2개 이상 = 시간대별 학년 나눔
+            const headTimesSrc = rest;
 
-            // 구분: "그 외 선수들은 휴식" 같은 줄은 판정에서 뺀다 (본 일정의 구분이 아니므로)
-            const typeText = bl.filter(l => !/^그\s*외/.test(l.trim())).join('\n');
-            if (/대회|리그|회장기|전국|토너먼트|결승|준결승|승리\s*시|패배\s*시|승자|패자/.test(typeText)) ev.type = '대회';   // 승리시/패배시 = 대진표 → 대회
-            else if (/연습\s*시합|연습\s*경기|친선|평가전|\bVS\b|vs/i.test(typeText)) ev.type = '연습시합';
-            else if (/관람|행사|워크숍|야유회|회식|총회|설명회/.test(typeText)) ev.type = '행사';
-            else if (/휴식|쉽니다|휴무/.test(typeText)) ev.type = '휴식';
-            else if (/훈련|연습|집합/.test(typeText)) ev.type = '훈련';
+            // 시간: 첫 줄 → 「시간 :」 칸 → 다른 줄(집합·출발 줄 빼고)
+            let tms = findTimes(headTimesSrc).filter(t => !t.meet);
+            const multiSlot = tms.filter(t => t.endT).length >= 2;
+            const setTime = arr => { if (!arr.length) return false; const f = arr[0], l = arr[arr.length - 1]; ev.start = hhmm(f); if (l.endT) ev.end = hhmm(l.endT); else if (arr.length > 1) ev.end = hhmm(l); return true; };
+            setTime(tms);
 
-            const kTime = v => {   // 「13:00~15:00」 · 「오후 2시 30분」 · 「2시」(1~7시는 오후로 봄) → HH:MM
-                const a = v.match(/(\d{1,2}):(\d{2})/); if (a) return pad2(a[1]) + ':' + a[2];
-                const b = v.match(/(오전|오후)?\s*(\d{1,2})\s*시\s*(?:(\d{1,2})\s*분|(반))?/); if (!b) return '';
-                let h = parseInt(b[2], 10); if (b[1] === '오후' && h < 12) h += 12; else if (!b[1] && h >= 1 && h <= 7) h += 12;
-                return pad2(h) + ':' + (b[3] ? pad2(b[3]) : b[4] ? '30' : '00');
-            };
-            bl.forEach((ln, idx) => {
-                const t = ln.trim();
-                // v2.41.24: 「- 장소 : 기장」 「- 참석대상 : 5학년」 「- 학교 출발시간 : 2시 30분」 「- 유니폼 : 아이보리」 처럼 「이름 : 값」 줄
-                const kv = idx > 0 ? t.replace(/^(?:[-–·•▪◦>]|ㄴ|└)\s*/, '').match(/^([^:：\d]{1,14}?)\s*[:：]\s*(.+)$/) : null;   // 이름에 숫자가 있으면(「집합 07:30」의 시간) 「이름 : 값」으로 보지 않음
-                if (kv) {
-                    const k = kv[1].trim(), v = kv[2].trim();
-                    if (/장소|구장|경기장|위치/.test(k)) { if (!ev.place) ev.place = v; used[idx] = true; return; }
-                    if (/참석|참가|대상|명단/.test(k)) { ev.target = v; const g = gradesFromText(v); if (g) ev.grades = g; used[idx] = true; return; }
-                    if (/출발|집합|도착|모임/.test(k)) { if (!ev.meet) ev.meet = (k.replace(/\s*(시간|시각)$/, '') + ' ' + v).trim(); used[idx] = true; return; }
-                    if (/유니폼|복장|시합복|훈련복|착용/.test(k)) { if (!ev.dress) ev.dress = v; used[idx] = true; return; }
-                    if (/상대/.test(k)) { if (!ev.opponent) ev.opponent = v.replace(/^vs\.?\s*/i, '').replace(/[\(（].*$/, '').trim(); used[idx] = true; return; }
-                    if (/^(경기\s*)?(시간|일시)$/.test(k)) {
-                        const tm = v.match(/(\d{1,2}:\d{2}|(?:오전|오후)?\s*\d{1,2}\s*시(?:\s*\d{1,2}\s*분|\s*반)?)\s*(?:[~\-–]\s*(\d{1,2}:\d{2}|(?:오전|오후)?\s*\d{1,2}\s*시(?:\s*\d{1,2}\s*분|\s*반)?))?/);
-                        if (tm && !ev.start) { ev.start = kTime(tm[1]); if (tm[2]) ev.end = kTime(tm[2]); used[idx] = true; return; }
-                    }
+            // 「이름 : 값」 줄과 여러 줄 살피기
+            lines.forEach((ln, idx) => {
+                const t = unBullet(ln.trim());
+                const kvm = t.match(/^([^:\d\n]{1,14}?)\s*:\s*(.+)$/);
+                if (kvm) {
+                    const k = kvm[1].replace(/^[^\p{L}]+/u, '').trim(), v = kvm[2].trim();
+                    if (/장소|구장|경기장|위치|어디/.test(k)) { if (!ev.place) ev.place = v; used[idx] = 1; return; }
+                    if (/참석|참가|대상|명단|선수|학년/.test(k)) { ev.target = v; const g = gradesFromText(v); if (g) ev.grades = g; used[idx] = 1; return; }
+                    if (MEET_RE.test(k)) { if (!ev.meet) ev.meet = (k.replace(/\s*(시간|시각|장소)$/, '') + ' ' + v).trim(); used[idx] = 1; return; }
+                    if (/유니폼|복장|시합복|훈련복|착용|옷/.test(k)) { if (!ev.dress) ev.dress = v; used[idx] = 1; return; }
+                    if (/상대/.test(k)) { if (!ev.opponent) ev.opponent = v.replace(/^vs\.?\s*/i, '').replace(/\(.*$/, '').trim(); used[idx] = 1; return; }
+                    if (/^(경기\s*|훈련\s*|시작\s*)?(시간|시각)$|^시작$/.test(k)) { if (!ev.start && setTime(findTimes(v).filter(t => !t.meet))) { used[idx] = 1; return; } }
+                    if (/제목|경기명|대회명|행사명|^경기$|^대회$|^내용$|^행사$/.test(k)) { if (!ev.title) ev.title = v; used[idx] = 1; return; }
+                    if (/일시|날짜|일자/.test(k)) { if (!ev.start) setTime(findTimes(v).filter(t => !t.meet)); used[idx] = 1; return; }
                 }
-                if (!ev.opponent) { const vm = t.match(/VS\.?\s*(.+)$/i); if (vm) { ev.opponent = vm[1].replace(/[\(（].*$/, '').trim(); used[idx] = true; return; } }
-                if (/참가\s*선수|참가\s*학년/.test(t)) {
-                    ev.target = t.replace(/.*참가\s*(선수|학년)\s*[:：]?\s*/, '').trim();
+                if (!ev.opponent) { const vm = t.match(/(?:^|\s)(?:vs\.?|VS\.?)\s*(.+)$/i); if (vm) { ev.opponent = vm[1].replace(/\(.*$/, '').trim(); used[idx] = 1; return; } }
+                if (/참가\s*선수|참가\s*학년|참석\s*대상/.test(t)) {
+                    ev.target = t.replace(/.*(참가\s*(선수|학년)|참석\s*대상)\s*:?\s*/, '').trim();
                     const g = gradesFromText(ev.target); if (g) ev.grades = g;
-                    used[idx] = true; return;
+                    used[idx] = 1; return;
                 }
-                if (/^그\s*외/.test(t)) return;   // "그 외 선수들은 ~" 은 메모로
-                if (!ev.meet && /집합|출발|도착/.test(t) && idx > 0) { ev.meet = t; used[idx] = true; return; }
-                if (!ev.dress && /시합복|복장|유니폼|훈련복|착용/.test(t)) { ev.dress = t.replace(/^(시합복|복장)\s*(은|는|:)?\s*/, ''); used[idx] = true; return; }
-                if (!ev.place && idx > 0 && !/대회|리그|시합|경기|훈련/.test(t) && /(구장|경기장|운동장|야구장|초등학교|중학교|체육관|연습장|^학교$|밀양|기장)/.test(t) && t.length <= 30 && !/\d{1,2}:\d{2}/.test(t)) { ev.place = t; used[idx] = true; return; }
+                if (/^그\s*외/.test(t)) return;   // 「그 외 선수들은 ~」 은 메모로
+                // 「13:00 경기 시작 (12:00 집합)」 → 경기 13:00, 집합 12:00
+                const tl = findTimes(t);
+                if (!ev.start && tl.length && tl[0].i <= 4 && !tl[0].meet && /경기|시작|훈련|시합/.test(t)) {
+                    setTime(tl.filter(z => !z.meet));
+                    const pm = t.match(/\(([^)]*(?:집합|출발|도착|모임)[^)]*)\)/); if (pm && !ev.meet) ev.meet = pm[1].trim();
+                    used[idx] = 1; return;
+                }
+                if (!ev.meet && MEET_RE.test(t)) { ev.meet = t; used[idx] = 1; return; }
+                if (!ev.dress && /시합복|복장|유니폼|훈련복|착용/.test(t)) { ev.dress = t.replace(/^(시합복|복장|유니폼)\s*(은|는|:)?\s*/, ''); used[idx] = 1; return; }
+                if (!ev.place && !/대회|리그|시합|경기|훈련/.test(t) && PLACE_WORD.test(t) && t.length <= 30 && !/\d{1,2}:\d{2}/.test(t) && !/^※/.test(ln)) { ev.place = t; used[idx] = 1; return; }
+                if (!ev.start && !/^※/.test(ln)) { const tt = findTimes(t).filter(z => !z.meet); if (tt.length && /경기|시작|훈련|시합|^\s*[\d오전후]/.test(t) && t.length <= 30) { setTime(tt); used[idx] = 1; return; } }
             });
 
-            // 제목: 첫 줄에서 날짜/시간을 뺀 나머지
-            let title = head.replace(dateRe, '').replace(slashRe, '').replace(dotRe, '').replace(/\d{1,2}:\d{2}\s*([~\-–]\s*\d{1,2}:\d{2})?/g, '')
-                .replace(/\bvs\.?\s.*$/i, '');   // v2.41.24: 「vs. 수영초 5학년」은 상대팀 칸으로 가므로 제목에서 뺌
-            if (multiSlot) {
-                // 시간대별 학년 공지: 첫 줄은 "시간+학년" 표라서 제목이 아님 → 학년·구분기호를 지우고, 남는 게 없으면 둘째 줄을 제목으로
-                title = title.replace(/((?:[1-6]\s*[,.·\s]\s*)*[1-6])\s*학년/g, '').replace(/[\/|,·]/g, ' ');
-                if (!ev.target) ev.target = head.replace(dateRe, '').replace(slashRe, '').replace(/[\(\)（）]/g, ' ').replace(/\s+/g, ' ').trim();
+            // 첫 줄의 나머지에서 상대 · 장소 · 학년 · 제목
+            let r = rest.replace(/\([^)]*(집합|출발|도착)[^)]*\)/g, ' ');
+            r = r.replace(/(오전|오후|낮|저녁|밤|아침|새벽)?\s*\d{1,2}\s*(?::\s*\d{2}|시\s*(?:\d{1,2}\s*분|반)?)\s*(?:[~\-–]\s*(오전|오후)?\s*\d{1,2}\s*(?::\s*\d{2}|시\s*(?:\d{1,2}\s*분|반)?))?(\s*(AM|PM|am|pm))?/g, ' ');
+            if (!ev.opponent) {
+                const vm = r.match(/(?:^|\s)(?:vs\.?|VS\.?)\s*([^,(/]+)/i);
+                if (vm) ev.opponent = vm[1].trim();
             }
-            title = title.replace(/[-=~_]{2,}/g, ' ');   // "-----2일-----" 같은 구분선 장식 제거
-            title = title.replace(/[\(\)（）]/g, ' ').replace(/\s+/g, ' ').trim();
-            title = title.replace(/^[-·,\/>→]+\s*/, '').replace(/\s*[-·,\/]$/, '').trim();
-            if (!title && bl[1] && !used[1] && !/\d{1,2}:\d{2}/.test(bl[1])) { title = bl[1].trim(); used[1] = true; }
-            if (/^(연습시합|연습경기)$/.test(title)) title = '';
-            const place2 = title.match(/^(.*?)\s*[\(（]?\s*(밀양|기장|부산|김해|양산|창원)\s*[\)）]?$/);
-            if (place2 && !ev.place) { ev.place = place2[2]; title = place2[1].trim(); }
-            if (ev.opponent && ev.type === '기타') ev.type = '연습시합';   // v2.41.24: 「상대 : 감천초」처럼 상대팀이 있으면 연습시합
+            r = r.replace(/(?:^|\s)(?:vs\.?|VS\.?)\s*[^,(/]+/i, ' ');
+            let typeTxt = [rest, bl.title].concat(lines.filter(l => !/^그\s*외/.test(l.trim()) && !/^※/.test(l.trim()))).join('\n');
+            ev.type = typeOf(typeTxt) || typeOf(headerText) || '기타';
+            if (!ev.opponent && /대회|연습시합/.test(ev.type)) {
+                const wm = r.match(/([가-힣]{1,8}(?:초등학교|초|리틀야구단|리틀))\s*(?:와|과|랑|하고)\s*(?:연습)?\s*(?:경기|시합)/);
+                if (wm && !isOurs(wm[1])) { ev.opponent = wm[1]; r = r.replace(wm[0], ' 연습경기 '); }
+                else { for (const sm of r.matchAll(SCHOOL_RE)) { if (!isOurs(sm[1])) { ev.opponent = sm[0].trim(); r = r.replace(sm[0], ' '); break; } } }
+            }
+            if (ev.opponent && ev.type === '기타') ev.type = '연습시합';
+            // 괄호 안 장소 「(기장)」 「(학교 운동장)」
+            r = r.replace(/\(([^)]{1,16})\)/g, (all, inner) => {
+                if (/학년/.test(inner)) { if (ev.grades === '전체') { const g = gradesFromText(inner); if (g) ev.grades = g; } return ' '; }
+                if (!ev.place && !/\d/.test(inner) && (PLACE_WORD.test(inner) || inner.length <= 6)) { ev.place = inner.trim(); return ' '; }
+                return all;
+            });
+            if (ev.grades === '전체') { const g = gradesFromText(r); if (g) ev.grades = g; }
+            if (meetHead && !ev.meet) ev.meet = meetHead;
+            // 「김해 삼성초 연습경기」의 「김해」처럼 따로 떨어진 지역 이름 → 장소 (「부산시장기」 같은 낱말 속은 제외)
+            if (!ev.place) { const pm = r.match(/(?:^|\s)(기장|밀양|부산|김해|양산|창원|사직|해운대|강서|화명|대저|삼락|구덕)(\s*[가-힣]*(?:구장|야구장|운동장|경기장))?(?=\s|$|,)/); if (pm) { ev.place = (pm[1] + (pm[2] || '')).trim(); r = r.replace(pm[0], ' '); } }
+            r = r.replace(/((?:[1-6]\s*[,.·~\-\s]\s*)*[1-6])\s*학년\s*(이하|이상|전원)?/g, ' ');
+            if (multiSlot) {
+                const set = {};
+                gradesFromText(headTimesSrc).split(',').filter(Boolean).forEach(g => set[g] = 1);
+                if (!ev.target) ev.target = headTimesSrc.replace(/[()]/g, ' ').replace(/\s+/g, ' ').trim();
+                if (Object.keys(set).length && ev.grades === '전체') ev.grades = Object.keys(set).sort().join(',');
+            }
+            // 제목 정리
+            const cleanT = s => String(s || '').replace(/[\[\]【】<>《》「」『』]/g, ' ').replace(/[-=~_]{2,}/g, ' ').replace(/[()]/g, ' ')
+                .replace(/\s+/g, ' ').trim().replace(/^[-·,\/>→:|]+\s*|\s*[-·,\/:|]+$/g, '').replace(/\s*(안내|공지)(\s*드립니다)?$/, '').trim();
+            const GENERIC = /^(연습\s*경기|연습\s*시합|경기|시합|훈련|일정|연습|휴식|팀\s*훈련|학교\s*훈련|정기\s*훈련)$/;
+            let title = cleanT(ev.title || r);
+            if ((!title || GENERIC.test(title)) && bl.title) title = cleanT(bl.title);
+            if (GENERIC.test(title)) title = '';
+            if (!title && lines[0] && !used[0] && !findTimes(lines[0]).length && !lines[0].includes(':') && lines[0].length <= 20 && !PLACE_WORD.test(lines[0]) && !/^※/.test(lines[0])) { title = cleanT(lines[0]); used[0] = 1; }
+            if (title && /^학교\s*훈련$/.test(title)) title = '';
+            if (title && !/[\p{L}\p{N}]/u.test(title)) title = '';   // 「/」처럼 기호만 남으면 제목 없음
+            if (!ev.place && /학교\s*훈련|학교에서/.test(rest)) ev.place = '학교';
+            if (ev.type === '기타' && ev.start && /^학교/.test(ev.place)) ev.type = '훈련';   // 학교 + 시간 → 훈련
             ev.title = title || ev.type;
 
-            if (ev.grades === '전체') { const g = gradesFromText(head.replace(/\bvs\.?\s.*$/i, '')); if (g) ev.grades = g; }   // 상대팀 학년(「vs 수영초 5학년」)은 빼고
-            if (ev.grades === '전체' && !ev.target) {
-                // "08:00~10:30 5학년 / 10:30~13:00 6학년" 처럼 시간대별 학년이 나뉜 경우 → 학년 합치기
-                const set = {};
-                bl.forEach(ln => { if (/\d{1,2}:\d{2}/.test(ln) && !/^그\s*외/.test(ln.trim())) gradesFromText(ln).split(',').filter(Boolean).forEach(g => set[g] = true); });
-                const gs = Object.keys(set).sort();
-                if (gs.length) { ev.grades = gs.join(','); ev.target = gs.slice().reverse().join('·') + '학년 (시간대별)'; }
-            }
-            ev.memo = bl.slice(1).filter((_, i) => !used[i + 1]).join('\n').trim();
-            out.push(ev);
+            ev.memo = lines.filter((_, i) => !used[i]).join('\n').trim();
+            // 날짜 → 실제 날짜 (여러 날 · 기간은 날마다 하나씩)
+            const days = [];
+            grp.forEach(tok => {
+                const d0 = resolveTok(tok); if (!d0) return;
+                if (tok.to) {
+                    const t2 = Object.assign({}, tok.to); if (!t2.mon) t2.mon = d0.getMonth() + 1;
+                    let d1 = new Date(t2.y || d0.getFullYear(), t2.mon - 1, t2.day); if (d1 < d0) d1 = new Date(d1.getFullYear() + 1, d1.getMonth(), d1.getDate());
+                    const n = Math.round((d1 - d0) / 86400000);
+                    if (n >= 0 && n <= 6) { for (let k = 0; k <= n; k++) days.push({ d: new Date(d0.getFullYear(), d0.getMonth(), d0.getDate() + k), range: [d0, d1] }); ctx = { y: d1.getFullYear(), m: d1.getMonth() }; return; }
+                }
+                days.push({ d: d0 });
+            });
+            days.forEach(o => {
+                const e = Object.assign({}, ev, { date: ymdOf(o.d) });
+                if (o.range) e.memo = ['기간 ' + fmtMD(ymdOf(o.range[0])) + ' ~ ' + fmtMD(ymdOf(o.range[1])), e.memo].filter(Boolean).join('\n');
+                out.push(e);
+            });
         });
-        if (common.length) out.forEach(ev => { ev.memo = [ev.memo, common.join('\n')].filter(Boolean).join('\n'); });   // 맨 끝 공통 안내는 모든 일정 메모에
+        if (common.length) out.forEach(ev => { ev.memo = [ev.memo, common.join('\n')].filter(Boolean).join('\n'); });
         return out;
     }
-    // "6학년 +민준", "4,3,2학년", "3.4학년" → "6" / "2,3,4"
-    //   한 줄에 학년이 여러 번 나오면 모두 합친다: "08:00 5학년 / 10:30 6학년" → "5,6"
+    // "6학년 +민준" · "4,3,2학년" · "3~5학년" · "4학년 이하" · "저학년" → "6" / "2,3,4" / "3,4,5" / "1,2,3,4" / "1,2,3"
     function gradesFromText(t) {
-        const set = {};
-        for (const m of String(t).matchAll(/((?:[1-6]\s*[,.·\s]\s*)*[1-6])\s*학년/g)) {
-            m[1].split(/[^1-6]+/).filter(Boolean).forEach(g => set[g] = true);
-        }
+        const s = String(t), set = {};
+        const add = g => { g = +g; if (g >= 1 && g <= 6) set[g] = true; };
+        for (const m of s.matchAll(/([1-6])\s*[~\-–]\s*([1-6])\s*학년/g)) for (let g = +m[1]; g <= +m[2]; g++) add(g);
+        for (const m of s.matchAll(/([1-6])\s*학년\s*이하/g)) for (let g = 1; g <= +m[1]; g++) add(g);
+        for (const m of s.matchAll(/([1-6])\s*학년\s*이상/g)) for (let g = +m[1]; g <= 6; g++) add(g);
+        if (/저학년/.test(s)) [1, 2, 3].forEach(add);
+        if (/고학년/.test(s)) [4, 5, 6].forEach(add);
+        for (const m of s.matchAll(/((?:[1-6]\s*[,.·\s]\s*)*[1-6])\s*학년/g)) m[1].split(/[^1-6]+/).filter(Boolean).forEach(add);
         return Object.keys(set).sort().join(',');
     }
 
@@ -6787,6 +6960,15 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.41.25', d: '2026-10-11', t: '텍스트 분석 새로 만들기 — 기호 없어도 날짜로 일정 찾기', items: [
+            '📌 ☘️ 같은 기호가 없어도 날짜가 나오면 일정을 나눔: 10/12 · 10.12(월) · 12일(월) · 10월 12일 · 2026.10.24 · 「월 10/12」처럼 요일이 앞에 와도',
+            '한 줄에 날짜 여러 개(12일(월), 13일(화)) → 날마다 따로 · 기간(24~25일, 10/24 ~ 10/25) → 날마다 따로 + 메모에 기간',
+            '「일시 : 10월 17일(토) 오후 1시~4시」 칸 형식 + 바로 위 [제목] 줄도 알아봄 · 「- 10/19(월) 15:00 수영초 (기장)」 같은 목록도 한 줄씩 일정',
+            '시간: 13:00 · 오후 3시 30분 · 3시반 · 15시 (오전/오후가 없으면 1~6시는 오후로) · 「13:00 경기 시작 (12:00 집합)」은 경기·집합 따로',
+            '상대: vs · VS · 「상대 : 」 · 「수영초와 연습경기」 · 학교 이름(○○초) / 장소: 「장소 : 」 · (기장) · 김해 같은 지역 이름 / 학년: 3~5학년 · 4학년 이하 · 저학년 · 고학년',
+            '머리말([10월 2주차 …])의 월과 구분(연습경기 등)을 참고 · 「※ 우천 시 18일로 연기」 「회비는 10/31까지」 같은 줄은 일정으로 자르지 않음',
+            '시험용 공지 17가지(기존 📌 공지 포함)를 모두 통과하는 것 확인'
+        ] },
         { v: 'v2.41.24', d: '2026-10-11', t: '텍스트 분석 — 다양한 공지 모양 알아보기', items: [
             '📌 말고도 ☘️ · ✅ · ⚾ 같은 아무 이모지/기호로 시작해도, 줄이 날짜(10/12 (월) · 12일(월) · 10월 12일 · 10.12(월))로 시작하면 일정을 따로 자름',
             '「- 장소 : 기장」 「- 참석대상 : 5학년」 「- 학교 출발시간 : 2시 30분」 「- 유니폼 : 아이보리」 처럼 「이름 : 값」 줄을 장소 · 참가 학년 · 집합/출발 · 복장 칸으로 나눠 넣음',
