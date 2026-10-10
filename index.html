@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.41.26 · b261011";
+        const APP_VERSION = "v2.42.0 · b261011";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1523,6 +1523,80 @@
         #eventEditModal .form-group.ev-inline.top { align-items: start; }
         #eventEditModal .form-group.ev-inline.top > label { padding-top: 8px; }
         #eventEditModal .form-group.ev-inline > label { white-space: nowrap; letter-spacing: -0.3px; }
+        /* 📍 장소 찾기 · 지도 (v2.42.0) — 장소 칸 옆 🔍 찾기 · 자주 쓰는 곳 칩 · 지도 연결 표시 */
+        #eventEditModal [hidden], #eventDetailModal [hidden], #placeSearchModal [hidden] { display: none !important; }
+        #eventEditModal .ev-place-col { display: flex; flex-direction: column; gap: 6px; min-width: 0; container-type: inline-size; }
+        #eventEditModal .ev-place-inp { display: flex; gap: 5px; min-width: 0; }
+        #eventEditModal .ev-place-inp input { flex: 1 1 auto; }
+        .ev-place-find { flex: 0 0 auto; border: 1px solid #0b2240; background: #0b2240; color: #fff; border-radius: 6px; padding: 0 10px; font-size: 12.5px; font-weight: 800; white-space: nowrap; cursor: pointer; }
+        .ev-place-chips { display: flex; gap: 5px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+        .ev-place-chips::-webkit-scrollbar { display: none; }
+        .ev-place-chips:empty { display: none; }
+        .pl-chip { flex: 0 0 auto; padding: 3px 9px; border-radius: 999px; border: 1px solid #cbd5e1; background: #fff; font-size: 11.5px; line-height: 1.35; color: #334155; font-weight: 700; cursor: pointer; white-space: nowrap; }
+        .pl-chip.on { border-color: #d11f2f; background: #fff1f2; color: #b91c1c; }
+        .pl-chip .pin { font-size: 9.5px; margin-right: 2px; }
+        .ev-place-card { display: flex; align-items: center; gap: 8px; padding: 5px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; min-width: 0; }
+        .ev-place-card .pc-thumb { flex: 0 0 64px; height: 50px; border-radius: 6px; overflow: hidden; background: #e8eef5; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .ev-place-card .pc-t { flex: 1; min-width: 0; font-size: 11px; line-height: 1.4; color: #475569; letter-spacing: -0.2px; }
+        .ev-place-card .pc-t b { display: block; color: #0b2240; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ev-place-card .pc-ok { color: #15803d; font-weight: 800; }
+        .ev-place-card .pc-new { color: #b45309; font-weight: 800; }
+        .ev-place-card .pc-btn { flex: 0 0 auto; border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; padding: 4px 8px; font-size: 11.5px; font-weight: 800; color: #0b2240; cursor: pointer; }
+        .ev-place-card.hint { background: none; border-style: dashed; padding: 5px 8px; }
+        .ev-place-card.hint .pc-t { color: #64748b; }
+        .ev-place-card.hint .pc-t b { display: inline; font-size: 11px; }
+        @container (max-width: 250px) { .ev-place-find { padding: 0 9px; } .ev-place-find .t { display: none; } .ev-place-card .pc-thumb { display: none; } }   /* 좁은 화면(큰 글씨): 🔍만 · 작은 지도 숨김 */
+        /* 📍 장소 찾기 창 — 아래에서 올라오는 창 (넓은 화면은 가운데) */
+        #placeSearchModal { z-index: 1002; align-items: flex-end; padding: 0; }
+        #placeSearchModal .modal-content { max-width: 460px; border-radius: 16px 16px 0 0; padding: 12px 12px 10px; max-height: calc(88vh / var(--ui-zoom, 1)); max-height: calc(90dvh / var(--ui-zoom, 1)); }
+        @media (min-width: 600px) { #placeSearchModal { align-items: center; padding: 10px; } #placeSearchModal .modal-content { border-radius: 14px; } }
+        .ps-head { display: flex; justify-content: space-between; align-items: center; }
+        .ps-x { border: 0; background: none; font-size: 18px; line-height: 1; color: #94a3b8; padding: 2px 6px; cursor: pointer; }
+        .ps-bar { display: flex; gap: 5px; margin-bottom: 8px; }
+        .ps-bar input { flex: 1; min-width: 0; padding: 8px 10px; border: 1.5px solid #0b2240; border-radius: 8px; font-size: 14px; outline: none; background: #fff; color: #0f172a; }
+        .ps-go { flex: 0 0 auto; border: 0; background: #0b2240; color: #fff; border-radius: 8px; padding: 0 14px; font-size: 13.5px; font-weight: 800; cursor: pointer; }
+        .ps-sec { font-size: 11.5px; font-weight: 800; color: #64748b; margin: 2px 0 5px; display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 6px; row-gap: 1px; }
+        .ps-sec .ps-l { white-space: nowrap; }
+        .ps-sec small { font-weight: 600; color: #94a3b8; font-size: 10.5px; }
+        #psChips { margin-bottom: 8px; }
+        .ps-map { height: 128px; border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; margin-bottom: 6px; background: #eef1ea; }
+        .ps-res { display: flex; flex-direction: column; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; }
+        .ps-res:empty { display: none; }
+        .ps-msg { padding: 14px 10px; text-align: center; font-size: 12.5px; color: #64748b; line-height: 1.5; }
+        .ps-r { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
+        .ps-r:last-child { border-bottom: 0; }
+        .ps-r.on { background: #fff7ed; }
+        .ps-n { flex: 0 0 20px; height: 20px; border-radius: 50%; background: #e53935; color: #fff; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+        .ps-r.on .ps-n { background: #0b2240; }
+        .ps-rt { flex: 1; min-width: 0; }
+        .ps-rt b { display: block; font-size: 13px; color: #0b2240; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ps-rt span { display: block; font-size: 11.5px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ps-pick { flex: 0 0 auto; border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; padding: 4px 10px; font-size: 12px; font-weight: 800; color: #0b2240; cursor: pointer; }
+        .ps-r.on .ps-pick { background: #d11f2f; border-color: #d11f2f; color: #fff; }
+        .ps-direct { display: block; width: 100%; margin-top: 8px; text-align: center; font-size: 12px; color: #475569; padding: 8px; border: 1px dashed #cbd5e1; border-radius: 8px; background: none; cursor: pointer; }
+        /* 지도 위 핀 (번호) · 이름표 */
+        .kpin { cursor: pointer; }
+        .kpin svg { display: block; filter: drop-shadow(0 1px 2px rgba(0,0,0,.35)); }
+        .kpin path { fill: #e53935; stroke: #fff; stroke-width: 2; }
+        .kpin.on path { fill: #0b2240; }
+        .kpin text { fill: #fff; font-size: 11px; font-weight: 800; font-family: inherit; }
+        .kpin-label { margin-top: 3px; padding: 2px 8px; border-radius: 9px; background: #fff; border: 1px solid #e2e8f0; font-size: 11px; font-weight: 800; color: #0b2240; white-space: nowrap; box-shadow: 0 1px 3px rgba(0,0,0,.15); }
+        /* 일정 상세 — 주소 · 지도 · 길찾기 */
+        .pl-row .v { white-space: normal; min-width: 0; }
+        .ev-detail-row.pl-row.has-ext { border-bottom: 0; padding-bottom: 0; }
+        .pl-ext { padding: 0 0 9px; border-bottom: 1px solid #f1f5f9; container-type: inline-size; }
+        .pl-addr { font-size: 12px; color: #64748b; margin-top: 1px; }
+        .pl-map-wrap { position: relative; margin-top: 6px; }
+        .pl-map { height: 128px; border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; background: #eef1ea; }
+        .pl-map-hit { position: absolute; inset: 0; z-index: 5; border: 0; background: transparent; cursor: pointer; border-radius: 10px; }
+        .pl-btns { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 5px; margin-top: 7px; }
+        .pl-btns.one { display: flex; margin-top: 5px; }
+        .pl-btns button { min-width: 0; overflow: hidden; text-overflow: ellipsis; border: 1px solid #cbd5e1; background: #fff; border-radius: 8px; padding: 7px 4px; font-size: 12px; font-weight: 800; color: #0b2240; white-space: nowrap; cursor: pointer; }
+        .pl-btns.one button { padding: 5px 10px; }
+        .pl-btns button.pri { background: #fee500; border-color: #f2d900; color: #191600; }
+        .pl-route { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+        .pl-route button { flex: 1 1 auto; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 8px; padding: 7px 6px; font-size: 12px; font-weight: 800; color: #334155; cursor: pointer; white-space: nowrap; }
+        @container (max-width: 270px) { .pl-btns { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .pl-btns button.pri { grid-column: 1 / -1; } }
         /* v2.41.6: 경기 결과·점수를 한 묶음으로, 복장 미리보기는 「복장」 이름표 오른쪽 */
         #eventEditModal .ev-score-grp { margin-top: -2px; }
         .ev-dress-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
@@ -2006,6 +2080,26 @@
     .ev-detail-title { color: #dde3ec; }
     .ev-detail-row { border-bottom: 1px solid #2a374e; color: #dde3ec; }
     .ev-detail-row .k { color: #97a3b7; }
+    .pl-chip { background: #1b2638; border-color: #2a374e; color: #bcc6d4; }
+    .pl-chip.on { background: #3a1a22; border-color: #c43c4c; color: #ffb4bd; }
+    .ev-place-card { background: #151e2e; border-color: #2a374e; }
+    .ev-place-card .pc-t { color: #97a3b7; }
+    .ev-place-card .pc-t b { color: #dde3ec; }
+    .ev-place-card .pc-ok { color: #4ade80; }
+    .ev-place-card .pc-new { color: #fbbf24; }
+    .ev-place-card .pc-btn, .pl-btns button, .ps-pick { background: #1b2638; border-color: #2a374e; color: #dde3ec; }
+    .pl-btns button.pri { background: #fee500; border-color: #f2d900; color: #191600; }
+    .pl-route button { background: #151e2e; border-color: #2a374e; color: #bcc6d4; }
+    .pl-addr, .ps-rt span, .ps-sec, .ps-msg { color: #97a3b7; }
+    .ps-rt b { color: #dde3ec; }
+    .ps-res, .ps-map, .pl-map { border-color: #2a374e; }
+    .pl-ext { border-bottom-color: #2a374e; }
+    .ps-r { border-bottom-color: #222d40; }
+    .ps-r.on { background: #2a2216; }
+    .ps-r.on .ps-pick { background: #d11f2f; border-color: #d11f2f; color: #fff; }
+    .ps-bar input { background: #0f1724; color: #dde3ec; border-color: #5b6b85; }
+    .ps-go, .ev-place-find { background: #29a8e0; border-color: #29a8e0; color: #0b1525; }
+    .ps-direct { border-color: #2a374e; color: #97a3b7; }
     .grade-checks label { border: 1px solid #2a374e; color: #bcc6d4; }
     .form-hint { color: #6f7b91; }
     .inst-btn { background: #1b2638; border-color: #2a374e; color: #dde3ec; }
@@ -2603,6 +2697,22 @@
     </div>
 </div>
 
+<!-- 📍 장소 찾기 창 (v2.42.0) — 카카오맵에서 구장을 찾아 일정 장소에 연결 -->
+<div id="placeSearchModal" class="modal" onclick="if (event.target === this) closeModal('placeSearchModal')">
+    <div class="modal-content">
+        <div class="modal-header ps-head"><span>📍 장소 찾기</span><button type="button" class="ps-x" onclick="closeModal('placeSearchModal')" aria-label="닫기">✕</button></div>
+        <div class="modal-scroll-body">
+            <form class="ps-bar" onsubmit="runPlaceSearch(); return false;"><input type="search" id="psQuery" maxlength="40" placeholder="예: 기장 야구장, 대연초등학교" enterkeyhint="search" autocomplete="off"><button type="submit" class="ps-go">검색</button></form>
+            <div class="ps-sec"><span class="ps-l">자주 쓰는 곳</span><small>많이 쓴 순서 · 📍 = 지도 연결됨</small></div>
+            <div class="ev-place-chips" id="psChips"></div>
+            <div class="ps-sec" id="psResHead" hidden><span class="ps-l">검색 결과</span><small>카카오맵 기준 · 줄을 누르면 지도에서 보여요</small></div>
+            <div class="ps-map" id="psMap" hidden></div>
+            <div class="ps-res" id="psRes"></div>
+            <button type="button" class="ps-direct" onclick="placeNameOnly()">✏️ 지도 없이 이름만 쓰기</button>
+        </div>
+    </div>
+</div>
+
 <!-- 📅 일정 추가/수정 모달 -->
 <div id="eventEditModal" class="modal">
     <div class="modal-content" style="max-width: 460px;">
@@ -2666,7 +2776,14 @@
                 </div>
             </div>
             <div class="form-group ev-inline"><label for="evTitle">제목</label><input type="text" id="evTitle" maxlength="60" placeholder="비우면 구분으로 표시 (예: 회장기)"></div>
-            <div class="form-group ev-inline"><label for="evPlace">장소</label><input type="text" id="evPlace" maxlength="60" placeholder="예: 기장리틀구장"></div>
+            <!-- v2.42.0: 📍 장소 — 🔍 찾기(카카오맵 검색) · 자주 쓰는 곳 칩 · 지도 연결 표시 -->
+            <div class="form-group ev-inline top"><label for="evPlace">장소</label>
+                <div class="ev-place-col">
+                    <div class="ev-place-inp"><input type="text" id="evPlace" maxlength="60" placeholder="예: 기장리틀구장" oninput="onEvPlaceInput()"><button type="button" class="ev-place-find" id="evPlaceFind" onclick="openPlaceSearch()" aria-label="장소 찾기">🔍<span class="t"> 찾기</span></button></div>
+                    <div class="ev-place-chips" id="evPlaceChips"></div>
+                    <div class="ev-place-card" id="evPlaceCard" hidden></div>
+                </div>
+            </div>
             <div class="form-group ev-inline"><label for="evTarget">참가선수</label><input type="text" id="evTarget" maxlength="80" placeholder="예: 6학년 + 민준, 승환"></div>
             <div class="form-group ev-inline"><label for="evMeet">집합·출발</label><input type="text" id="evMeet" maxlength="100" placeholder="예: 06:30 학교출발"></div>
             <div class="form-group"><div class="ev-dress-head"><label>복장</label><span class="ev-dress-prev empty" id="evDressPrev"></span></div>
@@ -3337,6 +3454,7 @@
         if (schedLoaded && !force) return Promise.resolve();
         schedLoading = apiGetJson('action=getSchedule').then(res => {
             if (res && Array.isArray(res.events)) { schedEvents = res.events; schedLoaded = true; schedFetchedAt = Date.now(); }
+            if (res && Array.isArray(res.venues)) schedVenues = res.venues;   // v2.42.0: 구장 목록 (시트 '구장')
         }).catch(err => console.warn('일정 불러오기 실패:', err)).finally(() => {
             schedLoading = null;
             if (currentMainTab === 'schedule') renderSchedule();
@@ -3368,7 +3486,7 @@
         document.getElementById('tabBtnNotice').style.display = nv ? '' : 'none';
         document.getElementById('tabBtnAdmin').style.display = av ? '' : 'none';
         tabs.style.display = (sv || nv || av) ? 'flex' : 'none';
-        if (!sv) { schedEvents = []; schedLoaded = false; }
+        if (!sv) { schedEvents = []; schedVenues = []; schedLoaded = false; }
         if (!nv) { noticeList = []; noticeLoaded = false; }
         if ((currentMainTab === 'schedule' && !sv) || (currentMainTab === 'notice' && !nv) || (currentMainTab === 'admin' && !av)) currentMainTab = 'roster';
         showMainTab(currentMainTab, true);
@@ -3614,7 +3732,7 @@
         return [
             `📌 ${fmtMD(ev.date)} ${ev.start ? timeText(ev) : ''}`.trim(),
             `${m.i} ${h.title || ev.type}${h.vs ? ' ' + h.vs : ''}`,
-            ev.place ? `📍 ${ev.place}` : '',
+            ev.place ? `📍 ${ev.place}` + (function () { const v = findVenue(ev.place); return v && v.addr ? ` (${v.addr})` : ''; })() : '',   // v2.42.0: 지도에 연결된 곳은 주소도
             `👥 ${targetText(ev)}`,
             ev.meet ? `⏰ ${ev.meet}` : '',
             ev.dress ? `👕 ${ev.dress}` : '',
@@ -3632,7 +3750,7 @@
                 <div class="ev-detail-date">${fmtKDate(ev.date)} · ${escapeHtml(timeText(ev))}${ddayLabel(ev.date) ? ' · ' + ddayLabel(ev.date) : ''}</div>
                 <div class="ev-detail-title">${m.i} ${escapeHtml(h.title || ev.type)} ${h.vs ? `<span class="ev-vs">${escapeHtml(h.vs)}</span>` : ''}</div>
             </div>
-            ${row('구분', ev.type)}${row('결과', (function () { const r = parseResult(ev); return r ? ((r.label === '승' ? '승리' : r.label === '패' ? '패배' : '무승부') + (r.score ? ' ' + r.score : '')) : ''; })())}${row('장소', ev.place)}${row('대상', targetText(ev))}${row('집합/출발', ev.meet)}${row('복장', ev.dress)}${row('메모', ev.memo)}
+            ${row('구분', ev.type)}${row('결과', (function () { const r = parseResult(ev); return r ? ((r.label === '승' ? '승리' : r.label === '패' ? '패배' : '무승부') + (r.score ? ' ' + r.score : '')) : ''; })())}${placeRowHtml(ev)}${row('대상', targetText(ev))}${row('집합/출발', ev.meet)}${row('복장', ev.dress)}${row('메모', ev.memo)}
             ${canEditSchedule() && ev.updated ? `<div class="form-hint" style="margin-top:8px;">최종 수정: ${escapeHtml(ev.updated)}</div>` : ''}`;
         const btns = [`<button class="btn-cancel" onclick="closeModal('eventDetailModal')">닫기</button>`];
         const right = [`<button class="btn-cancel" onclick="copyEventText('${escapeHtml(ev.id)}')">📋 복사</button>`];
@@ -3642,10 +3760,305 @@
         }
         document.getElementById('eventDetailBtns').innerHTML = btns.join('') + `<div style="display:flex;gap:6px;">${right.join('')}</div>`;
         document.getElementById('eventDetailModal').style.display = 'flex';
+        drawDetailMap();   // v2.42.0: 창이 보인 뒤에 지도
     }
     function copyEventText(id) {
         const ev = schedEvents.find(x => x.id === id);
         if (ev) copyText(eventShareText(ev), '일정 복사했캉! 📋', '단톡방에 붙여넣기 하세요');
+    }
+
+    // ==========================================================
+    // 📍 장소 찾기 · 지도 · 길찾기 (v2.42.0)
+    //   - 구장 목록 = 시트 「구장」 탭 (이름 · 주소 · 위치) — 한 번 등록하면 이름이 같은 일정(지난 일정 포함)에 지도 · 길찾기
+    //   - 일정의 장소 칸은 지금처럼 이름만 저장 (일정 시트 칸은 그대로)
+    //   - 「기장리틀구장 (3루측)」처럼 괄호가 붙어도 괄호 앞 이름으로 찾음
+    //   - 시트에서 주소만 적어 둬도 지도가 나옴 (위치는 주소로 찾음)
+    // ==========================================================
+    const KAKAO_JS_KEY = '47f31e44fbd9e0c9e7a640849d328e12';   // 카카오 지도 JavaScript 키 — 등록한 사이트(dybbr.github.io)에서만 작동하는 공개용 키
+    let schedVenues = [];        // 구장 목록 (getSchedule 응답의 venues)
+    let evVenuePick = null;      // 일정 수정 창에서 🔍 찾기로 고른 곳 — 저장할 때 장소 이름으로 「구장」에 등록
+    let evPlaceCardKey = null;   // 장소 아래 연결 표시를 글자 칠 때마다 다시 그리지 않게
+    let psResults = [], psSel = -1, psMapObj = null, psOverlays = [];
+    let plCur = null;            // 일정 상세에 보이는 구장 { name, v }
+    let kakaoReady = null;
+
+    const venueNorm = s => String(s || '').replace(/\s+/g, '').toLowerCase();
+    const venueBase = s => String(s || '').replace(/\s*[\(（\[].*$/, '').trim();
+    const venueLabel = s => { const b = venueBase(s); return b.length >= 3 ? b : String(s || '').trim(); };   // 「기장리틀구장 (3루측)」→ 기장리틀구장 · 「기장 (소프트구장)」→ 그대로
+    function venueByName(name) { const n = venueNorm(name); return n ? (schedVenues.find(v => venueNorm(v.name) === n) || null) : null; }
+    function findVenue(name) {
+        const ok = v => (v && (v.addr || (v.lat && v.lng))) ? v : null;
+        const full = String(name || '').trim(), base = venueBase(full);
+        return ok(venueByName(full)) || (base && base !== full ? ok(venueByName(base)) : null);
+    }
+    // 카카오 지도 SDK는 필요할 때 한 번만 불러옴
+    function loadKakaoMaps() {
+        if (!KAKAO_JS_KEY) return Promise.reject(new Error('nokey'));
+        if (window.kakao && kakao.maps && kakao.maps.services) return Promise.resolve(kakao);
+        if (kakaoReady) return kakaoReady;
+        kakaoReady = new Promise((res, rej) => {
+            const to = setTimeout(() => rej(new Error('timeout')), 12000);
+            const s = document.createElement('script');
+            s.src = 'https://dapi.kakao.com/v2/maps/sdk.js?appkey=' + encodeURIComponent(KAKAO_JS_KEY) + '&libraries=services&autoload=false';
+            s.onload = () => { try { kakao.maps.load(() => { clearTimeout(to); res(kakao); }); } catch (e) { clearTimeout(to); rej(e); } };
+            s.onerror = () => { clearTimeout(to); rej(new Error('load')); };
+            document.head.appendChild(s);
+        });
+        kakaoReady.catch(() => { kakaoReady = null; });   // 실패하면 다음에 다시 시도
+        return kakaoReady;
+    }
+    function venueLatLngNow(v) { const a = parseFloat(v && v.lat), b = parseFloat(v && v.lng); return (isFinite(a) && isFinite(b) && a && b) ? { lat: a, lng: b } : null; }
+    // 위치가 없으면(시트에 주소만 적은 경우) 주소 → 위치, 그래도 안 되면 이름으로 찾음
+    function venueLatLng(v) {
+        const now = venueLatLngNow(v);
+        if (now) return Promise.resolve(now);
+        if (!v._geo) {
+            v._geo = loadKakaoMaps().then(k => new Promise((res, rej) => {
+                const S = k.maps.services.Status, q = v.addr || v.name;
+                new k.maps.services.Geocoder().addressSearch(q, (r, st) => {
+                    if (st === S.OK && r[0]) return res({ lat: +r[0].y, lng: +r[0].x });
+                    new k.maps.services.Places().keywordSearch(q, (r2, st2) => (st2 === S.OK && r2[0]) ? res({ lat: +r2[0].y, lng: +r2[0].x }) : rej(new Error('geo')));
+                });
+            })).then(p => { v.lat = String(p.lat); v.lng = String(p.lng); return p; }, e => { v._geo = null; throw e; });
+        }
+        return v._geo;
+    }
+    // 지도 위 핀 (n: 번호, 0이면 가운데 점)
+    function pinEl(n, on) {
+        const d = document.createElement('div');
+        d.className = 'kpin' + (on ? ' on' : '');
+        d.innerHTML = '<svg viewBox="0 0 26 34" width="26" height="34"><path d="M13 33C11 27 2 22 2 13a11 11 0 1 1 22 0c0 9-9 14-11 20z"/>' +
+            (n ? '<text x="13" y="17.5" text-anchor="middle">' + n + '</text>' : '<circle cx="13" cy="13" r="4" fill="#fff"/>') + '</svg>';
+        return d;
+    }
+    const KMAP_OPTS = { level: 4, draggable: false, scrollwheel: false, disableDoubleClick: true, disableDoubleClickZoom: true, keyboardShortcuts: false };
+    function staticVenueMap(el, v, label) {   // 움직이지 않는 작은 지도 + 핀 (+ 이름표)
+        return loadKakaoMaps().then(k => venueLatLng(v).then(p => {
+            if (!el.isConnected) return;
+            el.textContent = '';
+            const pos = new k.maps.LatLng(p.lat, p.lng);
+            const map = new k.maps.Map(el, Object.assign({}, KMAP_OPTS, { center: pos }));
+            new k.maps.CustomOverlay({ map: map, position: pos, content: pinEl(0, false), xAnchor: 0.5, yAnchor: 1 });
+            if (label) { const lb = document.createElement('div'); lb.className = 'kpin-label'; lb.textContent = label; new k.maps.CustomOverlay({ map: map, position: pos, content: lb, xAnchor: 0.5, yAnchor: 0, zIndex: 2 }); }
+            requestAnimationFrame(() => { map.relayout(); map.setCenter(pos); });
+            return map;
+        }));
+    }
+    // 자주 쓰는 곳: 지난 일정에서 많이 쓴 장소(괄호 앞 이름) + 등록된 구장
+    function placeChipNames() {
+        const cnt = {};
+        schedEvents.forEach(ev => { const b = venueBase(ev.place) || String(ev.place || '').trim(); if (b) cnt[b] = (cnt[b] || 0) + 1; });
+        schedVenues.forEach(v => { const n = String(v.name || '').trim(); if (n && !cnt[n]) cnt[n] = 0.5; });
+        const seen = {}, out = [];
+        Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a]).forEach(n => { const k = venueNorm(n); if (!seen[k]) { seen[k] = 1; out.push(n); } });
+        return out.slice(0, 10);
+    }
+    function placeChipsHtml(fn, cur) {
+        const c = venueNorm(cur), cb = venueNorm(venueBase(cur));
+        return placeChipNames().map(n => `<button type="button" class="pl-chip${(venueNorm(n) === c || venueNorm(n) === cb) ? ' on' : ''}" data-n="${escapeHtml(n)}" onclick="${fn}(this.dataset.n)">${findVenue(n) ? '<span class="pin">📍</span>' : ''}${escapeHtml(n)}</button>`).join('');
+    }
+
+    // ---- 일정 수정 창: 장소 칸 ----
+    function syncEvPlace() {
+        const name = document.getElementById('evPlace').value.trim();
+        document.getElementById('evPlaceFind').style.display = KAKAO_JS_KEY ? '' : 'none';
+        document.getElementById('evPlaceChips').innerHTML = placeChipsHtml('pickEvPlaceChip', name);
+        const card = document.getElementById('evPlaceCard');
+        const v = name ? (evVenuePick || findVenue(name)) : null;
+        const key = v ? (evVenuePick ? 'p:' + (v.kid || v.addr) : 'v:' + v.name + '|' + v.addr) : (name && KAKAO_JS_KEY ? 'hint' : '');
+        if (key === evPlaceCardKey) return;
+        evPlaceCardKey = key;
+        if (v) {
+            card.className = 'ev-place-card'; card.hidden = false;
+            card.innerHTML = `<div class="pc-thumb" id="evPlaceThumb">📍</div><div class="pc-t">${evVenuePick ? '<span class="pc-new">✓ 저장하면 지도에 연결돼요</span>' : '<span class="pc-ok">✓ 지도 연결됨</span>'}<b>${escapeHtml(v.kname || v.name || name)}</b>${escapeHtml(v.addr || '')}</div>` +
+                (evVenuePick ? '<button type="button" class="pc-btn" onclick="evVenuePick=null;evPlaceCardKey=null;syncEvPlace()">취소</button>' : (KAKAO_JS_KEY ? '<button type="button" class="pc-btn" onclick="openPlaceSearch()">바꾸기</button>' : ''));
+            const th = document.getElementById('evPlaceThumb');
+            if (KAKAO_JS_KEY) staticVenueMap(th, v).catch(() => {});
+        } else if (key === 'hint') {
+            card.className = 'ev-place-card hint'; card.hidden = false;
+            card.innerHTML = '<div class="pc-t">지도에 연결 안 됨 · <b>🔍 찾기</b>로 연결하면 일정에 지도 · 길찾기가 보여요</div>';
+        } else { card.hidden = true; card.innerHTML = ''; }
+    }
+    function onEvPlaceInput() {
+        if (evVenuePick && !document.getElementById('evPlace').value.trim()) evVenuePick = null;
+        syncEvPlace();
+    }
+    function pickEvPlaceChip(n) {
+        document.getElementById('evPlace').value = n;
+        evVenuePick = null;
+        syncEvPlace();
+    }
+    // 저장할 때: 🔍 찾기로 고른 곳을 장소 이름으로 「구장」에 등록 (괄호 앞 이름이 3글자 이상이면 그 이름으로 → 1루측·3루측도 같은 구장)
+    function saveVenuePick(placeName) {
+        const pick = evVenuePick; evVenuePick = null;
+        placeName = String(placeName || '').trim();
+        if (!pick || !placeName) return;
+        const nm = venueLabel(placeName).slice(0, 40);
+        const ex = venueByName(nm);
+        const venue = Object.assign({ name: ex ? ex.name : nm }, pick);
+        if (ex) { Object.assign(ex, venue); ex._geo = null; } else schedVenues.push(venue);
+        Promise.resolve().then(() => postApi({ action: 'saveVenue', venue: venue })).catch(err => console.warn('구장 저장 실패:', err));
+    }
+
+    // ---- 📍 장소 찾기 창 ----
+    function openPlaceSearch() {
+        if (!KAKAO_JS_KEY) { bkNotify('info', '카카오 지도 키가 아직 없어캉'); return; }
+        const cur = document.getElementById('evPlace').value.trim();
+        let q = venueBase(cur) || cur;
+        if (q === '학교') q = '대연초등학교';
+        document.getElementById('psQuery').value = q;
+        document.getElementById('psChips').innerHTML = placeChipsHtml('pickPsChip', cur);
+        psResults = []; psSel = -1;
+        document.getElementById('psRes').innerHTML = '';
+        document.getElementById('psResHead').hidden = true;
+        document.getElementById('psMap').hidden = true;
+        document.getElementById('placeSearchModal').style.display = 'flex';
+        if (q) runPlaceSearch(); else setTimeout(() => document.getElementById('psQuery').focus(), 60);
+    }
+    function pickPsChip(n) {
+        if (findVenue(n)) {   // 이미 지도에 연결된 곳은 바로 입력
+            document.getElementById('evPlace').value = n;
+            evVenuePick = null; evPlaceCardKey = null;
+            closeModal('placeSearchModal'); syncEvPlace();
+            return;
+        }
+        document.getElementById('psQuery').value = n === '학교' ? '대연초등학교' : n;
+        runPlaceSearch();
+    }
+    function runPlaceSearch() {
+        const qi = document.getElementById('psQuery'), q = qi.value.trim();
+        if (!q) { qi.focus(); return; }
+        qi.blur();
+        psResults = []; psSel = -1;
+        document.getElementById('psResHead').hidden = true;
+        document.getElementById('psMap').hidden = true;
+        document.getElementById('psRes').innerHTML = '<div class="ps-msg">🔎 찾는 중…</div>';
+        loadKakaoMaps().then(k => {
+            new k.maps.services.Places().keywordSearch(q, (data, st) => {
+                if (document.getElementById('psQuery').value.trim() !== q) return;   // 그사이 다른 검색
+                const S = k.maps.services.Status;
+                if (st === S.OK && data.length) { psResults = data.slice(0, 8); psSel = 0; renderPsResults(); }
+                else renderPsResults(st === S.ZERO_RESULT ? '검색 결과가 없어요.\n동네 이름을 붙여 보세요 (예: 기장 야구장)' : '카카오 지도 검색이 안 돼요. 잠시 후 다시 해 주세요');
+            }, { size: 8 });
+        }).catch(() => renderPsResults('카카오 지도를 불러오지 못했어요.\n인터넷 연결을 확인해 주세요'));
+    }
+    function renderPsResults(msg) {
+        const box = document.getElementById('psRes'), mapEl = document.getElementById('psMap');
+        document.getElementById('psResHead').hidden = !psResults.length;
+        if (!psResults.length) { box.innerHTML = msg ? `<div class="ps-msg">${escapeHtml(msg).replace(/\n/g, '<br>')}</div>` : ''; mapEl.hidden = true; return; }
+        box.innerHTML = psResults.map((p, i) => {
+            const cat = String(p.category_name || '').split('>').pop().trim();
+            return `<div class="ps-r${i === psSel ? ' on' : ''}" onclick="selPsResult(${i})"><span class="ps-n">${i + 1}</span><div class="ps-rt"><b>${escapeHtml(p.place_name)}</b><span>${escapeHtml([cat, p.road_address_name || p.address_name].filter(Boolean).join(' · '))}</span></div><button type="button" class="ps-pick" onclick="event.stopPropagation();pickPsResult(${i})">선택</button></div>`;
+        }).join('');
+        mapEl.hidden = false;
+        drawPsMap();
+    }
+    function drawPsMap() {
+        loadKakaoMaps().then(k => {
+            const el = document.getElementById('psMap');
+            psOverlays.forEach(o => o.setMap(null)); psOverlays = [];
+            if (!psResults.length) return;
+            const pts = psResults.map(p => new k.maps.LatLng(+p.y, +p.x));
+            if (!psMapObj) psMapObj = new k.maps.Map(el, Object.assign({}, KMAP_OPTS, { center: pts[0], level: 5 }));
+            psMapObj.relayout();
+            psOverlays = pts.map((pt, i) => {
+                const c = pinEl(i + 1, i === psSel);
+                c.addEventListener('click', () => selPsResult(i));
+                return new k.maps.CustomOverlay({ map: psMapObj, position: pt, content: c, xAnchor: 0.5, yAnchor: 1, zIndex: i === psSel ? 3 : 1, clickable: true });
+            });
+            if (pts.length > 1) { const b = new k.maps.LatLngBounds(); pts.forEach(pt => b.extend(pt)); psMapObj.setBounds(b, 40, 24, 10, 24); }
+            else { psMapObj.setLevel(4); psMapObj.setCenter(pts[0]); }
+        }).catch(() => { document.getElementById('psMap').hidden = true; });
+    }
+    function selPsResult(i) {
+        psSel = i;
+        document.querySelectorAll('#psRes .ps-r').forEach((el, j) => el.classList.toggle('on', j === i));
+        psOverlays.forEach((o, j) => { const c = o.getContent(); if (c && c.classList) c.classList.toggle('on', j === i); o.setZIndex(j === i ? 3 : 1); });
+        const p = psResults[i];
+        if (psMapObj && p && window.kakao) psMapObj.panTo(new kakao.maps.LatLng(+p.y, +p.x));
+    }
+    function pickPsResult(i) {
+        const p = psResults[i];
+        if (!p) return;
+        const inp = document.getElementById('evPlace');
+        if (!inp.value.trim()) inp.value = String(p.place_name || '').slice(0, 60);   // 장소 칸이 비어 있으면 카카오 이름으로 (나중에 고쳐도 됨)
+        evVenuePick = { addr: p.road_address_name || p.address_name || '', jibun: p.address_name || '', lat: String(p.y), lng: String(p.x), kid: String(p.id || ''), kname: p.place_name || '', phone: p.phone || '' };
+        evPlaceCardKey = null;
+        closeModal('placeSearchModal');
+        syncEvPlace();
+    }
+    function placeNameOnly() {
+        const q = document.getElementById('psQuery').value.trim();
+        if (q) document.getElementById('evPlace').value = q.slice(0, 60);
+        evVenuePick = null; evPlaceCardKey = null;
+        closeModal('placeSearchModal');
+        syncEvPlace();
+    }
+
+    // ---- 일정 상세: 주소 · 지도 · 길찾기 ----
+    function placeRowHtml(ev) {
+        plCur = null;
+        if (!ev.place) return '';
+        const v = findVenue(ev.place);
+        if (!v) {   // 지도에 연결 안 된 곳: 이름으로 카카오맵 검색만 (「학교」는 뺌)
+            const q = venueBase(ev.place) || ev.place;
+            return `<div class="ev-detail-row pl-row"><div class="k">장소</div><div class="v">${escapeHtml(ev.place)}${q !== '학교' ? `<div class="pl-btns one"><button type="button" data-q="${escapeHtml(q)}" onclick="openUrl('https://map.kakao.com/link/search/' + encodeURIComponent(this.dataset.q))">🗺️ 지도에서 찾기</button></div>` : ''}</div></div>`;
+        }
+        plCur = { name: ev.place, v: v };
+        return `<div class="ev-detail-row pl-row has-ext"><div class="k">장소</div><div class="v"><b>${escapeHtml(ev.place)}</b>${v.addr ? `<div class="pl-addr">${escapeHtml(v.addr)}</div>` : ''}</div></div><div class="pl-ext">` +
+            (KAKAO_JS_KEY ? '<div class="pl-map-wrap" id="plMapWrap"><div class="pl-map" id="plMap"></div><button type="button" class="pl-map-hit" onclick="plOpenMap()" aria-label="지도 크게 보기"></button></div>' : '') +
+            '<div class="pl-btns"><button type="button" class="pri" onclick="plToggleRoute()">🚗 길찾기</button><button type="button" onclick="plOpenMap()">🗺️ 크게 보기</button><button type="button" onclick="plCopyAddr()">📋 주소 복사</button></div>' +
+            '<div class="pl-route" id="plRoute" hidden><button type="button" onclick="plRoute(\'kakao\')">카카오맵</button><button type="button" onclick="plRoute(\'naver\')">네이버지도</button><button type="button" onclick="plRoute(\'tmap\')">티맵</button></div></div>';
+    }
+    function drawDetailMap() {
+        const el = document.getElementById('plMap');
+        if (!el || !plCur) return;
+        const cur = plCur;
+        staticVenueMap(el, cur.v, venueLabel(cur.name)).catch(() => { const w = document.getElementById('plMapWrap'); if (w && plCur === cur) w.hidden = true; });
+    }
+    function openUrl(u) {
+        const w = window.open(u, '_blank');
+        if (w) { try { w.opener = null; } catch (e) {} } else location.href = u;
+    }
+    function plName() { return plCur ? venueLabel(plCur.name) : ''; }
+    function plToggleRoute() { const r = document.getElementById('plRoute'); if (r) r.hidden = !r.hidden; }
+    function plOpenMap() {
+        if (!plCur) return;
+        const v = plCur.v, p = venueLatLngNow(v), nm = plName(), enc = encodeURIComponent;
+        openUrl(v.kid ? 'https://place.map.kakao.com/' + enc(v.kid) : p ? `https://map.kakao.com/link/map/${enc(nm)},${p.lat},${p.lng}` : 'https://map.kakao.com/link/search/' + enc(v.addr || nm));
+    }
+    function plCopyAddr() {
+        if (!plCur) return;
+        copyText([plName(), plCur.v.addr].filter(Boolean).join('\n'), '주소 복사했캉! 📋', '내비 · 단톡방에 붙여넣기 하세요');
+    }
+    // 앱 열기 (설치 안 돼 있으면 웹으로) — 휴대폰에서만 앱 주소를 씀
+    function openAppOr(appUrl, webUrl, noAppMsg) {
+        const touch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+        if (!touch) { if (webUrl) openUrl(webUrl); else bkNotify('info', noAppMsg); return; }
+        let left = false;
+        const onHide = () => { if (document.hidden) left = true; };
+        document.addEventListener('visibilitychange', onHide);
+        location.href = appUrl;
+        setTimeout(() => {
+            document.removeEventListener('visibilitychange', onHide);
+            if (left || document.hidden) return;
+            if (webUrl) openUrl(webUrl); else bkNotify('info', noAppMsg, '카카오맵이나 네이버지도로 해 보세요');
+        }, 1600);
+    }
+    async function plRoute(app) {
+        if (!plCur) return;
+        const v = plCur.v, nm = plName(), enc = encodeURIComponent;
+        let p = venueLatLngNow(v);
+        if (app === 'kakao' && (v.kid || p)) { openUrl(v.kid ? 'https://map.kakao.com/link/to/' + enc(v.kid) : `https://map.kakao.com/link/to/${enc(nm)},${p.lat},${p.lng}`); return; }
+        if (!p) { try { p = await venueLatLng(v); } catch (e) { p = null; } }
+        if (app === 'kakao') openUrl(p ? `https://map.kakao.com/link/to/${enc(nm)},${p.lat},${p.lng}` : 'https://map.kakao.com/link/search/' + enc(v.addr || nm));
+        else if (app === 'naver') {
+            const web = 'https://map.naver.com/p/search/' + enc(v.addr || nm);
+            if (p) openAppOr(`nmap://route/car?dlat=${p.lat}&dlng=${p.lng}&dname=${enc(nm)}&appname=dybbr.github.io`, web); else openUrl(web);
+        } else if (app === 'tmap') {
+            if (p) openAppOr(`tmap://route?goalname=${enc(nm)}&goalx=${p.lng}&goaly=${p.lat}`, null, '티맵 앱이 없는 것 같아캉');
+            else bkNotify('info', '위치를 몰라서 티맵을 열 수 없어캉', '카카오맵이나 네이버지도로 해 보세요');
+        }
     }
 
     // ---------------- 추가 / 수정 ----------------
@@ -3674,6 +4087,7 @@
         document.getElementById('evOpponent').value = ev.opponent || '';
         document.getElementById('evTitle').value = (ev.title && ev.title !== ev.type) ? ev.title : '';
         document.getElementById('evPlace').value = ev.place || '';
+        evVenuePick = null; evPlaceCardKey = null;
         document.getElementById('evTarget').value = ev.target || '';
         document.getElementById('evMeet').value = ev.meet || '';
         loadDress(ev.dress || '');
@@ -3880,10 +4294,12 @@
         fillEventForm(ev);
         document.getElementById('eventEditModal').style.display = 'flex';
         fitEvScoreLabel();   // v2.41.16: 창이 보인 뒤에 긴 상대팀 이름 글자 크기 맞춤
+        syncEvPlace();       // v2.42.0: 장소 칩 · 지도 연결 표시 (창이 보인 뒤라야 작은 지도가 제대로 그려짐)
     }
     async function submitEventEditor() {
         const ev = readEventForm();
         if (!/^\d{4}-\d{2}-\d{2}$/.test(ev.date)) { bkNotify('info', '날짜를 넣어줘캉!'); return; }
+        saveVenuePick(ev.place);   // v2.42.0: 🔍 찾기로 고른 곳 → 시트 '구장'에 등록
         ev.id = (eventEditCtx && eventEditCtx.id) || newId('E');
         if (eventEditCtx && eventEditCtx.onSave) { eventEditCtx.onSave(ev); closeModal('eventEditModal'); return; }
         const btn = document.getElementById('btnEventSave');
@@ -6961,6 +7377,13 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.42.0', d: '2026-10-11', t: '장소 찾기 + 지도 · 길찾기', items: [
+            '일정 장소 칸 옆 「🔍 찾기」 — 「기장 야구장」처럼 치면 카카오맵에서 찾아 주고, 골라서 연결',
+            '장소 칸 아래 「자주 쓰는 곳」 칩 — 지난 일정에서 많이 쓴 구장을 한 번 눌러 입력 (📍 표시 = 지도 연결됨)',
+            '일정 상세에 주소 · 지도 · 「🚗 길찾기」(카카오맵 · 네이버지도 · 티맵) · 「📋 주소 복사」',
+            '구장은 시트 「구장」 탭에 한 번만 등록 → 이름이 같은 지난 일정에도 지도가 붙음 (「기장리틀구장 (3루측)」처럼 괄호가 붙어도 같은 구장)',
+            '일정 복사(단톡방 공유) 글에 주소도 함께'
+        ] },
         { v: 'v2.41.26', d: '2026-10-11', t: '텍스트 분석 [수정] 창이 뒤에 깔리던 문제', items: [
             '텍스트 분석 결과에서 [수정]을 누르면 일정 수정 창이 분석 창 뒤에 열려서 고칠 수 없던 문제 수정 — 이제 수정 창이 맨 위에 뜸'
         ] },
