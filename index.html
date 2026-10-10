@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.41.12 · b261010";
+        const APP_VERSION = "v2.41.13 · b261010";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1371,6 +1371,9 @@
         .ev-dchip.on { border-color: #0b2240; background: #0b2240; color: #fff; }
         .ev-dchip.other { border-style: dashed; color: #64748b; }
         .ev-dchip.other.on { border-style: solid; color: #fff; }
+        .ck-ic { width: 1.4em; height: 1.4em; flex: 0 0 auto; vertical-align: -0.32em; overflow: visible; }   /* 👕 직접 그린 옷 아이콘 (v2.41.13) */
+        .ev-dchip .ck-ic { margin: -2px 0 -2px -2px; }
+        .uniform-item-name .ck-ic { width: 1.2em; height: 1.2em; margin: 0 -2px; }   /* 주문 창은 칸이 좁아서 조금 작게 */
         .ev-dsw { width: 12px; height: 12px; flex: 0 0 auto; border-radius: 50%; border: 1px solid rgba(0,0,0,.25); }
         #evDressEtc { margin: 0 0 6px 40px; width: calc(100% - 40px) !important; }
         /* 📅 일정 입력 창 한 화면에 더 많이 (v2.41.1) — 날짜·시작·종료 한 줄, 창 높이 92%, 칸·버튼 간격 줄임 */
@@ -2118,6 +2121,19 @@
     </style>
 </head>
 <body>
+<!-- 👕 옷 아이콘 묶음 (v2.41.13) — 이모티콘에 없는 풀오버·패딩까지 직접 그림, 삼성·아이폰 어디서나 같은 모양. 테두리는 글자색을 따라감 -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+<symbol id="ck-tee" viewBox="0 0 24 24"><g stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"><path fill="#7cb6f5" d="M8.2 3.5 4.3 5.4 2 9.6 5.1 11.2 6.6 9.7V20.5h10.8V9.7l1.5 1.5L22 9.6l-2.3-4.2-3.9-1.9C15.1 5 13.7 5.9 12 5.9S8.9 5 8.2 3.5Z"/></g></symbol>
+<symbol id="ck-tee-long" viewBox="0 0 24 24"><g stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"><path fill="#9fb3d1" d="M8.2 3.5 4.6 5.1 2.3 18.6 5.2 19.2 6.8 11V20.5h10.4V11l1.6 8.2 2.9-.6L19.4 5.1 15.8 3.5C15.1 5 13.7 5.9 12 5.9S8.9 5 8.2 3.5Z"/></g></symbol>
+<symbol id="ck-inner" viewBox="0 0 24 24"><g stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"><path fill="#3f4b5e" d="M9.3 3 5.4 4.6 3.2 18.8 5.8 19.3 7.4 10.6V20.5h9.2V10.6l1.6 8.7 2.6-.5L18.6 4.6 14.7 3Z"/><path fill="#3f4b5e" d="M9.3 3h5.4v1.6c0 .7-1.2 1.2-2.7 1.2S9.3 5.3 9.3 4.6Z"/></g></symbol>
+<symbol id="ck-pants" viewBox="0 0 24 24"><g stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"><path fill="#eee6d2" d="M6.4 2.5h11.2l1.6 19H14.3L12 9.2 9.7 21.5H4.8Z"/><path fill="none" d="M6.3 5.2h11.4"/></g></symbol>
+<symbol id="ck-shorts" viewBox="0 0 24 24"><g stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"><path fill="#4f74b8" d="M5 5h14l1.8 12.2h-6.6L12 11.2 9.8 17.2H3.2Z"/><path fill="none" d="M4.9 7.8h14.2"/></g></symbol>
+<symbol id="ck-wind" viewBox="0 0 24 24"><g stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"><path fill="#4fc3a1" d="M8 4.2 4.5 5.6 2.4 18.6 5.2 19.2 6.8 11.2V20.6h10.4V11.2l1.6 8 2.8-.6L19.5 5.6 16 4.2Z"/><path fill="#2f9c7f" d="M7.8 4.6C7.6 1.8 16.4 1.8 16.2 4.6L12 8.6Z"/><path fill="none" d="M12 8.6V20.6M3.1 14.3l3.3-.8M20.9 14.3l-3.3-.8"/></g></symbol>
+<symbol id="ck-pull" viewBox="0 0 24 24"><g stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"><path fill="#ef6b6b" d="M8.4 4 4.6 5.5 2.4 18.6 5.2 19.2 6.8 11V20.5h10.4V11l1.6 8.2 2.8-.6L19.4 5.5 15.6 4Z"/><path fill="#d94b4b" d="M9 2.4h6V4.7L12 6 9 4.7Z"/><path fill="none" d="M12 6v5M8.6 15h6.8l.8 3.6H7.8Z"/><circle cx="12" cy="11.6" r=".9" fill="currentColor" stroke="none"/></g></symbol>
+<symbol id="ck-jumper" viewBox="0 0 24 24"><g stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"><path fill="#6f7fe0" d="M8.2 4.4 4.2 5.8C3 6.3 2.4 7.2 2.2 8.6L1.6 18.4 5.2 19.1 6.4 12.4V20.2c0 .7.5 1.1 1.2 1.1h8.8c.7 0 1.2-.4 1.2-1.1V12.4l1.2 6.7 3.6-.7-.6-9.8c-.2-1.4-.8-2.3-2-2.8L15.8 4.4Z"/><path fill="#5463c8" d="M8.6 2.2h6.8V5.2L12 6.4 8.6 5.2Z"/><path fill="none" d="M12 6.4V21.3M6.4 10.2h11.2M6.4 14h11.2M6.4 17.7h11.2M2 12.6l4-.6M22 12.6l-4-.6"/></g></symbol>
+<symbol id="ck-cap" viewBox="0 0 24 24"><g stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"><path fill="#e4483f" d="M3 15.6C3 9.6 6.9 5.6 11.6 5.6S20 9.4 20 15.2Z"/><path fill="#c7342c" d="M13.6 15.4H22.6C22.6 17.1 21.2 18.2 19.2 18.2H13.6Z"/><path fill="none" d="M3 15.6h10.6M11.6 5.6c-1.9 2.4-2.6 6-2.3 10"/><circle cx="11.6" cy="5" r=".95" fill="currentColor" stroke="none"/></g></symbol>
+<symbol id="ck-jersey" viewBox="0 0 24 24"><g stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"><path style="fill:var(--ck-fill,#f1e9d4)" d="M8.2 3.5 4.3 5.4 2 9.6 5.1 11.2 6.6 9.7V20.5h10.8V9.7l1.5 1.5L22 9.6l-2.3-4.2-3.9-1.9L12 8.6Z"/><path fill="none" style="stroke:var(--ck-trim,#d11f2f)" d="M8.4 3.9 12 8.3l3.6-4.4"/><path fill="none" d="M12 8.6V20.5"/><circle cx="13.3" cy="11.3" r=".75" fill="currentColor" stroke="none"/><circle cx="13.3" cy="14.6" r=".75" fill="currentColor" stroke="none"/><circle cx="13.3" cy="17.9" r=".75" fill="currentColor" stroke="none"/></g></symbol>
+</defs></svg>
 
 <!-- 🔍 화면 크기 조절: 평소엔 현재%만 보임 → 누르면 ＋/－ 펼침(3초 뒤 접힘) · 길게 누르면 100% -->
 <div class="ui-zoom-ctrl" id="uiZoomCtrl" aria-label="화면 크기 조절 · 효과음">
@@ -2643,12 +2659,12 @@
                 <label>유니폼 품목 및 사이즈 선택 *</label>
                 <div style="background: #f8fafc; border: 1px solid var(--card-border); border-radius: 8px; padding: 6px 10px;">
                     <div class="uniform-item-row" data-name="모자">
-                        <label class="uniform-item-name"><input type="checkbox" class="chk-item" onchange="toggleRowInputs(this)"> 🧢 모자</label>
+                        <label class="uniform-item-name"><input type="checkbox" class="chk-item" onchange="toggleRowInputs(this)"> <svg class="ck-ic" aria-hidden="true"><use href="#ck-cap"/></svg> 모자</label>
                         <select class="uniform-item-size" disabled><option value="프리" selected>프리</option></select>
                         <select class="uniform-item-qty" disabled><option value="1개">1개</option><option value="2개">2개</option><option value="3개">3개</option></select>
                     </div>
                     <div class="uniform-item-row" data-name="유니폼상의">
-                        <label class="uniform-item-name"><input type="checkbox" class="chk-item" onchange="toggleRowInputs(this)"> ⚾ 유니폼 상의</label>
+                        <label class="uniform-item-name"><input type="checkbox" class="chk-item" onchange="toggleRowInputs(this)"> <svg class="ck-ic" aria-hidden="true"><use href="#ck-jersey"/></svg> 유니폼 상의</label>
                         <select class="uniform-item-size" disabled>
                             <option value="80">80</option><option value="85">85</option><option value="90">90</option>
                             <option value="95" selected>95</option><option value="100">100</option><option value="105">105</option>
@@ -2657,7 +2673,7 @@
                         <select class="uniform-item-qty" disabled><option value="1벌">1벌</option><option value="2벌">2벌</option><option value="3벌">3벌</option></select>
                     </div>
                     <div class="uniform-item-row" id="rowPants">
-                        <label class="uniform-item-name"><input type="checkbox" id="chkPants" onchange="togglePantsInputs(this)"> 👖 바지(허리/기장)</label>
+                        <label class="uniform-item-name"><input type="checkbox" id="chkPants" onchange="togglePantsInputs(this)"> <svg class="ck-ic" aria-hidden="true"><use href="#ck-pants"/></svg> 바지(허리/기장)</label>
                         <div class="pants-double-box">
                             <select id="pantsWaist" disabled title="허리 사이즈">
                                 <option value="24">24인치</option><option value="25">25인치</option><option value="26">26인치</option>
@@ -2673,7 +2689,7 @@
                         <select id="pantsQty" class="uniform-item-qty" disabled><option value="1벌">1벌</option><option value="2벌">2벌</option><option value="3벌">3벌</option></select>
                     </div>
                     <div class="uniform-item-row" data-name="여름훈련티">
-                        <label class="uniform-item-name"><input type="checkbox" class="chk-item" onchange="toggleRowInputs(this)"> ☀️ 여름훈련티</label>
+                        <label class="uniform-item-name"><input type="checkbox" class="chk-item" onchange="toggleRowInputs(this)"> <svg class="ck-ic" aria-hidden="true"><use href="#ck-tee"/></svg> 여름훈련티</label>
                         <select class="uniform-item-size" disabled>
                             <option value="80">80</option><option value="85">85</option><option value="90">90</option>
                             <option value="95" selected>95</option><option value="100">100</option><option value="105">105</option>
@@ -2682,7 +2698,7 @@
                         <select class="uniform-item-qty" disabled><option value="1벌">1벌</option><option value="2벌">2벌</option><option value="3벌">3벌</option></select>
                     </div>
                     <div class="uniform-item-row" data-name="겨울훈련티">
-                        <label class="uniform-item-name"><input type="checkbox" class="chk-item" onchange="toggleRowInputs(this)"> ❄️ 겨울훈련티</label>
+                        <label class="uniform-item-name"><input type="checkbox" class="chk-item" onchange="toggleRowInputs(this)"> <svg class="ck-ic" aria-hidden="true"><use href="#ck-tee-long"/></svg> 겨울훈련티</label>
                         <select class="uniform-item-size" disabled>
                             <option value="80">80</option><option value="85">85</option><option value="90">90</option>
                             <option value="95" selected>95</option><option value="100">100</option><option value="105">105</option>
@@ -2691,7 +2707,7 @@
                         <select class="uniform-item-qty" disabled><option value="1벌">1벌</option><option value="2벌">2벌</option><option value="3벌">3벌</option></select>
                     </div>
                     <div class="uniform-item-row" data-name="바람막이">
-                        <label class="uniform-item-name"><input type="checkbox" class="chk-item" onchange="toggleRowInputs(this)"> 💨 바람막이</label>
+                        <label class="uniform-item-name"><input type="checkbox" class="chk-item" onchange="toggleRowInputs(this)"> <svg class="ck-ic" aria-hidden="true"><use href="#ck-wind"/></svg> 바람막이</label>
                         <select class="uniform-item-size" disabled>
                             <option value="80">80</option><option value="85">85</option><option value="90">90</option>
                             <option value="95" selected>95</option><option value="100">100</option><option value="105">105</option>
@@ -2700,7 +2716,7 @@
                         <select class="uniform-item-qty" disabled><option value="1벌">1벌</option><option value="2벌">2벌</option><option value="3벌">3벌</option></select>
                     </div>
                     <div class="uniform-item-row" data-name="풀오버">
-                        <label class="uniform-item-name"><input type="checkbox" class="chk-item" onchange="toggleRowInputs(this)"> 🧥 풀오버</label>
+                        <label class="uniform-item-name"><input type="checkbox" class="chk-item" onchange="toggleRowInputs(this)"> <svg class="ck-ic" aria-hidden="true"><use href="#ck-pull"/></svg> 풀오버</label>
                         <select class="uniform-item-size" disabled>
                             <option value="80">80</option><option value="85">85</option><option value="90">90</option>
                             <option value="95" selected>95</option><option value="100">100</option><option value="105">105</option>
@@ -2709,7 +2725,7 @@
                         <select class="uniform-item-qty" disabled><option value="1벌">1벌</option><option value="2벌">2벌</option><option value="3벌">3벌</option></select>
                     </div>
                     <div class="uniform-item-row" data-name="겨울점퍼">
-                        <label class="uniform-item-name"><input type="checkbox" class="chk-item" onchange="toggleRowInputs(this)"> 🧤 겨울점퍼</label>
+                        <label class="uniform-item-name"><input type="checkbox" class="chk-item" onchange="toggleRowInputs(this)"> <svg class="ck-ic" aria-hidden="true"><use href="#ck-jumper"/></svg> 겨울점퍼</label>
                         <select class="uniform-item-size" disabled>
                             <option value="80">80</option><option value="85">85</option><option value="90">90</option>
                             <option value="95" selected>95</option><option value="100">100</option><option value="105">105</option>
@@ -3609,21 +3625,21 @@
     //   목록에 없는 건 ✏️ 직접 입력 → 맨 뒤에 붙음. 예전에 글로 적은 복장도 아는 이름은 버튼으로 다시 켜짐 (syn = 예전 표현)
     const DRESS_CATS = [
         { k: 'top', name: '상의', opts: [   // v2.40.1: 아이보리·빨강·훈련티 3가지
-            { v: '아이보리', sw: ['#efe6cf'], syn: ['상의 아이보리', '아이보리 유니폼', '아이보리 상의', '아이보리색'] },
-            { v: '빨강', sw: ['#d11f2f'], syn: ['상의 빨강', '빨강 유니폼', '빨강 상의', '빨간색', '빨간 유니폼'] },
-            { v: '훈련티', label: '🎽 훈련티', syn: ['훈련복 상의', '훈련복', '하계훈련복 상의', '하계훈련복', '하계훈련티', '여름훈련티', '여름훈련복', '동계훈련복 상의', '동계훈련복', '동계훈련티', '겨울훈련티', '겨울훈련복'] }
+            { v: '아이보리', ic: 'jersey', fill: '#f1e9d4', trim: '#d11f2f', syn: ['상의 아이보리', '아이보리 유니폼', '아이보리 상의', '아이보리색'] },
+            { v: '빨강', ic: 'jersey', fill: '#d9333f', trim: '#f6efe0', syn: ['상의 빨강', '빨강 유니폼', '빨강 상의', '빨간색', '빨간 유니폼'] },
+            { v: '훈련티', ic: 'tee', syn: ['훈련복 상의', '훈련복', '하계훈련복 상의', '하계훈련복', '하계훈련티', '여름훈련티', '여름훈련복', '동계훈련복 상의', '동계훈련복', '동계훈련티', '겨울훈련티', '겨울훈련복'] }
         ] },
         { k: 'bottom', name: '하의', opts: [   // v2.40.1: 긴바지·반바지 2가지
-            { v: '긴바지', label: '👖 긴바지', syn: ['유니폼바지', '유니폼 바지', '바지', '긴 바지'] },
-            { v: '반바지', label: '🩳 반바지', syn: ['반 바지', '훈련 반바지', '훈련복 반바지'] }
+            { v: '긴바지', ic: 'pants', syn: ['유니폼바지', '유니폼 바지', '바지', '긴 바지'] },
+            { v: '반바지', ic: 'shorts', syn: ['반 바지', '훈련 반바지', '훈련복 반바지'] }
         ] },
         { k: 'inner', name: '이너', opts: [
-            { v: '이너티', label: '👕 이너티', syn: ['언더티', '이너', '언더셔츠', '이너 티'] }
+            { v: '이너티', ic: 'inner', syn: ['언더티', '이너', '언더셔츠', '이너 티'] }
         ] },
         { k: 'outer', name: '겉옷', opts: [
-            { v: '바람막이', label: '💨 바람막이', syn: [] },
-            { v: '풀오버', label: '🧥 풀오버', syn: [] },
-            { v: '겨울점퍼', label: '🧤 겨울점퍼', syn: ['점퍼', '패딩', '겨울 점퍼'] }
+            { v: '바람막이', ic: 'wind', syn: [] },
+            { v: '풀오버', ic: 'pull', syn: [] },
+            { v: '겨울점퍼', ic: 'jumper', syn: ['점퍼', '패딩', '겨울 점퍼'] }
         ] }
     ];
     let evDressSel = {}, evDressEtcOn = false;
@@ -3650,11 +3666,16 @@
         renderDressChips();
     }
     function dressSwatch(sw) { return (sw || []).map(c => `<i class="ev-dsw" style="background:${c}"></i>`).join(''); }
+    function clothIcon(o) {   // v2.41.13: 직접 그린 옷 아이콘 (유니폼 상의는 색만 바꿔서 아이보리·빨강)
+        if (!o || !o.ic) return '';
+        const st = (o.fill ? `--ck-fill:${o.fill};` : '') + (o.trim ? `--ck-trim:${o.trim};` : '');
+        return `<svg class="ck-ic" aria-hidden="true"${st ? ` style="${st}"` : ''}><use href="#ck-${o.ic}"/></svg>`;
+    }
     function renderDressChips() {
         const box = document.getElementById('evDressBox');
         if (!box) return;
         box.innerHTML = DRESS_CATS.map(c => `<div class="ev-drow"><span class="ev-drow-k">${c.name}</span><div class="ev-dress-chips">`
-            + c.opts.map(o => `<button type="button" class="ev-dchip${evDressSel[c.k] === o.v ? ' on' : ''}" data-k="${c.k}" data-v="${escapeHtml(o.v)}" onclick="pickDressOpt(this)">${dressSwatch(o.sw)}${escapeHtml(o.label || o.v)}</button>`).join('')
+            + c.opts.map(o => `<button type="button" class="ev-dchip${evDressSel[c.k] === o.v ? ' on' : ''}" data-k="${c.k}" data-v="${escapeHtml(o.v)}" onclick="pickDressOpt(this)">${o.ic ? clothIcon(o) : dressSwatch(o.sw)}${escapeHtml(o.label || o.v)}</button>`).join('')
             + `</div></div>`).join('')
             + `<div class="ev-drow"><span class="ev-drow-k">기타</span><div class="ev-dress-chips"><button type="button" class="ev-dchip other${evDressEtcOn ? ' on' : ''}" onclick="toggleDressEtc()">✏️ 직접 입력</button></div></div>`;
         document.getElementById('evDressEtc').style.display = evDressEtcOn ? '' : 'none';
@@ -6552,6 +6573,13 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.41.13', d: '2026-10-10', t: '복장 옷 그림 새로 그림', items: [
+            '겨울점퍼가 🧤장갑 그림으로 나오던 문제 → 옷 그림을 직접 그려서 바꿈 (이모티콘에는 풀오버·패딩 그림이 없음)',
+            '훈련티(반팔티) · 긴바지 · 반바지 · 이너티(목 올라온 긴팔) · 바람막이(모자 달린 지퍼) · 풀오버(반 지퍼 + 앞주머니) · 겨울점퍼(누빔 패딩)',
+            '상의 아이보리 · 빨강도 동그라미 대신 그 색깔 유니폼 상의 그림으로',
+            '유니폼 주문 신청 창의 모자 · 유니폼 상의 · 바지 · 여름/겨울훈련티 · 바람막이 · 풀오버 · 겨울점퍼도 같은 그림으로 맞춤',
+            '삼성 · 아이폰 · PC 어디서나 똑같은 모양으로 보임 (이모티콘은 기기마다 그림이 다름)'
+        ] },
         { v: 'v2.41.12', d: '2026-10-10', t: '화면 크기 키워도 팝업 창 안 잘리게', items: [
             '오른쪽 아래 화면 크기를 110~130%로 키우면 일정 입력 창(·비상연락망 등 팝업 창) 위아래가 화면 밖으로 나가서 취소·저장 버튼이 안 보이던 문제 수정',
             '원인: 창 높이 "화면의 92%"에 확대 배율이 한 번 더 곱해져서 130%에서는 화면의 120%가 됨 → 배율만큼 나눠서 항상 실제 화면 안에 들어가게'
