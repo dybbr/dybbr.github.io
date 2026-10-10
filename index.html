@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.39.0 · b261010";
+        const APP_VERSION = "v2.39.1 · b261010";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -4964,11 +4964,13 @@
         return pick(['오늘도 훈련 파이팅캉!', '글러브 챙겼캉?', szn, szn]);
     }
     let bkSayTimer = null;
+    // 🍗🏆 말풍선 끝 이모티콘이 혼자 다음 줄로 떨어지지 않게 바로 앞 낱말에 붙임 (v2.39.1) — 띄어쓰기를 줄바꿈 안 되는 칸으로
+    function bkGlueEmoji(t) { return String(t || '').replace(/\s+((?:\p{Extended_Pictographic}|\uFE0F|\u200D)+)\s*$/u, '\u00A0$1'); }
     function showBkSay(text, ms) {
         const el = document.getElementById('bkSay'), head = document.querySelector('.bk-head'), hd = document.querySelector('header');
         if (!el || !head || !hd || !document.documentElement.classList.contains('is-authenticated')) return;
         const bn = document.getElementById('bkNote'); if (bn && bn.classList.contains('on')) return;   // 부캉이 알림 중엔 인사 말풍선 안 띄움 (겹침 방지)
-        el.textContent = text || bkSayText();
+        el.textContent = bkGlueEmoji(text || bkSayText());
         const z = (typeof getUiZoom === 'function') ? getUiZoom() : 1;
         const hr = head.getBoundingClientRect(), hb = hd.getBoundingClientRect();
         const headW = hb.width / z, bubbleW = Math.min(260, headW - 32);
@@ -5085,7 +5087,7 @@
         clearTimeout(bkNoteTimer);
         const DEF = { saving: '저장하는 중이캉', done: '저장 완료캉! ✓', fail: '앗, 저장이 안 됐캉…', info: '잠깐만캉!', sleep: '화면을 잠갔캉 💤' };
         if (sub && /failed to fetch|networkerror|load failed|network request failed/i.test(String(sub))) sub = '인터넷 연결을 확인하고 다시 해 주세요';
-        el.querySelector('.bk-note-bub').innerHTML = escapeHtml(text || DEF[state] || '')
+        el.querySelector('.bk-note-bub').innerHTML = escapeHtml(bkGlueEmoji(text || DEF[state] || ''))
             + (state === 'saving' ? '<span class="bk-dots"><i>.</i><i>.</i><i>.</i></span>' : '')
             + (sub ? '<small>' + escapeHtml(sub) + '</small>' : '');
         const keepToast = bkNoteIsToast && el.classList.contains('on');
@@ -6318,6 +6320,9 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.39.1', d: '2026-10-10', t: '말풍선 이모티콘 줄바꿈', items: [
+            '부캉이 말풍선 끝의 🍗·🏆·🎂 같은 이모티콘이 혼자 다음 줄로 떨어지던 것 → 바로 앞 글자와 같은 줄에 붙어서 나옴 (알림 말풍선도 같이)'
+        ] },
         { v: 'v2.39.0', d: '2026-10-10', t: '일정 입력 창 간단하게', items: [
             '경기 결과를 [아직·승리·패배·무승부] 버튼으로 바로 고르기 (예전: 목록 펼쳐서 선택)',
             '점수는 우리 대연초 / 상대팀 칸을 −·＋ 버튼으로 (숫자 직접 입력도 됨) — 점수를 넣으면 승·패·무가 자동으로 골라지고, 우리:상대 순서로 저장',
