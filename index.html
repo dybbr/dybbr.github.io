@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.39.2 · b261010";
+        const APP_VERSION = "v2.40.0 · b261010";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1352,13 +1352,18 @@
         .ev-sc-colon { font-size: 20px; font-weight: 900; color: #94a3b8; margin-bottom: 7px; }
         .ev-sc-clear { width: 28px; height: 28px; margin: 0 0 5px 2px; border: 0; border-radius: 50%; background: #f1f5f9; color: #64748b; font-size: 12px; font-weight: 800; cursor: pointer; padding: 0; }
         .ev-dress-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        /* 👕 복장: 상의·하의·이너·겉옷 줄마다 고르기 (v2.40.0) */
+        .ev-drow { display: grid; grid-template-columns: 34px 1fr; gap: 6px; align-items: start; margin-bottom: 6px; }
+        .ev-drow-k { font-size: 12px; font-weight: 800; color: #64748b; padding-top: 9px; }
+        .ev-dress-prev { margin-top: 2px; font-size: 12.5px; font-weight: 800; color: #0b2240; background: #f1f5fb; border-radius: 8px; padding: 7px 10px; line-height: 1.4; word-break: keep-all; }
+        .ev-dress-prev.empty { color: #94a3b8; font-weight: 700; }
         .ev-dchip { display: inline-flex; align-items: center; gap: 5px; min-height: 34px; padding: 4px 11px; border: 1.5px solid #e2e8f0; border-radius: 999px; background: #fff;
             color: #334155; font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; text-align: left; -webkit-tap-highlight-color: transparent; }
         .ev-dchip.on { border-color: #0b2240; background: #0b2240; color: #fff; }
         .ev-dchip.other { border-style: dashed; color: #64748b; }
         .ev-dchip.other.on { border-style: solid; color: #fff; }
         .ev-dsw { width: 12px; height: 12px; flex: 0 0 auto; border-radius: 50%; border: 1px solid rgba(0,0,0,.25); }
-        #evDress { margin-top: 2px; }
+        #evDressEtc { margin: 0 0 6px 40px; width: calc(100% - 40px) !important; }
         .form-hint { font-size: 11px; color: #94a3b8; font-weight: 600; line-height: 1.5; }
         .import-item { display: flex; gap: 8px; align-items: flex-start; border: 1px solid #e2e8f0; border-left: 5px solid var(--ev); border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; background: #ffffff; }
         .import-item input[type="checkbox"] { width: auto; margin-top: 3px; }
@@ -1796,6 +1801,9 @@
     .ev-sc-clear { background: #1b2638; color: #97a3b7; }
     .ev-dchip.other { color: #97a3b7; }
     .ev-dsw { border-color: rgba(255,255,255,.35); }
+    .ev-drow-k { color: #97a3b7; }
+    .ev-dress-prev { background: #1b2638; color: #dde3ec; }
+    .ev-dress-prev.empty { color: #6f7b91; }
     .import-item { border: 1px solid #2a374e; border-left: 5px solid var(--ev); background: #151e2e; }
     .import-item .ii-body { color: #bcc6d4; }
     .import-item .ii-body b { color: #dde3ec; }
@@ -2362,7 +2370,7 @@
             <div class="form-row2">
                 <div class="form-group">
                     <label>구분</label>
-                    <select id="evType" onchange="syncEvResultRow(); renderDressChips();">
+                    <select id="evType" onchange="syncEvResultRow()">
                         <option value="대회">🏆 대회</option>
                         <option value="연습시합">⚾ 연습시합</option>
                         <option value="훈련">🏃 훈련</option>
@@ -2419,8 +2427,10 @@
             <div class="form-group"><label>참가선수 메모</label><input type="text" id="evTarget" maxlength="80" placeholder="예: 6학년 + 민준, 승환"></div>
             <div class="form-group"><label>집합 / 출발</label><input type="text" id="evMeet" maxlength="100" placeholder="예: 06:30 학교출발 / 시작 1시간 전 개별집합"></div>
             <div class="form-group"><label>복장</label>
-                <div class="ev-dress-chips" id="evDressChips"></div>
-                <input type="text" id="evDress" maxlength="100" placeholder="직접 입력 (예: 유니폼바지 + 이너티 + 하계훈련복 상의)">
+                <div id="evDressBox"></div>
+                <input type="text" id="evDressEtc" maxlength="80" placeholder="예: 사복 등교, 모자 지참" oninput="syncDressValue()">
+                <input type="hidden" id="evDress">
+                <div class="ev-dress-prev empty" id="evDressPrev"></div>
             </div>
             <div class="form-group"><label>메모</label><textarea id="evMemo" rows="3" maxlength="1000" placeholder="차량지원 요청, 준비물 등"></textarea></div>
         </div>
@@ -3391,8 +3401,7 @@
         document.getElementById('evPlace').value = ev.place || '';
         document.getElementById('evTarget').value = ev.target || '';
         document.getElementById('evMeet').value = ev.meet || '';
-        document.getElementById('evDress').value = ev.dress || '';
-        evDressOther = false;
+        loadDress(ev.dress || '');
         document.getElementById('evMemo').value = ev.memo || '';
         const rr = parseResult(ev);
         setEvResult(rr ? rr.label : '');
@@ -3402,7 +3411,6 @@
         evScoreRaw = (rr && rr.score && !sm) ? rr.score : '';   // "콜드승"처럼 숫자가 아닌 점수 메모는 그대로 보관
         syncEvScoreLabel();
         syncEvResultRow();
-        renderDressChips();
         const gs = String(ev.grades || '전체').split(',');
         const all = gs.indexOf('전체') !== -1;
         document.querySelectorAll('#evGrades input').forEach(i => {
@@ -3478,45 +3486,83 @@
         document.getElementById('evScoreThemLbl').textContent = o ? (o.length > 6 ? o.slice(0, 6) + '…' : o) : '상대';
     }
 
-    // 👕 복장 고르기 (v2.39.0) — 지금까지 일정에 2번 이상 쓴 복장을 많이 쓴 순서로 (같은 구분에서 많이 쓴 것 먼저), 없으면 ✏️ 기타
-    let evDressOther = false;
-    const DRESS_SWATCH = [[/아이보리/, '#efe6cf'], [/빨강|빨간|레드/, '#d11f2f'], [/남색|네이비/, '#1e3a8a'], [/흰색|화이트/, '#ffffff'], [/훈련복/, '#64748b'], [/사복/, '#a78bfa']];
-    function dressOptions(type) {
-        const all = {}, same = {};
-        schedEvents.forEach(ev => {
-            const d = String(ev.dress || '').trim();
-            if (!d || d.length > 40) return;
-            all[d] = (all[d] || 0) + 1;
-            if (ev.type === type) same[d] = (same[d] || 0) + 1;
-        });
-        const list = Object.keys(all).filter(d => all[d] >= 2).sort((x, y) => (same[y] || 0) - (same[x] || 0) || all[y] - all[x]).slice(0, 6);
-        return list.length ? list : ['아이보리', '빨강', '유니폼바지 + 하계훈련복 상의'];
+    // 👕 복장 고르기 (v2.40.0) — 유니폼 신청 품목(유니폼상의·바지·여름/겨울훈련티·바람막이·풀오버·겨울점퍼)을 상의·하의·이너·겉옷으로 나눔
+    //   줄마다 하나씩 고르면 "아이보리 + 유니폼바지 + 바람막이"처럼 복장 문장이 자동으로 만들어짐 (같은 걸 한 번 더 누르면 해제)
+    //   목록에 없는 건 ✏️ 직접 입력 → 맨 뒤에 붙음. 예전에 글로 적은 복장도 아는 이름은 버튼으로 다시 켜짐 (syn = 예전 표현)
+    const DRESS_CATS = [
+        { k: 'top', name: '상의', opts: [
+            { v: '아이보리', sw: ['#efe6cf'], syn: ['상의 아이보리', '아이보리 유니폼', '아이보리 상의', '아이보리색'] },
+            { v: '빨강', sw: ['#d11f2f'], syn: ['상의 빨강', '빨강 유니폼', '빨강 상의', '빨간색', '빨간 유니폼'] },
+            { v: '아이보리·빨강 번갈아 (당일 확인)', label: '번갈아 (당일 확인)', sw: ['#efe6cf', '#d11f2f'], syn: ['아이보리부터 경기마다 번갈아 (당일 확인)', '아이보리/빨강 번갈아 (당일 확인)'] },
+            { v: '여름훈련티', label: '☀️ 여름훈련티', syn: ['하계훈련복 상의', '하계훈련복', '하계훈련티', '여름훈련복'] },
+            { v: '겨울훈련티', label: '❄️ 겨울훈련티', syn: ['동계훈련복 상의', '동계훈련복', '동계훈련티', '겨울훈련복'] }
+        ] },
+        { k: 'bottom', name: '하의', opts: [
+            { v: '유니폼바지', label: '👖 유니폼바지', syn: ['유니폼 바지', '바지'] }
+        ] },
+        { k: 'inner', name: '이너', opts: [
+            { v: '이너티', label: '👕 이너티', syn: ['언더티', '이너', '언더셔츠', '이너 티'] }
+        ] },
+        { k: 'outer', name: '겉옷', opts: [
+            { v: '바람막이', label: '💨 바람막이', syn: [] },
+            { v: '풀오버', label: '🧥 풀오버', syn: [] },
+            { v: '겨울점퍼', label: '🧤 겨울점퍼', syn: ['점퍼', '패딩', '겨울 점퍼'] }
+        ] }
+    ];
+    let evDressSel = {}, evDressEtcOn = false;
+    const dressKey = t => String(t || '').replace(/\s+/g, '');
+    function dressFind(tok) {   // 낱말 하나 → { k, v } (띄어쓰기 무시하고 이름·예전 표현과 똑같을 때만)
+        const n = dressKey(tok);
+        for (const c of DRESS_CATS) for (const o of c.opts) if ([o.v].concat(o.syn || []).some(x => dressKey(x) === n)) return { k: c.k, v: o.v };
+        return null;
     }
-    function dressSwatch(d) {
-        return DRESS_SWATCH.filter(x => x[0].test(d)).slice(0, 2).map(x => `<i class="ev-dsw" style="background:${x[1]}"></i>`).join('');
+    function loadDress(text) {
+        text = String(text || '').trim();
+        evDressSel = {};
+        let etc = '';
+        if (text) {
+            const toks = text.split(/\s*[+,]\s*/).filter(Boolean), hits = toks.map(dressFind);
+            const firstMiss = hits.findIndex(h => !h);
+            const tailOnly = firstMiss === -1 || hits.slice(firstMiss).every(h => !h);   // 모르는 말이 맨 뒤에만 있을 때만 나눔
+            const dup = hits.filter(Boolean).some((h, i, a) => a.findIndex(x => x.k === h.k) !== i);
+            if (tailOnly && !dup) { hits.forEach(h => { if (h) evDressSel[h.k] = h.v; }); etc = firstMiss === -1 ? '' : toks.slice(firstMiss).join(' + '); }
+            else etc = text;                                                                // 순서가 섞인 예전 글은 그대로 보관
+        }
+        document.getElementById('evDressEtc').value = etc;
+        evDressEtcOn = !!etc;
+        renderDressChips();
     }
+    function dressSwatch(sw) { return (sw || []).map(c => `<i class="ev-dsw" style="background:${c}"></i>`).join(''); }
     function renderDressChips() {
-        const box = document.getElementById('evDressChips'), inp = document.getElementById('evDress');
-        if (!box || !inp) return;
-        const cur = inp.value.trim(), opts = dressOptions(document.getElementById('evType').value);
-        if (cur && opts.indexOf(cur) === -1) evDressOther = true;
-        box.innerHTML = opts.map(d => `<button type="button" class="ev-dchip${!evDressOther && d === cur ? ' on' : ''}" data-d="${escapeHtml(d)}" onclick="pickDress(this.dataset.d)">${dressSwatch(d)}${escapeHtml(d)}</button>`).join('')
-            + `<button type="button" class="ev-dchip other${evDressOther ? ' on' : ''}" onclick="pickDressOther()">✏️ 기타 (직접 입력)</button>`;
-        inp.style.display = evDressOther ? '' : 'none';
+        const box = document.getElementById('evDressBox');
+        if (!box) return;
+        box.innerHTML = DRESS_CATS.map(c => `<div class="ev-drow"><span class="ev-drow-k">${c.name}</span><div class="ev-dress-chips">`
+            + c.opts.map(o => `<button type="button" class="ev-dchip${evDressSel[c.k] === o.v ? ' on' : ''}" data-k="${c.k}" data-v="${escapeHtml(o.v)}" onclick="pickDressOpt(this)">${dressSwatch(o.sw)}${escapeHtml(o.label || o.v)}</button>`).join('')
+            + `</div></div>`).join('')
+            + `<div class="ev-drow"><span class="ev-drow-k">기타</span><div class="ev-dress-chips"><button type="button" class="ev-dchip other${evDressEtcOn ? ' on' : ''}" onclick="toggleDressEtc()">✏️ 직접 입력</button></div></div>`;
+        document.getElementById('evDressEtc').style.display = evDressEtcOn ? '' : 'none';
+        syncDressValue();
     }
-    function pickDress(d) {
-        const inp = document.getElementById('evDress');
-        const same = !evDressOther && inp.value.trim() === d;
-        evDressOther = false;
-        inp.value = same ? '' : d;   // 같은 걸 한 번 더 누르면 선택 해제
+    function pickDressOpt(btn) {
+        const k = btn.dataset.k, v = btn.dataset.v;
+        if (evDressSel[k] === v) delete evDressSel[k]; else evDressSel[k] = v;
         renderDressChips();
     }
-    function pickDressOther() {
-        const inp = document.getElementById('evDress');
-        evDressOther = !evDressOther;
-        if (!evDressOther || dressOptions(document.getElementById('evType').value).indexOf(inp.value.trim()) !== -1) inp.value = '';
+    function toggleDressEtc() {
+        const inp = document.getElementById('evDressEtc');
+        evDressEtcOn = !evDressEtcOn;
+        if (!evDressEtcOn) inp.value = '';
         renderDressChips();
-        if (evDressOther) setTimeout(() => { try { inp.focus(); } catch (e) {} }, 30);
+        if (evDressEtcOn) setTimeout(() => { try { inp.focus(); } catch (e) {} }, 30);
+    }
+    function syncDressValue() {   // 고른 것 + 직접 입력 → 숨은 칸(evDress)에 저장될 문장
+        const parts = DRESS_CATS.map(c => evDressSel[c.k]).filter(Boolean);
+        const etc = evDressEtcOn ? document.getElementById('evDressEtc').value.trim() : '';
+        if (etc) parts.push(etc);
+        const val = parts.join(' + ');
+        document.getElementById('evDress').value = val;
+        const pv = document.getElementById('evDressPrev');
+        if (pv) { pv.textContent = val ? '👕 ' + val : '👕 복장 안 정함'; pv.classList.toggle('empty', !val); }
     }
     // id: 기존 일정 수정 / defaultDate: 새 일정의 날짜 / draft+onSave: 붙여넣기 미리보기 항목 수정
     function openEventEditor(id, defaultDate, draft, onSave) {
@@ -6321,6 +6367,12 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.40.0', d: '2026-10-10', t: '복장을 상의·하의·이너·겉옷으로 고르기', items: [
+            '일정 입력 창의 복장을 상의·하의·이너·겉옷 줄로 나눠서 버튼으로 고르기 — 유니폼 신청 품목(유니폼상의·바지·여름/겨울훈련티·바람막이·풀오버·겨울점퍼)을 기준으로 정리',
+            '상의: 아이보리 · 빨강 · 번갈아(당일 확인) · ☀️여름훈련티 · ❄️겨울훈련티 / 하의: 👖유니폼바지 / 이너: 👕이너티 / 겉옷: 💨바람막이 · 🧥풀오버 · 🧤겨울점퍼',
+            '고른 대로 "아이보리 + 유니폼바지 + 바람막이"처럼 복장 문장이 자동으로 만들어지고, 아래에 저장될 문장을 미리 보여줌',
+            '목록에 없는 건 기타 ▸ ✏️ 직접 입력 (맨 뒤에 붙음). 예전에 "하계훈련복 상의", "언더티"처럼 적은 복장도 열면 버튼으로 다시 켜짐'
+        ] },
         { v: 'v2.39.2', d: '2026-10-10', t: '말풍선 가로로 넓게', items: [
             '부캉이 말풍선 최대 폭을 260px → 340px로 넓혀서 "감천초 (6학년) 상대로 승리했다캉! 다들 최고였어! 🏆" 같은 말이 한 줄에 들어감 (화면이 좁으면 화면 폭에 맞춤)',
             '줄이 바뀔 때 "최고였 / 어!"처럼 낱말 중간에서 끊기지 않고 띄어쓰기 단위로 넘어감'
