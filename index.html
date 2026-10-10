@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.41.6 · b261010";
+        const APP_VERSION = "v2.41.7 · b261010";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1382,6 +1382,15 @@
         #eventEditModal .ev-dt-row input { -webkit-appearance: none; appearance: none; padding: 6px 4px; text-align: center; }
         #eventEditModal .ev-dt-row input::-webkit-calendar-picker-indicator { display: none; }   /* 화살표 아이콘을 빼서 칸을 좁게 — 칸을 누르면 선택 창이 열림 */
         #eventEditModal .ev-dt-row input::-webkit-date-and-time-value { text-align: center; }
+        .ev-date-wrap { position: relative; }
+        #eventEditModal .ev-date-wrap input { padding: 6px 4px; min-height: 36px; font-size: 13.5px; color: transparent; -webkit-text-fill-color: transparent; }
+        #eventEditModal .ev-date-wrap input::-webkit-datetime-edit { color: transparent; }
+        .ev-date-txt { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 2px; pointer-events: none;
+            font-size: 13.5px; color: #0f172a; white-space: nowrap; letter-spacing: -0.2px; }
+        .ev-date-txt .dow { color: #64748b; font-size: 12.5px; }
+        .ev-date-txt .dow.sat { color: #2563eb; }
+        .ev-date-txt .dow.sun { color: #dc2626; }
+        .ev-date-txt .ph { color: #94a3b8; }
         #eventEditModal .ev-dt-row input[type="time"] { padding-left: 2px; padding-right: 2px; letter-spacing: -0.3px; }
         #eventEditModal .ev-dt-row input::-webkit-inner-spin-button, #eventEditModal .ev-dt-row input::-webkit-clear-button { display: none; }
         #eventEditModal .ev-dt-row input::-webkit-datetime-edit { padding: 0; }
@@ -1848,6 +1857,10 @@
     .ev-dchip.other { color: #97a3b7; }
     .ev-dsw { border-color: rgba(255,255,255,.35); }
     .ev-drow-k { color: #97a3b7; }
+    .ev-date-txt { color: #e2e8f0; }
+    .ev-date-txt .dow { color: #97a3b7; }
+    .ev-date-txt .dow.sat { color: #6aa8ff; }
+    .ev-date-txt .dow.sun { color: #ff7a7a; }
     .ev-dress-prev { background: #1b2638; color: #dde3ec; }
     .ev-dress-prev.empty { color: #6f7b91; }
     .import-item { border: 1px solid #2a374e; border-left: 5px solid var(--ev); background: #151e2e; }
@@ -2407,7 +2420,7 @@
         <div class="modal-header" id="eventEditTitle">📅 일정 추가</div>
         <div class="modal-scroll-body">
             <div class="ev-dt-row">
-                <div class="form-group"><label>날짜 *</label><input type="date" id="evDate" onclick="evPick(this)"></div>
+                <div class="form-group"><label>날짜 *</label><div class="ev-date-wrap"><input type="date" id="evDate" onclick="evPick(this)" oninput="syncEvDateText()" onchange="syncEvDateText()"><span class="ev-date-txt" id="evDateTxt" aria-hidden="true"></span></div></div>
                 <div class="form-group"><label>시작</label><input type="time" id="evStart" onclick="evPick(this)"></div>
                 <div class="form-group"><label>종료</label><input type="time" id="evEnd" onclick="evPick(this)"></div>
             </div>
@@ -3433,6 +3446,7 @@
     }
     function fillEventForm(ev) {
         document.getElementById('evDate').value = ev.date || '';
+        syncEvDateText();
         document.getElementById('evStart').value = ev.start || '';
         document.getElementById('evEnd').value = ev.end || '';
         document.getElementById('evType').value = SCHED_TYPES[ev.type] ? ev.type : '기타';
@@ -3486,6 +3500,16 @@
         const game = BK_GAME_TYPES.indexOf(document.getElementById('evType').value) !== -1;
         document.getElementById('evResultRow').style.display = game ? '' : 'none';
         if (!game) { setEvResult(''); document.getElementById('evScoreUs').value = ''; document.getElementById('evScoreThem').value = ''; evScoreRaw = ''; }
+    }
+    // 📅 날짜 칸은 "26.10.10 (토)"처럼 사이트가 직접 그림 (v2.41.7) — 브라우저 글자는 투명하게 두고 그 위에 겹침
+    //   (삼성인터넷 등이 "2026. 10. 10."을 길게 써서 잘리던 문제, 칸을 누르면 날짜 선택 창은 그대로 열림)
+    function syncEvDateText() {
+        const t = document.getElementById('evDateTxt');
+        if (!t) return;
+        const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(document.getElementById('evDate').value || '');
+        if (!m) { t.innerHTML = '<span class="ph">날짜 선택</span>'; return; }
+        const w = new Date(+m[1], +m[2] - 1, +m[3]).getDay();
+        t.innerHTML = `${m[1].slice(2)}.${m[2]}.${m[3]} <span class="dow${w === 0 ? ' sun' : w === 6 ? ' sat' : ''}">(${'일월화수목금토'[w]})</span>`;
     }
     // 📅 PC(마우스)에서는 날짜·시간 칸 어디를 눌러도 선택 창이 열리게 (휴대폰은 원래 칸을 누르면 열림) — v2.41.1
     function evPick(el) { try { if (el.showPicker && window.matchMedia && window.matchMedia('(pointer: fine)').matches) el.showPicker(); } catch (e) {} }
@@ -6475,6 +6499,10 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.41.7', d: '2026-10-10', t: '날짜 칸 짧게 + 요일', items: [
+            '일정 입력 창 날짜를 "2026. 10. 10." 대신 "26.10.10 (토)"처럼 년도 2자리 + 요일로 표시 → 칸에서 안 잘림 (토요일 파랑, 일요일 빨강)',
+            '날짜 칸을 누르면 날짜 선택 창은 예전처럼 열림, 저장되는 값은 그대로'
+        ] },
         { v: 'v2.41.6', d: '2026-10-10', t: '일정 입력 창 순서 정리', items: [
             '"경기 결과"와 "점수 (선택)" 이름표를 "경기 결과 및 점수 입력" 하나로 합치고, 점수 자동 안내 문구는 뺌',
             '대상 학년을 경기 결과·점수 바로 아래(제목 위)로 옮김',
