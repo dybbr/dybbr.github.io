@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.41.9 · b261010";
+        const APP_VERSION = "v2.41.10 · b261010";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1420,6 +1420,10 @@
         #eventEditModal .grade-checks input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none; }
         #eventEditModal .grade-checks label:has(input:focus-visible) { outline: 3px solid #29a8e0; outline-offset: 1px; }
         #eventEditModal .ev-res-line > label { line-height: 1.25; }
+        /* v2.41.10: 구분 칸은 좁게(116px), 상대팀 칸은 남는 폭 전부 — 긴 학교 이름도 보이게 */
+        #eventEditModal .ev-type-row { grid-template-columns: 116px minmax(0, 1fr); }
+        #eventEditModal .ev-type-row input { padding-left: 8px; padding-right: 6px; }
+        #eventEditModal .ev-type-row select { padding-left: 8px; padding-right: 4px; }
         #eventEditModal .ev-res-seg { grid-template-columns: repeat(4, minmax(0, 1fr)); }
         #eventEditModal .ev-res-seg button { min-height: 40px; min-width: 0; }
         @media (max-width: 345px) { #eventEditModal .ev-res-seg button { font-size: 12px; padding: 0 1px; } #eventEditModal .ev-res-seg { gap: 3px; }
@@ -2435,7 +2439,7 @@
                 <div class="form-group"><label>시작</label><input type="time" id="evStart" onclick="evPick(this)"></div>
                 <div class="form-group"><label>종료</label><input type="time" id="evEnd" onclick="evPick(this)"></div>
             </div>
-            <div class="form-row2">
+            <div class="form-row2 ev-type-row">
                 <div class="form-group">
                     <label>구분</label>
                     <select id="evType" onchange="syncEvResultRow()">
@@ -6524,6 +6528,9 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.41.10', d: '2026-10-10', t: '상대팀 칸 넓게', items: [
+            '일정 입력 창에서 구분 칸 폭을 줄이고 상대팀(VS) 칸을 넓혀서 긴 학교 이름도 잘 보이게'
+        ] },
         { v: 'v2.41.9', d: '2026-10-10', t: '복장 문구', items: [
             '복장을 고르지 않았을 때 "안 정함" 대신 "아직 선택하지 않았어요"로 표시'
         ] },
