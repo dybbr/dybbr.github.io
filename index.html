@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.41.21 · b261011";
+        const APP_VERSION = "v2.41.22 · b261011";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1474,6 +1474,13 @@
         .ev-dsw { width: 12px; height: 12px; flex: 0 0 auto; border-radius: 50%; border: 1px solid rgba(0,0,0,.25); }
         #evDressEtc { margin: 0 0 6px 40px; width: calc(100% - 40px) !important; }
         /* 📅 일정 입력 창 한 화면에 더 많이 (v2.41.1) — 날짜·시작·종료 한 줄, 창 높이 92%, 칸·버튼 간격 줄임 */
+        /* v2.41.22: 텍스트 분석 창 — 창을 아래로 키워 입력 칸을 넓게, 설명은 칸 아래 상자로 */
+        #eventImportModal .modal-content { max-height: calc(88vh / var(--ui-zoom, 1)); max-height: calc(92dvh / var(--ui-zoom, 1)); }
+        #importText { height: calc(40vh / var(--ui-zoom, 1)); height: calc(46dvh / var(--ui-zoom, 1)); min-height: 160px; resize: vertical; line-height: 1.5; }
+        .imp-guide { list-style: none; margin: 8px 0 0; padding: 9px 12px; border-radius: 10px; background: #f8fafc; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 5px; }
+        .imp-guide li { display: flex; align-items: flex-start; gap: 7px; font-size: 12px; line-height: 1.45; color: #475569; }
+        .imp-guide .ig-i { flex: 0 0 18px; text-align: center; }
+        .imp-guide b { color: #0b2240; font-weight: 800; }
         #eventEditModal .modal-content { max-height: calc(92vh / var(--ui-zoom, 1)); max-height: calc(92dvh / var(--ui-zoom, 1)); }   /* v2.41.12: 화면 크기 배율만큼 나눠야 실제 화면의 92% */
         #eventEditModal .modal-header { margin-bottom: 6px; }
         #eventEditModal .form-group { margin-bottom: 8px; gap: 3px; }
@@ -1943,6 +1950,9 @@
     .cal-filter { border: 1px solid #2a374e; background: #151e2e; color: #bcc6d4; }
     .cal-filter.active { background: #22354f; border-color: #2e486b; color: #f1f4f9; }
     .cal-filter.mine.active { background: #912d3d; border-color: #9b273a; }
+    .imp-guide { background: #151e2e; border-color: #2a374e; }
+    .imp-guide li { color: #97a3b7; }
+    .imp-guide b { color: #dde3ec; }
     .cgsel-btn { background: #151e2e; border-color: #58697e; color: #dde3ec; }
     .cgsel-btn.on { background: #22354f; border-color: #2e486b; color: #f1f4f9; }
     .cgsel-btn.on.mine { background: #912d3d; border-color: #9b273a; }
@@ -2678,9 +2688,14 @@
         <div class="modal-header">📋 텍스트 분석해서 일정 추가하기</div>
         <div class="modal-scroll-body">
             <div class="form-group" id="importInputBox">
-                <label>카카오톡 공지 내용을 그대로 붙여넣으세요</label>
-                <!-- v2.41.21: 예시 일정 글자 대신 설명을 칸 안 안내 글자로 (아래 설명 줄은 없앰) -->
-                <textarea id="importText" rows="9" placeholder="📌 표시 단위로 날짜·시간·장소·상대·참가학년을 자동으로 나눕니다.&#10;&#10;저장 전에 하나씩 확인하고 고칠 수 있어요."></textarea>
+                <label>카카오톡 공지 · 일정 내용을 그대로 붙여넣으세요</label>
+                <!-- v2.41.22: 창을 아래로 키워 입력 칸을 넓게, 설명은 칸 아래 상자로 보기 좋게 -->
+                <textarea id="importText" rows="9" placeholder="여기에 붙여넣으세요 (칸을 길게 누르면 붙여넣기)"></textarea>
+                <ul class="imp-guide">
+                    <li><span class="ig-i">✂️</span><span><b>📌 표시</b>마다 일정 1개로 나눠요</span></li>
+                    <li><span class="ig-i">🔎</span><span><b>날짜 · 시간 · 장소 · 상대 · 참가 학년</b>을 자동으로 찾아요</span></li>
+                    <li><span class="ig-i">✏️</span><span>저장 전에 하나씩 <b>확인하고 고칠 수</b> 있어요</span></li>
+                </ul>
             </div>
             <div id="importPreview"></div>
         </div>
@@ -6727,6 +6742,11 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.41.22', d: '2026-10-11', t: '텍스트 분석 창 입력 칸 넓게', items: [
+            '창을 아래로 키워서 공지 · 일정 내용을 붙여넣는 칸을 넓게 (화면 높이에 맞춰 늘어남)',
+            '설명은 입력 칸 아래 상자에 세 줄로 정리: 📌 표시마다 일정 1개 / 날짜 · 시간 · 장소 · 상대 · 참가 학년 자동 / 저장 전 확인 · 수정',
+            '입력 칸 안 안내 글자는 「여기에 붙여넣으세요 (칸을 길게 누르면 붙여넣기)」로 짧게'
+        ] },
         { v: 'v2.41.21', d: '2026-10-11', t: '텍스트 분석 창 글자 정리', items: [
             '창 제목을 「텍스트 분석해서 일정 추가하기」로 바꿈',
             '입력 칸의 예시 일정(📌3일(토) 13:00~18:00 …)을 지우고, 아래 있던 설명을 칸 안의 흐린 안내 글자로 넣음'
