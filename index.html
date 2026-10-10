@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.42.0 · b261011";
+        const APP_VERSION = "v2.42.1 · b261011";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -3786,10 +3786,23 @@
     const venueBase = s => String(s || '').replace(/\s*[\(（\[].*$/, '').trim();
     const venueLabel = s => { const b = venueBase(s); return b.length >= 3 ? b : String(s || '').trim(); };   // 「기장리틀구장 (3루측)」→ 기장리틀구장 · 「기장 (소프트구장)」→ 그대로
     function venueByName(name) { const n = venueNorm(name); return n ? (schedVenues.find(v => venueNorm(v.name) === n) || null) : null; }
+    // v2.42.1: 이름 맞추기 — ① 공백 무시 ② 괄호만 빼고(「기장 (리틀구장)」→ 기장리틀구장) ③ 괄호 앞 이름(「기장리틀구장 (3루측)」, 3글자 이상)
+    //   ④ 끝의 구장/야구장/경기장 차이(「기장 (소프트)」→ 기장소프트구장, 「을숙도구장」↔ 을숙도야구장) — 한 곳으로만 맞을 때
+    const venueSfx = s => s.replace(/(야구장|구장|경기장|운동장)$/, '');
     function findVenue(name) {
-        const ok = v => (v && (v.addr || (v.lat && v.lng))) ? v : null;
-        const full = String(name || '').trim(), base = venueBase(full);
-        return ok(venueByName(full)) || (base && base !== full ? ok(venueByName(base)) : null);
+        const full = String(name || '').trim();
+        if (!full) return null;
+        const list = schedVenues.filter(v => v && (v.addr || (v.lat && v.lng)));
+        const by = key => list.find(v => venueNorm(v.name) === key) || null;
+        const n1 = venueNorm(full), n2 = venueNorm(full.replace(/[\(（\)）\[\]]/g, '')), n3 = venueNorm(venueBase(full));
+        const v = by(n1) || by(n2) || (n3.length >= 3 ? by(n3) : null);
+        if (v) return v;
+        const s2 = venueSfx(n2);
+        if (s2.length >= 3) {
+            const c = list.filter(x => venueSfx(venueNorm(x.name)) === s2);
+            if (c.length && c.every(x => (x.kid || x.addr) === (c[0].kid || c[0].addr))) return c[0];
+        }
+        return null;
     }
     // 카카오 지도 SDK는 필요할 때 한 번만 불러옴
     function loadKakaoMaps() {
@@ -3847,10 +3860,10 @@
     // 자주 쓰는 곳: 지난 일정에서 많이 쓴 장소(괄호 앞 이름) + 등록된 구장
     function placeChipNames() {
         const cnt = {};
-        schedEvents.forEach(ev => { const b = venueBase(ev.place) || String(ev.place || '').trim(); if (b) cnt[b] = (cnt[b] || 0) + 1; });
+        schedEvents.forEach(ev => { const p = String(ev.place || '').trim(); if (!p) return; const v = findVenue(p), n = v ? v.name : venueLabel(p); cnt[n] = (cnt[n] || 0) + 1; });   // 「기장 (리틀구장)」도 등록된 이름(기장리틀구장)으로 묶음
         schedVenues.forEach(v => { const n = String(v.name || '').trim(); if (n && !cnt[n]) cnt[n] = 0.5; });
         const seen = {}, out = [];
-        Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a]).forEach(n => { const k = venueNorm(n); if (!seen[k]) { seen[k] = 1; out.push(n); } });
+        Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a]).forEach(n => { const v = findVenue(n), k = (v && v.kid) ? 'k' + v.kid : venueNorm(n); if (!seen[k]) { seen[k] = 1; out.push(n); } });   // 같은 장소(카카오 ID)는 칩 하나만
         return out.slice(0, 10);
     }
     function placeChipsHtml(fn, cur) {
@@ -3888,12 +3901,12 @@
         evVenuePick = null;
         syncEvPlace();
     }
-    // 저장할 때: 🔍 찾기로 고른 곳을 장소 이름으로 「구장」에 등록 (괄호 앞 이름이 3글자 이상이면 그 이름으로 → 1루측·3루측도 같은 구장)
+    // 저장할 때: 🔍 찾기로 고른 곳을 장소 칸 이름 그대로 「구장」에 등록 (v2.42.1: 이름이 똑같은 일정에만 적용 — 비슷한 이름의 다른 구장 위치는 건드리지 않음)
     function saveVenuePick(placeName) {
         const pick = evVenuePick; evVenuePick = null;
         placeName = String(placeName || '').trim();
         if (!pick || !placeName) return;
-        const nm = venueLabel(placeName).slice(0, 40);
+        const nm = placeName.slice(0, 40);
         const ex = venueByName(nm);
         const venue = Object.assign({ name: ex ? ex.name : nm }, pick);
         if (ex) { Object.assign(ex, venue); ex._geo = null; } else schedVenues.push(venue);
@@ -7377,6 +7390,11 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.42.1', d: '2026-10-11', t: '장소 이름이 조금 달라도 지도 연결', items: [
+            '「기장 (리틀구장)」 → 기장리틀구장, 「기장 (소프트구장)」 · 「기장 (소프트)」 → 기장소프트구장, 「을숙도구장」 ↔ 을숙도야구장처럼 이름이 조금 달라도 같은 구장으로 찾음',
+            '「자주 쓰는 곳」 칩도 등록된 구장 이름으로 묶어서 보여 줌 (같은 장소는 칩 하나)',
+            '🔍 찾기로 고른 곳은 장소 칸 이름 그대로 등록 — 비슷한 이름의 다른 구장 위치는 바뀌지 않음'
+        ] },
         { v: 'v2.42.0', d: '2026-10-11', t: '장소 찾기 + 지도 · 길찾기', items: [
             '일정 장소 칸 옆 「🔍 찾기」 — 「기장 야구장」처럼 치면 카카오맵에서 찾아 주고, 골라서 연결',
             '장소 칸 아래 「자주 쓰는 곳」 칩 — 지난 일정에서 많이 쓴 구장을 한 번 눌러 입력 (📍 표시 = 지도 연결됨)',
