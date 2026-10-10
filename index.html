@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.40.1 · b261010";
+        const APP_VERSION = "v2.41.0 · b261010";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -233,6 +233,14 @@
         #lockOverlay.kb-open .lock-title { font-size: 16px; margin-bottom: 4px; }
         #lockOverlay.kb-open .lock-desc { font-size: 11.5px; margin-bottom: 10px; line-height: 1.4; }
         #lockOverlay.kb-open #apkDownloadBox { display: none !important; }
+        /* 📲 앱 설치 안내 (v2.41.0) — 브라우저마다 설치 방법이 달라서 그 브라우저에 맞는 방법을 한 줄로 */
+        .inst-btns { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+        .inst-btn { display: inline-flex; align-items: center; gap: 4px; padding: 8px 14px; border-radius: 8px; background: #f1f5f9; border: 1px solid #cbd5e1;
+            color: #0b2240; font: inherit; font-size: 13px; font-weight: 800; text-decoration: none; cursor: pointer; }
+        .inst-btn.main { background: #0b2240; border-color: #0b2240; color: #fff; }
+        .inst-how { margin-top: 8px; font-size: 12px; font-weight: 700; color: #334155; line-height: 1.55; word-break: keep-all; }
+        .inst-how b { color: #0b2240; }
+        .inst-note { margin-top: 4px; font-size: 11px; color: #94a3b8; line-height: 1.5; word-break: keep-all; white-space: pre-line; }
 
         /* 🦈 부캉이 마스코트 (재미 요소) — 이미지는 --bk-img 하나를 모든 곳에서 같이 씀 */
         :root { --bk-img: url("data:image/webp;base64,UklGRqwtAABXRUJQVlA4WAoAAAAQAAAA5AAA7wAAQUxQSFMOAAABsIVtt2o7zT/GPCeGR4B4kODu7i51d/cm9RanLjjUcK9hNdxCcHeXBIdA8BNbY4z/Ivucs9dee85zGxETgAKUlNBSRRSAYAiqCcDwdT5wyKn/u/Xmm2++6cQ1IEOOJMDoD//1wYUc4DOTRIcWCcA2J84hSTczX3oxj8WQQhXY73Ij3TzYv8fTy0OGDJKAva8mac6BB9+YDB0qKLD+38mw4GCdD4yADBESen/6NsPYRuNfoBgSimKz60ljW53vRxoSKPC1d2jBtgYXrA0dCihGnkAa2+x8diXIECBh8rX0YLuN14ig/BOmP8qK7Tf+Eqn8EqY/xoo1BvcdAiRMf4zGGoNvToGWnmL64zTW6by7F1J4iomP0Vir8Vwoyl505HWsWNcPkcpOEv7CijUHDyy9hK/SWHNwySbQolNs8GZ4fa+sAik50WE30Fm38/7hZZfwfRprN85C0atMey2iE/4JLbmEs2nshLOKrhe7VB4dcXbBqWLKI3QOYUSTAu9/gsGhiqQkALDhP0jn0ESSAsDym864tI/hHJJIArDK+4+68umKpLFTC0sSsPzH//kilzYLdtA5Uk4JGHfQ4yTdzIOdbLwCUkgqWO5nz5JuwY53PjFcekpIEvDJh0hzNtL5M0C1eBTY+FLSnA2N4BlbAqlwEoYf8i7d2eglZ06HSsGIYoNZpLHZRs77KkSKRQSfmU8LNj2MPFFECkUER5DGbujGk0WkSETkr3RndwzjyUmlQETkZFqwa1Y8AloeoulkVsHuGb5gPWhpSMIJrNhVjQchlUbCD1hFl4krIYWRsHflwe4afGe6aFEoJj5LZ7c1/g5FISoX09h1I95eW7QgEr5KYxc2/ha95aAydV54N/J4bhJUiwFn0diVg/fsDmgZKHasPLoTg7xoCrQERHtn0ditPfjQakgFkPBxOrt4xYdWQU/2RIbf2d1ovGEKUu4SPkFndzc+tRM0byI9t9G6HI3v7QnNWsI+Huz6FR9eViRnioto3Y/GzyFlTLHuu4wcxHUqGUs4nMYcRrUdUrZEhz1Az4LxJGi2evEZOrPofHYlSJ4kYbtXI/LA4AeRsqTAV95gMJPGc6E5SljhNNKZS+ezK0Hyk7DO7fRgPoN7ScpOwk4v0JhT46nQ3CTsPJ/GrAbnT4XmRbHZ6zRm1vgdpKyIjH2IxuzEP6FZUZzAitl1PjQckhHF+n0e+Qm+MTUrCUfRmKGInZAyIrguckTn57ICmZ0n45FZSTiVVZ7OzIpi68W0LF0ByQgUn1tEz4/zrh5IRqDY+RFahp5cNi9ImHAPLTITnD8ZmhX0YI1ZzKGZmWcMip4vvRHR9Vqa9/Pu9OxABQfTuluQlx72s5PmkO4tuF1+0NOzG6PL+UwAGPeLOaTHUtvmCMfSuprzEZXelIAxX72XtDwlfGJJRLcbIQJIAkbOeJGWI8WOfQx297A9kQBAEjDtMlpslxvFpLl0dnnnraNUsbT0oPcC+iaZEdX/0Nj1nadAZSkgYfmrbhkFyUrCx2nMoPH3SNICguErIK8iKz4WnoMwzoS2giC3CX+lM4vhi7aDtoJIXhJm0JhJ4+xelVaZVeyyyCMXdO6OlCOVyXPozKbxmpQkR/g7jRl1fg0pP4ptlnjkJPzNjaAZ+geNWXXeO1okMyrrvRuRFxrPgOYGJ9OY2TDuj5QVlcnzI3JD513DRbqKpJRUNaWk0paEg2jMr/OTSN1DkmLASQensvJz4Vm6Y5hIt0gAVtp5xknnn3v+aUd8coPhQBocjqcxxxH7IXUHFaR9Tp/L/hc98KvVITIwxQZ9EVkyXqXSFRLwwZtI0lo7yddmAjKghD/QmOWIJVtAu0DCav8iw5z9h1fkn4dBBiK4MjJF4y+Qmpew3wt052DDeMkyIv0JRjxEz9YskcYlzFhCYzsr/ktV+lFMms/IVPD1CaoNS/gBw9neikci9ZOwSwRz7fwEejRJgxTfpgfbHFbtjtTfj2j5iie3RKMVmywIZ9uNd48SaSG4NGMM9l19wcxhkOZcQGONxm8hLSUY/xojXwySPB7akIRtFkfU4fHA8KQi6JFP0JnzsMr6pqo2Q3E2jbU6Pw0FVHEJLWskjd9HTyMUk+czaoo5W/cO7wG+WAVzH/HyxtAm9OBbdNYcXHD/A/f897pg/hh8cWtoAxQXhdXFYEFWnJ2kARj1GL02hrubRRFE9E2HNmD1dxn1FWVwX6QGbOssa+MXG7E7Yyi0c3l9vhHrLGQU1ncaMfoFemH9uREym1ZUzgdGQDou4ZjCCtpW0AZ8gFFUNH5ZUscJxj5PryfMSuN0aMdB8Q9aLUEyiiL4xnrQjkvy53qCr194A8vS+KfOE8V1tTif2QD4Nb0kPO7ugXSY4svurOWbGI6JbzJKgg8N6zis/Q6jno9jhI5/ozAebMDvaKzntgnAQXQW3hVRD4Nz/vpfMgpPbqTXw2BxNgL/oNVENyuOhxtwVH3l6bw1dd7Xyst4KQSdvoUxiut8aMct8yS9uE5E6rSEk2nFdVgT9mMU15c6T7D80/SyCu7WeUj4Pa2ogn1rQTtOsUFfREk556wA6TgozqKV1W3ahITtlkQUlPHvUDRQ5BpaScXPkZqQsLd5FJNXPKAZUFxAKyUn/ztCpCFrvxlRRsH7vjwKgmYqvk0rIudlywKChkqSS2gFFFFtg2GCxiqmvUwvIL40TgQNTviAWxTQ/PGqtWlKmqRNSDiIVfHQ+V30SD2iqFUSzmZVPBHvfQxIdSiw9ndPv+DwCZD2QGTktaxKh0E7akWoti1h4unvkuQto0TaA8WYG1iVDoN8cC9A2yOCrR8jzaqKOyK1CYoxN7AqHYYxzp4ObYcC33ibVZD0+Gj7oBhzA6soHNLJV3eFDi5h5X+RzqWdH6kBitH/pXvpkEs4d2XRwSSs8yAt2DJ4QB1Q9BxDWvGw4tEYTMK6T7Fi6+DijaA1QIFPvUz30gl/b13RASnWeIrGAbwwBlIHRLHmJaRF2dB4MnoGIjL6Dlbs33itCGpOwKceJc2LJvy9zdDTnyS9gBUHdBRSXVDBioe9RLpFudB556rQfhJ+wIoDdX6mA4AETDzscZJuHoVC5+PbQ1sotuzzGEhwyabQDoAkYPmPXfQmSbqZe7QsChpfXUMUgOiwG2kcqHPOCpBOACQBmPb5cx6rOFCPkuASHoEEIOFLNA7YeB2kQwBJCmDUZl/4wwW3Pz5v3rx5ry5kWXrcPxwCkRWfDh/MCUjoYE2KpWXZ8ePHj191vRmvMQqC4btKQsJMOgfzjc4CIJqSov+PuJeE8U9IoqMejcEE9+m4ltI6peGP0wvC+cwyMgKfpHPgwcUbQpvQv+JCWkHQ+Rtg6iMxuNcnNyvh8LJg8P8nPMPgIJ1zV4Q0az9GUTBIBgf37ErNEox/jVEUNHN2HYhcSyuLtnaBhMOKaO6KDVNsU0XxBOdNaJhg2D308rEtoI1Cwq9opUPnp5CapdhkEaN0jMc2DaKzw8rn5iTSrIRv00sn2LcOtFmCVV+JKBwaf4rULCQcQysd5wMjRZqlWK8vonDo/ChSs6A4nVY+Dy+n0rT1+yIKh85fIDULitNopRO+YFukhslqb0QUDp0PjYY2CglH0kuHxv/1iDZKZMyc8NKh8RQRbRISvkQrHhpPBrRJor3X04qHxjNGITUIio3e8SgeGq+djJ4GIeEHtPKh8YldoNIcSXoxrXxoXPBdiDQGiolz6WVgZt4+OnlSahAUeyz2KAAPkgxvG8P4PTQ54du0yJ07OfuwI28n3dtFs0eXaZIkHMcqb27kLe8XoPeTD5Ju0Z4lvHtEkyDaezGrjLmRT3xlGJASsOyMx0maxWDCjPYBNFux0ixWmQoL8omZKwIJgCRg+S9cu5hkmJm3NLMgef+BkGZBMXoWqwyFGck7v7wikAQtJQHY+KDr53OQL174sWWgaLpi9PWsMhNmJN++4IBeIAkGKAkAJu390zOuuPvxRx99/I7//WnmbuMAJDRfMfp6VrmIcLMguWj2j9YEkASD1YSWPaNGjhyVsLQmQTdUjL6KFt3LPcKtpbPly5f+cCMAmgRt1ZRU0FJSSoJuqRhxBiO6lXPAMf/hC366x8oAkBS1Skt0VwUOIaM7Oe/58n77f+l7M2bMmPntD2wzeQQASFJBhkXxyXcjupFz9mgMUlMS5Fp68HHvRhFvr4PeNEBVQdYl4Wpa9zH+B4qSTPKz7nSEpKLoke91p1+jKJLgP93IeYeqlIMCBzHYhZ1HIhWDYuvLGezG4fwBUiEoPrCAztrdPWIQERF1MdwORCoClfEvsmLtzqXD3Vq7B5eOmuh8dU1oCSQcwYod+MKDT78dHOR78+eTURON1/Sq5E8w7rnw2py/HTti+dW3OvBTH/3aoQcffPDBh3zhE/ttvfakSfs9w6iJxmOh+Uv4KZ11Gy9H23dcHFFTGD+ElDvB8PuiPo89pEdENQ1cVbUHF9NqosUskdwp1l/EqMt4c68I2puwV3hdwXfXhGYu4UAGa4t9kdBu1ctoNTG4H1L2vhheV8VzoGgfNl/kUZPxqwWwP6Omio+vKjVAcRSruiJ/iqlvR9Thxtc2h6JG0VE3cEnUEtwne1Ccx8XernAjb98MiloVU24nzdvnPm8VSPZk9SfJMPeIiBYREW5mTnLuj0ZCUbNihaPfJt3bZBWPhCL7gknHP89+Y2n2v/DuH48DFLUrsNahD5FuZubu4f2bkTxrmEr+IMDY95148wt9C/oWcenoW/Dyo9ed+4uPrd8LJEEHigLLfPMZtveurwkEJSgJAEavOX3N9Xbdddddd99qzenjRqJlEnSoJmD0B77127Mvv/Wmx56dM7f1vZf+eqcECApRUsKgJaWkgg6WhJYqy48b23rcCABIgi4IAFZQOCAyHwAA8H0AnQEq5QDwAD5hLJJGJCKhp6h1+yDwDAlkbuFvDgAZWGd798nPtv5qeyzXX8J/bv1p/bvct299XeYl0D+k/aR/qf+L7H/0V/5/8L8Af60f830yPWL+4XqI/ab9svd7/43q8/v3qCf2v/Y9Zj+7vsLfuD6cv7h/B//Yf+n+43wH/sj///3j+AD/2+oB/3OKD/ov4c/sl5ff6Lw58t3vr3P5nz2H43/nefv+98S+AF+Qf0nwMd+PunmR+1X2j/h+I9rMeFfYD/nf9o/6PlXeG/+D/3fsB/yz+3/+v/F+7P/b//T/WegD87/zf/n9wj+X/1v/tf432wvYt+6nsW/sD/3Ghal24rcH1i7N3WhcS4Ow1xp/UljAcjTmQPpJb8WPzzqSJC0TJ3ggUSUPC9ZOrXB37697lRBeRrZx47NpYsfnBFCPpByzMP4cB/y/a323U//zAHjZbL1QOtndUCBopkZXwIqwSzo5XcvSwV/icXjqZydf/501iybuLpL34dOge0JcLVKP78/BRJ0qh2pvStJHAXCra5+C1LtQDmJnGRF7edalXGwZ7fkddQ+e+RAoTp2cTtYxoXY0rpoywp7lHulIbYsZX8GytAuhp8R7A4Hx+s64PTv1bl+owl4sjWEFt9FYVanjkfM02a56L4TvftHhfA2aVJmqo2OGWYjnUQgsimzO+fUFqVqrp9+EHNU07jV7MJ9HP2vs0mHixGVFXFgQwrXJRDaShgfA0C03IEHS7/pD/xOnOlcpH90RRIDCKqruwDUcBKL9KP4i6ZvYuh1EbjV2UOsGWfcvo7L4iGsNt8i7TUzqzHbUtMFBzZXLDTRbmJtbmQ3/ZFXXbrJvscY3PZ7C5UMnPDREGRRNkn39bxySEy3NP5/USeJrsdogcEKWoU+hvwqGDstKzpNPP+HoHePRa9GeBlQuZINmuaDP19rANaD/cFC8kM43uqojuyao8xlTDnA3jDzkE8UFl6hKOFv7FOoLyZyH2MiB9QT9X42y/wVFQ+V2riv2hozyB5Qf8ZimjxHbi80M0nqjDhjKSMI5YJ/A488WDt2Am5rxsPTIH28Db/5GggYiMeK/jn4lY0H9xemDH/ZT2PDdFKwixTgggdTBuwQPro+QrGTWA2Lb+iXjJHZZ8b3chlU4obGNMzlZcBgrHwIsUIawRFSqnzPn4IvT6j/jgbu9AyCEYc8pGRJLd0RAc38Ja7rAykAehHxZsWWwIrUB3E9eNgZ37w7vUXyeH+ha05drXDpTEKZc8p/UBDxllXvh6HB+KVn2uylY7ZM7i7Yly/rjtKGLu87d6hPuHct1kPGRm7X64cRhO0mg2fddvvAqY2FB7G8szz5HPAAA/vrLUCc5Cz0iRmVRKrDZIC92fgwGS7t8PmP3qaLUDySFPekm2CywtuBDhCIuh1BMQuBefBpsZNzmyXLnhjnqy8+5qi4rg+eXJCJdNT8pJCNLgO6eNL6V9coV56Gv2zbOuozHT3eGp7ewGGs+WaOgKaojY3W7oK/O1pkHDUi3cNq0bf0/J6AMXXU5NDnJ6KQhbn7EL0dK8VLopvDZKaQPyxesGm4f3/rd5XY9owIwhXPx2AA27cWfYStavdWZO/iwYT+QLu+ScTs33iNAThPOZZU1BkAV2OMCDqXUHCVpvymxAA5KFJToNxN5ta6UIgDyg+3hldptr7DnGP6a5sZ/Um7v3hgVM6OlL50O/pmtpjtUYXivAY1f4IilzLWbQWqmNN0Mc6jcwypbQ3Gddo8MsUHLiier/VIbuG2FIHUFQb4sapCl73X/oPm7Bwt21YArNdRqbqfFz/+Zu9kr/n3rQN2l5EBu43zkachraITvkmDQzBjm9qOmlk0cK3Nx5WbMZV3JSIpL9wsjJXKkv6aDqabqorG1Aq1hKR9qYmc/nupsjY2NclSKn7gJ0O1qCyn6SISKa8AeUSS2amcQRVCZbnT3suI5wODTdcORNzUf410/ZaPow9Esy98tKLVbCQKrawoiN6DRLdWY6Y0/VsRaKCKLgArJzin6oRKgUfgyC7qb51hatvv+qSoJ4mLbIr0/PbAUp2HUnETUlV09Yprb/JjxWmrRcoeeAMK/8eXmsn91xhFu/tfhB68pNGcHX3Rl3/ib8Tva65Z2rLH3zdigaPnMv9ymYxGrjp3geeqF4/2clX82QUtuOvQJHmqc/+cFM8Dt2DGJwSuJjxpBvfwJJb3baKm2eONTJVOHhmsLhAVn5hAU3f8P+ek0XwguwheLG/v6pCbsSiW9WB66E+ocmpbyIUfil1e68U2cIboPyvZg9/+IRFV3RCyAneNdsU44XktTMNt4wma89McapO3QXNCCd5k6d/KeR9sM/ScGNnsU4P/UKod4h+QdyfQW/bz65S5B30B4ZVbKxVmglMFMGnpRN+VT+4WPSdtJIlVI7uDMRRDIQfPFSPpOzJm5+s7G2rbleIdcjh4NlWPdOA/RpgrUO8ZgkmAb0P+mLdaTfdidjE7QR1Y9tNyrFu9d8VhLbwjB7rfEQb4R+rVRRzJ4Z/9yP+HrPxkkzDEtBgo8+tJ6Yi+538yIRskBdG3lTe/0Ll2D4NauBVm7g0fZTMHKPDeg7xK7E0/Pu5tGEEqjLHbP9NtfRNvJdU9HxSwz7xbNzE7VF3jPL3gYQ+OwRmQzggg+VPMV4Fpa60yrsgD8QyHx5rbvI1yXAPKf8TuFgjzI5zUVywKAABmwehk/v5vyVwK12pFIgaKDDdT92dKnr17fLbzGDzxi5CTkQO8f/8SKTFSrQV5KNqzPv7Voh+w6dSOMU54tGOB8zxl+HvG6F3ogMv/dw+hBMrvrPhV0jvtHMk26hJOI4l3D46XxRC0JGa5/88h8pjZTl66aIbKiXGrkD7cCv6w79+5PR3tMoOPTU1X4ZNP9hlR8u34oyGCW9S9Wd0OOiB+pe17Fqxq0AUxYjPej5hkgsKzFtUWUX/oVv3y0GnyAUv9JA/8OVfV05POXW2egPspPRNrgt6wO8309WvjdJRc65TAZmZZ5SOQYXkezNvzrzBBV1XAfYV5wonV1ZHpq50N3rSSzd34/6un4ANl7lY4MQMdyOnul3wkURFa62vd8s8Q6GOlzabtwESo4uOVPEnDSe36AhQCLcGYITit4zDsoNZUnKWwJOFdCu8pSJPkuBaEw0BJI6vPw7H/ABPaUM1xbBVjAIm7T/3jUTK8qcum/zPYuj3aISpsUXnazb/jKnJoteJYVpQWna/qnvrVpQigI/v27j5QndgxfpeI296htMpoyhtS1VXv/cr9Zc6gLmCdj5D2wMqc9XU6Nfv1ObwmKPuAY+IABo1Ncn/vMCBPcOFE3bmFwEF64xlN2mdulJ1+yV+3bdHMN7ipBTHwdW+vAUKeaqcraxZAu/dofVpkG3EZlNcoanfKI2rqoTrf5nfzR7Wx0AiYPYKnfY1fIzCjiJwuar8urHmfOCrOWMZDJH0PKCNZ6NP4AxnKvtae2nVhrg8VkweEYZhMxB2539dFQD4P1VyZUbTm61Df0z7uE3l7uBd7pN5uRco6XCf4Hj8Zf1eujyQWK76DASMJHS25PCdSujnB6TjYcxzhWxKDUUnQxfJRqr5utgmn7os7Lqaff5I6SZqrsQFz8ja7ZAAyWXoonjTfPjHNZzfA5qb2MHr7uvrSO8K9l0yiHN6oaSBS3u6wYRsoYJ+itSSBsEmshycu/Te6BEUUU1X7fcKVsb2c2CHn/vtR6OAle1MYPOAFLhMa/PrqYyTdQLbxM+ciWqu936blQ1uYS7Y7dG6ujfqYVvSYC+YxpJ337+q4jGQil0ECxe/b87q2qYFwL4xlrMr1mJ7lhbDgPv2ZY5m05gsVJ/6x1ZAKZWXBXwhBgyGwdrIzaJ4k8NgyrwAyUDatlDvkBAe5ooqotRRg+o6KV6uLjlLT5Tx1g/6SFsng/GktFqJhSO/spNAZww1qN5veTIkNK5rW9YXO9RDFp//dBMW2qTJVQfkVtSFYujQllCwZm0G170l6kWwonvLtNOsEQTatAuq6zQG+51qiipW41mtUtwZHOfpE3CR0jv+SmZK9ElXT8J1/7zwUHi1aOrkRLciECbMt6SYcknORoIPYHRi21hGzVwnb0LKvpmBpiYUG8ChW2hmpcJPJHeIN1A5FYQ/iYXmn+BDYvFQ1WVLLiktZErfg8YZDh1j5xKw1dyLsMccvnUX07/2gnKpifUGDbnvpY44LCrwRkHNC+DpDTdapJ9igDElck9x7xViPjWxB2euIKzu+9XDfbd6rh8pEAj8HuhuaCiv2vjKCeeYO/J4XHFQ2Hf6TB8TeS0sY+Psewj+2HWiyN0wR4Bh4Xf2rNJFKMaclxzYQH28I9NRd0Zjb1/v00zbZ7K0LT0rs3vbrv6EuCDIbZCLiudTusqHQiy7R+Z6y/GyR09z7v7ifj1jgz/lE6VzewaqAIwc7l4UJqqfImbzmvZw3+4DtESA4/3zRGeDoK/aCMS6ezBladl3y89K37BEEAonSGdrK8LJqSjVKtkMLOakY23gyG7PqmKrtgxlCh0gy19YxGESdi/GHG4iW6zdo6QvPqbdQxIQXApxlY1TQGDEHFy5gm1/0d96+jmeXJevj4bhCcxN8+8wy0KgHgATLbmBY0V938Xv6pHQ+tlGHDSmFm/eTF161Q2XfIqRryqocG2PQgXdrop/oOIG65y++tKmBbwwjs83m4vMn/0pj2QyROJhQtjF7At8th0bfa/zZBttO+QHzD5FKG0XvgrIcre/nfiR+w4b/mqrAPA7Ollp/zZDxb6B8kqOnQZY2UUNMEZxBxPphgz+/+hwzSVv/93+umdXFIatYCuupozcB2mT9tTeto18Un7ldvKpP0MpvRJjo9jzaJH7chJvdItDfQW6oektBpUrjq75xLGkZ44joz8EVhlH4jKP3+tQ6a5rmJ3vX8vLHPSIHJQypRnqQjQuQTO1Bmg+8yGYAtlw1KysZb/6LKNWAYqxBPyWV5tJXR4m+9Xn2fgm/1rbsOdcS+yhuusEnFdDz9MGlTr9pllxlQkZnlpSXIcTX6KubXL9qRnmpU0wYkmOV0xtsN70zx1amNpQs7BoioUQisCos9vsbC0FmLAG5k9y9UuxHgTwQ5nqi01twWfWNU/9/gtAq3oiFSeWZY4bfPN/ISPKGZW8pN0Kku5Gghfrhytd03oTZazEZZYuxMfajPFZImb8YD0Vxod/sHoUuCMeA2JJjEef9R2oyjXZINU2gDCcSXWLjbpj1xxx+Vk/QAziNt80fTOsTsQIGzYzZhJ0XP2nApYehnmnPu6E/ICmv2Ibr3hsPMkD7v4Kll4++26uCvkVp7TWWuQdVWhEw4Kk+HZ7xfgMDK7jw5EjehGkbvzdcUJTy4jA8MGh8qWYxyUioFpoYpY5ql5FYHxtgtaQLWojUAs9Y7t9urE8t9eBaIx6OGMHcE8of4KrWspJOktfCb6+2ROyQXS/wA4PdvJtk4oq219iqwM3NJuRNlNIiqVUYTO0V+OF+yKxOaS/2LrtZy2ladm86e/frNj+GlB5e967nBop9YYBjkRPJdB/0BPphaNNtD5N1qn4le47Jc+9RbR04Lvlj1Y72E3eUoDYDRIS4rrzbUOi7jBmkfX11jY2IMUkTjTfxw9zpPzjGEd+GfdhIqMBtWI2MUGXwXcXqNEYnimu2CRkyfez3jW3siAXiQkYu78GbgW9M+HYUp+FSC7Kle/XKV6k+L85K/DUIgy+0zbPwm1FyvK7VgB2Ha8fjX0BfvjTRzCtoGf764bwvYk9NcKYn175Jfti9XL0r+bd344UoCK8LkUgxCZ+vF1FR+c/mrf1O+UT8ZoZYeu2u3UbNKLG8E92d2JhPQpvd+vvy6OStayTlxkXj8cLrG7vcvoavLtNomXv/FB0rAyw8ciOgLV2pZtCH5M6i/nYwmg3JtQpFKRk1W0F/xJ92jX+uLf/J7ez1mQZEP34/VrhG/6IDReYDNM9erOM7iYEUiw18m30I5eeQ84ygMJhqMqbrG80KH4Ul63hscjb9J/DhSh/rslIaOdpVa9bGctKOUfBtbArvjzqxvyF1jwySsx3IN8RVS6E4BU9D/pxwID6N2savBX113qGlUPsUGhyqvzpwFqVsguEOLWyHNKgt9UQ71s3oB7qugat5hvfZDNRZJ7qxxvG0gAe0iTPEEn3PI1v/DPzeDGt4nqOKw3wfgYSulXWyzvjr5xsh9d+9rYmLHnLueUeOQ2KLBnxR3pywe+WU0p1Ir2QHhf20PsodsOT/sl5+NZiK3yHagZZ3Zb8vE6S2xYrbML8VxOzLoN7JKCXdtIfE7XdphJfUicF8M9uV1eWTxFzgg32gj0yVODMZkr0l4owOVRLLIEDXkm/jKe045/rVneNXpmMTJWzR7EX6J4KaJzdwrW+g1E32fjnY2zhMombrwDMD+j/BR03R2FFKJYDtT1RJbFuebEO3iUQkWqhmZPgUP+hhmEd7InpZKCw82nHaXx4DBtaP5nhN7bnuX/tcHCFL191f5Wd7/3ifjoet5VdO2olaPlReAahDAd+S7XJ0J7nGzfYeZxyw6msSWF0PdxIcoz/l3NDvy9b8XRmXT4Q6x3JQZzw/5Np+UQ/z50YIvDqhOQcKm2qQ2CeGMEGpBcX6AY63fMmxnJ3rYMzlHZ1eXwqoZtElt9tho03NH35vvx3OUD3IkuG0ZdnU0qVV0wres489kx9ezoyFJZOqLZaQjZxTt5hevKzpKYiUrmj2p5t16MAHDt0yC/ghgCtNUGprN6loJJVLUxGjqbgN+OT1v5E5QcuAhpBO8kN73NeN6wavyfZEmEo3K+Qeq9JkLDvRg84K/k+m54mY1OTglw6YEAF3+2xWYB1XnE2/wyhO9MgiqWs4qjNOHY3bNUUm6mBZS4BMPscz0A7J5yuR8o0Tc8fkgVGUxUtjvvRQs82GatD9hT1exGeUehohE8LSsGNTxLlnsV2+1m3LhraSvc0frSFILynQYCAKK7S6HA0LGODpyyuVurpEjrw3XymS2Jvhnp17jDLNrIM9GAY7SnfOAfq5RE5fFL5R5tG1Z7WSD1oPYOiZjLqWxkgW0pGDLhQ3rn5b0Ija4fXJ60QWyq5/aUopIsxZ7kFIg3xB+Hqemg+VGz0GZ4muhcsWgXFf9h61KzLIANGMf3nU8QVaeY/69G3qHwKeU1foYk/UTatWCmVxtCVyXqHIhwpQPtGbRU1Pc2JWqzUGAyW79D89EiP3/VdQsBT0M3uT1dI6e9GSS/MT5c9rRZ+NlpIVccEqy0NAh0i96X7oPy33xdhhZe44DA6vnR+cg6icDe3BkdoEBOEUb87sHoXRUQsDpEZJe+p6u439CUMsS5745zwRWLtyaFrpagMM+JQV3dc254Xue1V+Gkiz9FHpzNJ5XgsYEoXu2p54RMU4BCS/z4D1wU7470PYm6vxC/kwSpNhCK5nBi9vyA7j/hMilbxmV1kenu3fx7jyfr+BdonoFwD5WjODksigNl3K4NeeL/Q4WACgMKMFcRMOMTAEa8AzVv8SXhs2IwArV+0P9eZT2TqAUEaKkD2O7UfB0jY5YaX4GKVAZBbFxsrHvmzTEFmbb692btrEh/uEn46TLOKj1g2XiNwG+2sjNVrWHLzMmZ2lbGVziTJhqEnPnA3aisSuh6gDecs7mQ/5mMV22n8XOweTbIvzI4IsS1Wdth+eLEoM6a6CQ6fFNwOgoYG22b+xUDHwA3rwo8kcwpnJDClk5E7yrugxg10/69/7f5sB0f9oxl2utiw2otf4SaVyYyyeG9IAwuWv0lsudyRqVGdT5WlO2LyT6VFryFWo+uI5YX8QwI2YQ9UlRfoKsYyliJ5UQLeLtCyyHIYLzjVis8d3gF7MRBq9NmDtMQJUTrLjgWwvE5qVX0KytwOsCDdCcc8QvgIjmhF1yoNz75TpPCFu8iMryAGkV9G94bQNETLA4/c9Irwh4/9LK+32JuSUicbPAKEzJ846rw7Sg9upevPcXdZHWDHuGU+Q2pHBM+/+Z8pIKFctjLhKODTbpwL213U1Gz0xHufgbyq6Ft/ssyljJwuvDhm1tBmqSV79fAD1HSmJRsYEVwr2TpvQLxgXCQOUMwZAgjXN0hfZR2nHHfASNx6kGaP1DAu6OAdyywxwDQQu3R3GlTRu/ab68Zt9MKPTCfRv2o31dyVD7z7ueIhrmBnd+75KFj0FpR8nC3i0Am82ze4s2b39bY9z+8G5Og9xAmrrBOydk1YLbSygBdBsMImLsg8p73SpPnW5XxE4+y6ZDkWU/rOngDvGMCROVEJiI5czrHhbA04vrjtDDcauGtW8KzVUT2tcpycAXghoFDQLeJv1jp+Ux04r/5Q2XYn8VbleVA88+YD+yL71Oy5/DNWIN1S+I2fM/2kq6RQf+slDCa7OUt75fL/U7qEvGD7mql/h36pbJnMouByKv+sfFuSXVCrc+zK9VjFDZnWvVKwbuae7eDVsKFp4hMihyHtVselv110FlqYYw4xhgqckFj4fTgG/gPB0k91NkAG5GzI0WzOfauL6LS9WCaUVreZg9+GeVXcmoHNj0pX59ljEynXGGAzDVmzwQg8x1aiVKgMIwiDPDMRAyfiZHmUv9o0JFYPAIVLxKQWGTQrFeNbJfTFG5c4BLhvm7oeQWdk/tQFJnGx5GsmvOUD1CIwQSTnHCRM9oLWSmaytWHZ/bdb/XOuS/nMnIE5wwmXCjnVLyol/DRe6vlxW245/uTnYy0mHLGG42EEn+sdM6b9VylnAs/Rv9VEd25xl0+qrp4LvNmmxzMmCKSYODQlSY0LPePLiUC0DxPhDHrrhL4EBCYUGRSzxAvydV7no5jCRXxd7ZKroCyuNpfOlW5eSAc5VNT33XyVOkJjL7a9UfZLxO5/x3cPKPYh5oJX4LzXDoxrQ14Rwd2u/pl3rsLIp3/R5hjJg4394ca7pXpnLIxhWIAESsl/TF1DxZ/4lwU7kAMSypgbNydO7oehWDZ16AyyLawgA8Y4cKZfa2lm384aB5978lIjIkT7U43yEchoJsaGAfxfg4Lm66tuMUD7Ekv0cIx0wpUU+RQHJntDb0qSWB2ACD43llAy3Mn6dNtN3v0QqwajUfT0tB2d8/LTPBwpLkMwulBhVQRzEhyHJ+AmZsEf5/hNVERN4m/OmTBtLcFQWtau0fky5VD7bn4mgm7fdBtwGoFqHtqWwtIBzMv7JL2/5WS7nIeSppeQJDwBvgi8glNYoK5NTmLefZT29nhI5LPcw/THx+zqoMiCjjZjaIIi7X9eHgIo8OGyp+UDrxjJKLnPtzfzjIvq3IH7cUMyRNiomEzCNYBejiFo/5ueXJ/mnI7OoEty/y0bRIvd0XlDjgyGxtH5LhyOAdcZWYKbrzM9ITWgb5Qry3IIL4RHt2E8C9QXeOCa6ZAoTGNsbUhds44/Z/jp/8Rg+ccqh75Q+BLEyx0SBzB1Utc7jYmscQcmEXc3Pytr8jmZwmm+/7Xm0hwQ7t/VkCZttq3imU9vSpP+jVMpowCL29AnQvaXOsMn21H/Wa2pQk+Tj7u76NTXrASPjuhAwiiNdQeBRMP7SAucrlOkaNDXH/lsBG6G/fgpubaCDO2Ba3vsD/6ZyzEJCGoLi99rGSV6bZhKtfzI1sADO10TLP+ZLAKTPN9np0tHIMcAa76wl4I3oKoYTfyxGKWxTF1zT+mDt1qt0GPfRHGeuQRC8fqME31J0dJnbTB+kk6X4S+vu0u8pTzQkv9YTekWmQKthKw1lgnkTdMZsqfbQoRxGKRNKeOErVScwtO+0b7IBRK+xC7ESuYylDM6b/leo4sZo4lJEKJ0MAdTwmeqwHXiueoxE2h26GZnexEexrF5d95RvNC2u1165J9YnBBwTKUex7x/NOUJQ5fhD6HG02KEeZThDCgEwF/jWvs1BqmqLLPWXmrJmEaQxAjSThIVOaWKLp84R8H7RKyCAw27EVL5Bszv4vDop//WUzyLlvTMecEWZ15xepPuUsFoY11/LKOascSiamgus/wQm18479HktVLZLPr8e1uR0UB/ArpxbSeKbxB5dOfYauguhKE3bmn+IRk921S6C1QG8Ay537XJLD8mPKpr2o0uBab70iTDow9UpuavDA0BN3tzmg2oh9NF1dDT7rjv0sw/CvuI8XmcGMyv69XZ672pJsc94JEKouNv+0ia6m3BU1scKxz7Cas2aC1a5hKDUEbPhy1uHN+eXfsG02wPSpijr2m3cqzQSF9TkK2sQ4oAa+mfayCRpjiLre5ODQ+op0vFFBJBi0WBP/jEj6rKxiz+htXQc/lahFxsXpR/wzHRvpy0Kkm5ZQM0ds3sFhiMX2MYzwJ0Fadok0W8zkSoHPIH2kciYXrPSizlYIIIvOZEJDjT6YL8q8fDI5FayMmPioreh6a/iUsqCjMuO4B8UaSfpqoO4iNzq4GQFW77crq2/vlWdFPh4DyGTjtQ5v6LZvcMnLBpsDS1ocVv9J2FINAfoLxEDw22+kan4G11XayymVbYL/AmKSOZ+ZuCZ4ObnKfjF5E9nEDwPSHpW8+KREPGi60Xxtet5clNPFT9bzZbbKI9/ApoIX5HP/2/f+mTkiJBz+NwmqfrZ+TrkvlF0aNYECXn8QSi04WFHEKf9xWPhH3xM2EsnEfztb5gAAAAAA"); }
@@ -1791,6 +1799,10 @@
     .ev-detail-row .k { color: #97a3b7; }
     .grade-checks label { border: 1px solid #2a374e; color: #bcc6d4; }
     .form-hint { color: #6f7b91; }
+    .inst-btn { background: #1b2638; border-color: #2a374e; color: #dde3ec; }
+    .inst-btn.main { background: #29a8e0; border-color: #29a8e0; color: #0b1525; }
+    .inst-how { color: #bcc6d4; }
+    .inst-how b { color: #f1f5f9; }
     .ev-res-seg button, .ev-dchip { background: #1b2638; border-color: #2a374e; color: #bcc6d4; }
     .ev-res-seg button.on, .ev-dchip.on { background: #29a8e0; border-color: #29a8e0; color: #0b1525; }
     .ev-res-seg button[data-v="승"].on { background: #1f9d63; border-color: #1f9d63; color: #fff; }
@@ -2123,15 +2135,14 @@
             <a href="javascript:void(0)" onclick="toggleFirstRegistrationMode()" id="toggleRegLink">처음 오셨나요? (최초 사용자 등록)</a>
         </div>
 
-        <!-- 📱 안드로이드 앱 다운로드 (안드로이드 브라우저에서만 표시, 앱 안에서는 숨김) -->
+        <!-- 📲 앱 설치 안내 (v2.41.0) — 크롬·삼성인터넷·웨일·파이어폭스·사파리·카톡 등 브라우저마다 그 브라우저의 방법을 보여줌 (설치된 앱 안에서는 숨김) -->
         <div id="apkDownloadBox" style="display: none; margin-top: 14px; padding-top: 12px; border-top: 1px dashed #e2e8f0; text-align: center;">
-            <a id="apkDownloadLink" href="#" rel="noopener"
-               style="display: inline-block; padding: 8px 14px; border-radius: 8px; background: #f1f5f9; border: 1px solid #cbd5e1; color: #0b2240; font-size: 13px; font-weight: 800; text-decoration: none;">
-                📱 안드로이드 앱 다운로드
-            </a>
-            <div style="margin-top: 6px; font-size: 11px; color: #94a3b8; line-height: 1.5;">
-                설치 시 '출처를 알 수 없는 앱 허용'이 필요할 수 있습니다.
+            <div class="inst-btns">
+                <button type="button" id="pwaInstallBtn" class="inst-btn main" style="display: none;" onclick="bkInstallNow()">📲 앱 설치</button>
+                <a id="apkDownloadLink" href="#" rel="noopener" class="inst-btn" style="display: none;">📱 안드로이드 앱(APK)</a>
             </div>
+            <div class="inst-how" id="installHowTo"></div>
+            <div class="inst-note" id="installNote"></div>
         </div>
     </div>
 </div>
@@ -4059,24 +4070,92 @@
     window.addEventListener('resize', fitHeaderTopBar);
 
     // ==========================================================
-    // 📱 안드로이드 앱(APK) 다운로드 링크
-    //   - GitHub Actions 가 빌드해서 Releases 에 올린 최신 APK 로 연결된다.
-    //   - 안드로이드 브라우저에서만 보이고, 설치된 앱(또는 홈 화면 설치본) 안에서는 숨긴다.
+    // 📲 앱 설치 안내 (v2.41.0, 예전: 안드로이드 APK 링크만)
+    //   - 크롬처럼 설치 창을 띄워 주는 브라우저 → [📲 앱 설치] 버튼 (beforeinstallprompt)
+    //   - 그 밖의 브라우저 → 그 브라우저 메뉴에서 「홈 화면에 추가」하는 방법을 한 줄로
+    //   - 갤럭시탭 삼성인터넷·크롬은 기본이 'PC(데스크톱) 버전'이라 브라우저가 Android 라고 밝히지 않음
+    //     (예: "X11; Linux x86_64 ... SamsungBrowser") → 터치 화면 + Linux 면 안드로이드 태블릿으로 봄
+    //   - 아이패드도 사파리가 맥(Macintosh)인 척함 → 터치 화면 + Macintosh 면 아이패드로 봄
+    //   - 카톡·네이버 앱 안의 브라우저는 설치가 안 돼서 '다른 브라우저로 열기' 안내
+    //   - 설치된 앱(APK)·홈 화면 앱 안에서는 숨김
     // ==========================================================
     const APK_DOWNLOAD_URL = "https://github.com/dybbr/dybbr.github.io/releases/latest/download/daeyeon-baseball.apk";
-    (function initApkDownloadLink() {
+    function bkEnv() {
+        const ua = navigator.userAgent || '', tp = navigator.maxTouchPoints || 0;
+        const uad = (navigator.userAgentData && navigator.userAgentData.platform) || '';
+        const ipadDesk = /Macintosh/i.test(ua) && tp > 0;                                    // 아이패드 (PC 버전으로 보는 중 — 맥은 터치가 없음)
+        const ios = /iPhone|iPad|iPod/i.test(ua) || ipadDesk;
+        const tabletDesk = !ios && !/Android/i.test(ua) && /Linux/i.test(ua) && !/CrOS/i.test(ua) && tp > 0;   // 안드로이드 태블릿 (PC 버전으로 보는 중)
+        const android = /Android/i.test(ua) || /Android/i.test(uad) || tabletDesk;
+        const tablet = tabletDesk || ipadDesk || /iPad/i.test(ua) || (/Android/i.test(ua) && !/Mobile/i.test(ua));
+        let br = 'other';
+        if (/KAKAOTALK/i.test(ua)) br = 'kakao';
+        else if (/NAVER\(inapp|NAVER\//i.test(ua)) br = 'naver';
+        else if (/Instagram|FBAN|FBAV|BAND\/|Line\//i.test(ua) || (android && /; wv\)/.test(ua))) br = 'inapp';
+        else if (/SamsungBrowser/i.test(ua)) br = 'samsung';
+        else if (/Whale/i.test(ua)) br = 'whale';
+        else if (/EdgA?\/|EdgiOS/i.test(ua)) br = 'edge';
+        else if (/Firefox|FxiOS/i.test(ua)) br = 'firefox';
+        else if (/OPR\/|Opera/i.test(ua)) br = 'opera';
+        else if (/CriOS|Chrome\//i.test(ua)) br = 'chrome';
+        else if (/Safari/i.test(ua)) br = 'safari';
+        return { ios, android, tablet, tabletDesk, ipadDesk, br, pc: !ios && !android };
+    }
+    function bkInstallHowTo(env) {
+        const B = t => '<b>' + t + '</b>';
+        if (env.br === 'kakao' || env.br === 'naver' || env.br === 'inapp') {
+            const app = env.br === 'kakao' ? '카카오톡' : env.br === 'naver' ? '네이버 앱' : '이 앱';
+            return { lead: '', how: `${app} 안의 화면에서는 설치가 안 돼요 → 메뉴(⋮ 또는 ⋯) → ${B('「다른 브라우저로 열기」')} 후 설치하세요`, note: '' };
+        }
+        if (env.ios) {
+            if (env.br === 'safari') return { how: `${env.tablet ? '위쪽' : '아래쪽'} 공유 버튼 ${B('□↑')} → ${B('「홈 화면에 추가」')}`, note: '홈 화면 아이콘으로 열면 앱처럼 전체 화면으로 열려요' };
+            return { how: `공유 버튼 ${B('□↑')} → ${B('「홈 화면에 추가」')}`, note: '메뉴에 없으면 사파리(Safari)로 열어서 추가하세요' };
+        }
+        const menu = {
+            samsung: `${env.tablet ? '위쪽' : '아래쪽'} ${B('≡ 메뉴')} → ${B('「현재 페이지 추가」')} → ${B('「홈 화면」')}`,
+            chrome: `오른쪽 위 ${B('⋮ 메뉴')} → ${B('「앱 설치」')} 또는 ${B('「홈 화면에 추가」')}`,
+            whale: `${B('메뉴')} → ${B('「홈 화면에 추가」')}`,
+            edge: `${B('⋯ 메뉴')} → ${B('「휴대폰에 추가」')} 또는 ${B('「홈 화면에 추가」')}`,
+            firefox: `${B('⋮ 메뉴')} → ${B('「설치」')} 또는 ${B('「홈 화면에 추가」')}`,
+            opera: `${B('메뉴')} → ${B('「홈 화면에 추가」')}`,
+            other: `브라우저 ${B('메뉴')} → ${B('「홈 화면에 추가」')}`
+        };
+        if (env.pc) return { lead: 'PC에 앱으로 설치: ', how: env.br === 'chrome' || env.br === 'edge' ? `주소창 오른쪽 ${B('설치 아이콘')}을 누르거나 메뉴 → ${B('「앱 설치」')}` : '', note: '' };
+        return { how: menu[env.br] || menu.other, note: env.tabletDesk ? '태블릿은 PC 화면으로 열려서 브라우저 자체 설치 안내가 안 뜰 수 있어요' : '' };
+    }
+    let bkInstallEvt = null;
+    window.addEventListener('beforeinstallprompt', e => { bkInstallEvt = e; renderInstallBox(); });   // 크롬 기본 설치 띠는 그대로 두고, 같은 설치 창을 버튼으로도 띄움
+    window.addEventListener('appinstalled', () => {
+        bkInstallEvt = null; sessionStorage.setItem('daeyeon_installed', '1'); renderInstallBox();
+        if (typeof bkNotify === 'function') bkNotify('done', '앱 설치 완료캉! 🎉', '홈 화면의 대연초 야구부 아이콘으로 열어 보세요', { ms: 5000 });
+    });
+    async function bkInstallNow() {
+        if (!bkInstallEvt) { renderInstallBox(); return; }
+        try { bkInstallEvt.prompt(); const r = await bkInstallEvt.userChoice; if (r && r.outcome === 'accepted') bkInstallEvt = null; } catch (e) { bkInstallEvt = null; }
+        renderInstallBox();
+    }
+    function renderInstallBox() {
         try {
-            if (document.referrer && document.referrer.indexOf('android-app://') === 0) {
-                sessionStorage.setItem('daeyeon_in_app', '1');
-            }
-            const inApp = sessionStorage.getItem('daeyeon_in_app') === '1' ||
-                (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
-            const isAndroid = /Android/i.test(navigator.userAgent);
-            if (!isAndroid || inApp) return;
-            document.getElementById('apkDownloadLink').href = APK_DOWNLOAD_URL;
-            document.getElementById('apkDownloadBox').style.display = 'block';
+            const box = document.getElementById('apkDownloadBox');
+            if (!box) return;
+            if (document.referrer && document.referrer.indexOf('android-app://') === 0) sessionStorage.setItem('daeyeon_in_app', '1');
+            const inApp = sessionStorage.getItem('daeyeon_in_app') === '1' || sessionStorage.getItem('daeyeon_installed') === '1' ||
+                (window.matchMedia && (window.matchMedia('(display-mode: standalone)').matches || window.matchMedia('(display-mode: fullscreen)').matches)) ||
+                window.navigator.standalone === true;
+            if (inApp) { box.style.display = 'none'; return; }
+            const env = bkEnv(), h = bkInstallHowTo(env);
+            const inAppBr = env.br === 'kakao' || env.br === 'naver' || env.br === 'inapp';
+            const btn = document.getElementById('pwaInstallBtn'), apk = document.getElementById('apkDownloadLink');
+            btn.style.display = bkInstallEvt ? '' : 'none';
+            const showApk = env.android && !inAppBr;
+            apk.style.display = showApk ? '' : 'none';
+            if (showApk) apk.href = APK_DOWNLOAD_URL;
+            document.getElementById('installHowTo').innerHTML = h.how ? (bkInstallEvt ? '또는 ' : (h.lead != null ? h.lead : '홈 화면에 추가: ')) + h.how : '';
+            document.getElementById('installNote').textContent = showApk ? ((h.note ? h.note + '\n' : '') + 'APK는 ‘출처를 알 수 없는 앱 허용’이 필요할 수 있어요') : h.note;
+            box.style.display = (bkInstallEvt || showApk || h.how) ? 'block' : 'none';
         } catch (e) {}
-    })();
+    }
+    renderInstallBox();
 
     // ==========================================================
     // ⌨️ 잠금창 키보드 대응
@@ -4215,16 +4294,16 @@
 
     function getDeviceInfo() {
         const ua = navigator.userAgent;
-        let browser = "브라우저";
-        if (/whale/i.test(ua)) browser = "웨일";
-        else if (/samsungbrowser/i.test(ua)) browser = "삼성인터넷";
-        else if (/chrome/i.test(ua)) browser = "크롬";
-        else if (/safari/i.test(ua)) browser = "사파리";
+        const env = bkEnv();   // v2.41.0: PC 버전으로 보는 태블릿·아이패드도 알아봄, 카톡·엣지·파이어폭스 추가
+        const browser = { kakao: '카톡', naver: '네이버앱', inapp: '앱 안 브라우저', samsung: '삼성인터넷', whale: '웨일', edge: '엣지', firefox: '파이어폭스', opera: '오페라', chrome: '크롬', safari: '사파리' }[env.br] || '브라우저';
 
         let os = "기기";
-        if (/android/i.test(ua)) os = "안드로이드";
-        else if (/iphone|ipad|ipod/i.test(ua)) os = "아이폰/iOS";
+        if (env.tabletDesk) os = "안드로이드 태블릿";
+        else if (/android/i.test(ua)) os = env.tablet ? "안드로이드 태블릿" : "안드로이드";
+        else if (env.ipadDesk || /ipad/i.test(ua)) os = "아이패드";
+        else if (/iphone|ipod/i.test(ua)) os = "아이폰/iOS";
         else if (/windows/i.test(ua)) os = "윈도우";
+        else if (/macintosh/i.test(ua)) os = "맥";
 
         return `${os} (${browser})`;
     }
@@ -6366,6 +6445,14 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.41.0', d: '2026-10-10', t: '앱 설치 안내를 모든 브라우저로', items: [
+            '잠금화면의 앱 설치 안내가 크롬(안드로이드)에서만 보이던 것 → 삼성인터넷·웨일·엣지·파이어폭스·아이폰·아이패드까지 그 브라우저에 맞는 「홈 화면에 추가」 방법을 한 줄로 알려줌',
+            '원인: 갤럭시탭의 삼성인터넷(·크롬)은 기본이 PC 버전 화면이라 브라우저가 "안드로이드"라고 밝히지 않음 → 예전에는 안드로이드가 아닌 줄 알고 안내를 숨겼음 (로그에 "기기 (삼성인터넷)"으로 찍히던 것)',
+            '이제 터치 화면 + 리눅스면 안드로이드 태블릿, 터치 화면 + 맥이면 아이패드로 알아봄 (APK 다운로드도 태블릿에서 보임)',
+            '크롬처럼 설치 창을 띄워 주는 브라우저에서는 [📲 앱 설치] 버튼 한 번으로 설치',
+            '카카오톡·네이버 앱 안에서 열면 "다른 브라우저로 열기" 안내, 이미 설치된 앱 안에서는 숨김',
+            '접속 기록의 기기 정보도 "안드로이드 태블릿 (삼성인터넷)", "아이패드 (사파리)", "안드로이드 (카톡)"처럼 더 정확하게'
+        ] },
         { v: 'v2.40.1', d: '2026-10-10', t: '복장 상의·하의 종류 정리', items: [
             '상의는 아이보리 · 빨강 · 🎽훈련티 3가지 (여름/겨울훈련티를 훈련티 하나로, 번갈아 버튼은 뺌 → 필요하면 ✏️ 직접 입력)',
             '하의는 👖긴바지 · 🩳반바지 2가지 (예전 "유니폼바지"는 긴바지로 켜짐)',
