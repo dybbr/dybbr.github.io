@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.43.2 · b261011";
+        const APP_VERSION = "v2.43.3 · b261011";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -5029,6 +5029,7 @@
             if (title && /^학교\s*훈련$/.test(title)) title = '';
             if (title && !/[\p{L}\p{N}]/u.test(title)) title = '';   // 「/」처럼 기호만 남으면 제목 없음
             if (!ev.place && /학교\s*훈련|학교에서/.test(rest)) ev.place = '학교';
+            if (!ev.place && /영남\s*(?:권역)?[^\n]{0,12}?리그/.test([title, rest, ev.type === '대회' ? typeTxt : ''].join('\n'))) { const mv = findVenue('밀양'); ev.place = mv ? mv.name : '밀양'; }   // v2.43.3: 장소 없이 「영남리그」만 적힌 공지 → 늘 밀양 선샤인 (구장 탭 이름으로)
             if (ev.type === '기타' && ev.start && /^학교/.test(ev.place)) ev.type = '훈련';   // 학교 + 시간 → 훈련
             ev.title = title || ev.type;
 
@@ -7691,6 +7692,9 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.43.3', d: '2026-10-11', t: '영남리그 → 밀양', items: [
+            '일정 텍스트 분석: 장소 없이 「영남리그」만 적힌 공지는 장소를 밀양 선샤인 스포츠파크로 채움 (구장 탭 이름 그대로)'
+        ] },
         { v: 'v2.43.2', d: '2026-10-11', t: '구장 순서 · 괄호 안 구장 이름', items: [
             '🏟️ 구장 탭 번호 순서를 시트 「구장」 탭의 줄 순서대로 (학교 → 기장리틀 → 기장공원 → 거제 하청스포츠타운 → 거제 하청야구장 …)',
             '장소에 「○○ (하청스포츠타운)」처럼 괄호 안에 등록된 구장 이름이 적혀 있으면 그 구장으로 연결'
