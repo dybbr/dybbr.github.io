@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.41.20 · b261011";
+        const APP_VERSION = "v2.41.21 · b261011";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -2675,12 +2675,12 @@
 <!-- 📋 단톡방 공지 붙여넣기 모달 -->
 <div id="eventImportModal" class="modal">
     <div class="modal-content" style="max-width: 480px;">
-        <div class="modal-header">📋 공지 붙여넣기로 일정 추가</div>
+        <div class="modal-header">📋 텍스트 분석해서 일정 추가하기</div>
         <div class="modal-scroll-body">
             <div class="form-group" id="importInputBox">
                 <label>카카오톡 공지 내용을 그대로 붙여넣으세요</label>
-                <textarea id="importText" rows="9" placeholder="📌3일(토) 13:00~18:00&#10;기장리틀구장&#10;VS 양정초&#10;참가선수 6학년+민준&#10;..."></textarea>
-                <span class="form-hint">📌 표시 단위로 날짜·시간·장소·상대·참가학년을 자동으로 나눕니다. 저장 전에 하나씩 확인하고 고칠 수 있어요.</span>
+                <!-- v2.41.21: 예시 일정 글자 대신 설명을 칸 안 안내 글자로 (아래 설명 줄은 없앰) -->
+                <textarea id="importText" rows="9" placeholder="📌 표시 단위로 날짜·시간·장소·상대·참가학년을 자동으로 나눕니다.&#10;&#10;저장 전에 하나씩 확인하고 고칠 수 있어요."></textarea>
             </div>
             <div id="importPreview"></div>
         </div>
@@ -6727,6 +6727,10 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.41.21', d: '2026-10-11', t: '텍스트 분석 창 글자 정리', items: [
+            '창 제목을 「텍스트 분석해서 일정 추가하기」로 바꿈',
+            '입력 칸의 예시 일정(📌3일(토) 13:00~18:00 …)을 지우고, 아래 있던 설명을 칸 안의 흐린 안내 글자로 넣음'
+        ] },
         { v: 'v2.41.20', d: '2026-10-11', t: '일정 윗부분 줄이기', items: [
             '학년 버튼 줄을 없애고 「2026년 10월」 오른쪽 [전체 학년 ▾] 버튼으로 — 누르면 우리 아이 · 전체 · 6~1학년 고르는 창이 뜸 (고른 학년이 버튼에 표시)',
             '「단톡방 공지 붙여넣기로 추가」 → 「텍스트 분석 추가」로 이름 바꿈 (관리자 탭 버튼도 같이)',
