@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.42.1 · b261011";
+        const APP_VERSION = "v2.43.0 · b261011";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1524,7 +1524,7 @@
         #eventEditModal .form-group.ev-inline.top > label { padding-top: 8px; }
         #eventEditModal .form-group.ev-inline > label { white-space: nowrap; letter-spacing: -0.3px; }
         /* 📍 장소 찾기 · 지도 (v2.42.0) — 장소 칸 옆 🔍 찾기 · 자주 쓰는 곳 칩 · 지도 연결 표시 */
-        #eventEditModal [hidden], #eventDetailModal [hidden], #placeSearchModal [hidden] { display: none !important; }
+        #eventEditModal [hidden], #eventDetailModal [hidden], #placeSearchModal [hidden], #venueSection [hidden], #venueEditModal [hidden] { display: none !important; }
         #eventEditModal .ev-place-col { display: flex; flex-direction: column; gap: 6px; min-width: 0; container-type: inline-size; }
         #eventEditModal .ev-place-inp { display: flex; gap: 5px; min-width: 0; }
         #eventEditModal .ev-place-inp input { flex: 1 1 auto; }
@@ -1597,6 +1597,46 @@
         .pl-route { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
         .pl-route button { flex: 1 1 auto; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 8px; padding: 7px 6px; font-size: 12px; font-weight: 800; color: #334155; cursor: pointer; white-space: nowrap; }
         @container (max-width: 270px) { .pl-btns { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .pl-btns button.pri { grid-column: 1 / -1; } }
+        /* 🏟️ 구장 탭 (v2.43.0) */
+        .vn-map-wrap { margin-bottom: 10px; }
+        .vn-map { height: 210px; border-radius: 14px; overflow: hidden; border: 1px solid var(--card-border); background: #eef1ea; }
+        .vn-card { background: #ffffff; border: 1px solid var(--card-border); border-radius: 14px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(15,23,42,0.04); overflow: hidden; }
+        .vn-card.open { border-color: #cbd5e1; box-shadow: 0 2px 10px rgba(11,34,64,0.08); }
+        .vn-sum { display: flex; align-items: flex-start; gap: 10px; width: 100%; text-align: left; border: none; background: transparent; padding: 12px; cursor: pointer; font: inherit; color: inherit; }
+        .vn-n { flex: 0 0 22px; height: 22px; border-radius: 50%; background: #e53935; color: #ffffff; font-size: 11.5px; font-weight: 800; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+        .vn-card.open .vn-n { background: #0b2240; }
+        .vn-main { flex: 1; min-width: 0; }
+        .vn-title { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .vn-title b { font-size: 15.5px; font-weight: 900; color: var(--text-title); }
+        .vn-kind { font-size: 11px; font-weight: 800; padding: 1px 7px; border-radius: 6px; background: #eff6ff; color: #1d4ed8; }
+        .vn-kind.train { background: #f0fdf4; color: #15803d; }
+        .vn-addr { font-size: 12px; color: #64748b; margin-top: 2px; }
+        .vn-next { font-size: 12px; color: #0b2240; font-weight: 700; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .vn-sum .chev { color: #94a3b8; font-size: 14px; transition: transform 0.2s; margin-top: 3px; flex-shrink: 0; }
+        .vn-card.open .vn-sum .chev { transform: rotate(180deg); }
+        .vn-body { padding: 0 12px 12px; container-type: inline-size; }
+        .vn-info { display: flex; flex-direction: column; gap: 6px; border-top: 1px solid #f1f5f9; padding-top: 10px; }
+        .vn-row { display: flex; gap: 8px; font-size: 13px; line-height: 1.5; color: #1e293b; }
+        .vn-row .k { flex: 0 0 78px; font-size: 12px; font-weight: 800; color: #64748b; padding-top: 1px; white-space: nowrap; }
+        .vn-row .v { flex: 1; min-width: 0; white-space: pre-line; word-break: keep-all; overflow-wrap: anywhere; }
+        .vn-row a { color: #1d4ed8; font-weight: 700; }
+        .vn-empty { font-size: 12px; color: #94a3b8; }
+        .vn-evs { margin-top: 10px; border-top: 1px solid #f1f5f9; padding-top: 8px; }
+        .vn-sub { font-size: 12px; font-weight: 800; color: #64748b; margin-bottom: 2px; }
+        .vn-sub small { font-weight: 600; color: #94a3b8; font-size: 11px; margin-left: 4px; }
+        .vn-ev { display: flex; gap: 8px; align-items: baseline; padding: 5px 0; font-size: 12.5px; cursor: pointer; color: #1e293b; }
+        .vn-ev .d { flex: 0 0 auto; font-weight: 800; color: var(--ev, #0b2240); }
+        .vn-ev .t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .vn-ev .go { color: #94a3b8; font-weight: 800; }
+        .vn-ev.past { opacity: 0.6; }
+        .vn-edit { margin-top: 8px; width: 100%; border: 1px dashed #cbd5e1; background: none; border-radius: 8px; padding: 8px; font-size: 12.5px; font-weight: 800; color: #0b2240; cursor: pointer; }
+        .vn-form input[type="text"], .vn-form textarea { width: 100%; box-sizing: border-box; }
+        .vn-form textarea { resize: vertical; font: inherit; font-size: 13px; line-height: 1.45; }
+        .vn-kind-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+        .ev-place-find.vn-find { width: 100%; padding: 9px 12px; }
+        #vnLoc { container-type: inline-size; }   /* 좁으면 작은 지도 숨김 (위 @container 규칙) */
+        .pl-info { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; padding: 8px 10px; border-radius: 8px; background: #f8fafc; }
+        .pl-info .vn-row .k { flex-basis: 74px; }
         /* v2.41.6: 경기 결과·점수를 한 묶음으로, 복장 미리보기는 「복장」 이름표 오른쪽 */
         #eventEditModal .ev-score-grp { margin-top: -2px; }
         .ev-dress-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
@@ -2100,6 +2140,18 @@
     .ps-bar input { background: #0f1724; color: #dde3ec; border-color: #5b6b85; }
     .ps-go, .ev-place-find { background: #29a8e0; border-color: #29a8e0; color: #0b1525; }
     .ps-direct { border-color: #2a374e; color: #97a3b7; }
+    .vn-card { background: #151e2e; border-color: #2a374e; box-shadow: none; }
+    .vn-card.open { border-color: #3a4a64; }
+    .vn-title b, .vn-row, .vn-ev { color: #dde3ec; }
+    .vn-addr, .vn-row .k, .vn-sub { color: #97a3b7; }
+    .vn-next { color: #9fc4ff; }
+    .vn-kind { background: #1e2a44; color: #9fc4ff; }
+    .vn-kind.train { background: #14301f; color: #86efac; }
+    .vn-info, .vn-evs { border-top-color: #2a374e; }
+    .vn-map { border-color: #2a374e; }
+    .vn-edit { border-color: #3a4a64; color: #dde3ec; }
+    .vn-row a { color: #9fc4ff; }
+    .pl-info { background: #0f1724; }
     .grade-checks label { border: 1px solid #2a374e; color: #bcc6d4; }
     .form-hint { color: #6f7b91; }
     .inst-btn { background: #1b2638; border-color: #2a374e; color: #dde3ec; }
@@ -2522,6 +2574,7 @@
         <button type="button" class="main-tab active" data-tab="roster" onclick="showMainTab('roster')"><span class="tab-ico">👥</span><span class="tab-txt">선수 명단</span></button>
         <button type="button" class="main-tab" data-tab="schedule" id="tabBtnSchedule" onclick="showMainTab('schedule')"><span class="tab-ico">📅</span><span class="tab-txt">일정</span></button>
         <button type="button" class="main-tab" data-tab="notice" id="tabBtnNotice" onclick="showMainTab('notice')"><span class="tab-ico">📢</span><span class="tab-txt">공지</span><span class="tab-dot" id="noticeDot"></span></button>
+        <button type="button" class="main-tab" data-tab="venue" id="tabBtnVenue" onclick="showMainTab('venue')"><span class="tab-ico">🏟️</span><span class="tab-txt">구장</span></button>
         <button type="button" class="main-tab admin-tab" data-tab="admin" id="tabBtnAdmin" style="display: none;" onclick="showMainTab('admin')"><span class="tab-ico">⚙️</span><span class="tab-txt">관리자</span></button>
     </nav>
     <div class="next-event-banner" id="nextEventBanner"></div>
@@ -2686,6 +2739,17 @@
         <div class="notice-cats" id="noticeCats"></div>
         <div id="noticeList"><div class="bk-state loading"><span class="bk-img" aria-hidden="true"></span><div class="bk-msg">공지사항을 불러오는 중...</div></div></div>
     </section>
+
+    <!-- 🏟️ 구장 탭 (v2.43.0) — 자주 가는 훈련장 · 경기장 (수정: 대표님 · 개발자) -->
+    <section id="venueSection" class="app-section">
+        <div class="notice-head">
+            <h2>🏟️ 구장</h2>
+            <button type="button" class="btn-sched-admin" id="btnNewVenue" style="display: none;" onclick="openVenueEditor(null)">＋ 구장 추가</button>
+        </div>
+        <div class="vn-map-wrap" id="vnMapWrap" hidden><div class="vn-map" id="vnMap"></div></div>
+        <div class="notice-cats" id="venueCats"></div>
+        <div id="venueList"></div>
+    </section>
 </div>
 
 
@@ -2697,18 +2761,39 @@
     </div>
 </div>
 
+<!-- 🏟️ 구장 추가/수정 창 (v2.43.0) — 대표님 · 개발자만 -->
+<div id="venueEditModal" class="modal">
+    <div class="modal-content" style="max-width: 460px;">
+        <div class="modal-header" id="venueEditTitle">🏟️ 구장 정보 수정</div>
+        <div class="modal-scroll-body vn-form">
+            <div class="form-group"><label for="vnName">이름 *</label><input type="text" id="vnName" maxlength="40" placeholder="일정 장소 칸에 쓰는 이름 (예: 기장리틀구장)"></div>
+            <div class="form-group"><label for="vnAliases">다른 이름</label><input type="text" id="vnAliases" maxlength="200" placeholder="쉼표로 구분 (예: 을숙도구장, 을숙도)"><div class="form-hint">일정에 이 이름으로 적혀 있어도 같은 구장으로 연결돼요</div></div>
+            <div class="form-group"><label>구분</label><div class="vn-kind-btns" id="vnKind" data-k=""><button type="button" class="cal-filter" data-k="경기장" onclick="setVnKind('경기장')">⚾ 경기장</button><button type="button" class="cal-filter" data-k="훈련장" onclick="setVnKind('훈련장')">🏃 훈련장</button><button type="button" class="cal-filter" data-k="" onclick="setVnKind('')">자동 (일정 보고)</button></div></div>
+            <div class="form-group"><label>위치 *</label><div id="vnLoc"></div></div>
+            <div class="form-group"><label for="vn_parking">🅿️ 주차 안내</label><textarea id="vn_parking" rows="2" maxlength="300" placeholder="예: 구장 앞 주차장, 주말엔 일찍 차요"></textarea></div>
+            <div class="form-group"><label for="vn_amenities">🚻 편의시설</label><textarea id="vn_amenities" rows="2" maxlength="300" placeholder="예: 화장실 1루 쪽, 근처 편의점 도보 5분"></textarea></div>
+            <div class="form-group"><label for="vn_meet">📍 집합 장소</label><textarea id="vn_meet" rows="2" maxlength="300" placeholder="예: 3루 쪽 출입구 앞"></textarea></div>
+            <div class="form-group"><label for="vn_memo">📝 메모</label><textarea id="vn_memo" rows="2" maxlength="500" placeholder="예: 그늘 없음, 모자 · 물 챙기기"></textarea></div>
+        </div>
+        <div class="modal-btns" style="justify-content: space-between;">
+            <button class="btn-cancel" id="btnVenueDelete" style="color:#b91c1c;border-color:#fecaca;background:#fff5f5;" onclick="deleteVenueEditor()">삭제</button>
+            <div style="display:flex;gap:6px;"><button class="btn-cancel" onclick="closeModal('venueEditModal')">취소</button><button class="btn-save" id="btnVenueSave" onclick="saveVenueEditor()">저장</button></div>
+        </div>
+    </div>
+</div>
+
 <!-- 📍 장소 찾기 창 (v2.42.0) — 카카오맵에서 구장을 찾아 일정 장소에 연결 -->
 <div id="placeSearchModal" class="modal" onclick="if (event.target === this) closeModal('placeSearchModal')">
     <div class="modal-content">
         <div class="modal-header ps-head"><span>📍 장소 찾기</span><button type="button" class="ps-x" onclick="closeModal('placeSearchModal')" aria-label="닫기">✕</button></div>
         <div class="modal-scroll-body">
             <form class="ps-bar" onsubmit="runPlaceSearch(); return false;"><input type="search" id="psQuery" maxlength="40" placeholder="예: 기장 야구장, 대연초등학교" enterkeyhint="search" autocomplete="off"><button type="submit" class="ps-go">검색</button></form>
-            <div class="ps-sec"><span class="ps-l">자주 쓰는 곳</span><small>많이 쓴 순서 · 📍 = 지도 연결됨</small></div>
+            <div class="ps-sec" id="psChipsHead"><span class="ps-l">자주 쓰는 곳</span><small>많이 쓴 순서 · 📍 = 지도 연결됨</small></div>
             <div class="ev-place-chips" id="psChips"></div>
             <div class="ps-sec" id="psResHead" hidden><span class="ps-l">검색 결과</span><small>카카오맵 기준 · 줄을 누르면 지도에서 보여요</small></div>
             <div class="ps-map" id="psMap" hidden></div>
             <div class="ps-res" id="psRes"></div>
-            <button type="button" class="ps-direct" onclick="placeNameOnly()">✏️ 지도 없이 이름만 쓰기</button>
+            <button type="button" class="ps-direct" id="psDirect" onclick="placeNameOnly()">✏️ 지도 없이 이름만 쓰기</button>
         </div>
     </div>
 </div>
@@ -3458,6 +3543,7 @@
         }).catch(err => console.warn('일정 불러오기 실패:', err)).finally(() => {
             schedLoading = null;
             if (currentMainTab === 'schedule') renderSchedule();
+            if (currentMainTab === 'venue') renderVenues();
             renderNextEventBanner();
             applyBkMood();   // 🦈 결과·경기 당일에 따라 표정
         });
@@ -3484,11 +3570,12 @@
         const sv = canViewSchedule(), nv = canViewNotice(), av = canViewAdmin();
         document.getElementById('tabBtnSchedule').style.display = sv ? '' : 'none';
         document.getElementById('tabBtnNotice').style.display = nv ? '' : 'none';
+        document.getElementById('tabBtnVenue').style.display = sv ? '' : 'none';
         document.getElementById('tabBtnAdmin').style.display = av ? '' : 'none';
         tabs.style.display = (sv || nv || av) ? 'flex' : 'none';
         if (!sv) { schedEvents = []; schedVenues = []; schedLoaded = false; }
         if (!nv) { noticeList = []; noticeLoaded = false; }
-        if ((currentMainTab === 'schedule' && !sv) || (currentMainTab === 'notice' && !nv) || (currentMainTab === 'admin' && !av)) currentMainTab = 'roster';
+        if (((currentMainTab === 'schedule' || currentMainTab === 'venue') && !sv) || (currentMainTab === 'notice' && !nv) || (currentMainTab === 'admin' && !av)) currentMainTab = 'roster';
         showMainTab(currentMainTab, true);
         if (sv) loadSchedule();
         if (nv) loadNotices();
@@ -3500,10 +3587,12 @@
         document.getElementById('rosterSection').style.display = tab === 'roster' ? '' : 'none';
         document.getElementById('scheduleSection').classList.toggle('active', tab === 'schedule');
         document.getElementById('noticeSection').classList.toggle('active', tab === 'notice');
+        document.getElementById('venueSection').classList.toggle('active', tab === 'venue');
         document.getElementById('adminSection').classList.toggle('active', tab === 'admin');
         if (tab === 'admin') updateAdminPanel();
         if (tab === 'schedule') { renderSchedule(); if (!silent) loadSchedule(true); }
         if (tab === 'notice') { renderNotices(); markNoticesSeen(); if (!silent) loadNotices(true); }
+        if (tab === 'venue') { renderVenues(); if (!silent) loadSchedule(true); }   // v2.43.0: 🏟️ 구장 (구장 목록은 일정과 함께 받음)
         renderNextEventBanner();
         if (!silent) window.scrollTo({ top: 0 });
     }
@@ -3785,7 +3874,7 @@
     const venueNorm = s => String(s || '').replace(/\s+/g, '').toLowerCase();
     const venueBase = s => String(s || '').replace(/\s*[\(（\[].*$/, '').trim();
     const venueLabel = s => { const b = venueBase(s); return b.length >= 3 ? b : String(s || '').trim(); };   // 「기장리틀구장 (3루측)」→ 기장리틀구장 · 「기장 (소프트구장)」→ 그대로
-    function venueByName(name) { const n = venueNorm(name); return n ? (schedVenues.find(v => venueNorm(v.name) === n) || null) : null; }
+    function venueByName(name) { const n = venueNorm(name); return n ? (schedVenues.find(v => venueNames(v).some(x => venueNorm(x) === n)) || null) : null; }   // v2.43.0: 다른 이름 포함
     // v2.42.1: 이름 맞추기 — ① 공백 무시 ② 괄호만 빼고(「기장 (리틀구장)」→ 기장리틀구장) ③ 괄호 앞 이름(「기장리틀구장 (3루측)」, 3글자 이상)
     //   ④ 끝의 구장/야구장/경기장 차이(「기장 (소프트)」→ 기장소프트구장, 「을숙도구장」↔ 을숙도야구장) — 한 곳으로만 맞을 때
     const venueSfx = s => s.replace(/(야구장|구장|경기장|운동장)$/, '');
@@ -3793,13 +3882,14 @@
         const full = String(name || '').trim();
         if (!full) return null;
         const list = schedVenues.filter(v => v && (v.addr || (v.lat && v.lng)));
-        const by = key => list.find(v => venueNorm(v.name) === key) || null;
+        const keys = v => venueNames(v).map(venueNorm);   // v2.43.0: 이름 + 다른 이름(별칭)
+        const by = key => list.find(v => keys(v).indexOf(key) !== -1) || null;
         const n1 = venueNorm(full), n2 = venueNorm(full.replace(/[\(（\)）\[\]]/g, '')), n3 = venueNorm(venueBase(full));
         const v = by(n1) || by(n2) || (n3.length >= 3 ? by(n3) : null);
         if (v) return v;
         const s2 = venueSfx(n2);
         if (s2.length >= 3) {
-            const c = list.filter(x => venueSfx(venueNorm(x.name)) === s2);
+            const c = list.filter(x => keys(x).some(k => venueSfx(k) === s2));
             if (c.length && c.every(x => (x.kid || x.addr) === (c[0].kid || c[0].addr))) return c[0];
         }
         return null;
@@ -3874,17 +3964,18 @@
     // ---- 일정 수정 창: 장소 칸 ----
     function syncEvPlace() {
         const name = document.getElementById('evPlace').value.trim();
-        document.getElementById('evPlaceFind').style.display = KAKAO_JS_KEY ? '' : 'none';
+        const canV = !!KAKAO_JS_KEY && canEditVenues();   // v2.43.0: 새 구장 연결 · 바꾸기는 대표님 · 개발자만 (총무님은 등록된 구장 칩에서 고르기)
+        document.getElementById('evPlaceFind').style.display = canV ? '' : 'none';
         document.getElementById('evPlaceChips').innerHTML = placeChipsHtml('pickEvPlaceChip', name);
         const card = document.getElementById('evPlaceCard');
         const v = name ? (evVenuePick || findVenue(name)) : null;
-        const key = v ? (evVenuePick ? 'p:' + (v.kid || v.addr) : 'v:' + v.name + '|' + v.addr) : (name && KAKAO_JS_KEY ? 'hint' : '');
+        const key = v ? (evVenuePick ? 'p:' + (v.kid || v.addr) : 'v:' + v.name + '|' + v.addr) : (name && canV ? 'hint' : '');
         if (key === evPlaceCardKey) return;
         evPlaceCardKey = key;
         if (v) {
             card.className = 'ev-place-card'; card.hidden = false;
             card.innerHTML = `<div class="pc-thumb" id="evPlaceThumb">📍</div><div class="pc-t">${evVenuePick ? '<span class="pc-new">✓ 저장하면 지도에 연결돼요</span>' : '<span class="pc-ok">✓ 지도 연결됨</span>'}<b>${escapeHtml(v.kname || v.name || name)}</b>${escapeHtml(v.addr || '')}</div>` +
-                (evVenuePick ? '<button type="button" class="pc-btn" onclick="evVenuePick=null;evPlaceCardKey=null;syncEvPlace()">취소</button>' : (KAKAO_JS_KEY ? '<button type="button" class="pc-btn" onclick="openPlaceSearch()">바꾸기</button>' : ''));
+                (evVenuePick ? '<button type="button" class="pc-btn" onclick="evVenuePick=null;evPlaceCardKey=null;syncEvPlace()">취소</button>' : (canV ? '<button type="button" class="pc-btn" onclick="openPlaceSearch()">바꾸기</button>' : ''));
             const th = document.getElementById('evPlaceThumb');
             if (KAKAO_JS_KEY) staticVenueMap(th, v).catch(() => {});
         } else if (key === 'hint') {
@@ -3905,7 +3996,7 @@
     function saveVenuePick(placeName) {
         const pick = evVenuePick; evVenuePick = null;
         placeName = String(placeName || '').trim();
-        if (!pick || !placeName) return;
+        if (!pick || !placeName || !canEditVenues()) return;
         const nm = placeName.slice(0, 40);
         const ex = venueByName(nm);
         const venue = Object.assign({ name: ex ? ex.name : nm }, pick);
@@ -3914,13 +4005,17 @@
     }
 
     // ---- 📍 장소 찾기 창 ----
-    function openPlaceSearch() {
+    let psMode = 'event';   // 'event' = 일정 장소 칸 / 'venue' = 구장 수정 창 위치 (v2.43.0)
+    function openPlaceSearch(mode) {
         if (!KAKAO_JS_KEY) { bkNotify('info', '카카오 지도 키가 아직 없어캉'); return; }
-        const cur = document.getElementById('evPlace').value.trim();
+        psMode = mode === 'venue' ? 'venue' : 'event';
+        const cur = document.getElementById(psMode === 'venue' ? 'vnName' : 'evPlace').value.trim();
         let q = venueBase(cur) || cur;
         if (q === '학교') q = '대연초등학교';
         document.getElementById('psQuery').value = q;
-        document.getElementById('psChips').innerHTML = placeChipsHtml('pickPsChip', cur);
+        document.getElementById('psChips').innerHTML = psMode === 'event' ? placeChipsHtml('pickPsChip', cur) : '';
+        document.getElementById('psChipsHead').hidden = psMode !== 'event';
+        document.getElementById('psDirect').hidden = psMode !== 'event';
         psResults = []; psSel = -1;
         document.getElementById('psRes').innerHTML = '';
         document.getElementById('psResHead').hidden = true;
@@ -3993,6 +4088,14 @@
     function pickPsResult(i) {
         const p = psResults[i];
         if (!p) return;
+        if (psMode === 'venue' && vnEditCtx) {   // 구장 수정 창 위치
+            vnEditCtx.loc = { addr: p.road_address_name || p.address_name || '', jibun: p.address_name || '', lat: String(p.y), lng: String(p.x), kid: String(p.id || ''), kname: p.place_name || '', phone: p.phone || '' };
+            const nm = document.getElementById('vnName');
+            if (!nm.value.trim()) nm.value = String(p.place_name || '').slice(0, 40);
+            closeModal('placeSearchModal');
+            syncVnLoc();
+            return;
+        }
         const inp = document.getElementById('evPlace');
         if (!inp.value.trim()) inp.value = String(p.place_name || '').slice(0, 60);   // 장소 칸이 비어 있으면 카카오 이름으로 (나중에 고쳐도 됨)
         evVenuePick = { addr: p.road_address_name || p.address_name || '', jibun: p.address_name || '', lat: String(p.y), lng: String(p.x), kid: String(p.id || ''), kname: p.place_name || '', phone: p.phone || '' };
@@ -4021,7 +4124,11 @@
         return `<div class="ev-detail-row pl-row has-ext"><div class="k">장소</div><div class="v"><b>${escapeHtml(ev.place)}</b>${v.addr ? `<div class="pl-addr">${escapeHtml(v.addr)}</div>` : ''}</div></div><div class="pl-ext">` +
             (KAKAO_JS_KEY ? '<div class="pl-map-wrap" id="plMapWrap"><div class="pl-map" id="plMap"></div><button type="button" class="pl-map-hit" onclick="plOpenMap()" aria-label="지도 크게 보기"></button></div>' : '') +
             '<div class="pl-btns"><button type="button" class="pri" onclick="plToggleRoute()">🚗 길찾기</button><button type="button" onclick="plOpenMap()">🗺️ 크게 보기</button><button type="button" onclick="plCopyAddr()">📋 주소 복사</button></div>' +
-            '<div class="pl-route" id="plRoute" hidden><button type="button" onclick="plRoute(\'kakao\')">카카오맵</button><button type="button" onclick="plRoute(\'naver\')">네이버지도</button><button type="button" onclick="plRoute(\'tmap\')">티맵</button></div></div>';
+            '<div class="pl-route" id="plRoute" hidden><button type="button" onclick="plRoute(\'kakao\')">카카오맵</button><button type="button" onclick="plRoute(\'naver\')">네이버지도</button><button type="button" onclick="plRoute(\'tmap\')">티맵</button></div>' +
+            (function () {   // v2.43.0: 구장 탭에 적어 둔 주차 · 편의시설 · 집합 장소 · 메모
+                const r = [['🅿️ 주차', v.parking], ['🚻 편의시설', v.amenities], ['📍 집합 장소', v.meet], ['📝 메모', v.memo]].filter(x => x[1]);
+                return r.length ? '<div class="pl-info">' + r.map(x => `<div class="vn-row"><span class="k">${x[0]}</span><span class="v">${escapeHtml(x[1])}</span></div>`).join('') + '</div>' : '';
+            })() + '</div>';
     }
     function drawDetailMap() {
         const el = document.getElementById('plMap');
@@ -4072,6 +4179,198 @@
             if (p) openAppOr(`tmap://route?goalname=${enc(nm)}&goalx=${p.lng}&goaly=${p.lat}`, null, '티맵 앱이 없는 것 같아캉');
             else bkNotify('info', '위치를 몰라서 티맵을 열 수 없어캉', '카카오맵이나 네이버지도로 해 보세요');
         }
+    }
+
+    // ==========================================================
+    // 🏟️ 구장 탭 (v2.43.0) — 자주 가는 훈련장 · 경기장 모아 보기
+    //   - 보기: 일정을 볼 수 있는 사람 모두 (학부모 포함) / 추가 · 수정 · 삭제: 대표님 · 개발자만
+    //   - 위에 전체 지도(번호 핀), 아래 구장 카드: 구분 · 주소 · 다음 일정 → 펼치면 주차 · 편의시설 · 집합 장소 · 메모 · 이 구장 일정 · 길찾기
+    //   - 「다른 이름」(별칭): 일정에 그 이름으로 적혀 있어도 같은 구장으로 연결
+    // ==========================================================
+    let venueFilter = '전체', venueOpenName = null, vnMapObj = null, vnOverlays = [], vnPts = [], vnRowsCur = [], vnEditCtx = null;
+    function canEditVenues() { return isAuthValid() && ['dev', 'super'].indexOf(currentRole) !== -1; }
+    function venueNames(v) { return [v && v.name].concat(String((v && v.aliases) || '').split(/[,，]/)).map(s => String(s || '').trim()).filter(Boolean); }
+    function venueEvents(v) { return schedEvents.filter(ev => ev.place && findVenue(ev.place) === v).sort(sortEvents); }
+    function venueKindOf(v, evs) {
+        if (v.kind === '경기장' || v.kind === '훈련장') return v.kind;
+        const g = evs.filter(e => isGameEvent(e)).length;   // 구분을 안 정했으면 그 구장 일정이 훈련이 많은지 경기가 많은지로
+        return evs.length && g * 2 < evs.length ? '훈련장' : '경기장';
+    }
+    function venueRows() {   // 일정 많은 순
+        return schedVenues.filter(v => v && v.name && (v.addr || venueLatLngNow(v)))
+            .map(v => { const evs = venueEvents(v); return { v: v, evs: evs, kind: venueKindOf(v, evs) }; })
+            .sort((a, b) => b.evs.length - a.evs.length || String(a.v.name).localeCompare(String(b.v.name), 'ko'));
+    }
+    function renderVenues() {
+        if (!document.getElementById('venueSection')) return;
+        document.getElementById('btnNewVenue').style.display = canEditVenues() ? '' : 'none';
+        const list = document.getElementById('venueList');
+        if (!schedLoaded) { list.innerHTML = '<div class="bk-state loading"><span class="bk-img" aria-hidden="true"></span><div class="bk-msg">구장 정보를 불러오는 중...</div></div>'; return; }
+        const all = venueRows();
+        const kinds = ['전체'].concat(['경기장', '훈련장'].filter(k => all.some(r => r.kind === k)));
+        if (kinds.indexOf(venueFilter) === -1) venueFilter = '전체';
+        document.getElementById('venueCats').innerHTML = kinds.length > 2 ? kinds.map(k => `<button type="button" class="cal-filter ${k === venueFilter ? 'active' : ''}" onclick="venueFilter='${k}';renderVenues()">${k} ${k === '전체' ? all.length : all.filter(r => r.kind === k).length}</button>`).join('') : '';
+        vnRowsCur = all.filter(r => venueFilter === '전체' || r.kind === venueFilter);
+        if (!vnRowsCur.length) {
+            list.innerHTML = `<div class="bk-state empty"><span class="bk-img" aria-hidden="true"></span><div class="bk-msg">등록된 구장이 없어요${canEditVenues() ? '<br>＋ 구장 추가로 등록해 주세요' : ''}</div></div>`;
+            document.getElementById('vnMapWrap').hidden = true;
+            return;
+        }
+        renderVenueCards();
+        drawVenueMap();
+    }
+    function renderVenueCards() {
+        const today = ymdOf(new Date());
+        document.getElementById('venueList').innerHTML = vnRowsCur.map((r, i) => venueCardHtml(r, i, today)).join('');
+    }
+    function venueCardHtml(r, i, today) {
+        const v = r.v, open = venueOpenName === v.name;
+        const next = r.evs.find(e => e.date >= today), nh = next ? eventHeadline(next) : null;
+        return `<div class="vn-card${open ? ' open' : ''}" id="vnCard${i}"><button type="button" class="vn-sum" onclick="toggleVenue(${i})"><span class="vn-n">${i + 1}</span><div class="vn-main">` +
+            `<div class="vn-title"><b>${escapeHtml(v.name)}</b><span class="vn-kind${r.kind === '훈련장' ? ' train' : ''}">${r.kind}</span></div>` +
+            `<div class="vn-addr">${escapeHtml(v.addr || v.kname || '')}</div>` +
+            (next ? `<div class="vn-next">📅 다음 ${fmtMD(next.date)} · ${typeMeta(next.type).i} ${escapeHtml(nh.title || next.type)} ${escapeHtml(nh.vs)}</div>` : '') +
+            `</div><span class="chev">▾</span></button>${open ? venueBodyHtml(r, i, today) : ''}</div>`;
+    }
+    function venueBodyHtml(r, i, today) {
+        const v = r.v;
+        const row = (k, val) => val ? `<div class="vn-row"><span class="k">${k}</span><span class="v">${escapeHtml(val)}</span></div>` : '';
+        let s = row('🅿️ 주차', v.parking) + row('🚻 편의시설', v.amenities) + row('📍 집합 장소', v.meet) + row('📝 메모', v.memo);
+        if (!s) s = `<div class="vn-empty">${canEditVenues() ? '주차 · 편의시설 · 집합 장소는 아래 ✏️ 수정에서 적을 수 있어요' : '주차 · 편의시설 안내는 아직 없어요'}</div>`;
+        if (v.phone) s += `<div class="vn-row"><span class="k">☎️ 전화</span><span class="v"><a href="tel:${escapeHtml(String(v.phone).replace(/[^\d+]/g, ''))}">${escapeHtml(v.phone)}</a></span></div>`;
+        s += row('🗺️ 카카오맵', v.kname && venueNorm(v.kname) !== venueNorm(v.name) ? v.kname : '');
+        s += row('다른 이름', venueNames(v).slice(1).join(', '));
+        const up = r.evs.filter(e => e.date >= today).slice(0, 3), past = r.evs.filter(e => e.date < today).slice(-2).reverse();
+        const evl = e => { const m = typeMeta(e.type), hh = eventHeadline(e); return `<div class="vn-ev${e.date < today ? ' past' : ''}" style="--ev:${m.c}" onclick="openEventDetail('${escapeHtml(e.id)}')"><span class="d">${fmtMD(e.date)}</span><span class="t">${m.i} ${escapeHtml(hh.title || e.type)} ${escapeHtml(hh.vs)}</span><span class="go">›</span></div>`; };
+        const evs = up.concat(past);
+        return `<div class="vn-body"><div class="vn-info">${s}</div>` +
+            (evs.length ? `<div class="vn-evs"><div class="vn-sub">📅 이 구장 일정 <small>모두 ${r.evs.length}번 · 다가오는 일정 먼저</small></div>${evs.map(evl).join('')}</div>` : '') +
+            `<div class="pl-btns"><button type="button" class="pri" onclick="vnToggleRoute(${i})">🚗 길찾기</button><button type="button" onclick="vnUse(${i});plOpenMap()">🗺️ 크게 보기</button><button type="button" onclick="vnUse(${i});plCopyAddr()">📋 주소 복사</button></div>` +
+            `<div class="pl-route" id="vnRoute${i}" hidden><button type="button" onclick="vnUse(${i});plRoute('kakao')">카카오맵</button><button type="button" onclick="vnUse(${i});plRoute('naver')">네이버지도</button><button type="button" onclick="vnUse(${i});plRoute('tmap')">티맵</button></div>` +
+            (canEditVenues() ? `<button type="button" class="vn-edit" onclick="openVenueEditor(${i})">✏️ 구장 정보 수정</button>` : '') + '</div>';
+    }
+    function vnUse(i) { const r = vnRowsCur[i]; if (r) plCur = { name: r.v.name, v: r.v }; }
+    function vnToggleRoute(i) { const el = document.getElementById('vnRoute' + i); if (el) el.hidden = !el.hidden; }
+    function toggleVenue(i, fromMap) {
+        const r = vnRowsCur[i];
+        if (!r) return;
+        venueOpenName = (venueOpenName === r.v.name && !fromMap) ? null : r.v.name;
+        renderVenueCards();
+        vnHighlight(venueOpenName ? i : -1);
+        const c = document.getElementById('vnCard' + i);
+        if (c && venueOpenName) c.scrollIntoView({ behavior: 'smooth', block: fromMap ? 'start' : 'nearest' });
+    }
+    // 위쪽 전체 지도 — 움직이고 확대할 수 있음 (마우스 휠 확대는 끔: 화면 스크롤과 헷갈리지 않게)
+    function drawVenueMap() {
+        const wrap = document.getElementById('vnMapWrap'), el = document.getElementById('vnMap');
+        if (!KAKAO_JS_KEY) { wrap.hidden = true; return; }
+        wrap.hidden = false;
+        const rows = vnRowsCur;
+        loadKakaoMaps().then(k => Promise.all(rows.map(r => venueLatLng(r.v).catch(() => null))).then(pts => {
+            if (currentMainTab !== 'venue' || rows !== vnRowsCur) return;
+            vnOverlays.forEach(o => o.setMap(null)); vnOverlays = []; vnPts = [];
+            const ok = pts.map((p, i) => p ? { p: p, i: i } : null).filter(Boolean);
+            if (!ok.length) { wrap.hidden = true; return; }
+            vnPts = ok.map(o => ({ i: o.i, ll: new k.maps.LatLng(o.p.lat, o.p.lng) }));
+            if (!vnMapObj) {
+                vnMapObj = new k.maps.Map(el, { center: vnPts[0].ll, level: 9, scrollwheel: false, keyboardShortcuts: false });
+                if (k.maps.ZoomControl && k.maps.ControlPosition) vnMapObj.addControl(new k.maps.ZoomControl(), k.maps.ControlPosition.RIGHT);
+            }
+            vnMapObj.relayout();
+            vnOverlays = vnPts.map(o => {
+                const c = pinEl(o.i + 1, false);
+                c.addEventListener('click', () => toggleVenue(o.i, true));
+                const ov = new k.maps.CustomOverlay({ map: vnMapObj, position: o.ll, content: c, xAnchor: 0.5, yAnchor: 1, zIndex: 1, clickable: true });
+                ov._vi = o.i;
+                return ov;
+            });
+            const oi = vnRowsCur.findIndex(r => r.v.name === venueOpenName);
+            vnHighlight(oi);
+        })).catch(() => { wrap.hidden = true; });
+    }
+    function vnHighlight(i) {
+        if (!vnMapObj || !window.kakao) return;
+        vnOverlays.forEach(o => { const c = o.getContent(); if (c && c.classList) c.classList.toggle('on', o._vi === i); o.setZIndex(o._vi === i ? 3 : 1); });
+        const hit = vnPts.find(o => o.i === i);
+        if (hit) { vnMapObj.setLevel(5); vnMapObj.setCenter(hit.ll); return; }
+        // 처음엔 일정이 많은 곳(앞쪽 6곳)이 다 보이게
+        const b = new kakao.maps.LatLngBounds();
+        vnPts.slice(0, 6).forEach(o => b.extend(o.ll));
+        if (vnPts.length > 1) vnMapObj.setBounds(b, 36, 20, 12, 20); else { vnMapObj.setLevel(5); vnMapObj.setCenter(vnPts[0].ll); }
+    }
+
+    // ---- 구장 추가 / 수정 (대표님 · 개발자) ----
+    function openVenueEditor(i) {
+        if (!canEditVenues()) return;
+        const r = (i === null || i === undefined) ? null : vnRowsCur[i], v = r ? r.v : null;
+        vnEditCtx = { orig: v, loc: v ? { addr: v.addr || '', jibun: v.jibun || '', lat: v.lat || '', lng: v.lng || '', kid: v.kid || '', kname: v.kname || '', phone: v.phone || '' } : null };
+        document.getElementById('venueEditTitle').textContent = v ? '🏟️ 구장 정보 수정' : '🏟️ 구장 추가';
+        document.getElementById('vnName').value = v ? v.name : '';
+        document.getElementById('vnAliases').value = v ? venueNames(v).slice(1).join(', ') : '';
+        setVnKind(v ? (v.kind === '경기장' || v.kind === '훈련장' ? v.kind : '') : '');
+        ['parking', 'amenities', 'meet', 'memo'].forEach(k => { document.getElementById('vn_' + k).value = v ? (v[k] || '') : ''; });
+        document.getElementById('btnVenueDelete').style.visibility = v ? '' : 'hidden';
+        document.getElementById('venueEditModal').style.display = 'flex';
+        document.querySelector('#venueEditModal .modal-scroll-body').scrollTop = 0;
+        syncVnLoc();
+    }
+    function setVnKind(k) {
+        const box = document.getElementById('vnKind');
+        box.dataset.k = k;
+        box.querySelectorAll('.cal-filter').forEach(b => b.classList.toggle('active', b.dataset.k === k));
+    }
+    function syncVnLoc() {
+        const box = document.getElementById('vnLoc'), L = vnEditCtx && vnEditCtx.loc;
+        if (L && (L.addr || venueLatLngNow(L))) {
+            box.innerHTML = `<div class="ev-place-card"><div class="pc-thumb" id="vnLocThumb">📍</div><div class="pc-t"><span class="pc-ok">✓ 위치 연결됨</span><b>${escapeHtml(L.kname || '')}</b>${escapeHtml(L.addr || '')}</div><button type="button" class="pc-btn" onclick="openPlaceSearch('venue')">바꾸기</button></div>`;
+            const th = document.getElementById('vnLocThumb');
+            if (th && KAKAO_JS_KEY) staticVenueMap(th, L).catch(() => {});
+        } else box.innerHTML = '<button type="button" class="ev-place-find vn-find" onclick="openPlaceSearch(\'venue\')">🔍 카카오맵에서 위치 찾기</button>';
+    }
+    async function saveVenueEditor() {
+        if (!canEditVenues() || !vnEditCtx) return;
+        const name = document.getElementById('vnName').value.trim().slice(0, 40);
+        if (!name) { bkNotify('info', '구장 이름을 넣어줘캉!'); return; }
+        const L = vnEditCtx.loc;
+        if (!L || !(L.addr || venueLatLngNow(L))) { bkNotify('info', '위치를 골라줘캉!', '🔍 카카오맵에서 위치 찾기로 연결해야 지도 · 길찾기가 나와요'); return; }
+        const orig = vnEditCtx.orig;
+        const al = document.getElementById('vnAliases').value.split(/[,，]/).map(s => s.trim()).filter(Boolean)
+            .filter((s, i, a) => a.findIndex(x => venueNorm(x) === venueNorm(s)) === i && venueNorm(s) !== venueNorm(name));
+        const mine = [name].concat(al).map(venueNorm);
+        const clash = schedVenues.find(x => x !== orig && venueNames(x).some(n => mine.indexOf(venueNorm(n)) !== -1));
+        if (clash) { bkNotify('info', `「${clash.name}」 구장에 이미 있는 이름이캉`, '이름이나 다른 이름을 바꿔 주세요'); return; }
+        const val = id => document.getElementById(id).value.trim();
+        const venue = { name: name, aliases: al.join(', ').slice(0, 200), kind: document.getElementById('vnKind').dataset.k || '',
+            addr: L.addr || '', jibun: L.jibun || '', lat: L.lat || '', lng: L.lng || '', kid: L.kid || '', kname: L.kname || '', phone: L.phone || '',
+            parking: val('vn_parking'), amenities: val('vn_amenities'), meet: val('vn_meet'), memo: val('vn_memo') };
+        const btn = document.getElementById('btnVenueSave');
+        btn.disabled = true; btn.textContent = '저장 중...';
+        bkNotify('saving', '구장 저장하는 중이캉');
+        try {
+            await postApi({ action: 'saveVenue', venue: Object.assign({ oldName: orig ? orig.name : '' }, venue) });
+            if (orig) { Object.assign(orig, venue); orig._geo = null; } else schedVenues.push(venue);
+            venueOpenName = name;
+            closeModal('venueEditModal');
+            renderVenues();
+            bkNotify('done', '구장 저장 완료캉! ✓');
+            setTimeout(() => loadSchedule(true), 2500);   // 시트에 잘 들어갔는지 다시 받아 맞춤
+        } catch (err) { bkNotify('fail', null, err.message); }
+        finally { btn.disabled = false; btn.textContent = '저장'; }
+    }
+    async function deleteVenueEditor() {
+        const orig = vnEditCtx && vnEditCtx.orig;
+        if (!orig || !canEditVenues()) return;
+        if (!(await bkConfirm(`「${orig.name}」 구장을 지울까캉?`, { sub: '일정은 그대로 남고, 지도 연결만 없어져요', ok: '삭제', danger: true }))) return;
+        bkNotify('saving', '구장 지우는 중이캉');
+        try {
+            await postApi({ action: 'deleteVenue', name: orig.name });
+            schedVenues = schedVenues.filter(x => x !== orig);
+            venueOpenName = null;
+            closeModal('venueEditModal');
+            renderVenues();
+            bkNotify('done', '구장 삭제 완료캉');
+            setTimeout(() => loadSchedule(true), 2500);
+        } catch (err) { bkNotify('fail', null, err.message); }
     }
 
     // ---------------- 추가 / 수정 ----------------
@@ -7390,6 +7689,13 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.43.0', d: '2026-10-11', t: '🏟️ 구장 탭', items: [
+            '맨 위 탭에 「🏟️ 구장」 추가 — 자주 가는 훈련장 · 경기장을 지도와 함께 모아 봄 (학부모님도 볼 수 있음)',
+            '구장마다 구분(경기장/훈련장) · 주소 · 다음 일정, 펼치면 주차 · 편의시설 · 집합 장소 · 메모 · 이 구장 일정 · 🚗 길찾기 · 주소 복사',
+            '구장 추가 · 수정 · 삭제는 대표님만 (「다른 이름」을 적어 두면 그 이름으로 적힌 일정도 같은 구장으로 연결)',
+            '일정 상세에도 그 구장의 주차 · 편의시설 · 집합 장소 · 메모가 함께 보임',
+            '일정 수정 창의 🔍 찾기(새 구장 연결)는 대표님만 — 총무님은 등록된 구장 칩에서 고르기'
+        ] },
         { v: 'v2.42.1', d: '2026-10-11', t: '장소 이름이 조금 달라도 지도 연결', items: [
             '「기장 (리틀구장)」 → 기장리틀구장, 「기장 (소프트구장)」 · 「기장 (소프트)」 → 기장소프트구장, 「을숙도구장」 ↔ 을숙도야구장처럼 이름이 조금 달라도 같은 구장으로 찾음',
             '「자주 쓰는 곳」 칩도 등록된 구장 이름으로 묶어서 보여 줌 (같은 장소는 칩 하나)',
