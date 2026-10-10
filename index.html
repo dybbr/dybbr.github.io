@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.41.5 · b261010";
+        const APP_VERSION = "v2.41.6 · b261010";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1397,6 +1397,11 @@
         #eventEditModal .form-group.ev-inline.top { align-items: start; }
         #eventEditModal .form-group.ev-inline.top > label { padding-top: 8px; }
         #eventEditModal .form-group.ev-inline > label { white-space: nowrap; letter-spacing: -0.3px; }
+        /* v2.41.6: 경기 결과·점수를 한 묶음으로, 복장 미리보기는 「복장」 이름표 오른쪽 */
+        #eventEditModal .ev-score-grp { margin-top: -2px; }
+        .ev-dress-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
+        .ev-dress-head > label { flex: 0 0 auto; }
+        #eventEditModal .ev-dress-head .ev-dress-prev { margin: 0; padding: 3px 9px; font-size: 12px; border-radius: 10px; min-width: 0; flex: 0 1 auto; }
         #eventEditModal .lbl-hint { font-size: 11px; font-weight: 600; color: #94a3b8; letter-spacing: -0.2px; }
         #eventEditModal .grade-checks { display: grid; grid-template-columns: 1.45fr repeat(6, 1fr); gap: 4px; }
         #eventEditModal .grade-checks label { justify-content: center; gap: 3px; padding: 6px 2px; min-width: 0; white-space: nowrap; font-size: 12.5px; }
@@ -2422,7 +2427,7 @@
             </div>
             <div id="evResultRow">
                 <div class="form-group">
-                    <label>경기 결과</label>
+                    <label>경기 결과 및 점수 입력</label>
                     <input type="hidden" id="evResult">
                     <div class="ev-res-seg" id="evResultSeg">
                         <button type="button" data-v="" onclick="onEvResultTap('')">아직</button>
@@ -2431,8 +2436,7 @@
                         <button type="button" data-v="무" onclick="onEvResultTap('무')">무승부</button>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>점수 (선택) <span class="lbl-hint" id="evResultHint">· 넣으면 승·패가 자동으로 골라져요</span></label>
+                <div class="form-group ev-score-grp">
                     <div class="ev-score">
                         <div class="ev-sc-side"><span class="ev-sc-who">우리 대연초</span><div class="ev-sc-ctl">
                             <button type="button" class="ev-sc-btn" onclick="evScoreStep('evScoreUs', -1)" aria-label="우리 점수 빼기">−</button>
@@ -2447,8 +2451,6 @@
                     </div>
                 </div>
             </div>
-            <div class="form-group ev-inline"><label for="evTitle">제목</label><input type="text" id="evTitle" maxlength="60" placeholder="비우면 구분으로 표시 (예: 회장기)"></div>
-            <div class="form-group ev-inline"><label for="evPlace">장소</label><input type="text" id="evPlace" maxlength="60" placeholder="예: 기장리틀구장"></div>
             <div class="form-group">
                 <label>대상 학년 <span class="lbl-hint">· 학부모님 화면 "우리 아이" 필터 기준</span></label>
                 <div class="grade-checks" id="evGrades">
@@ -2461,13 +2463,14 @@
                     <label><input type="checkbox" value="1"> 1</label>
                 </div>
             </div>
+            <div class="form-group ev-inline"><label for="evTitle">제목</label><input type="text" id="evTitle" maxlength="60" placeholder="비우면 구분으로 표시 (예: 회장기)"></div>
+            <div class="form-group ev-inline"><label for="evPlace">장소</label><input type="text" id="evPlace" maxlength="60" placeholder="예: 기장리틀구장"></div>
             <div class="form-group ev-inline"><label for="evTarget">참가선수</label><input type="text" id="evTarget" maxlength="80" placeholder="예: 6학년 + 민준, 승환"></div>
             <div class="form-group ev-inline"><label for="evMeet">집합·출발</label><input type="text" id="evMeet" maxlength="100" placeholder="예: 06:30 학교출발"></div>
-            <div class="form-group"><label>복장</label>
+            <div class="form-group"><div class="ev-dress-head"><label>복장</label><span class="ev-dress-prev empty" id="evDressPrev"></span></div>
                 <div id="evDressBox"></div>
                 <input type="text" id="evDressEtc" maxlength="80" placeholder="예: 사복 등교, 모자 지참" oninput="syncDressValue()">
                 <input type="hidden" id="evDress">
-                <div class="ev-dress-prev empty" id="evDressPrev"></div>
             </div>
             <div class="form-group ev-inline top"><label for="evMemo">메모</label><textarea id="evMemo" rows="2" maxlength="1000" placeholder="차량지원 요청, 준비물 등"></textarea></div>
         </div>
@@ -3482,7 +3485,6 @@
     function syncEvResultRow() {
         const game = BK_GAME_TYPES.indexOf(document.getElementById('evType').value) !== -1;
         document.getElementById('evResultRow').style.display = game ? '' : 'none';
-        document.getElementById('evResultHint').style.display = game ? '' : 'none';
         if (!game) { setEvResult(''); document.getElementById('evScoreUs').value = ''; document.getElementById('evScoreThem').value = ''; evScoreRaw = ''; }
     }
     // 📅 PC(마우스)에서는 날짜·시간 칸 어디를 눌러도 선택 창이 열리게 (휴대폰은 원래 칸을 누르면 열림) — v2.41.1
@@ -3600,7 +3602,7 @@
         const val = parts.join(' + ');
         document.getElementById('evDress').value = val;
         const pv = document.getElementById('evDressPrev');
-        if (pv) { pv.textContent = val ? '👕 ' + val : '👕 복장 안 정함'; pv.classList.toggle('empty', !val); }
+        if (pv) { pv.textContent = val || '안 정함'; pv.classList.toggle('empty', !val); }   // v2.41.6: 「복장」 이름표 오른쪽에 표시
     }
     // id: 기존 일정 수정 / defaultDate: 새 일정의 날짜 / draft+onSave: 붙여넣기 미리보기 항목 수정
     function openEventEditor(id, defaultDate, draft, onSave) {
@@ -6473,6 +6475,11 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.41.6', d: '2026-10-10', t: '일정 입력 창 순서 정리', items: [
+            '"경기 결과"와 "점수 (선택)" 이름표를 "경기 결과 및 점수 입력" 하나로 합치고, 점수 자동 안내 문구는 뺌',
+            '대상 학년을 경기 결과·점수 바로 아래(제목 위)로 옮김',
+            '복장에서 고른 내용(예: 빨강 + 긴바지)이 「복장」 이름표 오른쪽에 바로 보임'
+        ] },
         { v: 'v2.41.5', d: '2026-10-10', t: '종료 시간 안 잘리게', items: [
             '일정 입력 창에서 날짜 칸을 조금 줄이고 시작·종료 칸을 넓혀서 "오전 10:30"처럼 긴 시간도 끝까지 보이게 (삼성인터넷)'
         ] },
