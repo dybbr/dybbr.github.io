@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.41.18 · b261010";
+        const APP_VERSION = "v2.41.19 · b261010";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1084,6 +1084,18 @@
             .uni-items .uniform-item-qty { width: 50px !important; }
             .uin-t small { display: inline; font-size: inherit; opacity: 1; }
             .uin-t small::before { content: '('; } .uin-t small::after { content: ')'; }
+        }
+        /* v2.41.19: 칸 높이를 기기 글꼴과 상관없이 고정 (삼성 폰은 글꼴 때문에 칸이 더 커져서 한 화면에 다 안 들어갔음)
+           + 휴대폰에서는 품목 줄 위아래 여백을 줄여서 8개 품목이 스크롤 없이 한 화면에 */
+        .uni-items select { height: 28px; line-height: 1.2; padding-top: 0 !important; padding-bottom: 0 !important; }
+        .uniform-item-row { padding-top: 5px; padding-bottom: 5px; }
+        .uni-items input[type="checkbox"] { width: 16px; height: 16px; margin: 0; flex: 0 0 auto; }
+        .uin-t { line-height: 1.2; }
+        #uniformModal .uni-player-row > select { height: 34px; line-height: 1.2; padding-top: 0; padding-bottom: 0; }
+        .uni-body-row input { height: 28px; line-height: 1.2; padding-top: 0; padding-bottom: 0; }
+        #uniformModal .modal-content { max-height: calc(86vh / var(--ui-zoom, 1)); max-height: calc(90dvh / var(--ui-zoom, 1)); }   /* 신청 창은 화면을 조금 더 쓰게 (일정 창처럼) */
+        @container (max-width: 339px) {
+            .uniform-item-row { padding: 4px 2px; }
         }
 
         .order-modal-tabs { display: flex; border-bottom: 2px solid #e2e8f0; margin-bottom: 10px; gap: 6px; flex-shrink: 0; }
@@ -6636,6 +6648,10 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.41.19', d: '2026-10-10', t: '유니폼 신청 창 품목 한 화면에', items: [
+            '스마트폰에서 품목 줄 사이 여백을 줄여서 모자~겨울점퍼 8개 품목이 스크롤 없이 한 화면에 보이게',
+            '고르기 칸 · 체크 칸 높이를 기기 글꼴과 상관없이 고정 (삼성 폰에서 칸이 더 커지던 것), 신청 창이 화면을 조금 더 넓게 씀'
+        ] },
         { v: 'v2.41.18', d: '2026-10-10', t: '유니폼 신청 창 윗부분 한 줄씩', items: [
             '맨 위 설명을 한 줄로: 「선수를 고르고 필요한 품목을 선택해 주세요.」',
             '「대상 선수 선택」 바로 옆에 선수 고르기 칸을 붙여 한 줄로 (안내 글자도 「선수를 골라 주세요」로 짧게)',
