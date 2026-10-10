@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.41.13 · b261010";
+        const APP_VERSION = "v2.41.14 · b261010";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1040,6 +1040,27 @@
         .uniform-item-size { flex: 1.2; padding: 6px 8px !important; font-size: 12px !important; }
         .pants-double-box { flex: 1.2; display: flex; gap: 4px; }
         .uniform-item-qty { width: 58px !important; padding: 6px 6px !important; font-size: 12px !important; }
+        .pants-double-box select { flex: 1 1 0; min-width: 0; }
+        /* v2.41.14: 주문 창 고르기 칸 — 브라우저 기본 큰 화살표 대신 작은 화살표(글자 자리 넓게) */
+        .uni-items select { -webkit-appearance: none; appearance: none; padding: 6px 18px 6px 8px !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2364748b' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 6px center; background-size: 10px 6px; }
+        /* 바지는 고르는 칸이 3개라 항상 이름 윗줄 · 허리/기장/수량 아랫줄 (이름이 "바지(허/리/기장)"처럼 끊기지 않게) */
+        #rowPants { flex-wrap: wrap; row-gap: 6px; }
+        #rowPants .uniform-item-name { flex: 1 1 100%; white-space: nowrap; }
+        #rowPants .pants-double-box { flex: 1 1 0; min-width: 0; margin-left: 22px; }
+        /* v2.41.14: 칸이 좁을 때(작은 폰·화면 크기 키움) 품목 이름은 윗줄 한 줄로, 사이즈·수량은 아랫줄로 → 이름이 한 글자씩 끊기지 않게 */
+        .uni-items { container-type: inline-size; }
+        @container (max-width: 329px) {
+            .uniform-item-row { flex-wrap: wrap; row-gap: 6px; padding: 8px 4px; }
+            .uniform-item-name { flex: 1 1 100%; min-width: 0; white-space: nowrap; }
+            .uniform-item-size, .pants-double-box { flex: 1 1 0; min-width: 0; margin-left: 22px; }
+        }
+        @container (max-width: 250px) {   /* 아주 좁으면 들여쓰기 없이 칸을 끝까지 → 「28인치」 안 잘림 */
+            .uniform-item-size, .pants-double-box, #rowPants .pants-double-box { margin-left: 0; }
+            .uni-items .uniform-item-qty { width: 52px !important; }
+            .uni-items .pants-double-box select { padding: 6px 15px 6px 6px !important; background-position: right 4px center; }
+        }
 
         .order-modal-tabs { display: flex; border-bottom: 2px solid #e2e8f0; margin-bottom: 10px; gap: 6px; flex-shrink: 0; }
         .order-tab-btn { background: none; border: none; padding: 7px 10px; font-size: 12px; font-weight: 700; color: #64748b; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; }
@@ -2657,7 +2678,7 @@
 
             <div class="form-group">
                 <label>유니폼 품목 및 사이즈 선택 *</label>
-                <div style="background: #f8fafc; border: 1px solid var(--card-border); border-radius: 8px; padding: 6px 10px;">
+                <div class="uni-items" style="background: #f8fafc; border: 1px solid var(--card-border); border-radius: 8px; padding: 6px 10px;">
                     <div class="uniform-item-row" data-name="모자">
                         <label class="uniform-item-name"><input type="checkbox" class="chk-item" onchange="toggleRowInputs(this)"> <svg class="ck-ic" aria-hidden="true"><use href="#ck-cap"/></svg> 모자</label>
                         <select class="uniform-item-size" disabled><option value="프리" selected>프리</option></select>
@@ -6573,6 +6594,11 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.41.14', d: '2026-10-10', t: '유니폼 주문 창 품목 이름 안 끊기게', items: [
+            '작은 휴대폰이나 화면 크기를 키웠을 때 품목 이름이 "유/니/폼"처럼 한 글자씩 끊기던 문제 수정',
+            '칸이 좁으면 품목 이름은 윗줄에 한 줄로, 사이즈·수량 칸은 바로 아랫줄에 넓게 나옴 (넓은 화면은 지금처럼 한 줄)',
+            '바지 허리·기장 칸이 오른쪽으로 삐져나가던 것도 칸 안에 맞춤'
+        ] },
         { v: 'v2.41.13', d: '2026-10-10', t: '복장 옷 그림 새로 그림', items: [
             '겨울점퍼가 🧤장갑 그림으로 나오던 문제 → 옷 그림을 직접 그려서 바꿈 (이모티콘에는 풀오버·패딩 그림이 없음)',
             '훈련티(반팔티) · 긴바지 · 반바지 · 이너티(목 올라온 긴팔) · 바람막이(모자 달린 지퍼) · 풀오버(반 지퍼 + 앞주머니) · 겨울점퍼(누빔 패딩)',
