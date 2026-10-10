@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.41.0 · b261010";
+        const APP_VERSION = "v2.41.1 · b261010";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1372,6 +1372,24 @@
         .ev-dchip.other.on { border-style: solid; color: #fff; }
         .ev-dsw { width: 12px; height: 12px; flex: 0 0 auto; border-radius: 50%; border: 1px solid rgba(0,0,0,.25); }
         #evDressEtc { margin: 0 0 6px 40px; width: calc(100% - 40px) !important; }
+        /* 📅 일정 입력 창 한 화면에 더 많이 (v2.41.1) — 날짜·시작·종료 한 줄, 창 높이 92%, 칸·버튼 간격 줄임 */
+        #eventEditModal .modal-content { max-height: 92vh; max-height: 92dvh; }
+        #eventEditModal .modal-header { margin-bottom: 6px; }
+        #eventEditModal .form-group { margin-bottom: 8px; gap: 3px; }
+        #eventEditModal .form-group > input, #eventEditModal .form-group > select, #eventEditModal .form-group > textarea { padding: 6px 9px; min-height: 36px; font-size: 13.5px; }
+        .ev-dt-row { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 6px; }
+        .ev-dt-row > * { min-width: 0; }
+        #eventEditModal .ev-dt-row input { -webkit-appearance: none; appearance: none; padding: 6px 4px; text-align: center; }
+        #eventEditModal .ev-dt-row input::-webkit-calendar-picker-indicator { display: none; }   /* 화살표 아이콘을 빼서 칸을 좁게 — 칸을 누르면 선택 창이 열림 */
+        #eventEditModal .ev-dt-row input::-webkit-date-and-time-value { text-align: center; }
+        #eventEditModal .ev-res-seg button { min-height: 36px; }
+        #eventEditModal .ev-sc-btn { height: 34px; }
+        #eventEditModal .ev-sc-ctl input { height: 34px; }
+        #eventEditModal .ev-dchip { min-height: 30px; padding: 3px 10px; }
+        #eventEditModal .ev-drow { margin-bottom: 4px; }
+        #eventEditModal .ev-drow-k { padding-top: 7px; }
+        #eventEditModal .grade-checks { gap: 5px; }
+        #eventEditModal .grade-checks label { padding: 4px 8px; white-space: nowrap; }
         .form-hint { font-size: 11px; color: #94a3b8; font-weight: 600; line-height: 1.5; }
         .import-item { display: flex; gap: 8px; align-items: flex-start; border: 1px solid #e2e8f0; border-left: 5px solid var(--ev); border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; background: #ffffff; }
         .import-item input[type="checkbox"] { width: auto; margin-top: 3px; }
@@ -2372,11 +2390,10 @@
     <div class="modal-content" style="max-width: 460px;">
         <div class="modal-header" id="eventEditTitle">📅 일정 추가</div>
         <div class="modal-scroll-body">
-            <div class="form-group"><label>날짜 *</label><input type="date" id="evDate"></div>
-            <div class="ev-time-row">
-                <div class="form-group"><label>시작</label><input type="time" id="evStart"></div>
-                <span class="ev-time-sep">~</span>
-                <div class="form-group"><label>종료</label><input type="time" id="evEnd"></div>
+            <div class="ev-dt-row">
+                <div class="form-group"><label>날짜 *</label><input type="date" id="evDate" onclick="evPick(this)"></div>
+                <div class="form-group"><label>시작</label><input type="time" id="evStart" onclick="evPick(this)"></div>
+                <div class="form-group"><label>종료</label><input type="time" id="evEnd" onclick="evPick(this)"></div>
             </div>
             <div class="form-row2">
                 <div class="form-group">
@@ -2419,7 +2436,7 @@
                     </div>
                 </div>
             </div>
-            <span class="form-hint" id="evResultHint" style="margin:-6px 0 10px; display:block;">점수를 넣으면 승·패가 자동으로 골라져요 · 결과를 넣으면 그날 부캉이가 반응해요</span>
+            <span class="form-hint" id="evResultHint" style="margin:-6px 0 10px; display:block;">점수를 넣으면 승·패가 자동으로 골라져요</span>
             <div class="form-group"><label>제목</label><input type="text" id="evTitle" maxlength="60" placeholder="예: 회장기 전국대회 (비우면 구분으로 표시)"></div>
             <div class="form-group"><label>장소</label><input type="text" id="evPlace" maxlength="60" placeholder="예: 기장리틀구장"></div>
             <div class="form-group">
@@ -2443,7 +2460,7 @@
                 <input type="hidden" id="evDress">
                 <div class="ev-dress-prev empty" id="evDressPrev"></div>
             </div>
-            <div class="form-group"><label>메모</label><textarea id="evMemo" rows="3" maxlength="1000" placeholder="차량지원 요청, 준비물 등"></textarea></div>
+            <div class="form-group"><label>메모</label><textarea id="evMemo" rows="2" maxlength="1000" placeholder="차량지원 요청, 준비물 등"></textarea></div>
         </div>
         <div class="modal-btns" style="justify-content: space-between;">
             <button class="btn-cancel" onclick="closeModal('eventEditModal')">취소</button>
@@ -3459,6 +3476,8 @@
         document.getElementById('evResultHint').style.display = game ? 'block' : 'none';
         if (!game) { setEvResult(''); document.getElementById('evScoreUs').value = ''; document.getElementById('evScoreThem').value = ''; evScoreRaw = ''; }
     }
+    // 📅 PC(마우스)에서는 날짜·시간 칸 어디를 눌러도 선택 창이 열리게 (휴대폰은 원래 칸을 누르면 열림) — v2.41.1
+    function evPick(el) { try { if (el.showPicker && window.matchMedia && window.matchMedia('(pointer: fine)').matches) el.showPicker(); } catch (e) {} }
     // 🏆 경기 결과 버튼 + 점수 −/＋ (v2.39.0)
     //   점수를 둘 다 넣으면 승·패·무가 자동으로 골라짐. 반대로 결과를 먼저 눌렀는데 점수가 거꾸로면 두 점수를 바꿔 줌 (우리:상대 순서로 저장)
     let evScoreRaw = '';
@@ -6445,6 +6464,11 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.41.1', d: '2026-10-10', t: '일정 입력 창 더 촘촘하게', items: [
+            '날짜 · 시작 · 종료를 한 줄에 (칸 옆 화살표 아이콘을 빼서 좁은 휴대폰에서도 들어감, 칸을 누르면 선택 창이 열림)',
+            '일정 입력 창 높이를 화면의 75% → 92%로 늘리고, 칸·버튼·줄 간격을 줄여서 한 화면에 더 많이 보이게',
+            '메모 칸 기본 높이 3줄 → 2줄 (쓰면 늘어남)'
+        ] },
         { v: 'v2.41.0', d: '2026-10-10', t: '앱 설치 안내를 모든 브라우저로', items: [
             '잠금화면의 앱 설치 안내가 크롬(안드로이드)에서만 보이던 것 → 삼성인터넷·웨일·엣지·파이어폭스·아이폰·아이패드까지 그 브라우저에 맞는 「홈 화면에 추가」 방법을 한 줄로 알려줌',
             '원인: 갤럭시탭의 삼성인터넷(·크롬)은 기본이 PC 버전 화면이라 브라우저가 "안드로이드"라고 밝히지 않음 → 예전에는 안드로이드가 아닌 줄 알고 안내를 숨겼음 (로그에 "기기 (삼성인터넷)"으로 찍히던 것)',
