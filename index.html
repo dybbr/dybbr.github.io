@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.41.4 · b261010";
+        const APP_VERSION = "v2.41.5 · b261010";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1377,11 +1377,14 @@
         #eventEditModal .modal-header { margin-bottom: 6px; }
         #eventEditModal .form-group { margin-bottom: 8px; gap: 3px; }
         #eventEditModal .form-group > input, #eventEditModal .form-group > select, #eventEditModal .form-group > textarea { padding: 6px 9px; min-height: 36px; font-size: 13.5px; }
-        .ev-dt-row { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 6px; }
+        .ev-dt-row { display: grid; grid-template-columns: 1.05fr 1fr 1fr; gap: 5px; }   /* v2.41.5: 날짜 칸을 줄이고 시간 칸을 넓힘 ("오전 10:30" 안 잘리게) */
         .ev-dt-row > * { min-width: 0; }
         #eventEditModal .ev-dt-row input { -webkit-appearance: none; appearance: none; padding: 6px 4px; text-align: center; }
         #eventEditModal .ev-dt-row input::-webkit-calendar-picker-indicator { display: none; }   /* 화살표 아이콘을 빼서 칸을 좁게 — 칸을 누르면 선택 창이 열림 */
         #eventEditModal .ev-dt-row input::-webkit-date-and-time-value { text-align: center; }
+        #eventEditModal .ev-dt-row input[type="time"] { padding-left: 2px; padding-right: 2px; letter-spacing: -0.3px; }
+        #eventEditModal .ev-dt-row input::-webkit-inner-spin-button, #eventEditModal .ev-dt-row input::-webkit-clear-button { display: none; }
+        #eventEditModal .ev-dt-row input::-webkit-datetime-edit { padding: 0; }
         #eventEditModal .ev-res-seg button { min-height: 36px; }
         #eventEditModal .ev-sc-btn { height: 34px; }
         #eventEditModal .ev-sc-ctl input { height: 34px; }
@@ -6470,6 +6473,9 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.41.5', d: '2026-10-10', t: '종료 시간 안 잘리게', items: [
+            '일정 입력 창에서 날짜 칸을 조금 줄이고 시작·종료 칸을 넓혀서 "오전 10:30"처럼 긴 시간도 끝까지 보이게 (삼성인터넷)'
+        ] },
         { v: 'v2.41.4', d: '2026-10-10', t: '대상 학년 안내 옆으로', items: [
             '"학부모님 화면 우리 아이 필터 기준" 안내를 대상 학년 이름표 옆으로 옮겨서 한 줄 더 줄임'
         ] },
