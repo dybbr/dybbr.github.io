@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.41.19 · b261010";
+        const APP_VERSION = "v2.41.20 · b261011";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1310,6 +1310,46 @@
         .cal-admin-bar.on { display: flex; }
         .btn-sched-admin { border: none; border-radius: 8px; padding: 7px 12px; font-size: 12px; font-weight: 800; cursor: pointer; background: var(--kbo-blue); color: #ffffff; }
         .btn-sched-admin.alt { background: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe; }
+        /* v2.41.20: 일정 윗부분 2줄로 — 학년 고르기는 제목 오른쪽 [학년 ▾] 버튼(누르면 고르는 창), 일정 추가 버튼은 월·주·목록과 같은 줄 */
+        .cal-head { container-type: inline-size; position: relative; z-index: 6; }
+        .cal-head .cal-toolbar { flex-wrap: wrap; row-gap: 6px; }
+        .cal-head .cal-nav { min-width: 0; }
+        .cal-head .cgsel-wrap { margin-left: auto; }
+        .cal-today-btn { white-space: nowrap; flex-shrink: 0; }
+        .cal-toolbar2 { display: flex; align-items: center; gap: 6px; padding: 0 12px 10px; flex-wrap: wrap; }
+        .cal-toolbar2 .cal-admin-bar { padding: 0; flex-wrap: nowrap; }
+        .cal-toolbar2 .cal-views { margin-left: auto; }
+        .cgsel-wrap { position: relative; flex: 0 0 auto; }
+        .cgsel-btn { display: flex; align-items: center; gap: 5px; height: 32px; padding: 0 10px 0 12px; border: 1px solid #cbd5e1; border-radius: 16px; background: #ffffff;
+            font-size: 12px; font-weight: 800; color: #0b2240; white-space: nowrap; cursor: pointer; }
+        .cgsel-btn.on { background: var(--kbo-blue); border-color: var(--kbo-blue); color: #ffffff; }
+        .cgsel-btn.on.mine { background: var(--kbo-red); border-color: var(--kbo-red); }
+        .cgsel-menu { display: none; position: absolute; top: 38px; right: 0; z-index: 60; width: 210px; grid-template-columns: 1fr 1fr; gap: 4px; padding: 6px;
+            background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 10px 30px rgba(15,23,42,0.18); }
+        .cgsel-wrap.open .cgsel-menu { display: grid; }
+        .cgsel-menu button { border: none; background: #f8fafc; border-radius: 10px; padding: 10px 8px; font-size: 13px; font-weight: 700; color: #334155; cursor: pointer; }
+        .cgsel-menu button.wide { grid-column: 1 / -1; }
+        .cgsel-menu button.on { background: #0b2240; color: #ffffff; }
+        .cgsel-menu button.mine.on { background: var(--kbo-red); }
+        @container (max-width: 419px) {   /* 휴대폰: 버튼 안쪽 여백을 줄여서 「＋ 일정 추가」·「텍스트 분석 추가」·월 주 목록이 한 줄에 */
+            .cal-head .cal-toolbar { padding: 12px 10px 8px; }
+            .cal-toolbar2 { padding: 0 10px 10px; gap: 5px; }
+            .cal-toolbar2 .cal-admin-bar { gap: 5px; }
+            .cal-toolbar2 .btn-sched-admin { padding: 7px 9px; }
+            .cal-toolbar2 .cal-view-btn { padding: 6px 9px; }
+        }
+        @container (max-width: 359px) {   /* 작은 휴대폰: 화살표·글자를 조금 줄이고 「전체 학년」→「전체」, 「일정 추가」→「일정」으로 짧게 해서 두 줄 유지 */
+            .cal-head .cal-toolbar { gap: 4px; padding: 10px 8px 8px; }
+            .cal-head .cal-nav { gap: 2px; }
+            .cal-head .cal-nav-btn { width: 26px; }
+            .cal-head .cal-today-btn { padding: 0 9px; }
+            .cal-head .cal-title { font-size: 15px; margin-left: 2px; }
+            .cgsel-btn { padding: 0 8px 0 10px; gap: 3px; }
+            .cal-head .nw { display: none; }
+            .cal-toolbar2 { padding: 0 8px 10px; }
+            .cal-toolbar2 .btn-sched-admin { padding: 7px 10px; }
+            .cal-toolbar2 .cal-view-btn { padding: 6px 10px; }
+        }
 
         .cal-legend { display: flex; gap: 10px; flex-wrap: wrap; padding: 8px 12px 12px; border-top: 1px solid #f1f5f9; font-size: 11px; color: #64748b; font-weight: 700; }
         .cal-legend span::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--c); margin-right: 4px; vertical-align: 0; }
@@ -1903,6 +1943,13 @@
     .cal-filter { border: 1px solid #2a374e; background: #151e2e; color: #bcc6d4; }
     .cal-filter.active { background: #22354f; border-color: #2e486b; color: #f1f4f9; }
     .cal-filter.mine.active { background: #912d3d; border-color: #9b273a; }
+    .cgsel-btn { background: #151e2e; border-color: #58697e; color: #dde3ec; }
+    .cgsel-btn.on { background: #22354f; border-color: #2e486b; color: #f1f4f9; }
+    .cgsel-btn.on.mine { background: #912d3d; border-color: #9b273a; }
+    .cgsel-menu { background: #151e2e; border-color: #2a374e; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .cgsel-menu button { background: #1b2638; color: #bcc6d4; }
+    .cgsel-menu button.on { background: #23395d; color: #f1f4f9; }
+    .cgsel-menu button.mine.on { background: #912d3d; }
     .btn-sched-admin { border: none; background: #22354f; color: #f1f4f9; }
     .btn-sched-admin.alt { background: #1b2846; color: #9995e0; border: 1px solid #233364; }
     .cal-legend { border-top: 1px solid #2a374e; color: #97a3b7; }
@@ -2442,23 +2489,31 @@
     <!-- 📅 일정 탭 -->
     <section id="scheduleSection" class="app-section">
         <div class="sched-card">
-            <div class="cal-toolbar">
-                <div class="cal-nav">
-                    <button type="button" class="cal-nav-btn" onclick="calMove(-1)" aria-label="이전">‹</button>
-                    <button type="button" class="cal-today-btn" onclick="calGoToday()">오늘</button>
-                    <button type="button" class="cal-nav-btn" onclick="calMove(1)" aria-label="다음">›</button>
-                    <span class="cal-title" id="calTitle"></span>
+            <!-- v2.41.20: 윗부분 2줄 — ① ‹ 오늘 › 2026년 10월 …… [학년 ▾]  ② [＋ 일정 추가][📋 텍스트 분석 추가] …… [월|주|목록] -->
+            <div class="cal-head">
+                <div class="cal-toolbar">
+                    <div class="cal-nav">
+                        <button type="button" class="cal-nav-btn" onclick="calMove(-1)" aria-label="이전">‹</button>
+                        <button type="button" class="cal-today-btn" onclick="calGoToday()">오늘</button>
+                        <button type="button" class="cal-nav-btn" onclick="calMove(1)" aria-label="다음">›</button>
+                        <span class="cal-title" id="calTitle"></span>
+                    </div>
+                    <div class="cgsel-wrap" id="calGradeWrap">
+                        <button type="button" class="cgsel-btn" id="calGradeBtn" onclick="toggleCalGradeMenu(event)" aria-haspopup="listbox" aria-expanded="false"><span id="calGradeLabel">전체<span class="nw"> 학년</span></span><svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5"/></svg></button>
+                        <div class="cgsel-menu" id="calGradeMenu" role="listbox"></div>
+                    </div>
                 </div>
-                <div class="cal-views">
-                    <button type="button" class="cal-view-btn" data-view="month" onclick="setCalView('month')">월</button>
-                    <button type="button" class="cal-view-btn" data-view="week" onclick="setCalView('week')">주</button>
-                    <button type="button" class="cal-view-btn" data-view="list" onclick="setCalView('list')">목록</button>
+                <div class="cal-toolbar2">
+                    <div class="cal-admin-bar" id="calAdminBar">
+                        <button type="button" class="btn-sched-admin" onclick="openEventEditor(null)">＋ 일정<span class="nw"> 추가</span></button>
+                        <button type="button" class="btn-sched-admin alt" onclick="openEventImport()">📋 텍스트 분석<span class="nw"> 추가</span></button>
+                    </div>
+                    <div class="cal-views">
+                        <button type="button" class="cal-view-btn" data-view="month" onclick="setCalView('month')">월</button>
+                        <button type="button" class="cal-view-btn" data-view="week" onclick="setCalView('week')">주</button>
+                        <button type="button" class="cal-view-btn" data-view="list" onclick="setCalView('list')">목록</button>
+                    </div>
                 </div>
-            </div>
-            <div class="cal-filters" id="calFilters"></div>
-            <div class="cal-admin-bar" id="calAdminBar">
-                <button type="button" class="btn-sched-admin" onclick="openEventEditor(null)">＋ 일정 추가</button>
-                <button type="button" class="btn-sched-admin alt" onclick="openEventImport()">📋 단톡방 공지 붙여넣기로 추가</button>
             </div>
             <div id="calBody"></div>
             <div class="cal-legend" id="calLegend"></div>
@@ -2501,7 +2556,7 @@
                 <div class="admin-group-title">일정 · 공지</div>
                 <div class="admin-bar-btns">
                     <button type="button" class="btn-sched-admin" onclick="showMainTab('schedule'); openEventEditor(null)">＋ 일정 추가</button>
-                    <button type="button" class="btn-sched-admin alt" onclick="showMainTab('schedule'); openEventImport()">📋 단톡방 공지 붙여넣기로 일정 추가</button>
+                    <button type="button" class="btn-sched-admin alt" onclick="showMainTab('schedule'); openEventImport()">📋 텍스트 분석 추가</button>
                     <button type="button" class="btn-sched-admin" style="background:#0f766e;" onclick="showMainTab('notice'); openNoticeEditor(null)">✏️ 새 공지 작성</button>
                 </div>
             </div>
@@ -3357,6 +3412,38 @@
         try { sessionStorage.setItem('daeyeon_cal_filter', f); } catch (e) {}
         renderSchedule();
     }
+    // 📅 일정 학년 고르기 창 (v2.41.20)
+    function renderCalGradeMenu() {
+        const f = getCalFilter(), menu = document.getElementById('calGradeMenu'), btn = document.getElementById('calGradeBtn');
+        if (!menu || !btn) return;
+        const items = [];
+        if (getActiveUser()) {
+            const mine = myChildGrades();
+            items.push(`<button type="button" class="wide mine${f === 'mine' ? ' on' : ''}" onclick="pickCalGrade('mine')">⭐ 우리 아이${mine.length ? ' (' + mine.sort((a, b) => b - a).join('·') + '학년)' : ''}</button>`);
+        }
+        items.push(`<button type="button" class="wide${f === 'all' ? ' on' : ''}" onclick="pickCalGrade('all')">전체 학년</button>`);
+        ['6', '5', '4', '3', '2', '1'].forEach(g => items.push(`<button type="button"${f === g ? ' class="on"' : ''} onclick="pickCalGrade('${g}')">${g}학년</button>`));
+        menu.innerHTML = items.join('');
+        document.getElementById('calGradeLabel').innerHTML = f === 'mine' ? '⭐ 우리 아이' : f === 'all' ? '전체<span class="nw"> 학년</span>' : f + '학년';
+        btn.classList.toggle('on', f !== 'all');
+        btn.classList.toggle('mine', f === 'mine');
+    }
+    function toggleCalGradeMenu(e) {
+        if (e) e.stopPropagation();
+        const w = document.getElementById('calGradeWrap'), open = !w.classList.contains('open');
+        w.classList.toggle('open', open);
+        document.getElementById('calGradeBtn').setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    function closeCalGradeMenu() {
+        const w = document.getElementById('calGradeWrap');
+        if (!w) return;
+        w.classList.remove('open');
+        const b = document.getElementById('calGradeBtn');
+        if (b) b.setAttribute('aria-expanded', 'false');
+    }
+    function pickCalGrade(f) { closeCalGradeMenu(); setCalFilter(f); }
+    document.addEventListener('click', function (e) { const w = document.getElementById('calGradeWrap'); if (w && w.classList.contains('open') && !w.contains(e.target)) closeCalGradeMenu(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeCalGradeMenu(); });
     function calMove(dir) {
         if (calView === 'month') { calCursor = new Date(calCursor.getFullYear(), calCursor.getMonth() + dir, 1); }
         else if (calView === 'week') { calCursor = new Date(calCursor.getFullYear(), calCursor.getMonth(), calCursor.getDate() + 7 * dir); calSelected = ymdOf(calCursor); }
@@ -3374,16 +3461,8 @@
         document.querySelectorAll('.cal-view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === calView));
         document.getElementById('calAdminBar').classList.toggle('on', canEditSchedule());
 
-        // 학년 필터
-        const f = getCalFilter();
-        const chips = [];
-        if (getActiveUser()) {
-            const mine = myChildGrades();
-            chips.push(`<button type="button" class="cal-filter mine ${f === 'mine' ? 'active' : ''}" onclick="setCalFilter('mine')">⭐ 우리 아이${mine.length ? ' (' + mine.sort((a, b) => b - a).join('·') + '학년)' : ''}</button>`);
-        }
-        chips.push(`<button type="button" class="cal-filter ${f === 'all' ? 'active' : ''}" onclick="setCalFilter('all')">전체</button>`);
-        ['6', '5', '4', '3', '2', '1'].forEach(g => chips.push(`<button type="button" class="cal-filter ${f === g ? 'active' : ''}" onclick="setCalFilter('${g}')">${g}학년</button>`));
-        document.getElementById('calFilters').innerHTML = chips.join('');
+        // 학년 필터 — v2.41.20: 「2026년 10월」 오른쪽 [학년 ▾] 버튼 → 누르면 고르는 창 (학년 버튼 줄을 없애 화면을 넓게)
+        renderCalGradeMenu();
 
         document.getElementById('calLegend').innerHTML = Object.keys(SCHED_TYPES).map(k => `<span style="--c:${SCHED_TYPES[k].c}">${k}</span>`).join('');
 
@@ -6648,6 +6727,11 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.41.20', d: '2026-10-11', t: '일정 윗부분 줄이기', items: [
+            '학년 버튼 줄을 없애고 「2026년 10월」 오른쪽 [전체 학년 ▾] 버튼으로 — 누르면 우리 아이 · 전체 · 6~1학년 고르는 창이 뜸 (고른 학년이 버튼에 표시)',
+            '「단톡방 공지 붙여넣기로 추가」 → 「텍스트 분석 추가」로 이름 바꿈 (관리자 탭 버튼도 같이)',
+            '「＋ 일정 추가」 · 「텍스트 분석 추가」를 월 · 주 · 목록과 같은 줄에 — 버튼은 왼쪽, 월 · 주 · 목록은 오른쪽 (좁은 폰은 「＋ 일정」 · 「텍스트 분석」으로 짧게)'
+        ] },
         { v: 'v2.41.19', d: '2026-10-10', t: '유니폼 신청 창 품목 한 화면에', items: [
             '스마트폰에서 품목 줄 사이 여백을 줄여서 모자~겨울점퍼 8개 품목이 스크롤 없이 한 화면에 보이게',
             '고르기 칸 · 체크 칸 높이를 기기 글꼴과 상관없이 고정 (삼성 폰에서 칸이 더 커지던 것), 신청 창이 화면을 조금 더 넓게 씀'
@@ -7580,7 +7664,7 @@
             if (window.scrollY > 0 || currentMainTab === 'admin') return false;
             const lock = document.getElementById('lockOverlay');
             if (lock && getComputedStyle(lock).display !== 'none') return false;
-            if (target && target.closest && target.closest('.modal, .modal-overlay, #lockOverlay, .gsel-menu, input, textarea, select, .cal-grid, .ui-zoom-ctrl')) return false;
+            if (target && target.closest && target.closest('.modal, .modal-overlay, #lockOverlay, .gsel-menu, .cgsel-menu, input, textarea, select, .cal-grid, .ui-zoom-ctrl')) return false;
             return true;
         }
         function setPull(d) {
