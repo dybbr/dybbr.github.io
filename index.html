@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.39.1 · b261010";
+        const APP_VERSION = "v2.39.2 · b261010";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -358,7 +358,7 @@
         .bk-retry { margin-top: 6px; background: var(--kbo-blue); color: #fff; border: 0; border-radius: 10px; padding: 9px 16px; font-weight: 800; font-size: 13px; cursor: pointer; font-family: inherit; }
 
         /* 1️⃣ 말풍선 멘트 — 헤더 부캉이 아래에 잠깐 떠서 상황에 맞는 말을 함 (누르면 닫힘, 부캉이를 누르면 다시) */
-        .bk-say { position: absolute; z-index: 60; background: #fff; color: #0b2240; border: 2px solid #234164; border-radius: 14px; padding: 8px 12px; font-size: 13px; font-weight: 700; line-height: 1.4; max-width: min(260px, calc(100vw - 32px)); box-shadow: 0 6px 16px rgba(11,34,64,.22); cursor: pointer; opacity: 0; transform: translateY(-6px); transition: opacity .25s ease, transform .25s ease; pointer-events: none; }
+        .bk-say { position: absolute; z-index: 60; background: #fff; color: #0b2240; border: 2px solid #234164; border-radius: 14px; padding: 8px 12px; font-size: 13px; font-weight: 700; line-height: 1.4; max-width: min(340px, calc(100vw - 32px)); word-break: keep-all; overflow-wrap: anywhere; box-shadow: 0 6px 16px rgba(11,34,64,.22); cursor: pointer; opacity: 0; transform: translateY(-6px); transition: opacity .25s ease, transform .25s ease; pointer-events: none; }
         .bk-say.on { opacity: 1; transform: translateY(0); pointer-events: auto; }
         .bk-say::after { content: ''; position: absolute; left: var(--tail, 18px); top: -8px; width: 12px; height: 12px; background: #fff; border-left: 2px solid #234164; border-top: 2px solid #234164; transform: rotate(45deg); }
         /* 📌 줄어드는 고정 헤더 띠 (v2.30.0) — 아래로 내리면 부캉이·제목·시즌 효과만 남은 48px 띠가 위에 붙음 */
@@ -4971,9 +4971,10 @@
         if (!el || !head || !hd || !document.documentElement.classList.contains('is-authenticated')) return;
         const bn = document.getElementById('bkNote'); if (bn && bn.classList.contains('on')) return;   // 부캉이 알림 중엔 인사 말풍선 안 띄움 (겹침 방지)
         el.textContent = bkGlueEmoji(text || bkSayText());
+        el.style.left = '0px';   // 실제 말풍선 폭을 먼저 잼 (v2.39.2: 최대 340px, 짧은 말은 그만큼만)
         const z = (typeof getUiZoom === 'function') ? getUiZoom() : 1;
         const hr = head.getBoundingClientRect(), hb = hd.getBoundingClientRect();
-        const headW = hb.width / z, bubbleW = Math.min(260, headW - 32);
+        const headW = hb.width / z, bubbleW = Math.min(el.getBoundingClientRect().width / z || 340, headW - 32);
         const cx = (hr.left - hb.left + hr.width / 2) / z;
         let left = Math.max(16, Math.min(cx - 22, headW - 16 - bubbleW));
         el.style.top = ((hr.bottom - hb.top) / z + 8) + 'px';
@@ -6320,6 +6321,10 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.39.2', d: '2026-10-10', t: '말풍선 가로로 넓게', items: [
+            '부캉이 말풍선 최대 폭을 260px → 340px로 넓혀서 "감천초 (6학년) 상대로 승리했다캉! 다들 최고였어! 🏆" 같은 말이 한 줄에 들어감 (화면이 좁으면 화면 폭에 맞춤)',
+            '줄이 바뀔 때 "최고였 / 어!"처럼 낱말 중간에서 끊기지 않고 띄어쓰기 단위로 넘어감'
+        ] },
         { v: 'v2.39.1', d: '2026-10-10', t: '말풍선 이모티콘 줄바꿈', items: [
             '부캉이 말풍선 끝의 🍗·🏆·🎂 같은 이모티콘이 혼자 다음 줄로 떨어지던 것 → 바로 앞 글자와 같은 줄에 붙어서 나옴 (알림 말풍선도 같이)'
         ] },
