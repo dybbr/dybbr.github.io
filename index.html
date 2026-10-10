@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.41.11 · b261010";
+        const APP_VERSION = "v2.41.12 · b261010";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1022,6 +1022,7 @@
 
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 999; align-items: center; justify-content: center; padding: 10px; }
         .modal-content { background: #ffffff; width: 100%; max-width: 480px; max-height: 75vh; display: flex; flex-direction: column; border-radius: 14px; padding: 14px 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow: hidden; }
+        .modal-content { max-height: calc(75vh / var(--ui-zoom, 1)); max-height: calc(80dvh / var(--ui-zoom, 1)); }   /* v2.41.12: 화면 크기(110~130%)를 키워도 팝업 창 위아래가 안 잘리게 — 배율만큼 나눔 */
         .modal-header { font-size: 17px; font-weight: 800; margin-bottom: 8px; flex-shrink: 0; }
         .modal-scroll-body { flex: 1; overflow-y: auto; padding-right: 2px; }
         .form-group { margin-bottom: 10px; display: flex; flex-direction: column; gap: 4px; }
@@ -1373,7 +1374,7 @@
         .ev-dsw { width: 12px; height: 12px; flex: 0 0 auto; border-radius: 50%; border: 1px solid rgba(0,0,0,.25); }
         #evDressEtc { margin: 0 0 6px 40px; width: calc(100% - 40px) !important; }
         /* 📅 일정 입력 창 한 화면에 더 많이 (v2.41.1) — 날짜·시작·종료 한 줄, 창 높이 92%, 칸·버튼 간격 줄임 */
-        #eventEditModal .modal-content { max-height: 92vh; max-height: 92dvh; }
+        #eventEditModal .modal-content { max-height: calc(92vh / var(--ui-zoom, 1)); max-height: calc(92dvh / var(--ui-zoom, 1)); }   /* v2.41.12: 화면 크기 배율만큼 나눠야 실제 화면의 92% */
         #eventEditModal .modal-header { margin-bottom: 6px; }
         #eventEditModal .form-group { margin-bottom: 8px; gap: 3px; }
         #eventEditModal .form-group > input, #eventEditModal .form-group > select, #eventEditModal .form-group > textarea { padding: 6px 9px; min-height: 36px; font-size: 13.5px; }
@@ -2830,7 +2831,7 @@
 
 <!-- 6. 학부모 비상연락망 모달 -->
 <div id="emergencyContactsModal" class="modal">
-    <div class="modal-content" style="max-width: 480px; width: 95%; max-height: 90vh;">
+    <div class="modal-content" style="max-width: 480px; width: 95%; max-height: calc(90vh / var(--ui-zoom, 1));">
         <div class="modal-header" id="contactsModalTitle">🚨 학부모 비상연락망</div>
         <div class="contact-filter-row">
             <input type="text" id="contactSearchInput" placeholder="선수명 / 연락처 / 차량 / 주소 / 등하교 검색" style="padding: 7px 10px; border: 1px solid var(--card-border); border-radius: 6px; font-size: 12px;" oninput="renderEmergencyContacts()">
@@ -6551,6 +6552,10 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.41.12', d: '2026-10-10', t: '화면 크기 키워도 팝업 창 안 잘리게', items: [
+            '오른쪽 아래 화면 크기를 110~130%로 키우면 일정 입력 창(·비상연락망 등 팝업 창) 위아래가 화면 밖으로 나가서 취소·저장 버튼이 안 보이던 문제 수정',
+            '원인: 창 높이 "화면의 92%"에 확대 배율이 한 번 더 곱해져서 130%에서는 화면의 120%가 됨 → 배율만큼 나눠서 항상 실제 화면 안에 들어가게'
+        ] },
         { v: 'v2.41.11', d: '2026-10-10', t: '구분 칸·결과 버튼 정리, 화면 크기 키워도 안 잘리게', items: [
             '결과 버튼 "아직" → "미정", "🏆 승리" → "승리" (트로피 뺌)',
             '구분 칸을 더 좁게(104px) — 브라우저 기본 큰 화살표 대신 작은 화살표를 직접 그림, 그만큼 상대팀 칸이 넓어짐',
