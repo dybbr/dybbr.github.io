@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.41.14 · b261010";
+        const APP_VERSION = "v2.41.15 · b261010";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1408,6 +1408,13 @@
         #eventEditModal .ev-dt-row input::-webkit-calendar-picker-indicator { display: none; }   /* 화살표 아이콘을 빼서 칸을 좁게 — 칸을 누르면 선택 창이 열림 */
         #eventEditModal .ev-dt-row input::-webkit-date-and-time-value { text-align: center; }
         .ev-date-wrap { position: relative; }
+        /* v2.41.15: 날짜·시작·종료 / 구분·상대팀 칸 높이 맞춤 — 삼성 기기는 이름표에 영문·기호(「날짜 *」 「(VS)」)가 섞이면 그 줄만 높아져서
+           아래 칸이 밀려 내려갔음 → 이름표 줄 높이를 고정하고, 같은 줄 칸들은 남는 높이를 똑같이 채움 */
+        #eventEditModal .ev-dt-row > .form-group > label, #eventEditModal .ev-type-row > .form-group > label {
+            flex: 0 0 auto; line-height: 1.35; height: 1.35em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        #eventEditModal .ev-dt-row > .form-group > :last-child, #eventEditModal .ev-type-row > .form-group > :last-child { flex: 1 1 auto; }
+        #eventEditModal .ev-date-wrap { display: flex; }
+        #eventEditModal .ev-date-wrap input { display: block; flex: 1 1 auto; width: 100%; }
         #eventEditModal .ev-date-wrap input { padding: 6px 4px; min-height: 36px; font-size: 13.5px; color: transparent; -webkit-text-fill-color: transparent; }
         #eventEditModal .ev-date-wrap input::-webkit-datetime-edit { color: transparent; }
         .ev-date-txt { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 2px; pointer-events: none;
@@ -6594,6 +6601,11 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.41.15', d: '2026-10-10', t: '일정 입력 창 칸 높이 맞춤 (삼성 태블릿)', items: [
+            '삼성 미니 태블릿에서 날짜 칸이 시작·종료 칸보다 아래로 내려가고, 구분 칸이 상대팀 칸보다 위로 올라가 보이던 문제 수정',
+            '원인: 칸 이름에 영문·기호(「날짜 *」 「상대팀 (VS)」)가 섞이면 삼성 기기에서 그 이름 줄만 조금 높아져서 아래 칸이 밀려 내려감',
+            '이름 줄 높이를 고정하고, 같은 줄의 칸들은 높이를 똑같이 맞춤'
+        ] },
         { v: 'v2.41.14', d: '2026-10-10', t: '유니폼 주문 창 품목 이름 안 끊기게', items: [
             '작은 휴대폰이나 화면 크기를 키웠을 때 품목 이름이 "유/니/폼"처럼 한 글자씩 끊기던 문제 수정',
             '칸이 좁으면 품목 이름은 윗줄에 한 줄로, 사이즈·수량 칸은 바로 아랫줄에 넓게 나옴 (넓은 화면은 지금처럼 한 줄)',
