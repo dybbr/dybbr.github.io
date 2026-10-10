@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.43.0 · b261011";
+        const APP_VERSION = "v2.43.1 · b261011";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -7689,6 +7689,9 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.43.1', d: '2026-10-11', t: '구장 지도 끌기 고침', items: [
+            '🏟️ 구장 탭 지도를 손가락으로 아래로 끌면 화면 새로고침(당겨서 새로고침)까지 같이 되던 문제 수정 — 이제 지도만 움직임'
+        ] },
         { v: 'v2.43.0', d: '2026-10-11', t: '🏟️ 구장 탭', items: [
             '맨 위 탭에 「🏟️ 구장」 추가 — 자주 가는 훈련장 · 경기장을 지도와 함께 모아 봄 (학부모님도 볼 수 있음)',
             '구장마다 구분(경기장/훈련장) · 주소 · 다음 일정, 펼치면 주차 · 편의시설 · 집합 장소 · 메모 · 이 구장 일정 · 🚗 길찾기 · 주소 복사',
@@ -8677,7 +8680,7 @@
             if (window.scrollY > 0 || currentMainTab === 'admin') return false;
             const lock = document.getElementById('lockOverlay');
             if (lock && getComputedStyle(lock).display !== 'none') return false;
-            if (target && target.closest && target.closest('.modal, .modal-overlay, #lockOverlay, .gsel-menu, .cgsel-menu, input, textarea, select, .cal-grid, .ui-zoom-ctrl')) return false;
+            if (target && target.closest && target.closest('.modal, .modal-overlay, #lockOverlay, .gsel-menu, .cgsel-menu, input, textarea, select, .cal-grid, .ui-zoom-ctrl, .vn-map')) return false;   // v2.43.1: 구장 지도를 아래로 끌 때는 새로고침 안 함
             return true;
         }
         function setPull(d) {
