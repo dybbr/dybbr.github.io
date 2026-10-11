@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.44.7 · b261011";
+        const APP_VERSION = "v2.45.0 · b261011";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -958,6 +958,17 @@
         .grade-3 { background: #c5d3e8; color: #0b2240; }
         .grade-2 { background: #dce5f2; color: #1e3a66; }
         .grade-1 { background: #eef3f9; color: #27467a; border-color: #d3deee; }
+        /* 🎓 졸업생 (OB) 명단 (v2.45.0) */
+        .grade-grad { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+        .filter-btn.grad-tab { border-style: dashed; }
+        .filter-btn[hidden], .gsel-menu button[hidden] { display: none !important; }
+        tr.ob-row { cursor: default; }
+        tr.ob-year-row td { background: #fffbeb; color: #92400e; font-size: 13px; font-weight: 900; padding: 9px 12px; text-align: left; border-bottom: 1px solid #fde68a; }
+        .ob-year-head { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 900; color: #92400e; padding: 6px 2px 0; }
+        .ob-year-head::after { content: ''; flex: 1; height: 1px; background: #fde68a; }
+        .ob-card { cursor: default; }
+        .ob-card .card-photo-box { filter: saturate(.9); }
+        .ob-lock { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 6px; background: #f1f5f9; color: #64748b; font-size: 11px; font-weight: 800; }
 
         /* 🎨 포지션: 야구장에서 따온 색 — 투수=마운드 흙, 포수=장비 파랑, 내야=내야 흙, 외야=잔디, 지명타자=보라. 여러 개면 칩을 나눠서 */
         .pos-chips { display: inline-flex; flex-wrap: wrap; gap: 3px; justify-content: center; vertical-align: middle; }
@@ -1321,6 +1332,24 @@
         #adminSection .admin-bar-btns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; width: 100%; }
         #adminSection .admin-bar-btns > button { width: 100%; min-height: 44px; padding: 9px 10px; border-radius: 10px; font-size: 14px; font-weight: 800; justify-content: center; align-items: center; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.2px; }
         #adminSection #btnEmergencyContacts, #adminSection .admin-bar-btns > button.ops-wide { grid-column: 1 / -1; }
+        /* 🎓 새 학년도 (v2.45.0) */
+        .btn-season { background: #b45309; color: #fff; border: none; cursor: pointer; }
+        .season-stat { font-size: 12.5px; font-weight: 700; color: #475569; margin: 0 0 8px; line-height: 1.55; word-break: keep-all; }
+        .season-due { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; border-radius: 10px; padding: 8px 10px; margin: 0 0 8px; font-size: 12.5px; font-weight: 800; }
+        .season-due button { flex-shrink: 0; border: none; background: #dc2626; color: #fff; border-radius: 8px; padding: 7px 10px; font-size: 12px; font-weight: 800; cursor: pointer; }
+        #seasonModal .modal-content { max-width: 460px; }
+        .ss-head { font-size: 15px; font-weight: 900; color: #0b2240; margin: 2px 0 8px; }
+        .ss-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; font-size: 13px; line-height: 1.6; }
+        .ss-box b { font-weight: 900; }
+        .ss-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+        .ss-chip { font-size: 11.5px; font-weight: 800; background: #fff; border: 1px solid #e2e8f0; border-radius: 999px; padding: 2px 8px; color: #334155; }
+        .ss-list { margin: 0; padding-left: 18px; font-size: 12.5px; line-height: 1.65; color: #334155; }
+        .ss-list li { margin-bottom: 3px; }
+        .ss-opt { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-weight: 800; cursor: pointer; }
+        .ss-opt input { width: 18px; height: 18px; margin: 0; }
+        .ss-warn { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; font-size: 12.5px; font-weight: 700; line-height: 1.55; }
+        .ss-danger { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; font-size: 12.5px; font-weight: 800; line-height: 1.55; }
+        .ss-link { display: inline-block; margin-top: 6px; color: #0369a1; font-weight: 800; text-decoration: underline; cursor: pointer; background: none; border: none; padding: 0; font-size: 13px; }
         .uni-st { display: inline-flex; align-items: center; gap: 4px; margin-left: 3px; padding: 1px 7px 1px 6px; border-radius: 10px; background: rgba(255,255,255,.14); font-size: 11.5px; font-weight: 900; vertical-align: 1px; }
         .uni-st::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 2px rgba(34,197,94,.25); }
         .uni-st.on { color: #bbf7d0; }
@@ -1857,6 +1886,7 @@
                 border-bottom: 1px solid var(--card-border);
             }
             #listContainer tr.clickable-row:last-child { border-bottom: none; }
+            #listContainer tr.ob-year-row, #listContainer tr.ob-year-row > td { display: block; }   /* 🎓 졸업 연도 줄은 가로 전체 */
             #listContainer tr.clickable-row > td { padding: 0; border: none; text-align: left; min-width: 0; }
             #listContainer tr.clickable-row > td:nth-child(1) { grid-area: no; text-align: center; font-size: 13px; line-height: 1; white-space: nowrap; letter-spacing: -0.3px; }
             #listContainer tr.clickable-row > td.td-no:not(.no-empty):not(.has-jsy)::before { content: "No."; font-size: 9.5px; font-weight: 700; opacity: 0.7; margin-right: 1px; }
@@ -2411,6 +2441,16 @@
     .grade-3 { background: #2a4167; color: #c3d0e6; }
     .grade-2 { background: #213450; color: #a8b8d3; }
     .grade-1 { background: #1a2840; color: #8fa2c2; border-color: #2c3d5a; }
+    .grade-grad { background: rgba(251,191,36,.14); color: #f5cf6b; border-color: rgba(251,191,36,.4); }
+    tr.ob-year-row td { background: #2a2416; color: #f5cf6b; border-bottom-color: #4a3d1c; }
+    .ob-year-head { color: #f5cf6b; } .ob-year-head::after { background: #4a3d1c; }
+    .ob-lock { background: #1b2638; color: #97a3b7; }
+    .ss-box { background: #1b2638 !important; border-color: #2a374e !important; }
+    .ss-warn { background: #3a2a14 !important; border-color: #6b4f1d !important; color: #f5cf6b !important; }
+    .ss-danger { background: #3a1d22 !important; border-color: #6b2d36 !important; color: #f0a3a3 !important; }
+    .ss-chip { background: #151e2e !important; border-color: #2a374e !important; color: #dde3ec !important; }
+    .season-stat { color: #bcc6d4 !important; }
+    .season-due { background: #3a1d22 !important; border-color: #6b2d36 !important; color: #f0a3a3 !important; }
     .pos-tag { color: #b8c2d1 !important; background: rgba(148,163,184,.12); border-color: rgba(148,163,184,.28); }
     .pos-pitcher  { background: rgba(225,105,65,.16); color: #f0ae90 !important; border-color: rgba(225,105,65,.34); }
     .pos-catcher  { background: rgba(90,140,230,.16); color: #a9c4f2 !important; border-color: rgba(90,140,230,.34); }
@@ -2670,6 +2710,7 @@
                     <button type="button" data-grade="3" class="" onclick="pickGrade('3')">3학년</button>
                     <button type="button" data-grade="2" class="" onclick="pickGrade('2')">2학년</button>
                     <button type="button" data-grade="1" class="" onclick="pickGrade('1')">1학년</button>
+                    <button type="button" data-grade="grad" class="" onclick="pickGrade('grad')" hidden>🎓 졸업생</button>
                 </div>
             </div>
             <div class="grade-filters" id="gradeFilters">
@@ -2681,6 +2722,7 @@
                 <button class="filter-btn" data-grade="3" onclick="setGrade('3', this)">3학년</button>
                 <button class="filter-btn" data-grade="2" onclick="setGrade('2', this)">2학년</button>
                 <button class="filter-btn" data-grade="1" onclick="setGrade('1', this)">1학년</button>
+                <button class="filter-btn grad-tab" data-grade="grad" onclick="setGrade('grad', this)" hidden>🎓 졸업생</button>
             </div>
 
             <div class="control-right">
@@ -2779,6 +2821,17 @@
                 <div class="admin-empty" id="adminOpsEmpty">이 등급에서 쓸 수 있는 운영 기능이 없습니다.</div>
             </div>
 
+            <!-- 🎓 새 학년도 (v2.45.0) — 대표님 · 개발자만 -->
+            <div class="admin-group" id="adminGroupSeason" style="display: none;">
+                <div class="admin-group-title">🎓 새 학년도</div>
+                <p class="admin-role-desc" style="margin-bottom: 8px;">1년에 한 번, <b>6학년 졸업</b>과 <b>나머지 한 학년씩 올리기</b>를 한꺼번에 해요. 누르면 먼저 미리보기가 나오고, 바꾸기 전에 시트 전체를 드라이브에 백업해요.</p>
+                <div class="season-stat" id="seasonStat"></div>
+                <div id="seasonDue"></div>
+                <div class="admin-bar-btns">
+                    <button type="button" class="btn-season" onclick="openSeasonModal()">🎓 새 학년도 넘기기</button>
+                </div>
+            </div>
+
             <div class="admin-group" id="adminGroupJersey" style="display: none;">
                 <div class="admin-group-title">👕 학년별·코치진·감독님 유니폼 색</div>
                 <p class="admin-role-desc" style="margin-bottom: 8px;">색을 골라 저장하면 그 학년 선수들의 <b>등번호 유니폼 색</b>과 이미지형 카드의 <b>사진 테두리 색</b>이 함께 바뀌고, 모든 기기에 바로 반영됩니다.<br>색은 학년마다 정해져 있어서, 새 학기에 아이들 학년이 올라가면 올라간 학년의 색으로 자동으로 바뀌어요. (예: 5학년 색이 파랑이면, 6학년이 된 아이는 6학년 색으로 보여요)</p>
@@ -2854,6 +2907,18 @@
         <div class="modal-btns" style="justify-content: space-between;">
             <button class="btn-cancel" id="btnVenueDelete" style="color:#b91c1c;border-color:#fecaca;background:#fff5f5;" onclick="deleteVenueEditor()">삭제</button>
             <div style="display:flex;gap:6px;"><button class="btn-cancel" onclick="closeModal('venueEditModal')">취소</button><button class="btn-save" id="btnVenueSave" onclick="saveVenueEditor()">저장</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- 🎓 새 학년도 넘기기 (v2.45.0) — 미리보기 → 확인 → 실행 -->
+<div id="seasonModal" class="modal" onclick="if (event.target === this && !seasonBusy) closeModal('seasonModal')">
+    <div class="modal-content">
+        <div class="modal-header">🎓 새 학년도 넘기기</div>
+        <div class="modal-scroll-body" id="seasonBody"></div>
+        <div class="modal-btns" style="justify-content: space-between;">
+            <button class="btn-cancel" id="seasonClose" onclick="if (!seasonBusy) closeModal('seasonModal')">닫기</button>
+            <button class="btn-save" id="seasonGoBtn" style="background:#b45309;" onclick="seasonGo()" disabled>🎓 넘기기</button>
         </div>
     </div>
 </div>
@@ -3474,6 +3539,8 @@
     // 전역 변수
     // ==========================================================
     let players = [];
+    let gradPlayers = [];     // 🎓 졸업생 (OB) 명단 — 서버 「졸업생 명단」 탭 (v2.45.0)
+    let rosterSeason = 0;     // 명단 제목의 학년도 (서버가 알려 줌)
     const VALID_ROLES = ['dev', 'super', 'sub', 'general'];
     let currentRole = (function () {
         if (!isAuthValid()) return 'guest';   // 만료된 관리자 권한이 되살아나지 않도록
@@ -3575,12 +3642,14 @@
         const anyOps = bar && Array.from(bar.querySelectorAll('button')).some(b => b.style.display !== 'none');
         document.getElementById('adminOpsEmpty').style.display = anyOps ? 'none' : 'block';
         if (bar) bar.style.display = anyOps ? 'flex' : 'none';
-        if (bar) {   // v2.44.4: 운영 버튼 2칸 격자 — 🚨 비상 연락은 한 줄 전체, 나머지가 홀수개면 마지막 버튼도 한 줄 전체 (총무님: 비상 연락 + 비번 관리)
-            const vis = Array.from(bar.querySelectorAll('.admin-bar-btns > button')).filter(b => b.style.display !== 'none');
+        // v2.44.4: 관리 탭 버튼 2칸 격자 — 🚨 비상 연락은 한 줄 전체, 나머지가 홀수개면 마지막 버튼도 한 줄 전체 (v2.45.0: 모든 묶음에 똑같이)
+        document.querySelectorAll('#adminSection .admin-bar-btns').forEach(box => {
+            const vis = Array.from(box.querySelectorAll(':scope > button')).filter(b => b.style.display !== 'none');
             vis.forEach(b => b.classList.remove('ops-wide'));
             const rest = vis.filter(b => b.id !== 'btnEmergencyContacts');
             if (rest.length % 2) rest[rest.length - 1].classList.add('ops-wide');
-        }
+        });
+        refreshSeasonStatus();   // 🎓 새 학년도 (대표님 · 개발자)
         document.getElementById('adminGroupContent').style.display = canEditSchedule() ? '' : 'none';
         const devGroup = document.getElementById('adminGroupDev');
         if (devGroup) devGroup.style.display = (currentRole === 'dev') ? '' : 'none';   // 개발 카테고리는 개발자만
@@ -5906,6 +5975,9 @@
 
         if (res && res.locked) {
             bkNotify('fail', '로그인 시도가 너무 많캉…', res.message || '잠시 후 다시 시도해 주세요', { ms: 6000 });
+        } else if (res && res.grad) {   // 🎓 v2.45.0: 졸업생 보호자 번호
+            sendActivityLog('인증실패', '미상', '졸업생 보호자 번호');
+            bkNotify('info', '졸업을 축하해캉! 🎓', res.message || '졸업 처리가 끝나 더 이상 들어올 수 없어요', { ms: 8000 });
         } else {
             sendActivityLog('인증실패', '미상', '로그인 실패');   // ← 입력한 비번/번호는 더 이상 기록하지 않는다
             bkNotify('fail', '번호나 비밀번호가 맞지 않캉…', '등록된 휴대폰 번호 또는 관리자 비밀번호를 확인해 주세요');
@@ -6844,6 +6916,7 @@
 
         updateUniformButtonVisibility();
         const canViewPhoto = (currentRole === 'sub' || currentRole === 'general' || isSuperOrDev());   // 코치진·총무님·대표님: 비공개 정보 열람
+        if (selectedGrade === 'grad') { renderGrads(rawQuery, numberQuery, canViewPhoto); return; }   // 🎓 졸업생 (v2.45.0)
 
         const filtered = players.filter(p => {
             const isVisible = (p.visible !== false);
@@ -6877,7 +6950,7 @@
 
         const activeStaff = players.filter(p => isStaff(p.grade) && (isSuperOrDev() || p.visible !== false)).length;
         const activeStudent = players.filter(p => !isStaff(p.grade) && (isSuperOrDev() || p.visible !== false)).length;
-        document.getElementById('rosterCountText').textContent = `2026 OFFICIAL ROSTER (코칭스태프 ${activeStaff}명 · 등록선수 ${activeStudent}명)`;
+        document.getElementById('rosterCountText').textContent = `${rosterSeason || new Date().getFullYear()} OFFICIAL ROSTER (코칭스태프 ${activeStaff}명 · 등록선수 ${activeStudent}명)`;   // v2.45.0: 학년도는 서버 값
         const mhs = document.getElementById('miniHeadSub'); if (mhs) mhs.textContent = `선수 ${activeStudent}명 ⬆`;
 
         renderBdayBand();   // 🎂 오늘 생일 띠
@@ -6977,6 +7050,199 @@
             `;
         }).join('');
         fitCardNames();
+    }
+
+    // ==========================================================
+    // 🎓 졸업생 (OB) 명단 (v2.45.0) — 명단 탭 「🎓 졸업생」: 졸업 연도별로 묶어서 사진 · 배번 · 이름 · 포지션
+    //   생년월일 · 키 · 몸무게는 서버가 안 보냄 · 선수 상세 페이지로는 안 감 (배번이 새 선수에게 다시 쓰일 수 있어서)
+    // ==========================================================
+    function syncGradFilter() {
+        const has = gradPlayers.length > 0;
+        document.querySelectorAll('[data-grade="grad"]').forEach(b => { b.hidden = !has; });
+        if (!has && selectedGrade === 'grad') setGrade('all', document.querySelector('#gradeFilters .filter-btn[data-grade="all"]'));
+    }
+    function gradPhotoUrl(g) { return (g.photoLink && /^https?:/.test(g.photoLink)) ? g.photoLink : defaultAvatar; }   // 배번 사진(data/photos)은 새 선수 것일 수 있어 안 씀
+    function renderGrads(rawQuery, numberQuery, canViewPhoto) {
+        const tableBody = document.getElementById('tableBody'), cardContainer = document.getElementById('cardContainer'), notice = document.getElementById('statusNotice');
+        const list = gradPlayers.filter(g => (isSuperOrDev() || g.visible !== false) && (
+            g.name.toLowerCase().includes(rawQuery) || (g.no && (String(g.no).includes(rawQuery) || (numberQuery && String(g.no) === numberQuery))) ||
+            (g.pos && g.pos.includes(rawQuery)) || (g.gradYear && g.gradYear.includes(rawQuery))));
+        document.getElementById('rosterCountText').textContent = `🎓 졸업생 (OB) · ${gradPlayers.filter(g => isSuperOrDev() || g.visible !== false).length}명`;
+        renderBdayBand();
+        if (!list.length) {
+            tableBody.innerHTML = ''; cardContainer.innerHTML = '';
+            notice.innerHTML = bkState('empty bk-s-search', '조건에 맞는 졸업생이 없습니다.', '어디 숨었캉?');
+            notice.style.display = 'block';
+            return;
+        }
+        notice.style.display = 'none';
+        const years = [...new Set(list.map(g => g.gradYear || '연도 미상'))].sort((a, b) => String(b).localeCompare(String(a)));
+        const byNo = (a, b) => (a.no && b.no && a.no !== b.no) ? a.no - b.no : (a.no && !b.no) ? -1 : (!a.no && b.no) ? 1 : a.name.localeCompare(b.name, 'ko');
+        const yLabel = y => /^\d{4}$/.test(y) ? `${y}년 졸업` : y;
+        const photoOf = (g, big) => {
+            if (g.hidePhoto && !canViewPhoto) return big ? '<div class="ob-lock"><span style="font-size:28px;opacity:.4;">👤</span>🔒 사진 비공개</div>' : '<div class="table-thumb-wrap" style="background:#f1f5f9;"><span style="font-size:15px; opacity:0.6;">🔒</span></div>';
+            const u = escapeHtml(gradPhotoUrl(g));
+            return big ? `<img class="card-img" src="${u}" alt="" loading="lazy" onerror="handleImgError(this)">` : `<div class="table-thumb-wrap"><img class="table-thumb" src="${u}" alt="" onerror="handleImgError(this)"></div>`;
+        };
+        const tag = g => `<span class="grade-tag grade-grad">🎓 ${escapeHtml(g.gradYear || '졸업')}</span>`;
+        const hid = g => g.visible === false ? '<span class="hidden-badge">숨김</span>' : '';
+        tableBody.innerHTML = years.map(y => {
+            const gs = list.filter(g => (g.gradYear || '연도 미상') === y).sort(byNo);
+            return `<tr class="ob-year-row"><td colspan="8">🎓 ${escapeHtml(yLabel(y))} · ${gs.length}명</td></tr>` + gs.map(g => `
+                <tr class="clickable-row ob-row">
+                    <td class="td-no${g.no ? '' : ' no-empty'}">${g.no || '-'}</td>
+                    <td>${photoOf(g, false)}</td>
+                    <td class="td-name">${escapeHtml(g.name)}${hid(g)}</td>
+                    <td>${tag(g)}</td>
+                    <td>${getPosBadge(g.pos, '6')}</td>
+                    <td>${getBtBadge(g.bt, '6')}</td>
+                    <td class="td-meta"></td>
+                    <td class="td-meta"></td>
+                </tr>`).join('');
+        }).join('');
+        cardContainer.innerHTML = years.map(y => {
+            const gs = list.filter(g => (g.gradYear || '연도 미상') === y).sort(byNo);
+            return `<div class="ob-year-head">🎓 ${escapeHtml(yLabel(y))} · ${gs.length}명</div>` + gs.map(g => {
+                const posBadge = (g.pos && g.pos !== '-' && g.pos !== '정보없음' && g.pos !== '미정') ? getPosBadge(g.pos, '6') : '';
+                return `
+                <div class="player-card ob-card">
+                    <div class="card-photo-box">
+                        <span class="card-no-badge">${g.no ? 'No.' + g.no : 'OB'}</span>
+                        ${photoOf(g, true)}
+                    </div>
+                    <div class="card-info">
+                        <div class="card-name-row">
+                            <span class="card-name">${g.no ? `<span class="card-name-no">No.${g.no}</span>` : ''}<span>${escapeHtml(g.name)}</span>${hid(g)}</span>
+                            ${tag(g)}
+                        </div>
+                        <div class="card-meta">${getBtBadge(g.bt, '6')}${posBadge}</div>
+                    </div>
+                </div>`;
+            }).join('');
+        }).join('');
+        fitCardNames();
+    }
+
+    // ==========================================================
+    // 🎓 새 학년도 넘기기 (v2.45.0) — 관리 탭 · 대표님 · 개발자만
+    //   미리보기(seasonPreview) → 확인 → 실행(seasonRollover): 백업 → 6학년은 졸업생 탭으로 · 나머지 학년 +1 → 유니폼 신청 보관
+    //   졸업생 연락망은 졸업한 해 3월 31일이 지나면 「지우기」 알림 (seasonPurge)
+    // ==========================================================
+    let seasonPv = null, seasonBusy = false, seasonStatusCache = null, seasonStatusReq = null;
+    function seasonCan() { return currentRole === 'super' || currentRole === 'dev'; }
+    async function refreshSeasonStatus(force) {
+        const grp = document.getElementById('adminGroupSeason');
+        if (!grp) return;
+        grp.style.display = seasonCan() ? '' : 'none';
+        if (!seasonCan()) return;
+        const stat = document.getElementById('seasonStat'), due = document.getElementById('seasonDue');
+        if (seasonStatusCache && !force) return renderSeasonStatus();
+        if (seasonStatusReq) return seasonStatusReq;   // 이미 불러오는 중이면 한 번만
+        stat.textContent = '불러오는 중…';
+        let done; seasonStatusReq = new Promise(r => { done = r; });
+        try {
+            const r = await apiGetJson('action=seasonStatus');
+            if (!r || r.result !== 'success') throw new Error((r && r.message) || '상태를 못 불러왔어요');
+            seasonStatusCache = r;
+        } catch (e) { stat.textContent = '상태를 못 불러왔어요 (' + e.message + ')'; due.innerHTML = ''; seasonStatusReq = null; done(); return; }
+        seasonStatusReq = null; done();
+        renderSeasonStatus();
+    }
+    function renderSeasonStatus() {
+        const r = seasonStatusCache; if (!r) return;
+        const stat = document.getElementById('seasonStat'), due = document.getElementById('seasonDue');
+        const last = r.last;
+        stat.innerHTML = `지금 명단: <b>${r.season}학년도</b>` + (last ? ` · 마지막으로 넘긴 날: ${escapeHtml(String(last.at || '').slice(0, 10))} (${escapeHtml(last.by || '')}, ${last.season}학년도 → 졸업 ${last.grads}명)` : ' · 아직 넘긴 적 없어요');
+        const gc = r.gradContacts || {};
+        if (gc.due > 0) due.innerHTML = `<div class="season-due"><span>🗑️ 졸업생 연락처 ${gc.due}명 — 보관 기간(3월 31일)이 지났어요</span><button type="button" onclick="seasonPurge()">지우기</button></div>`;
+        else if (gc.total > 0) due.innerHTML = `<div class="season-stat">🗂️ 졸업생 연락처 ${gc.total}명 보관 중 · ${escapeHtml(gc.dueAfter || '')} 지나면 지우기 알림</div>`;
+        else due.innerHTML = '';
+    }
+    async function seasonPurge() {
+        const gc = (seasonStatusCache && seasonStatusCache.gradContacts) || {};
+        const ok = await bkConfirm(`졸업생 연락처 ${gc.due || ''}명을 지울까요?`, { sub: '「졸업생 연락망」 탭에서 보관 기간이 지난 줄만 지워요. 지우면 되돌릴 수 없어요 (넘기기 때 만든 백업본에는 남아 있어요).', ok: '지우기', danger: true });
+        if (!ok) return;
+        bkNotify('saving', '졸업생 연락처 지우는 중이캉');
+        try {
+            const r = await apiGetJson('action=seasonPurge');
+            if (!r || r.result !== 'success') throw new Error((r && r.message) || '지우지 못했어요');
+            bkNotify('done', `졸업생 연락처 ${r.deleted}명 지웠캉 ✓`);
+            refreshSeasonStatus(true);
+        } catch (e) { bkNotify('fail', null, e.message); }
+    }
+    function openSeasonModal() {
+        if (!seasonCan()) return;
+        seasonPv = null;
+        document.getElementById('seasonGoBtn').disabled = true;
+        document.getElementById('seasonGoBtn').textContent = '🎓 넘기기';
+        document.getElementById('seasonBody').innerHTML = bkState('loading', '미리보기를 만드는 중...', '시트를 살펴보는 중이캉');
+        document.getElementById('seasonModal').style.display = 'flex';
+        loadSeasonPreview();
+    }
+    async function loadSeasonPreview() {
+        const body = document.getElementById('seasonBody');
+        try {
+            const r = await apiGetJson('action=seasonPreview');
+            if (!r || r.result !== 'success') throw new Error((r && r.message) || '미리보기를 못 만들었어요');
+            seasonPv = r;
+        } catch (e) { body.innerHTML = `<div class="ss-danger">${escapeHtml(e.message)}</div>`; return; }
+        renderSeasonPreview();
+    }
+    function renderSeasonPreview() {
+        const r = seasonPv, body = document.getElementById('seasonBody'), go = document.getElementById('seasonGoBtn');
+        const R = r.roster || {}, C = r.contacts || {}, U = r.uniform || {};
+        if (R.error || C.error) { body.innerHTML = `<div class="ss-danger">${escapeHtml(R.error || C.error)}</div>`; go.disabled = true; return; }
+        const nG = (R.grads || []).length, from = R.from || {};
+        const ups = [5, 4, 3, 2, 1].filter(g => from[g]).map(g => `${g}→${g + 1}학년 <b>${from[g]}명</b>`).join(' · ') || '없음';
+        const chips = (R.grads || []).map(g => `<span class="ss-chip">${g.no ? 'No.' + g.no + ' ' : ''}${escapeHtml(g.name)}</span>`).join('');
+        const warn = [];
+        if ((R.odd || []).length) warn.push(`학년을 알 수 없어 그대로 두는 선수: ${R.odd.map(x => escapeHtml(x.name) + (x.grade ? '(' + escapeHtml(x.grade) + ')' : '(빈칸)')).join(', ')}`);
+        if ((C.odd || []).length) warn.push(`비상연락망에서 학년을 알 수 없는 줄: ${C.odd.map(x => escapeHtml(x.name || '(이름 없음)')).join(', ')}`);
+        if ((r.onlyRoster || []).length) warn.push(`선수정보엔 6학년인데 비상연락망엔 6학년이 아닌 선수: ${r.onlyRoster.map(escapeHtml).join(', ')}`);
+        if ((r.onlyContacts || []).length) warn.push(`비상연락망엔 6학년인데 선수정보엔 6학년이 아닌 선수: ${r.onlyContacts.map(escapeHtml).join(', ')}`);
+        body.innerHTML =
+            (r.already ? `<div class="ss-danger">⚠️ ${r.season}학년도는 이미 넘겼어요 (${escapeHtml(String(r.last && r.last.at || ''))}). 한 번 더 넘기면 지금 6학년이 또 졸업 처리돼요 — 정말 필요할 때만 「다시 넘기기」를 누르세요.</div>` : '') +
+            `<div class="ss-head">${r.season}학년도 → ${r.season + 1}학년도</div>` +
+            `<div class="ss-box">🎓 졸업 <b>${nG}명</b> <small>(${r.gradYear}년 졸업으로 기록)</small><div class="ss-chips">${chips || '<span class="ss-chip">없음</span>'}</div></div>` +
+            `<div class="ss-box">⬆️ ${ups}<br><small>감독 · 코치님은 그대로예요</small></div>` +
+            (warn.length ? `<div class="ss-warn">${warn.map(w => '⚠️ ' + w).join('<br>')}</div>` : '') +
+            `<div class="ss-box"><ul class="ss-list">
+                <li>💾 바꾸기 전에 <b>시트 전체를 드라이브에 백업</b> (같은 폴더)</li>
+                <li>👥 선수정보: 졸업생 ${nG}명 → 「졸업생 명단」 탭으로 옮김 (명단 탭 「🎓 졸업생」에서 볼 수 있어요)</li>
+                <li>🚨 비상연락망: 졸업생 ${(C.grads || []).length}명 → 「졸업생 연락망」 탭으로 옮김 · 졸업생 보호자는 더 이상 로그인 안 돼요 · ${r.gradYear}년 3월 31일이 지나면 지우기 알림</li>
+                <li>👕 유니폼 신청(${U.rows || 0}줄): 「${escapeHtml(U.archiveName || '')}」 탭으로 복사해 보관${U.archiveExists ? ' (이미 있어서 그대로)' : ''}
+                    <label class="ss-opt"><input type="checkbox" id="seasonClearUniform" checked> 보관 후 비우고 새로 시작</label>
+                    <small>체크를 끄면 졸업생 ${U.grads || 0}명 줄만 빼고 학년 +1</small></li>
+                <li>📅 일정 · 공지 · 구장은 그대로</li>
+            </ul></div>`;
+        go.disabled = false;
+        go.textContent = r.already ? '⚠️ 다시 넘기기' : '🎓 넘기기';
+    }
+    async function seasonGo() {
+        const r = seasonPv; if (!r || seasonBusy) return;
+        const nG = (r.roster.grads || []).length;
+        const ok = await bkConfirm(`${r.season}학년도를 넘길까요?`, { sub: `6학년 ${nG}명 졸업 · 나머지는 한 학년씩 올라가요. 바꾸기 전에 백업본을 만들어서 되돌릴 수 있어요.`, ok: r.already ? '다시 넘기기' : '넘기기', danger: true });
+        if (!ok) return;
+        const clear = document.getElementById('seasonClearUniform') && document.getElementById('seasonClearUniform').checked;
+        const body = document.getElementById('seasonBody'), go = document.getElementById('seasonGoBtn'), close = document.getElementById('seasonClose');
+        seasonBusy = true; go.disabled = true; close.disabled = true;
+        body.innerHTML = bkState('loading', '넘기는 중... (30초쯤 걸려요)', '백업하고 옮기는 중이캉 · 창을 닫지 마세요');
+        let res;
+        try {
+            res = await apiGetJson(`action=seasonRollover&expectR=${nG}&expectC=${(r.contacts.grads || []).length}&clearUniform=${clear ? 1 : 0}${r.already ? '&force=1' : ''}`);
+        } catch (e) { res = { result: 'error', message: '서버와 연결이 끊겼어요. 시트가 바뀌었는지 확인한 뒤 다시 해 주세요. (' + e.message + ')' }; }
+        seasonBusy = false; close.disabled = false;
+        if (!res || res.result !== 'success') {
+            body.innerHTML = `<div class="ss-danger">${escapeHtml((res && res.message) || '넘기지 못했어요')}</div>` + (res && res.code === 'changed' ? '<button type="button" class="ss-link" onclick="openSeasonModal()">🔄 미리보기 다시 열기</button>' : '');
+            return;
+        }
+        body.innerHTML = `<div class="ss-head">✅ ${res.season}학년도 넘기기 끝!</div>
+            <div class="ss-box">🎓 졸업 <b>${res.grads}명</b> (${res.gradYear}년 졸업) · ⬆️ 학년 올림 <b>${res.bumped}명</b><br>🚨 졸업생 연락처 ${res.contacts}명 보관<br>👕 유니폼: ${escapeHtml(res.uniform || '')}</div>
+            <div class="ss-box">💾 백업: ${escapeHtml(res.backupName || '')}<br><button type="button" class="ss-link" data-u="${escapeHtml(res.backupUrl || '')}" onclick="openUrl(this.dataset.u)">백업 파일 열기</button></div>`;
+        go.textContent = '완료'; go.disabled = true;
+        bkNotify('done', `${res.season + 1}학년도 시작이캉! 🎓`, `졸업 ${res.grads}명 · 학년 올림 ${res.bumped}명`);
+        seasonStatusCache = null; refreshSeasonStatus(true);
+        try { loadGoogleSheetData(); } catch (e) {}
     }
 
     // 🦈 긴 이름(킬브라이드 이든 등)이 카드 이름 줄을 3줄로 꺾지 않게: ① 살짝 축소 → ② 번호(No.) 접기(사진 위 배지에 이미 있음) → ③ 더 축소(최소 13px) → ④ 그래도 안 되면 2줄 (v2.27.2)
@@ -7853,6 +8119,14 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.45.0', d: '2026-10-11', t: '🎓 새 학년도 넘기기 · 졸업생(OB) 명단', items: [
+            '관리 탭 「🎓 새 학년도」(대표님 · 개발자): 1년에 한 번 누르면 미리보기 → 확인 → 6학년 졸업 + 나머지 한 학년씩 올리기를 한꺼번에',
+            '넘기기 전에 시트 전체를 드라이브에 자동 백업 · 미리보기 뒤에 시트가 바뀌었거나 같은 학년도를 두 번 누르면 멈춤',
+            '졸업생은 지우지 않고 「졸업생 명단」 탭으로 옮김 → 명단 탭 「🎓 졸업생」에서 졸업 연도별 OB 명단 (생년월일 · 키 · 몸무게는 안 보임)',
+            '졸업생 보호자 연락처는 「졸업생 연락망」 탭에 보관 → 졸업한 해 3월 31일이 지나면 관리 탭에 「지우기」 알림 · 졸업생 보호자 번호로는 로그인 안 됨',
+            '유니폼 신청은 「유니폼 의류 신청정보 (학년도)」 탭으로 보관한 뒤 비우고 새로 시작 (선택)',
+            '명단 제목의 연도(2026 OFFICIAL ROSTER)가 학년도에 맞춰 바뀜 · 관리 탭 모든 묶음의 버튼도 2칸 격자로 정리'
+        ] },
         { v: 'v2.44.7', d: '2026-10-11', t: '👕 일정 창 복장 칸 정렬', items: [
             '일정 추가 · 수정 창의 복장 고르기(상의 · 하의 · 이너 · 겉옷 · 기타)를 위 제목 · 장소 · 참가선수 입력칸과 같은 위치에서 시작하게 오른쪽으로 맞춤',
             '「아직 선택하지 않았어요」 표시도 같은 줄에 · 상의 · 하의 이름표는 「복장」 아래 살짝 들여쓰기'
@@ -8951,6 +9225,14 @@
                 hideWeight: !!p.hideWeight,
                 photoLink: String(p.photoLink || '').trim()
             })).filter(p => p.name);
+            // 🎓 졸업생 (v2.45.0) — 명단과 따로 (배번이 새 선수에게 다시 쓰여도 섞이지 않게)
+            gradPlayers = (Array.isArray(res.grads) ? res.grads : []).map(g => ({
+                no: (!isNaN(parseInt(g.no, 10)) && parseInt(g.no, 10) > 0) ? parseInt(g.no, 10) : 0,
+                name: String(g.name || '').trim(), pos: g.pos || '-', bt: g.bt || '-', gradYear: String(g.gradYear || '').trim(),
+                visible: g.visible !== false, hidePhoto: !!g.hidePhoto, photoLink: String(g.photoLink || '').trim()
+            })).filter(g => g.name);
+            rosterSeason = parseInt(res.season, 10) || 0;
+            syncGradFilter();
 
             updateNewSeen();   // 🦈 NEW 스티커용: 이 기기에서 처음 보는 선수 기록
             switchView(currentView);
