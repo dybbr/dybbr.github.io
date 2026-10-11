@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.44.1 · b261011";
+        const APP_VERSION = "v2.44.2 · b261011";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -7774,11 +7774,16 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.44.2', d: '2026-10-11', t: '⬅️ 뒤로가기 알림 고침 · 3초', items: [
+            '앱(APK)에서 큰 지도 · 창을 연 채 뒤로가기를 누르면 창 대신 앱이 닫히던 것 고침 — 뒤로가기 한 번에 맨 위 창 하나씩 닫히고, 창을 다 닫으면 「한 번 더 누르면 앱이 닫혀요」',
+            '원인: 크롬은 「화면을 누른 뒤」 넣은 기록 칸만 지켜 줌 — 뒤로가기를 처리하면서 칸을 다시 넣던 것이 앱 기록 전체를 건너뛰게 만들었음 → 이제 화면을 누르고 뗄 때만 (열린 창 수 + 1)칸을 넣음',
+            '두 번째 뒤로가기를 기다리는 시간 2초 → 3초'
+        ] },
         { v: 'v2.44.1', d: '2026-10-11', t: '🗺️ 큰 지도 · ⬅️ 뒤로가기 두 번 종료 · 탭 이름 두 글자', items: [
             '🗺️ 크게 보기를 누르면 카카오맵 장소(플레이스) 화면 대신 앱 안에서 바로 큰 지도가 열림 (휴대폰은 화면 가득 · PC는 큰 창)',
             '큰 지도는 손가락으로 끌기 · 두 손가락 확대 · [+][-] · PC 마우스 휠 확대 — 아래 🚗 길찾기 · 카카오맵에서 보기 · 주소 복사',
             '일정 상세의 작은 지도를 눌러도 같은 큰 지도',
-            '⬅️ 뒤로가기: 창이 열려 있으면 창부터 닫고, 탭 화면에서는 「한 번 더 누르면 앱이 닫혀요」 — 2초 안에 한 번 더 누르면 앱 종료',
+            '⬅️ 뒤로가기: 창이 열려 있으면 창부터 닫고, 탭 화면에서는 「한 번 더 누르면 앱이 닫혀요」 — 2초 안에 한 번 더 누르면 앱 종료 (v2.44.2부터 3초)',
             '맨 위 탭 이름을 두 글자로: 「선수 명단」→「명단」, 「관리자」→「관리」'
         ] },
         { v: 'v2.44.0', d: '2026-10-11', t: '⭐ 즐겨쓰는 구장 · 장소 칩은 구장 탭 목록', items: [
@@ -8730,18 +8735,34 @@
     // ==========================================================
     // ⬅️ 뒤로가기 (v2.44.1) — 실수로 눌러도 앱이 바로 닫히지 않게
     //   · 창(팝업) · 확인 창 · 고르기 메뉴가 열려 있으면 → 그것부터 닫음
-    //   · 탭 화면에서는 → 「한 번 더 누르면 앱이 닫혀요」, 2초 안에 한 번 더 누르면 앱 종료
+    //   · 탭 화면에서는 → 「한 번 더 누르면 앱이 닫혀요」, 3초 안에 한 번 더 누르면 앱 종료 (v2.44.2: 2초 → 3초)
     //   방법: 화면을 누를 때 기록(history)에 「지킴이」 한 칸을 넣어 두고, 뒤로가기로 그 칸이 빠지면(popstate) 처리
+    //   v2.44.2: 크롬 규칙 — 「사용자가 화면을 누른 뒤」에 넣은 칸만 뒤로가기가 멈춰 줌.
+    //            뒤로가기를 한 번 누르면 그 뒤로는 다시 화면을 누르기 전까지 새 칸을 넣으면 안 됨
+    //            (넣으면 크롬이 앱 기록을 통째로 건너뛰어 → 앱(TWA)이 바로 닫힘 = 큰 지도에서 뒤로가기 → 앱 종료 원인)
+    //            그래서: 지킴이는 손가락을 뗀 직후(click · touchend · 키 입력)에만 넣고, 뒤로가기 처리 중 · 3초 타이머에서는 절대 안 넣음
+    //            칸 수 = 열린 창 수 + 1 (일정 상세 → 큰 지도처럼 창이 2개면 3칸) → 창을 다 닫은 다음 뒤로가기에 「한 번 더」 알림
     // ==========================================================
-    let backArmed = false, backTimer = null;
-    function backGuardOn() {
-        try { if (!(history.state && history.state.dyBack)) history.pushState(Object.assign({}, history.state || {}, { dyBack: 1 }), ''); } catch (e) {}
+    let backArmed = false, backTimer = null, backSkipPop = false, backEpoch = 0, backTopUpQ = 0;
+    const backDepth = () => (history.state && +history.state.dyBack) || 0;
+    function openLayerCount() {   // 뒤로가기로 닫을 수 있는 것 개수 (closeTopLayer와 같은 기준)
+        return (bkAskResolve ? 1 : 0) + document.querySelectorAll('.cf-layer:not(.out)').length +
+            [...document.querySelectorAll('.modal')].filter(m => m.style.display === 'flex').length +
+            document.querySelectorAll('.gsel-wrap.open, .cgsel-wrap.open').length;
+    }
+    function backGuardTopUp(epoch) {   // 화면을 누르고 뗀 직후에만 부름 (그사이 뒤로가기가 있었으면 안 넣음)
+        if (epoch !== backEpoch) return;
+        try {
+            if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
+            const want = Math.min(openLayerCount() + 1, 6);
+            for (let d = backDepth(); d < want; d++) history.pushState(Object.assign({}, history.state || {}, { dyBack: d + 1 }), '');
+        } catch (e) {}
     }
     function closeTopLayer() {
         if (bkAskResolve) { bkAskClose(false); return true; }   // 부캉이 확인 창 → 취소
         const cf = document.querySelector('.cf-layer:not(.out)'); if (cf) { cf.click(); return true; }   // 승리 축하 화면
         const open = [...document.querySelectorAll('.modal')].filter(m => m.style.display === 'flex');
-        if (open.length) {   // 맨 위 창 하나만 닫음 (예: 장소 찾기 → 일정 수정 창은 그대로)
+        if (open.length) {   // 맨 위 창 하나만 닫음 (예: 큰 지도 → 일정 상세는 그대로)
             const z = m => parseInt(getComputedStyle(m).zIndex, 10) || 0;
             const top = open.reduce((a, b) => (z(b) >= z(a) ? b : a));
             closeModal(top.id);
@@ -8750,17 +8771,27 @@
         const dd = document.querySelector('.gsel-wrap.open, .cgsel-wrap.open'); if (dd) { dd.classList.remove('open'); return true; }
         return false;
     }
-    window.addEventListener('popstate', () => {
-        if (closeTopLayer()) { backGuardOn(); return; }
-        if (backArmed) return;
+    function backArm() {
         backArmed = true;
-        bkNotify('info', '뒤로가기를 한 번 더 누르면 앱이 닫혀캉', '', { ms: 2000 });
+        bkNotify('info', '뒤로가기를 한 번 더 누르면 앱이 닫혀캉', '', { ms: 3000 });
         clearTimeout(backTimer);
-        backTimer = setTimeout(() => { backArmed = false; backGuardOn(); }, 2000);   // 2초 지나면 다시 지킴이
+        backTimer = setTimeout(() => { backArmed = false; }, 3000);   // 3초 안에 한 번 더 → 앱 종료
+    }
+    window.addEventListener('popstate', () => {
+        backEpoch++;   // 뒤로가기가 일어남 → 다시 화면을 누르기 전까지 새 칸 금지
+        if (backSkipPop) { backSkipPop = false; backArm(); return; }   // 남은 지킴이를 비우고 맨 처음 칸에 도착
+        if (closeTopLayer()) return;   // 창 닫기 (아래에 지킴이 칸이 남아 있음)
+        if (backArmed) return;
+        const d = backDepth();
+        if (d > 0) { backSkipPop = true; history.go(-d); return; }   // 남은 지킴이 칸을 비워야 다음 뒤로가기에 바로 앱이 닫힘
+        backArm();
     });
-    ['pointerdown', 'keydown'].forEach(t => document.addEventListener(t, () => {   // 화면을 누를 때 지킴이 넣기 (누른 뒤에 넣어야 뒤로가기가 건너뛰지 않음)
+    ['click', 'touchend', 'keydown'].forEach(t => document.addEventListener(t, () => {   // 화면을 누르고 뗄 때(사용자 동작으로 인정된 뒤) 지킴이 채우기
         if (backArmed) { backArmed = false; clearTimeout(backTimer); }
-        backGuardOn();
+        const ep = backEpoch;
+        clearTimeout(backTopUpQ);   // 누른 버튼이 창을 연 다음에 세어야 하므로 잠깐 뒤에 (창 수 + 1칸)
+        backTopUpQ = setTimeout(() => backGuardTopUp(ep), 0);
+        setTimeout(() => backGuardTopUp(ep), 450);   // 조금 늦게 열리는 창 대비
     }, { capture: true, passive: true }));
     function isOff(val) { if (!val) return false; const v = String(val).toUpperCase().trim(); return v === 'OFF' || v === '비공개'; }
 
