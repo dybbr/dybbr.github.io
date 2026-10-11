@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.44.3 · b261011";
+        const APP_VERSION = "v2.44.4 · b261011";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1288,6 +1288,15 @@
         .jsy-btns button.ok { background: #0b2240; color: #fff; border-color: #0b2240; }
         .jsy-panel-msg { font-size: 11px; color: #64748b; margin-top: 6px; min-height: 14px; }
         #adminSection .admin-bar { padding: 0; margin: 0; background: transparent !important; border: none !important; }
+        /* v2.44.4: 운영 버튼 — 같은 너비 2칸 격자 · 이름 4글자 (비상 연락 · 접수 · 주문 집계 · 비번 관리 · 시트 편집) */
+        #adminSection .admin-bar-btns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; width: 100%; }
+        #adminSection .admin-bar-btns > button { width: 100%; min-height: 44px; padding: 9px 10px; border-radius: 10px; font-size: 14px; font-weight: 800; justify-content: center; align-items: center; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.2px; }
+        #adminSection #btnEmergencyContacts, #adminSection .admin-bar-btns > button.ops-wide { grid-column: 1 / -1; }
+        .uni-st { display: inline-flex; align-items: center; gap: 4px; margin-left: 3px; padding: 1px 7px 1px 6px; border-radius: 10px; background: rgba(255,255,255,.14); font-size: 11.5px; font-weight: 900; vertical-align: 1px; }
+        .uni-st::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 2px rgba(34,197,94,.25); }
+        .uni-st.on { color: #bbf7d0; }
+        .uni-st.off { color: #cbd5e1; }
+        .uni-st.off::before { background: #94a3b8; box-shadow: none; }
         .admin-empty { display: none; font-size: 12px; color: #94a3b8; font-weight: 700; padding: 6px 0; }
         .app-section.active { display: block; }
 
@@ -2713,11 +2722,11 @@
                 <div class="admin-group-title">운영</div>
                 <div id="adminBar" class="admin-bar">
                     <div class="admin-bar-btns">
-            <button id="btnEmergencyContacts" class="btn-emergency-contact" onclick="openEmergencyContactsModal()">🚨 학부모 비상연락망</button>
-            <button id="btnToggleUniform" class="btn-toggle-uniform" style="display: none;" onclick="toggleUniformFeature()">👕 접수기능: ON</button>
-            <button id="btnViewOrders" class="btn-orders-view" style="display: none;" onclick="openOrdersSummaryModal()">📋 유니폼 접수 & 발주 집계</button>
-            <button id="btnManagePw" class="btn-manage-pw" style="display: none;" onclick="openPasswordManageModal()">🔑 비밀번호 관리</button>
-            <button id="btnSheetLink" class="btn-sheet-link" style="display: none;" onclick="window.open(GOOGLE_SHEET_EDIT_URL, '_blank')">📊 구글 시트 편집창 열기</button>
+            <button id="btnEmergencyContacts" class="btn-emergency-contact" onclick="openEmergencyContactsModal()">🚨 비상 연락</button>
+            <button id="btnToggleUniform" class="btn-toggle-uniform" style="display: none;" onclick="toggleUniformFeature()">👕 접수 <span class="uni-st on">ON</span></button>
+            <button id="btnViewOrders" class="btn-orders-view" style="display: none;" onclick="openOrdersSummaryModal()">📋 주문 집계</button>
+            <button id="btnManagePw" class="btn-manage-pw" style="display: none;" onclick="openPasswordManageModal()">🔑 비번 관리</button>
+            <button id="btnSheetLink" class="btn-sheet-link" style="display: none;" onclick="window.open(GOOGLE_SHEET_EDIT_URL, '_blank')">📊 시트 편집</button>
         </div>
     </div>
 
@@ -3518,6 +3527,12 @@
         const anyOps = bar && Array.from(bar.querySelectorAll('button')).some(b => b.style.display !== 'none');
         document.getElementById('adminOpsEmpty').style.display = anyOps ? 'none' : 'block';
         if (bar) bar.style.display = anyOps ? 'flex' : 'none';
+        if (bar) {   // v2.44.4: 운영 버튼 2칸 격자 — 🚨 비상 연락은 한 줄 전체, 나머지가 홀수개면 마지막 버튼도 한 줄 전체 (총무님: 비상 연락 + 비번 관리)
+            const vis = Array.from(bar.querySelectorAll('.admin-bar-btns > button')).filter(b => b.style.display !== 'none');
+            vis.forEach(b => b.classList.remove('ops-wide'));
+            const rest = vis.filter(b => b.id !== 'btnEmergencyContacts');
+            if (rest.length % 2) rest[rest.length - 1].classList.add('ops-wide');
+        }
         document.getElementById('adminGroupContent').style.display = canEditSchedule() ? '' : 'none';
         const devGroup = document.getElementById('adminGroupDev');
         if (devGroup) devGroup.style.display = (currentRole === 'dev') ? '' : 'none';   // 개발 카테고리는 개발자만
@@ -6176,13 +6191,14 @@
         return null;
     }
 
+    function uniToggleLabel() { return `👕 접수 <span class="uni-st ${isUniformActive ? 'on' : 'off'}">${isUniformActive ? 'ON' : 'OFF'}</span>`; }   // v2.44.4: 초록 점 ON · 회색 점 OFF
     function updateUniformButtonVisibility() {
         const cta = document.getElementById('btnUniformCTA');
         // 1922(익명 열람) 접속자는 학부모 인증이 안 된 상태이므로 유니폼 주문 버튼 자체를 숨긴다.
         if (isAnonymousGuest()) {
             cta.style.display = 'none';
             const tg2 = document.getElementById('btnToggleUniform');
-            if (tg2) tg2.textContent = `👕 접수기능: ${isUniformActive ? 'ON' : 'OFF'}`;
+            if (tg2) tg2.innerHTML = uniToggleLabel();
             return;
         }
         if (isUniformActive) {
@@ -6199,7 +6215,7 @@
             }
         }
         const tg = document.getElementById('btnToggleUniform');
-        if (tg) tg.textContent = `👕 접수기능: ${isUniformActive ? 'ON' : 'OFF'}`;
+        if (tg) tg.innerHTML = uniToggleLabel();
     }
 
     async function toggleUniformFeature() {
@@ -7774,6 +7790,11 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.44.4', d: '2026-10-11', t: '⚙️ 운영 버튼 이름 4글자 · 같은 크기', items: [
+            '관리 탭 운영 버튼 이름을 탭 이름처럼 두 글자 + 두 글자로: 학부모 비상연락망 → 🚨 비상 연락 · 유니폼 접수 & 발주 집계 → 📋 주문 집계 · 비밀번호 관리 → 🔑 비번 관리 · 구글 시트 편집창 열기 → 📊 시트 편집',
+            '접수기능: ON → 👕 접수 ●ON (켜짐은 초록 점 · 꺼짐은 회색 점 OFF)',
+            '버튼을 같은 너비 2칸으로 정리 — 🚨 비상 연락은 맨 위 한 줄 전체'
+        ] },
         { v: 'v2.44.3', d: '2026-10-11', t: '⬅️ 알림이 사라진 뒤 뒤로가기 → 알림 다시', items: [
             '「뒤로가기를 한 번 더 누르면 앱이 닫혀캉」 알림 뒤 3초 안에 안 누르고 기다렸다가 뒤로가기를 누르면 앱이 닫히던 것 고침 → 알림이 다시 뜸 (3초 안에 두 번 눌러야 종료)',
             '뒤로가기로 창을 닫거나 알림이 사라질 때 보던 화면 위치(스크롤)가 그대로 유지되게'
