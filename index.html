@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.47.0 · b261011";
+        const APP_VERSION = "v2.47.1 · b261011";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -2879,7 +2879,7 @@
                     <button id="btnViewLogs" class="btn-manage-pw" style="background: #4338ca;" onclick="openLogsModal()">📜 보안 활동 로그</button>
                     <button id="btnViewHistory" class="btn-manage-pw" style="background: #0f766e;" onclick="openHistoryModal()">🕘 업데이트 히스토리</button>
                 </div>
-                <div class="pres-log" id="presLog"><div class="pres-log-h">🟢 실시간 접속 알림 (앱이 켜져 있는 동안 · 15초마다 확인)</div><div class="pres-log-empty">아직 들어오고 나간 사람이 없어요</div></div>
+                <div class="pres-log" id="presLog"><div class="pres-log-h">🟢 실시간 접속 알림 (앱이 켜져 있는 동안 · 10초마다 확인)</div><div class="pres-log-empty">아직 들어오고 나간 사람이 없어요</div></div>
             </div>
         </div>
     </section>
@@ -5862,7 +5862,7 @@
     // 🟢 실시간 접속 알림 (v2.47.0)
     //   ① 개발자를 뺀 모든 사람: 들어올 때(로그인 · 앱 열기 · 다시 들어옴) / 나갈 때(로그아웃 · 화면 잠금 · 세션 만료 · 앱 나감) 서버에 짧게 알림
     //      — 시트에는 안 남고 서버 캐시에 최근 60건만 (누가인지는 서버가 토큰으로 확인)
-    //   ② 개발자: 앱이 켜져 있는 동안 15초마다 새 알림을 받아 화면 위쪽에 「🟢 대표님 접속」 칩 + 관리 탭 「개발」에 최근 목록
+    //   ② 개발자: 앱이 켜져 있는 동안 10초마다 새 알림을 받아 화면 위쪽에 「🟢 대표님 접속」 칩 + 관리 탭 「개발」에 최근 목록
     //      앱을 잠깐 내렸다가 1분 안에 다시 올리면(다른 앱 잠깐 보기) 「나감 · 들어옴」 둘 다 안 띄움
     // ==========================================================
     let presIn = false, presAway = false, presFirstWhy = '앱 열기';
@@ -5901,7 +5901,7 @@
                 }
             } catch (e) {}
         }
-        if (presenceFeedOn()) presTimer = setTimeout(presencePoll, 15000);
+        if (presenceFeedOn()) presTimer = setTimeout(presencePoll, 10000);   // v2.47.1: 15초 → 10초
     }
     function presenceShow(it) {
         const cid = it.cid || ('?' + it.seq);
@@ -5930,7 +5930,7 @@
     }
     function renderPresLog() {
         const box = document.getElementById('presLog'); if (!box) return;
-        box.innerHTML = '<div class="pres-log-h">🟢 실시간 접속 알림 (앱이 켜져 있는 동안 · 15초마다 확인)</div>' + (presLog.length
+        box.innerHTML = '<div class="pres-log-h">🟢 실시간 접속 알림 (앱이 켜져 있는 동안 · 10초마다 확인)</div>' + (presLog.length
             ? presLog.map(it => `<div class="pres-log-row"><span class="t">${escapeHtml(it.at || '')}</span><span class="w">${it.kind === 'in' ? '🟢' : '⚪'} ${escapeHtml(it.who || '')} ${it.kind === 'in' ? '접속' : '나감'}${it.why ? ' · ' + escapeHtml(it.why) : ''}</span></div>`).join('')
             : '<div class="pres-log-empty">아직 들어오고 나간 사람이 없어요</div>');
     }
@@ -8256,6 +8256,9 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.47.1', d: '2026-10-11', t: '🟢 접속 알림 확인 간격 15초 → 10초', items: [
+            '개발자 화면의 실시간 접속 알림을 10초마다 확인 — 알림이 늦게 뜨는 시간이 최대 약 17초 → 약 12초로 줄어듦 (앱이 화면에 떠 있을 때만 확인 · 서버 부담은 거의 그대로)'
+        ] },
         { v: 'v2.47.0', d: '2026-10-11', t: '🟢 개발자 실시간 접속 알림', items: [
             '개발자로 로그인해 앱이 켜져 있으면, 대표님 · 총무님 · 코치진 · 보호자 · 일반 열람자가 들어오고 나갈 때 화면 위쪽에 「🟢 대표님 접속」 · 「⚪ 보호자 (김OO) 나감」 칩 (15초마다 확인)',
             '들어옴: 로그인 · 앱 열기 · 다시 들어옴 / 나감: 로그아웃 · 화면 잠금 · 세션 만료 · 앱 나감 — 앱을 잠깐 내렸다가 1분 안에 돌아오면 안 띄움',
