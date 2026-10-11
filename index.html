@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.51.2 · b261011";
+        const APP_VERSION = "v2.52.0 · b261011";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -1225,6 +1225,19 @@
         @media (min-width: 520px) { .contact-filter-row .ec-pick { flex: 0 0 auto; } }
         #emergencyContactsModal.ec-simple .contact-filter-row .ec-pick { flex: 0 0 auto; }
         #emergencyContactsModal.ec-simple .ec-pick[data-for="contactCommuteSelect"] { display: none !important; }
+        /* 👆 v2.52.0: 앱 전체 고르기칸 — 휴대폰 기본 선택창(「완료」를 눌러야 닫힘) 대신 앱 안 메뉴, 누르면 바로 적용
+           고르기칸 모양 · 자리는 그대로 두고 손가락만 통과시켜서(누른 자리를 앱이 알아채) 메뉴를 띄움 */
+        select:not([data-native]) { pointer-events: none; }
+        .app-pick-bg { position: fixed; inset: 0; z-index: 100000; background: rgba(15,23,42,.18); touch-action: none; }
+        .app-pick { position: fixed; z-index: 100001; box-sizing: border-box; min-width: 160px; max-width: min(92vw, 380px); max-height: min(62vh, 440px); overflow-y: auto; overscroll-behavior: contain; display: grid; gap: 4px; padding: 6px; background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 12px 32px rgba(15,23,42,.28); animation: appPickIn .14s ease; }
+        @keyframes appPickIn { from { opacity: 0; transform: translateY(-4px); } }
+        .app-pick.g2 { grid-template-columns: 1fr 1fr; } .app-pick.g3 { grid-template-columns: 1fr 1fr 1fr; }
+        .app-pick button { border: 0; background: #f8fafc; border-radius: 10px; padding: 11px 12px; font: inherit; font-size: 14px; font-weight: 700; color: #334155; text-align: left; cursor: pointer; line-height: 1.3; -webkit-tap-highlight-color: transparent; }
+        .app-pick.g2 button, .app-pick.g3 button { text-align: center; padding: 11px 8px; }
+        .app-pick button.wide { grid-column: 1 / -1; }
+        .app-pick button.on { background: #0b2240; color: #fff; }
+        .app-pick button:active { filter: brightness(.94); }
+        .app-pick button:disabled { opacity: .4; }
         .ec-mode { display: inline-flex; flex: 0 0 auto; border: 1px solid var(--card-border); border-radius: 6px; overflow: hidden; }
         .ec-mode button { border: 0; background: #fff; color: #475569; font: inherit; font-size: 12px; font-weight: 800; padding: 6px 9px; cursor: pointer; white-space: nowrap; }
         .ec-mode button + button { border-left: 1px solid var(--card-border); }
@@ -2196,6 +2209,8 @@
     .ecs-call b { color: #dde3ec; } .ecs-sms { background: #0c3a56; border-color: #075985; color: #7dd3fc; }
     .ecs-home { background: #1b2638; border-color: #2a374e; } .ecs-home:active { background: #223047; }
     .ec-mode button { background: #1b2638; color: #bcc6d4; } .ec-mode button.on { background: #2c4a7a; color: #fff; }
+    .app-pick { background: #151e2e; border-color: #2a374e; box-shadow: 0 12px 32px rgba(0,0,0,.55); } .app-pick-bg { background: rgba(0,0,0,.35); }
+    .app-pick button { background: #1b2638; color: #bcc6d4; } .app-pick button.on { background: #2c4a7a; color: #fff; }
     .contact-header { border-bottom: 1px solid #2a374e; }
     .contact-player-name { color: #dde3ec; }
     .contact-row { background: #1b2638; border: 1px solid #2a374e; }
@@ -8231,6 +8246,62 @@
     }
     document.addEventListener('click', e => { if (!(e.target.closest && e.target.closest('.ec-pick'))) ecPickClose(); });
 
+    // ==========================================================
+    // 👆 v2.52.0: 앱 전체 고르기칸 → 앱 안 메뉴 (누르면 바로 적용)
+    //   휴대폰 기본 선택창은 「이전 · 다음 · 완료」가 붙어 「완료」를 눌러야 닫힘 → 앱이 직접 메뉴를 그림
+    //   방법: 고르기칸(<select>)은 모양 · 자리 · 값을 그대로 두고 손가락만 통과(pointer-events: none) →
+    //         그 자리를 누르면 아래 칸이 눌린 것으로 잡혀서, 그 칸 안의 고르기칸이면 메뉴를 띄움
+    //   고르면 값을 넣고 change 를 보내서 원래 하던 일(onchange)은 그대로 · 기본 선택창이 필요하면 data-native
+    // ==========================================================
+    function appPickClose() {
+        const a = document.getElementById('appPick'), b = document.getElementById('appPickBg');
+        if (a) a.remove(); if (b) b.remove();
+    }
+    function appPickOpen(sel) {
+        appPickClose();
+        const opts = [...sel.options];
+        if (opts.length < 2) return;   // 고를 게 하나뿐이면 메뉴 없이
+        const short = opts.length <= 9 && opts.every(o => o.textContent.trim().length <= 6);   // 짧은 항목이 몇 개면 두 칸(3개면 세 칸)으로
+        const cols = !short ? 1 : (opts.length === 3 ? 3 : 2);
+        const head = opts[0] && (opts[0].value === '' || opts[0].value === 'all' || /전체|골라|선택/.test(opts[0].textContent));   // 「전체」 같은 첫 칸은 한 줄 통째로
+        const bg = document.createElement('div'); bg.className = 'app-pick-bg'; bg.id = 'appPickBg';
+        bg.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); appPickClose(); });
+        const m = document.createElement('div'); m.className = 'app-pick' + (cols > 1 ? ' g' + cols : ''); m.id = 'appPick';
+        m.setAttribute('role', 'listbox'); if (sel.title || sel.getAttribute('aria-label')) m.setAttribute('aria-label', sel.getAttribute('aria-label') || sel.title);
+        m.innerHTML = opts.map((o, i) => `<button type="button" role="option" data-i="${i}" aria-selected="${o.selected}" class="${cols === 2 && i === 0 && head && opts.length % 2 === 1 ? 'wide' : ''}${o.selected ? ' on' : ''}"${o.disabled ? ' disabled' : ''}>${escapeHtml(o.textContent.trim() || '-')}</button>`).join('');
+        m.addEventListener('click', e => {
+            const b = e.target.closest('button[data-i]'); if (!b) return;
+            e.stopPropagation();
+            const i = +b.dataset.i;
+            appPickClose();
+            if (sel.selectedIndex !== i) { sel.selectedIndex = i; sel.dispatchEvent(new Event('input', { bubbles: true })); sel.dispatchEvent(new Event('change', { bubbles: true })); }
+        });
+        document.body.append(bg, m);
+        const r = sel.getBoundingClientRect(), vw = window.innerWidth, vh = window.innerHeight;
+        m.style.minWidth = Math.min(Math.max(160, r.width), vw - 16) + 'px';
+        const mr = m.getBoundingClientRect();
+        const left = Math.min(Math.max(8, r.left), vw - mr.width - 8);
+        let top = r.bottom + 4;
+        if (top + mr.height > vh - 8) top = Math.max(8, r.top - mr.height - 4);   // 아래 자리가 모자라면 위로
+        m.style.left = left + 'px'; m.style.top = top + 'px';
+        const on = m.querySelector('button.on'); if (on && m.scrollHeight > m.clientHeight) on.scrollIntoView({ block: 'center' });
+    }
+    document.addEventListener('click', e => {
+        if (document.getElementById('appPick') || !e.isTrusted) return;
+        const x = e.clientX, y = e.clientY, t = e.target;
+        if ((!x && !y) || !t || !t.contains) return;   // 키보드로 누른 것 등은 그대로
+        const hit = [...document.querySelectorAll('select:not([data-native])')].find(s => {
+            if (s.disabled || !t.contains(s) || !s.getClientRects().length) return false;   // 눌린 칸 안에 있는(= 맨 위에 보이는) 고르기칸만
+            const r = s.getBoundingClientRect();
+            return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+        });
+        if (!hit) return;
+        e.preventDefault(); e.stopPropagation();
+        appPickOpen(hit);
+    }, true);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') appPickClose(); });
+    window.addEventListener('resize', () => appPickClose());
+
     const EC_GENERAL_SIMPLE_ONLY = false;   // true 면 총무님은 「간단히」만 (자세히로 못 바꿈) · false 면 기본 간단히 + 바꿀 수 있음
     function ecMode() {
         if (currentRole === 'general') {
@@ -8578,6 +8649,12 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.52.0', d: '2026-10-11', t: '👆 앱 전체 고르기칸 — 누르면 바로 적용', items: [
+            '휴대폰 기본 선택창(이전 · 다음 · 완료) 대신 앱 안 메뉴 — 고르면 바로 적용되고 닫힘',
+            '적용: 처음 등록(선수 · 관계), 일정 종류, 공지 분류, 유니폼 신청(선수 · 사이즈 · 수량 · 허리 · 기장), 선수 정보 수정(투타), 로그 삭제 기간',
+            '고르기칸 모양 · 자리는 그대로 · 짧은 항목은 두 칸, 긴 목록은 위아래로 밀어서 · 지금 고른 것은 진하게',
+            '바깥을 누르거나 뒤로가기를 누르면 메뉴만 닫힘'
+        ] },
         { v: 'v2.51.2', d: '2026-10-11', t: '👆 비상연락망 학년 · 등하교 고르면 바로 적용', items: [
             '학년 · 등하교 고르기를 휴대폰 기본 선택창 대신 앱 안 메뉴로 — 누르면 바로 적용되고 닫힘 (「완료」를 안 눌러도 됨)',
             '걸러 보는 중이면(예: 6학년) 버튼 색이 바뀌어 한눈에 보임 · 뒤로가기나 바깥을 누르면 메뉴만 닫힘'
@@ -9643,7 +9720,7 @@
     let backArmed = false, backTimer = null, backSkipPop = false, backEpoch = 0, backTopUpQ = 0;
     const backDepth = () => (history.state && +history.state.dyBack) || 0;
     function openLayerCount() {   // 뒤로가기로 닫을 수 있는 것 개수 (closeTopLayer와 같은 기준)
-        return (bkAskResolve ? 1 : 0) + document.querySelectorAll('.cf-layer:not(.out)').length +
+        return (bkAskResolve ? 1 : 0) + (document.getElementById('appPick') ? 1 : 0) + document.querySelectorAll('.cf-layer:not(.out)').length +
             [...document.querySelectorAll('.modal')].filter(m => m.style.display === 'flex').length +
             document.querySelectorAll('.gsel-wrap.open, .cgsel-wrap.open').length;
     }
@@ -9656,6 +9733,7 @@
         } catch (e) {}
     }
     function closeTopLayer() {
+        if (document.getElementById('appPick')) { appPickClose(); return true; }   // v2.52.0: 고르기 메뉴부터
         if (bkAskResolve) { bkAskClose(false); return true; }   // 부캉이 확인 창 → 취소
         const cf = document.querySelector('.cf-layer:not(.out)'); if (cf) { cf.click(); return true; }   // 승리 축하 화면
         const dd0 = document.querySelector('.modal .cgsel-wrap.open'); if (dd0) { dd0.classList.remove('open'); return true; }   // v2.51.2: 창 안의 고르기 메뉴는 창보다 먼저 닫음
