@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.44.6 · b261011";
+        const APP_VERSION = "v2.44.7 · b261011";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1562,6 +1562,15 @@
         #eventEditModal .form-group.ev-inline.top { align-items: start; }
         #eventEditModal .form-group.ev-inline.top > label { padding-top: 8px; }
         #eventEditModal .form-group.ev-inline > label { white-space: nowrap; letter-spacing: -0.3px; }
+        /* v2.44.7: 👕 복장도 다른 칸(제목 · 장소 · 참가선수…)과 같은 줄에 맞춤 — 이름 칸 56px, 고르기 칸은 그 오른쪽부터 */
+        #eventEditModal .ev-dress-head { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 6px; align-items: center; }
+        #eventEditModal .ev-dress-head > label { white-space: nowrap; letter-spacing: -0.3px; }
+        #eventEditModal .ev-dress-head .ev-dress-prev { justify-self: start; max-width: 100%; }
+        #eventEditModal .ev-drow { grid-template-columns: 56px minmax(0, 1fr); gap: 6px; }
+        #eventEditModal .ev-drow-k { padding-left: 10px; }   /* 상의 · 하의 … 는 「복장」 아래 살짝 들여쓰기 */
+        #eventEditModal #evDressEtc { margin-left: 62px; width: calc(100% - 62px) !important; }
+        #eventEditModal .ev-dress-chips { gap: 5px; }
+        #eventEditModal .ev-dchip { padding: 4px 9px; }   /* 오른쪽으로 옮긴 만큼 칩을 살짝 좁혀서 한 줄에 그대로 들어가게 */
         /* 📍 장소 찾기 · 지도 (v2.42.0) — 장소 칸 옆 🔍 찾기 · 자주 쓰는 곳 칩 · 지도 연결 표시 */
         #eventEditModal [hidden], #eventDetailModal [hidden], #placeSearchModal [hidden], #venueSection [hidden], #venueEditModal [hidden] { display: none !important; }
         #eventEditModal .ev-place-col { display: flex; flex-direction: column; gap: 6px; min-width: 0; container-type: inline-size; }
@@ -7844,6 +7853,10 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.44.7', d: '2026-10-11', t: '👕 일정 창 복장 칸 정렬', items: [
+            '일정 추가 · 수정 창의 복장 고르기(상의 · 하의 · 이너 · 겉옷 · 기타)를 위 제목 · 장소 · 참가선수 입력칸과 같은 위치에서 시작하게 오른쪽으로 맞춤',
+            '「아직 선택하지 않았어요」 표시도 같은 줄에 · 상의 · 하의 이름표는 「복장」 아래 살짝 들여쓰기'
+        ] },
         { v: 'v2.44.6', d: '2026-10-11', t: '🚨 비상연락망 정리 — 복사 버튼 3줄 · 등하교 표 · 주소 누르면 지도', items: [
             '복사 버튼을 상자 3개 × 버튼 3개로 — 칸 크기가 모두 같고, 이름은 두 글자 + 두 글자 (누르면 하는 일은 그대로)',
             '⚡ 긴급 공지(문구 복사): 우천 취소 · 경기 시간 · 안전 귀가',
