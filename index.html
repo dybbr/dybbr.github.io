@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.51.0 · b261011";
+        const APP_VERSION = "v2.51.1 · b261011";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -1229,31 +1229,38 @@
         .ecs-top .grade-tag { flex: 0 0 auto; font-size: 10.5px; padding: 1px 6px; }
         .ecs-car { margin-left: auto; flex: 0 1 auto; min-width: 0; font-size: 12px; font-weight: 800; color: #334155; text-align: right; line-height: 1.2; overflow-wrap: anywhere; }
         .ecs-car span { white-space: nowrap; }   /* 차가 두 대면 번호가 안 쪼개지게 한 대씩 줄바꿈 */
-        /* 아버님 · 어머님 나란히 — 번호 칸 전체가 📞 통화 버튼, 옆 💬 가 문자 */
+        /* v2.51.1 시안 B: 🏠 주소 버튼은 이름 줄 오른쪽 끝 (누르면 주소 복사 + 카카오맵) → 카드 2줄 */
+        .ecs-home { flex: 0 0 auto; margin-left: auto; width: 30px; height: 24px; padding: 0; border: 1px solid #cbd5e1; border-radius: 7px; background: #f8fafc; font-size: 14px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        .ecs-car + .ecs-home { margin-left: 6px; }
+        .ecs-home:active { background: #e2e8f0; }
+        /* 아버님 · 어머님 나란히 — 글자 대신 아이콘(파랑 = 아버님 · 분홍 = 어머님), 번호 칸 전체가 📞 통화, 옆 말풍선이 문자 */
         .ecs-phones { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
         .ecs-phones.one { grid-template-columns: minmax(0, 1fr); }
         .ecs-ph { display: flex; gap: 3px; min-width: 0; }
-        .ecs-call { flex: 1 0 auto; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 0; padding: 3px 6px; border-radius: 7px; border: 1px solid transparent; text-decoration: none; line-height: 1.25; -webkit-tap-highlight-color: transparent; }
-        .ecs-call i { font-style: normal; font-size: 10.5px; font-weight: 900; white-space: nowrap; }
-        .ecs-call b { font-size: 13px; font-weight: 800; color: #0f172a; font-variant-numeric: tabular-nums; letter-spacing: -0.4px; white-space: nowrap; }
-        .ecs-call.f { background: #eff6ff; border-color: #bfdbfe; } .ecs-call.f i { color: #1d4ed8; }
-        .ecs-call.m { background: #fdf2f8; border-color: #fbcfe8; } .ecs-call.m i { color: #be185d; }
-        .ecs-call.o { background: #f8fafc; border-color: #e2e8f0; } .ecs-call.o i { color: #475569; }
-        .ecs-call.off { opacity: .55; } .ecs-call.off b { font-size: 11.5px; color: #94a3b8; font-weight: 700; }
+        .ecs-call { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 3px 6px 3px 4px; border-radius: 7px; border: 1px solid transparent; text-decoration: none; line-height: 1.2; -webkit-tap-highlight-color: transparent; }
+        .ecs-call .ic { flex: 0 0 auto; width: 18px; height: 18px; display: block; }
+        .ecs-call .ic svg { width: 100%; height: 100%; display: block; }
+        .ecs-call b { font-size: 13px; font-size: clamp(11.5px, calc(6.3cqi - 8.6px), 14px); font-weight: 800; color: #0f172a; font-variant-numeric: tabular-nums; letter-spacing: -0.4px; white-space: nowrap; }   /* 카드 너비에 맞춰 번호 크기 자동 → 안 잘림 */
+        .ecs-call.f { background: #eff6ff; border-color: #bfdbfe; }
+        .ecs-call.m { background: #fdf2f8; border-color: #fbcfe8; }
+        .ecs-call.o { background: #f8fafc; border-color: #e2e8f0; }
+        .ecs-call.off { opacity: .5; } .ecs-call.off b { font-size: 11.5px; color: #94a3b8; font-weight: 700; letter-spacing: 0; }
         a.ecs-call:active { filter: brightness(.94); }
-        .ecs-sms { flex: 0 0 auto; width: 34px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 7px; background: #e0f2fe; border: 1px solid #7dd3fc; text-decoration: none; font-size: 14px; line-height: 1.1; }
-        .ecs-sms i { font-style: normal; font-size: 9.5px; font-weight: 900; color: #0369a1; }
+        .ecs-sms { flex: 0 0 auto; width: 30px; display: flex; align-items: center; justify-content: center; border-radius: 7px; background: #e0f2fe; border: 1px solid #7dd3fc; color: #0369a1; text-decoration: none; }
+        .ecs-sms svg { width: 18px; height: 18px; display: block; }
         .ecs-none { font-size: 11.5px; color: #94a3b8; font-weight: 700; padding: 4px 2px; }
-        @container (max-width: 300px) {   /* 좁은 카드(작은 폰 · 태블릿 3칸): 번호가 잘리지 않게 글자 · 여백을 살짝 줄임 */
-            .ecs-phones { gap: 4px; }
-            .ecs-call { padding: 3px 4px; }
-            .ecs-call b { font-size: 12px; letter-spacing: -0.5px; }
-            .ecs-sms { width: 29px; }
+        @container (max-width: 330px) {   /* 좁은 카드(작은 폰 · 태블릿 3칸) */
+            .ecs-phones { gap: 3px; } .ecs-ph { gap: 2px; }
+            .ecs-call { padding: 3px 4px 3px 3px; gap: 3px; }
+            .ecs-call .ic { width: 16px; height: 16px; }
+            .ecs-call b { letter-spacing: -0.5px; }
+            .ecs-sms { width: 26px; } .ecs-sms svg { width: 17px; height: 17px; }
         }
-        @container (max-width: 268px) { .ecs-phones { grid-template-columns: minmax(0, 1fr); } }   /* 아주 작은 폰: 아버님 · 어머님 위아래로 */
-        .ecs-addr { display: flex; align-items: center; gap: 4px; width: 100%; min-width: 0; box-sizing: border-box; border: 0; background: #f8fafc; border-radius: 6px; padding: 4px 6px; font: inherit; font-size: 11.5px; font-weight: 600; color: #334155; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-        .ecs-addr span { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-decoration: underline; text-decoration-color: #cbd5e1; text-underline-offset: 2px; }
-        .ecs-addr:active { background: #e2e8f0; }
+        @container (max-width: 280px) { .ecs-phones { grid-template-columns: minmax(0, 1fr); } }   /* 아주 작은 폰(320px): 아버님 · 어머님 위아래로 */
+        @media (max-width: 480px) {   /* 폰: 창 여백을 줄여 번호 칸을 넓게 */
+            #emergencyContactsModal.ec-simple .modal-content { padding-left: 9px !important; padding-right: 9px !important; }
+            .ecs-card { padding-left: 5px; padding-right: 5px; }
+        }
         @container (max-width: 270px) {   /* 아주 좁은 화면: 이름은 위 한 줄, 버튼은 아래 전체 너비 */
             .contact-quick-bar.cqb { grid-template-columns: minmax(0, 1fr); gap: 5px; }
             .cqb-l { padding-top: 0; }
@@ -2174,11 +2181,11 @@
     .contact-card { background: #151e2e; border: 1px solid #2a374e; border-left: 4px solid #ad3939; }
     .ecs-card { background: #151e2e; border-color: #2a374e; border-left-color: #ad3939; }
     .ecs-name { color: #dde3ec; } .ecs-car { color: #bcc6d4; } .ecs-no { background: #2c4a7a; }
-    .ecs-call.f { background: #172a4a; border-color: #1e3a6e; } .ecs-call.f i { color: #93c5fd; }
-    .ecs-call.m { background: #3a1830; border-color: #5b1d3d; } .ecs-call.m i { color: #f9a8d4; }
-    .ecs-call.o { background: #1b2638; border-color: #2a374e; } .ecs-call.o i { color: #cbd5e1; }
-    .ecs-call b { color: #dde3ec; } .ecs-sms { background: #0c3a56; border-color: #075985; } .ecs-sms i { color: #7dd3fc; }
-    .ecs-addr { background: #1b2638; color: #bcc6d4; } .ecs-addr span { text-decoration-color: #2f5a7a; } .ecs-addr:active { background: #223047; }
+    .ecs-call.f { background: #172a4a; border-color: #1e3a6e; }
+    .ecs-call.m { background: #3a1830; border-color: #5b1d3d; }
+    .ecs-call.o { background: #1b2638; border-color: #2a374e; }
+    .ecs-call b { color: #dde3ec; } .ecs-sms { background: #0c3a56; border-color: #075985; color: #7dd3fc; }
+    .ecs-home { background: #1b2638; border-color: #2a374e; } .ecs-home:active { background: #223047; }
     .ec-mode button { background: #1b2638; color: #bcc6d4; } .ec-mode button.on { background: #2c4a7a; color: #fff; }
     .contact-header { border-bottom: 1px solid #2a374e; }
     .contact-player-name { color: #dde3ec; }
@@ -8170,7 +8177,7 @@
 
     // ==========================================================
     // 📇 비상연락망 「간단히」 (v2.51.0) — 총무님용
-    //   선수(번호 · 이름 · 학년) + 아버님 · 어머님(📞 통화 · 💬 문자) + 차량 + 주소만, 카드를 작게 해서 한 화면에 많이
+    //   선수(번호 · 이름 · 학년) + 아버님 · 어머님(아이콘 · 번호 = 통화 · 말풍선 = 문자) + 차량 + 🏠 주소 버튼만, 카드 2줄로 한 화면에 많이 (v2.51.1)
     //   등하교 · 긴급 공지 · 복사 · 단체 문자는 안 보임 · 태블릿은 2~3칸으로
     //   아버님 · 어머님 번호가 둘 다 없을 때만 기타 번호를 대신 보여 줌 (연락할 길이 하나는 있게)
     // ==========================================================
@@ -8201,11 +8208,19 @@
         renderEmergencyContacts();
         const body = document.querySelector('#emergencyContactsModal .modal-scroll-body'); if (body) body.scrollTop = 0;
     }
-    function ecsPhone(cls, label, phone) {   // 번호 칸 전체 = 📞 통화 · 옆 💬 = 문자
+    // v2.51.1: 글자 대신 아이콘 (직접 그린 그림 → 어느 폰에서나 같은 모양) — 파랑 사람 = 아버님 · 분홍 사람 = 어머님 · 회색 전화 = 기타 · 말풍선 = 문자
+    const ECS_IC = {
+        f: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#2563eb"/><circle cx="12" cy="9.2" r="3.9" fill="#fff"/><path d="M4.6 19.6c1.3-3.3 4.2-5.2 7.4-5.2s6.1 1.9 7.4 5.2A11.9 11.9 0 0 1 12 24a11.9 11.9 0 0 1-7.4-4.4z" fill="#fff"/></svg>',
+        m: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#db2777"/><path d="M6.9 13.6c-.4-5.5 1.6-8.9 5.1-8.9s5.5 3.4 5.1 8.9c-.9.7-2.1 1-3.2 1h-3.8c-1.1 0-2.3-.3-3.2-1z" fill="#fde2ef"/><circle cx="12" cy="9.6" r="3.6" fill="#fff"/><path d="M4.6 19.6c1.3-3.3 4.2-5.2 7.4-5.2s6.1 1.9 7.4 5.2A11.9 11.9 0 0 1 12 24a11.9 11.9 0 0 1-7.4-4.4z" fill="#fff"/></svg>',
+        o: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#64748b"/><path d="M8.6 6.2l1.6 3.3-1.4 1.2a8.4 8.4 0 0 0 4.5 4.5l1.2-1.4 3.3 1.6-.6 2.6c-.2.6-.7 1-1.3 1A11.2 11.2 0 0 1 5 7.8c0-.6.4-1.1 1-1.3z" fill="#fff"/></svg>',
+        sms: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 1-1.5 1.5h-9.2L6 21v-3.5H4A1.5 1.5 0 0 1 2.5 16V7A1.5 1.5 0 0 1 4 5.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="8" cy="11.5" r="1.2" fill="currentColor"/><circle cx="12" cy="11.5" r="1.2" fill="currentColor"/><circle cx="16" cy="11.5" r="1.2" fill="currentColor"/></svg>'
+    };
+    function ecsPhone(cls, label, phone) {   // 번호 칸 전체 = 통화 · 옆 말풍선 = 문자
         const d = digitsOnly(phone);
-        if (d.length < 9) return `<div class="ecs-ph"><span class="ecs-call ${cls} off"><i>${label}</i><b>${phone ? escapeHtml(phone) : '번호 없음'}</b></span></div>`;
-        return `<div class="ecs-ph"><a href="tel:${d}" class="ecs-call ${cls}" aria-label="${label} 통화 ${escapeHtml(phone)}"><i>📞 ${label}</i><b>${escapeHtml(phone)}</b></a>` +
-            `<a href="sms:${d}" class="ecs-sms" aria-label="${label} 문자">💬<i>문자</i></a></div>`;
+        const ic = `<span class="ic">${ECS_IC[cls]}</span>`;
+        if (d.length < 9) return `<div class="ecs-ph"><span class="ecs-call ${cls} off" title="${label} 번호 없음">${ic}<b>${phone ? escapeHtml(phone) : '번호 없음'}</b></span></div>`;
+        return `<div class="ecs-ph"><a href="tel:${d}" class="ecs-call ${cls}" title="${label} · 누르면 통화" aria-label="${label} 통화 ${escapeHtml(phone)}">${ic}<b>${escapeHtml(phone)}</b></a>` +
+            `<a href="sms:${d}" class="ecs-sms" title="${label}에게 문자" aria-label="${label} 문자">${ECS_IC.sms}</a></div>`;
     }
     function ecsCard(c) {
         const name = getColVal(c, '선수이름', '이름', '선수명');
@@ -8222,9 +8237,9 @@
         return `<div class="ecs-card">` +
             `<div class="ecs-top">${no ? `<span class="ecs-no">${escapeHtml(no)}</span>` : ''}<span class="ecs-name">${escapeHtml(name)}</span>` +
             `${gradeNum ? `<span class="grade-tag grade-${escapeHtml(gradeNum)}">${escapeHtml(gradeNum)}학년</span>` : ''}` +
-            `${cars.length ? `<span class="ecs-car" title="차량번호">🚗 ${cars.map(x => `<span>${escapeHtml(x)}</span>`).join(' · ')}</span>` : ''}</div>` +
+            `${cars.length ? `<span class="ecs-car" title="차량번호">🚗 ${cars.map(x => `<span>${escapeHtml(x)}</span>`).join(' · ')}</span>` : ''}` +
+            (address ? `<button type="button" class="ecs-home" data-addr="${escapeHtml(address)}" title="${escapeHtml(address)}" onclick="contactAddrTap(this.dataset.addr)" aria-label="주소 복사하고 카카오맵 열기">🏠</button>` : '') + `</div>` +
             `<div class="ecs-phones${one ? ' one' : ''}">${phones}</div>` +
-            (address ? `<button type="button" class="ecs-addr" data-addr="${escapeHtml(address)}" onclick="contactAddrTap(this.dataset.addr)" aria-label="주소 복사하고 카카오맵 열기">🏠<span>${escapeHtml(address)}</span>🗺️</button>` : '') +
             `</div>`;
     }
 
@@ -8512,6 +8527,12 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.51.1', d: '2026-10-11', t: '📇 간단 비상연락망 더 촘촘하게 (시안 B)', items: [
+            '「아버님 · 어머님」 글자 대신 아이콘 (파란 사람 = 아버님, 분홍 사람 = 어머님, 회색 전화 = 기타) · 「문자」 글자 대신 말풍선 아이콘',
+            '주소 줄을 없애고 이름 줄 오른쪽 끝 🏠 버튼으로 — 누르면 지금처럼 주소 복사 + 카카오맵 (주소로 검색도 그대로 됨)',
+            '카드가 2줄이 돼서 폰 한 화면 6명 → 9명, 태블릿 가로 15명 → 22명',
+            '번호 글자 크기는 카드 너비에 맞춰 자동 — 작은 폰 · 태블릿 3칸에서도 번호가 잘리지 않음 · 폰은 창 여백을 줄여 번호 칸을 넓게'
+        ] },
         { v: 'v2.51.0', d: '2026-10-11', t: '📇 총무님용 간단 비상연락망', items: [
             '총무님이 🚨 비상 연락을 열면 「간단히」 보기 — 선수(번호 · 이름 · 학년) + 아버님 · 어머님 번호(누르면 📞 통화, 옆 💬 문자) + 🚗 차량 + 🏠 주소만',
             '등교 · 하교, 긴급 공지, 복사, 단체 문자는 안 보임 · 카드를 작게 해서 한 화면에 많이 (태블릿은 2~3칸)',
