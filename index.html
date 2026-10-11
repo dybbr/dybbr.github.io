@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.50.0 · b261011";
+        const APP_VERSION = "v2.51.0 · b261011";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -1210,6 +1210,50 @@
         .cqb-g3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
         .cqb-g3 .btn-quick-action { padding: 6px 2px; font-size: 12px; font-weight: 800; text-align: center; white-space: nowrap; letter-spacing: -0.3px; }
         #emergencyContactsModal .modal-scroll-body { container-type: inline-size; }
+        /* 📇 비상연락망 「간단히」 (v2.51.0) — 총무님용 · 선수 + 아버님/어머님(통화 · 문자) + 차량 + 주소만, 한 화면에 많이 */
+        #emergencyContactsModal.ec-simple .modal-content { max-width: min(1100px, 96vw) !important; width: 96% !important; max-height: calc(94vh / var(--ui-zoom, 1)) !important; }
+        #emergencyContactsModal.ec-simple #commuteSummary, #emergencyContactsModal.ec-simple .cqb, #emergencyContactsModal.ec-simple #contactCommuteSelect { display: none !important; }
+        #emergencyContactsModal.ec-simple .contact-filter-row { flex-wrap: nowrap; }   /* 검색 · 학년 · 보기를 한 줄로 → 목록 자리 넓게 */
+        #emergencyContactsModal.ec-simple .contact-filter-row input { flex: 1 1 0; }
+        #emergencyContactsModal.ec-simple .contact-filter-row select { flex: 0 0 auto; }
+        .ec-mode { display: inline-flex; flex: 0 0 auto; border: 1px solid var(--card-border); border-radius: 6px; overflow: hidden; }
+        .ec-mode button { border: 0; background: #fff; color: #475569; font: inherit; font-size: 12px; font-weight: 800; padding: 6px 9px; cursor: pointer; white-space: nowrap; }
+        .ec-mode button + button { border-left: 1px solid var(--card-border); }
+        .ec-mode button.on { background: #0b2240; color: #fff; }
+        .ec-mode[hidden] { display: none !important; }
+        #contactsListContent.ecs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 6px; }
+        .ecs-card { container-type: inline-size; min-width: 0; display: flex; flex-direction: column; gap: 4px; background: #fff; border: 1px solid #e2e8f0; border-left: 3px solid #dc2626; border-radius: 9px; padding: 5px 7px 6px; }
+        .ecs-top { display: flex; align-items: center; gap: 6px; min-width: 0; }
+        .ecs-no { flex: 0 0 auto; box-sizing: border-box; min-width: 24px; height: 21px; padding: 0 5px; border-radius: 6px; background: #0b2240; color: #fff; font-size: 12px; font-weight: 900; display: inline-flex; align-items: center; justify-content: center; font-variant-numeric: tabular-nums; }
+        .ecs-name { flex: 0 0 auto; font-size: 15px; font-weight: 900; color: #0f172a; white-space: nowrap; letter-spacing: -0.3px; }
+        .ecs-top .grade-tag { flex: 0 0 auto; font-size: 10.5px; padding: 1px 6px; }
+        .ecs-car { margin-left: auto; flex: 0 1 auto; min-width: 0; font-size: 12px; font-weight: 800; color: #334155; text-align: right; line-height: 1.2; overflow-wrap: anywhere; }
+        .ecs-car span { white-space: nowrap; }   /* 차가 두 대면 번호가 안 쪼개지게 한 대씩 줄바꿈 */
+        /* 아버님 · 어머님 나란히 — 번호 칸 전체가 📞 통화 버튼, 옆 💬 가 문자 */
+        .ecs-phones { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
+        .ecs-phones.one { grid-template-columns: minmax(0, 1fr); }
+        .ecs-ph { display: flex; gap: 3px; min-width: 0; }
+        .ecs-call { flex: 1 0 auto; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 0; padding: 3px 6px; border-radius: 7px; border: 1px solid transparent; text-decoration: none; line-height: 1.25; -webkit-tap-highlight-color: transparent; }
+        .ecs-call i { font-style: normal; font-size: 10.5px; font-weight: 900; white-space: nowrap; }
+        .ecs-call b { font-size: 13px; font-weight: 800; color: #0f172a; font-variant-numeric: tabular-nums; letter-spacing: -0.4px; white-space: nowrap; }
+        .ecs-call.f { background: #eff6ff; border-color: #bfdbfe; } .ecs-call.f i { color: #1d4ed8; }
+        .ecs-call.m { background: #fdf2f8; border-color: #fbcfe8; } .ecs-call.m i { color: #be185d; }
+        .ecs-call.o { background: #f8fafc; border-color: #e2e8f0; } .ecs-call.o i { color: #475569; }
+        .ecs-call.off { opacity: .55; } .ecs-call.off b { font-size: 11.5px; color: #94a3b8; font-weight: 700; }
+        a.ecs-call:active { filter: brightness(.94); }
+        .ecs-sms { flex: 0 0 auto; width: 34px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 7px; background: #e0f2fe; border: 1px solid #7dd3fc; text-decoration: none; font-size: 14px; line-height: 1.1; }
+        .ecs-sms i { font-style: normal; font-size: 9.5px; font-weight: 900; color: #0369a1; }
+        .ecs-none { font-size: 11.5px; color: #94a3b8; font-weight: 700; padding: 4px 2px; }
+        @container (max-width: 300px) {   /* 좁은 카드(작은 폰 · 태블릿 3칸): 번호가 잘리지 않게 글자 · 여백을 살짝 줄임 */
+            .ecs-phones { gap: 4px; }
+            .ecs-call { padding: 3px 4px; }
+            .ecs-call b { font-size: 12px; letter-spacing: -0.5px; }
+            .ecs-sms { width: 29px; }
+        }
+        @container (max-width: 268px) { .ecs-phones { grid-template-columns: minmax(0, 1fr); } }   /* 아주 작은 폰: 아버님 · 어머님 위아래로 */
+        .ecs-addr { display: flex; align-items: center; gap: 4px; width: 100%; min-width: 0; box-sizing: border-box; border: 0; background: #f8fafc; border-radius: 6px; padding: 4px 6px; font: inherit; font-size: 11.5px; font-weight: 600; color: #334155; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        .ecs-addr span { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-decoration: underline; text-decoration-color: #cbd5e1; text-underline-offset: 2px; }
+        .ecs-addr:active { background: #e2e8f0; }
         @container (max-width: 270px) {   /* 아주 좁은 화면: 이름은 위 한 줄, 버튼은 아래 전체 너비 */
             .contact-quick-bar.cqb { grid-template-columns: minmax(0, 1fr); gap: 5px; }
             .cqb-l { padding-top: 0; }
@@ -2128,6 +2172,14 @@
     .summary-title { color: #dde3ec; }
     .summary-item-badge { background: #151e2e; border: 1px solid #58697e; color: #bcc6d4; }
     .contact-card { background: #151e2e; border: 1px solid #2a374e; border-left: 4px solid #ad3939; }
+    .ecs-card { background: #151e2e; border-color: #2a374e; border-left-color: #ad3939; }
+    .ecs-name { color: #dde3ec; } .ecs-car { color: #bcc6d4; } .ecs-no { background: #2c4a7a; }
+    .ecs-call.f { background: #172a4a; border-color: #1e3a6e; } .ecs-call.f i { color: #93c5fd; }
+    .ecs-call.m { background: #3a1830; border-color: #5b1d3d; } .ecs-call.m i { color: #f9a8d4; }
+    .ecs-call.o { background: #1b2638; border-color: #2a374e; } .ecs-call.o i { color: #cbd5e1; }
+    .ecs-call b { color: #dde3ec; } .ecs-sms { background: #0c3a56; border-color: #075985; } .ecs-sms i { color: #7dd3fc; }
+    .ecs-addr { background: #1b2638; color: #bcc6d4; } .ecs-addr span { text-decoration-color: #2f5a7a; } .ecs-addr:active { background: #223047; }
+    .ec-mode button { background: #1b2638; color: #bcc6d4; } .ec-mode button.on { background: #2c4a7a; color: #fff; }
     .contact-header { border-bottom: 1px solid #2a374e; }
     .contact-player-name { color: #dde3ec; }
     .contact-row { background: #1b2638; border: 1px solid #2a374e; }
@@ -3432,6 +3484,10 @@
                 <option value="walk">🚶 도보</option>
                 <option value="academy">🚐 학원차량</option>
             </select>
+            <div class="ec-mode" id="ecModeToggle" hidden role="group" aria-label="보기 방식">
+                <button type="button" data-m="simple" onclick="setEcMode('simple')">간단히</button>
+                <button type="button" data-m="full" onclick="setEcMode('full')">자세히</button>
+            </div>
         </div>
         <div class="modal-scroll-body">
             <div class="commute-summary" id="commuteSummary"></div>
@@ -7927,6 +7983,7 @@
     async function openEmergencyContactsModal() {
         if (!(isSuperOrDev() || currentRole === 'general')) { bkNotify('info', '비상연락망은 대표님·총무님만 볼 수 있캉!'); return; }
         document.getElementById('btnContactsSheet').style.visibility = isSuperOrDev() ? 'visible' : 'hidden';   // 시트 원본은 대표님만
+        applyEcMode();   // 📇 v2.51.0: 총무님은 「간단히」
         document.getElementById('emergencyContactsModal').style.display = 'flex';
         const content = document.getElementById('contactsListContent');
         sendActivityLog("열람", currentRole, "학부모 비상연락망 열람");
@@ -8053,10 +8110,13 @@
         if (!content) return;
 
         const filtered = getFilteredContacts();
-        renderCommuteSummary(filtered);
+        const simple = ecSimple();
+        content.classList.toggle('ecs-grid', simple && filtered.length > 0);
+        if (!simple) renderCommuteSummary(filtered);
 
-        if (title) title.textContent = `🚨 학부모 비상연락망 (${filtered.length}명)`;
+        if (title) title.textContent = simple ? `📇 비상연락망 · 간단히 (${filtered.length}명)` : `🚨 학부모 비상연락망 (${filtered.length}명)`;
         if (filtered.length === 0) { content.innerHTML = bkState('empty bk-s-search', '검색 결과가 없습니다.', '어디 숨었캉?'); return; }
+        if (simple) { content.innerHTML = filtered.map(ecsCard).join(''); return; }
 
         const phoneRow = (roleCls, roleLabel, phone, extraStyle, phoneStyle) => {
             const d = digitsOnly(phone);
@@ -8106,6 +8166,66 @@
                 </div>
             `;
         }).join('');
+    }
+
+    // ==========================================================
+    // 📇 비상연락망 「간단히」 (v2.51.0) — 총무님용
+    //   선수(번호 · 이름 · 학년) + 아버님 · 어머님(📞 통화 · 💬 문자) + 차량 + 주소만, 카드를 작게 해서 한 화면에 많이
+    //   등하교 · 긴급 공지 · 복사 · 단체 문자는 안 보임 · 태블릿은 2~3칸으로
+    //   아버님 · 어머님 번호가 둘 다 없을 때만 기타 번호를 대신 보여 줌 (연락할 길이 하나는 있게)
+    // ==========================================================
+    const EC_GENERAL_SIMPLE_ONLY = false;   // true 면 총무님은 「간단히」만 (자세히로 못 바꿈) · false 면 기본 간단히 + 바꿀 수 있음
+    function ecMode() {
+        if (currentRole === 'general') {
+            if (EC_GENERAL_SIMPLE_ONLY) return 'simple';
+            try { return localStorage.getItem('daeyeon_ec_mode') || 'simple'; } catch (e) { return 'simple'; }
+        }
+        try { return localStorage.getItem('daeyeon_ec_mode') || 'full'; } catch (e) { return 'full'; }
+    }
+    function ecSimple() { return ecMode() === 'simple'; }
+    function applyEcMode() {
+        const simple = ecSimple();
+        document.getElementById('emergencyContactsModal').classList.toggle('ec-simple', simple);
+        const tg = document.getElementById('ecModeToggle');
+        if (tg) {
+            tg.hidden = currentRole === 'general' && EC_GENERAL_SIMPLE_ONLY;   // 총무님은 바꾸는 버튼 없이 간단히만
+            tg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.m === (simple ? 'simple' : 'full')));
+        }
+        const q = document.getElementById('contactSearchInput');
+        if (q) q.placeholder = simple ? '이름 · 번호 · 차량 · 주소 검색' : '선수명 / 연락처 / 차량 / 주소 / 등하교 검색';
+        if (simple) { const cs = document.getElementById('contactCommuteSelect'); if (cs) cs.value = 'all'; }   // 숨긴 등하교 필터가 몰래 걸려 있지 않게
+    }
+    function setEcMode(m) {
+        try { localStorage.setItem('daeyeon_ec_mode', m); } catch (e) {}
+        applyEcMode();
+        renderEmergencyContacts();
+        const body = document.querySelector('#emergencyContactsModal .modal-scroll-body'); if (body) body.scrollTop = 0;
+    }
+    function ecsPhone(cls, label, phone) {   // 번호 칸 전체 = 📞 통화 · 옆 💬 = 문자
+        const d = digitsOnly(phone);
+        if (d.length < 9) return `<div class="ecs-ph"><span class="ecs-call ${cls} off"><i>${label}</i><b>${phone ? escapeHtml(phone) : '번호 없음'}</b></span></div>`;
+        return `<div class="ecs-ph"><a href="tel:${d}" class="ecs-call ${cls}" aria-label="${label} 통화 ${escapeHtml(phone)}"><i>📞 ${label}</i><b>${escapeHtml(phone)}</b></a>` +
+            `<a href="sms:${d}" class="ecs-sms" aria-label="${label} 문자">💬<i>문자</i></a></div>`;
+    }
+    function ecsCard(c) {
+        const name = getColVal(c, '선수이름', '이름', '선수명');
+        const no = getColVal(c, '배번', '등번호');
+        const grade = getColVal(c, '학년', '구분');
+        const gradeNum = grade.replace(/[^0-9]/g, '');
+        const f = getColVal(c, '아버님', '아버지'), m = getColVal(c, '어머님', '어머니');
+        const o = getColVal(c, '기타연락처', '기타', '추가연락처');
+        const cars = [getColVal(c, '차량번호1', '차량번호'), getColVal(c, '차량번호2')].filter(Boolean);
+        const address = getColVal(c, '주소');
+        const one = !(f || m);
+        const phones = !one ? ecsPhone('f', '아버님', f) + ecsPhone('m', '어머님', m)
+                     : (o ? ecsPhone('o', '기타', o) : '<span class="ecs-none">등록된 보호자 번호가 없어요</span>');
+        return `<div class="ecs-card">` +
+            `<div class="ecs-top">${no ? `<span class="ecs-no">${escapeHtml(no)}</span>` : ''}<span class="ecs-name">${escapeHtml(name)}</span>` +
+            `${gradeNum ? `<span class="grade-tag grade-${escapeHtml(gradeNum)}">${escapeHtml(gradeNum)}학년</span>` : ''}` +
+            `${cars.length ? `<span class="ecs-car" title="차량번호">🚗 ${cars.map(x => `<span>${escapeHtml(x)}</span>`).join(' · ')}</span>` : ''}</div>` +
+            `<div class="ecs-phones${one ? ' one' : ''}">${phones}</div>` +
+            (address ? `<button type="button" class="ecs-addr" data-addr="${escapeHtml(address)}" onclick="contactAddrTap(this.dataset.addr)" aria-label="주소 복사하고 카카오맵 열기">🏠<span>${escapeHtml(address)}</span>🗺️</button>` : '') +
+            `</div>`;
     }
 
     // v2.44.6: 주소를 누르면 → 주소 복사 + 카카오맵에서 검색 (내비 · 단톡방에 바로 붙여넣기)
@@ -8392,6 +8512,12 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.51.0', d: '2026-10-11', t: '📇 총무님용 간단 비상연락망', items: [
+            '총무님이 🚨 비상 연락을 열면 「간단히」 보기 — 선수(번호 · 이름 · 학년) + 아버님 · 어머님 번호(누르면 📞 통화, 옆 💬 문자) + 🚗 차량 + 🏠 주소만',
+            '등교 · 하교, 긴급 공지, 복사, 단체 문자는 안 보임 · 카드를 작게 해서 한 화면에 많이 (태블릿은 2~3칸)',
+            '주소를 누르면 지금처럼 주소 복사 + 카카오맵 · 아버님 · 어머님 번호가 둘 다 없으면 기타 번호를 대신 보여 줌',
+            '위쪽 「간단히 | 자세히」로 바꿔 볼 수 있음 (기기마다 기억) — 총무님은 기본 간단히, 대표님 · 개발자는 기본 자세히'
+        ] },
         { v: 'v2.50.0', d: '2026-10-11', t: '🔓 화면 잠금 → 로그아웃 하나로', items: [
             '왼쪽 위 「🔒 화면 잠금」을 빼고 오른쪽 위 「🔓 로그아웃」 하나로 — 둘이 하는 일이 똑같았음 (로그인 지우고 서버 로그인도 끝내고 잠금 화면으로)',
             '「🔓 로그아웃」이 이제 보호자 · 일반 열람자에게도 보임 (예전엔 관리자만) · 누르면 「로그아웃할까캉?」 한 번 물어봄',
