@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.49.1 · b261011";
+        const APP_VERSION = "v2.50.0 · b261011";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -2724,7 +2724,7 @@
             <div id="sessionTimerBadge" class="session-timer-badge">
                 ⏱️ <span id="timerCountdown">--:--:--</span>
             </div>
-            <button class="btn-screen-lock" onclick="lockScreenNow()" title="즉시 화면 잠금 및 완전 로그아웃">🔒 화면 잠금</button>
+            <!-- v2.50.0: 「🔒 화면 잠금」은 로그아웃과 하는 일이 같아 빼고, 오른쪽 위 「🔓 로그아웃」 하나로 (보호자 · 열람자에게도 보임) -->
             <button type="button" id="presCdBtn" class="pres-cd-btn" hidden onclick="presencePoll()" title="실시간 접속 알림 — 다음 확인까지 남은 초 (누르면 지금 확인)">📡 <b>10</b></button>
         </div>
 
@@ -5826,7 +5826,7 @@
         const u = getActiveUser();
         const ok = await bkConfirm((u && u.name) ? '다른 번호로 다시 로그인할까캉?' : '다시 로그인할까캉?',
             { sub: (u && u.name) ? `지금 로그인: ${u.name} (${u.role})` : '지금은 일반 열람 상태예요', ok: '다시 로그인' });
-        if (ok) lockScreenNow();
+        if (ok) lockScreenNow('로그아웃');
     }
 
     function resetRegPick() {
@@ -5926,7 +5926,7 @@
     // ==========================================================
     // 🟢 실시간 접속 알림 (v2.47.0 · v2.49.0 정리)
     //   ① 개발자를 뺀 모든 사람이 서버에 짧게 알림 (누가인지는 서버가 토큰으로 확인 — 보호자는 아버님 · 어머님까지)
-    //      들어옴: 로그인 · 앱 실행 · 재접속 / 나감: 로그아웃 · 화면 잠금 · 시간 만료 · 앱 나감 · 앱 종료
+    //      들어옴: 로그인 · 앱 실행 · 재접속 / 나감: 로그아웃 · 시간 만료 · 앱 나감 · 앱 종료 (화면 잠금은 v2.50.0부터 로그아웃으로 합침)
     //      보는 화면: 탭을 바꾸고 2초 머물면 한 번 (빨리 넘기는 건 안 보냄)
     //      작업(일정 · 공지 · 사진 · 주문 · 신규 등록 …) · 경고(로그인 실패 · 잠김 · 졸업생 번호)는 서버가 직접 기록 (성공한 것만)
     //   ② 개발자: 앱이 켜져 있는 동안 10초마다 새 알림을 받아 화면 위쪽에 「[로그인] 김승원 아버님 22:10」 칩 + 「개발」에 최근 50건
@@ -6114,9 +6114,12 @@
     }
 
     // quiet: 앱이 닫히는 중 (v2.48.0) — 알림 · 입력칸 포커스 없이, 서버에는 sendBeacon 으로
+    //        v2.50.0: 기록은 여기서 한 번만 (예전엔 로그아웃하면 「로그아웃」 + 「화면잠금」 두 줄) · 누가인지 지우기 전에 남김
     function lockScreenNow(why, quiet) {
-        presenceOut(why || '화면 잠금', !!quiet);   // 🟢 v2.47.0: 토큰을 지우기 전에 「나감」
-        if (quiet) sendActivityLog("앱종료", currentRole, "뒤로가기 두 번으로 앱 종료 · 자동 로그아웃", true);   // 누가인지 지우기 전에
+        why = why || '로그아웃';
+        presenceOut(why, !!quiet);   // 🟢 v2.47.0: 토큰을 지우기 전에 「나감」
+        if (quiet) sendActivityLog("앱종료", currentRole, "뒤로가기 두 번으로 앱 종료 · 자동 로그아웃", true);
+        else sendActivityLog(why === '로그아웃' ? "로그아웃" : "화면잠금", currentRole, why === '로그아웃' ? "로그아웃" : why + " · 완전 로그아웃");
         try { if (getToken()) (quiet ? beaconApi : postApi)({ action: 'logout', token: getToken() }); } catch (e) {}   // 서버 세션도 폐기
         localStorage.removeItem('daeyeon_auth_expire');
         clearAdminRoleStorage();
@@ -6124,7 +6127,6 @@
         localStorage.removeItem('daeyeon_active_user');
         sessionStorage.removeItem('daeyeon_active_user');
 
-        const prevRole = currentRole;
         currentRole = 'guest';
 
         document.documentElement.classList.remove('is-authenticated');
@@ -6137,8 +6139,6 @@
         updateUserIdentityBadge();
         render();
 
-        if (!quiet) sendActivityLog("화면잠금", prevRole, "화면 잠금 및 완전 로그아웃");
-
         const overlay = document.getElementById('lockOverlay');
         if (overlay) {
             overlay.style.display = 'flex';
@@ -6146,7 +6146,7 @@
             pwInput.value = '';
             if (!quiet) setTimeout(() => pwInput.focus(), 50);
         }
-        if (!quiet) bkNotify('sleep', '화면을 잠갔캉 💤', '다시 쓰려면 로그인해 주세요', { ms: 3500 });
+        if (!quiet) bkNotify('sleep', '로그아웃했캉 👋', '다시 쓰려면 로그인해 주세요', { ms: 3500 });
     }
     // 🚪 v2.48.0: 뒤로가기 두 번으로 앱을 닫을 때 자동 로그아웃 (로그인 상태일 때만 · 한 번만)
     function appExitLogout() {
@@ -8392,6 +8392,13 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.50.0', d: '2026-10-11', t: '🔓 화면 잠금 → 로그아웃 하나로', items: [
+            '왼쪽 위 「🔒 화면 잠금」을 빼고 오른쪽 위 「🔓 로그아웃」 하나로 — 둘이 하는 일이 똑같았음 (로그인 지우고 서버 로그인도 끝내고 잠금 화면으로)',
+            '「🔓 로그아웃」이 이제 보호자 · 일반 열람자에게도 보임 (예전엔 관리자만) · 누르면 「로그아웃할까캉?」 한 번 물어봄',
+            '접속자 이름(배지)을 눌러 「다시 로그인」해도 로그아웃으로 처리',
+            '고침: 관리자가 로그아웃하면 기록이 「로그아웃」 + 「화면잠금」 두 줄로 남던 것 → 한 줄 (누가인지도 함께)',
+            '접속 기록(개발)에서 「앱종료」(뒤로가기 두 번)도 나감으로 묶어 보여 줌'
+        ] },
         { v: 'v2.49.1', d: '2026-10-11', t: '⏳ 접속 알림 카운트다운', items: [
             '개발자 화면 위쪽 줄(화면 잠금 옆)에 「📡 7」처럼 다음 확인까지 남은 초 — 확인하는 동안은 「…」, 누르면 지금 바로 확인',
             '관리 탭 「개발」의 실시간 접속 알림 제목 오른쪽에도 「다음 확인 7초」 + 차오르는 막대 (누르면 바로 확인)',
@@ -8991,7 +8998,7 @@
         view: ['열람', '복사']
     };
     const LOG_CAT_DESC = {
-        access: '들어옴(로그인)과 나감(로그아웃·화면 잠금·자동 잠김)을 기기별로 한 줄씩 묶어 보여줍니다. 구글 시트 "접속기록" 탭에 따로 보관돼요 (최근 300건).',
+        access: '들어옴(로그인)과 나감(로그아웃·앱 종료·자동 잠김)을 기기별로 한 줄씩 묶어 보여줍니다. 구글 시트 "접속기록" 탭에 따로 보관돼요 (최근 300건).',
         change: '비밀번호·일정·공지·사진·선수 정보·유니폼 주문/설정 등 내용을 바꾼 기록입니다 (최근 200건).',
         view: '비상연락망 열람, 번호 복사 기록입니다 (최근 200건).',
         all: '모든 활동의 최근 100건입니다.'
@@ -9014,8 +9021,8 @@
     }
 
     // ---- 👥 접속 기록: 같은 기기의 "들어옴 → 나감"을 한 줄로 ----
-    const ACC_IN = ['잠금해제', '최초등록'], ACC_OUT = ['로그아웃', '화면잠금', '세션만료'];
-    const ACC_OUT_LABEL = { '로그아웃': '로그아웃', '화면잠금': '화면 잠금', '세션만료': '자동 잠김 (시간 만료)' };
+    const ACC_IN = ['잠금해제', '최초등록'], ACC_OUT = ['로그아웃', '화면잠금', '세션만료', '앱종료'];
+    const ACC_OUT_LABEL = { '로그아웃': '로그아웃', '화면잠금': '화면 잠금', '세션만료': '자동 잠김 (시간 만료)', '앱종료': '앱 종료 (뒤로가기 두 번)' };
     const ACC_TTL_MIN = { '개발자': 360, '대표님': 240, '코치진': 120, '총무님': 60, '보호자': 60, '일반 열람자': 10 };   // 서버 로그인 유지 시간과 같게
     function accDate(v) { const m = String(v).match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})\D+(\d{1,2}):(\d{2}):(\d{2})/); return m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]) : null; }
     function accWho(log) {   // 인증등급 칸: "역할 [누구]" → { who, label }
@@ -9190,9 +9197,8 @@
     // 관리자 로그인
     // ==========================================================
     async function openAdminModal() {
-        if (currentRole !== 'guest') {
+        if (currentRole !== 'guest' || isAuthValid()) {   // v2.50.0: 보호자 · 열람자도 이 버튼으로 로그아웃
             if (await bkConfirm('로그아웃할까캉?', { sub: '로그아웃하면 잠금화면으로 돌아가요', ok: '로그아웃' })) {
-                sendActivityLog("로그아웃", currentRole, "로그아웃");
                 lockScreenNow('로그아웃');   // 토큰·세션 완전 폐기 후 잠금화면으로
             }
         } else {
@@ -9253,8 +9259,11 @@
             document.getElementById('btnManagePw').style.display = (isSuperOrDev() || currentRole === 'general') ? 'inline-block' : 'none';   // 총무님은 본인 비밀번호만
             document.getElementById('btnEmergencyContacts').style.display = (isSuperOrDev() || currentRole === 'general') ? 'inline-flex' : 'none';   // 대표님·총무님
         } else {
-            // 일반 학부모/사용자인 경우 우측 상단 관리자 로그인 버튼을 숨김 (관리자 비번 인증 시에만 노출)
-            adminBtn.style.display = 'none';
+            // 보호자 · 일반 열람자: 관리 메뉴는 숨기고, 오른쪽 위 「🔓 로그아웃」만 (v2.50.0 — 예전 「화면 잠금」 자리)
+            const loggedIn = isAuthValid() && !!getToken();
+            adminBtn.style.display = loggedIn ? '' : 'none';
+            adminBtn.textContent = '🔓 로그아웃';
+            adminBtn.classList.toggle('logged-in', loggedIn);
             adminBar.style.display = 'none';
         }
         try { updateAdminPanel(); } catch (e) {}
