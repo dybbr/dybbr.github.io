@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.51.1 · b261011";
+        const APP_VERSION = "v2.51.2 · b261011";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -1212,10 +1212,19 @@
         #emergencyContactsModal .modal-scroll-body { container-type: inline-size; }
         /* 📇 비상연락망 「간단히」 (v2.51.0) — 총무님용 · 선수 + 아버님/어머님(통화 · 문자) + 차량 + 주소만, 한 화면에 많이 */
         #emergencyContactsModal.ec-simple .modal-content { max-width: min(1100px, 96vw) !important; width: 96% !important; max-height: calc(94vh / var(--ui-zoom, 1)) !important; }
-        #emergencyContactsModal.ec-simple #commuteSummary, #emergencyContactsModal.ec-simple .cqb, #emergencyContactsModal.ec-simple #contactCommuteSelect { display: none !important; }
+        #emergencyContactsModal.ec-simple #commuteSummary, #emergencyContactsModal.ec-simple .cqb { display: none !important; }
         #emergencyContactsModal.ec-simple .contact-filter-row { flex-wrap: nowrap; }   /* 검색 · 학년 · 보기를 한 줄로 → 목록 자리 넓게 */
         #emergencyContactsModal.ec-simple .contact-filter-row input { flex: 1 1 0; }
         #emergencyContactsModal.ec-simple .contact-filter-row select { flex: 0 0 auto; }
+        /* v2.51.2: 학년 · 등하교 고르기 — 안드로이드 기본 선택창(「완료」를 눌러야 닫힘) 대신 앱 안 메뉴, 누르면 바로 적용 */
+        #contactGradeSelect, #contactCommuteSelect { display: none !important; }   /* 값은 숨긴 선택칸에 그대로 (검색 · 필터 로직 그대로) */
+        .contact-filter-row .ec-pick { flex: 1 1 0; min-width: 0; }
+        .ec-pick .cgsel-btn { width: 100%; height: 32px; justify-content: space-between; border-radius: 6px; border-color: var(--card-border); padding: 0 8px 0 10px; }
+        .ec-pick .cgsel-btn .l { overflow: hidden; text-overflow: ellipsis; }
+        .ec-pick .cgsel-menu { top: 36px; z-index: 80; }
+        @media (min-width: 520px) { .contact-filter-row .ec-pick { flex: 0 0 auto; } }
+        #emergencyContactsModal.ec-simple .contact-filter-row .ec-pick { flex: 0 0 auto; }
+        #emergencyContactsModal.ec-simple .ec-pick[data-for="contactCommuteSelect"] { display: none !important; }
         .ec-mode { display: inline-flex; flex: 0 0 auto; border: 1px solid var(--card-border); border-radius: 6px; overflow: hidden; }
         .ec-mode button { border: 0; background: #fff; color: #475569; font: inherit; font-size: 12px; font-weight: 800; padding: 6px 9px; cursor: pointer; white-space: nowrap; }
         .ec-mode button + button { border-left: 1px solid var(--card-border); }
@@ -3483,6 +3492,7 @@
                 <option value="2">2학년</option>
                 <option value="1">1학년</option>
             </select>
+            <div class="cgsel-wrap ec-pick" data-for="contactGradeSelect"><button type="button" class="cgsel-btn" onclick="ecPickToggle(this, event)" aria-haspopup="listbox" aria-expanded="false" title="학년"><span class="l">전체</span><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M2 4l4 4 4-4"/></svg></button><div class="cgsel-menu" role="listbox"></div></div>
             <select id="contactCommuteSelect" title="등·하교 방법" style="padding: 7px 6px; border: 1px solid var(--card-border); border-radius: 6px; font-size: 12px; font-weight: 700;" onchange="renderEmergencyContacts()">
                 <option value="all">등하교 전체</option>
                 <option value="car">🚗 자차</option>
@@ -3491,6 +3501,7 @@
                 <option value="walk">🚶 도보</option>
                 <option value="academy">🚐 학원차량</option>
             </select>
+            <div class="cgsel-wrap ec-pick" data-for="contactCommuteSelect"><button type="button" class="cgsel-btn" onclick="ecPickToggle(this, event)" aria-haspopup="listbox" aria-expanded="false" title="등·하교 방법"><span class="l">등하교 전체</span><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M2 4l4 4 4-4"/></svg></button><div class="cgsel-menu" role="listbox"></div></div>
             <div class="ec-mode" id="ecModeToggle" hidden role="group" aria-label="보기 방식">
                 <button type="button" data-m="simple" onclick="setEcMode('simple')">간단히</button>
                 <button type="button" data-m="full" onclick="setEcMode('full')">자세히</button>
@@ -8181,6 +8192,45 @@
     //   등하교 · 긴급 공지 · 복사 · 단체 문자는 안 보임 · 태블릿은 2~3칸으로
     //   아버님 · 어머님 번호가 둘 다 없을 때만 기타 번호를 대신 보여 줌 (연락할 길이 하나는 있게)
     // ==========================================================
+    // v2.51.2: 학년 · 등하교 고르기 메뉴 — 숨긴 <select> 의 항목으로 버튼을 만들고, 누르면 값을 넣고 바로 닫힘
+    function ecPickSync() {
+        document.querySelectorAll('.ec-pick').forEach(w => {
+            const sel = document.getElementById(w.dataset.for); if (!sel) return;
+            const o = sel.options[sel.selectedIndex];
+            w.querySelector('.l').textContent = o ? o.textContent : '';
+            w.querySelector('.cgsel-btn').classList.toggle('on', sel.value !== 'all');   // 걸러 보는 중이면 색으로 표시
+        });
+    }
+    function ecPickClose(except) {
+        document.querySelectorAll('.ec-pick.open').forEach(w => { if (w !== except) { w.classList.remove('open'); w.querySelector('.cgsel-btn').setAttribute('aria-expanded', 'false'); } });
+    }
+    function ecPickToggle(btn, e) {
+        if (e) e.stopPropagation();
+        const w = btn.closest('.ec-pick'), sel = document.getElementById(w.dataset.for);
+        if (!sel) return;
+        ecPickClose(w);
+        const open = !w.classList.contains('open');
+        if (open) {
+            w.querySelector('.cgsel-menu').innerHTML = [...sel.options].map((o, i) =>
+                `<button type="button" role="option" class="${i === 0 ? 'wide' : ''}${o.value === sel.value ? ' on' : ''}" aria-selected="${o.value === sel.value}" data-v="${escapeHtml(o.value)}" onclick="ecPickSet(this, event)">${escapeHtml(o.textContent)}</button>`).join('');
+        }
+        w.classList.toggle('open', open);
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (open) {   // 메뉴가 창 밖으로 나가지 않게 — 왼쪽 맞춤이 넘치면 오른쪽 맞춤으로
+            const m = w.querySelector('.cgsel-menu'), box = w.closest('.modal-content') || document.body;
+            m.style.left = '0'; m.style.right = 'auto';
+            if (m.getBoundingClientRect().right > box.getBoundingClientRect().right - 4) { m.style.left = 'auto'; m.style.right = '0'; }
+        }
+    }
+    function ecPickSet(b, e) {
+        if (e) e.stopPropagation();
+        const w = b.closest('.ec-pick'), sel = document.getElementById(w.dataset.for);
+        ecPickClose();
+        if (sel && sel.value !== b.dataset.v) { sel.value = b.dataset.v; sel.dispatchEvent(new Event('change')); }
+        ecPickSync();
+    }
+    document.addEventListener('click', e => { if (!(e.target.closest && e.target.closest('.ec-pick'))) ecPickClose(); });
+
     const EC_GENERAL_SIMPLE_ONLY = false;   // true 면 총무님은 「간단히」만 (자세히로 못 바꿈) · false 면 기본 간단히 + 바꿀 수 있음
     function ecMode() {
         if (currentRole === 'general') {
@@ -8201,6 +8251,7 @@
         const q = document.getElementById('contactSearchInput');
         if (q) q.placeholder = simple ? '이름 · 번호 · 차량 · 주소 검색' : '선수명 / 연락처 / 차량 / 주소 / 등하교 검색';
         if (simple) { const cs = document.getElementById('contactCommuteSelect'); if (cs) cs.value = 'all'; }   // 숨긴 등하교 필터가 몰래 걸려 있지 않게
+        ecPickClose(); ecPickSync();
     }
     function setEcMode(m) {
         try { localStorage.setItem('daeyeon_ec_mode', m); } catch (e) {}
@@ -8527,6 +8578,10 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.51.2', d: '2026-10-11', t: '👆 비상연락망 학년 · 등하교 고르면 바로 적용', items: [
+            '학년 · 등하교 고르기를 휴대폰 기본 선택창 대신 앱 안 메뉴로 — 누르면 바로 적용되고 닫힘 (「완료」를 안 눌러도 됨)',
+            '걸러 보는 중이면(예: 6학년) 버튼 색이 바뀌어 한눈에 보임 · 뒤로가기나 바깥을 누르면 메뉴만 닫힘'
+        ] },
         { v: 'v2.51.1', d: '2026-10-11', t: '📇 간단 비상연락망 더 촘촘하게 (시안 B)', items: [
             '「아버님 · 어머님」 글자 대신 아이콘 (파란 사람 = 아버님, 분홍 사람 = 어머님, 회색 전화 = 기타) · 「문자」 글자 대신 말풍선 아이콘',
             '주소 줄을 없애고 이름 줄 오른쪽 끝 🏠 버튼으로 — 누르면 지금처럼 주소 복사 + 카카오맵 (주소로 검색도 그대로 됨)',
@@ -9603,6 +9658,7 @@
     function closeTopLayer() {
         if (bkAskResolve) { bkAskClose(false); return true; }   // 부캉이 확인 창 → 취소
         const cf = document.querySelector('.cf-layer:not(.out)'); if (cf) { cf.click(); return true; }   // 승리 축하 화면
+        const dd0 = document.querySelector('.modal .cgsel-wrap.open'); if (dd0) { dd0.classList.remove('open'); return true; }   // v2.51.2: 창 안의 고르기 메뉴는 창보다 먼저 닫음
         const open = [...document.querySelectorAll('.modal')].filter(m => m.style.display === 'flex');
         if (open.length) {   // 맨 위 창 하나만 닫음 (예: 큰 지도 → 일정 상세는 그대로)
             const z = m => parseInt(getComputedStyle(m).zIndex, 10) || 0;
