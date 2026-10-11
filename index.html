@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.44.5 · b261011";
+        const APP_VERSION = "v2.44.6 · b261011";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1152,7 +1152,12 @@
         .commute-chip.car { color: #b45309; } .commute-chip.subway { color: #1d4ed8; } .commute-chip.bus { color: #047857; }
         .commute-chip.walk { color: #475569; } .commute-chip.academy { color: #7c3aed; }
         .contact-memo-box { font-size: 11px; color: #92400e; background: #fffbeb; padding: 5px 8px; border-radius: 6px; margin-top: 4px; border: 1px solid #fde68a; white-space: pre-line; }
-        .btn-map { margin-left: 6px; font-size: 10.5px; font-weight: 800; color: #0369a1; text-decoration: none; background: #ffffff; border: 1px solid #bae6fd; border-radius: 5px; padding: 1px 6px; white-space: nowrap; }
+        /* v2.44.6: 주소 줄 자체가 버튼 — 누르면 주소 복사 + 카카오맵 (따로 있던 「지도」 버튼은 뺌) */
+        .contact-address-box.addr-tap { display: flex; align-items: center; gap: 4px; width: 100%; text-align: left; font-family: inherit; line-height: 1.45; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        .addr-tap b { flex-shrink: 0; }
+        .addr-tap .addr-t { flex: 1 1 auto; min-width: 0; color: #0f4c81; font-weight: 700; text-decoration: underline; text-decoration-color: #93c5fd; text-underline-offset: 2px; word-break: keep-all; overflow-wrap: anywhere; }
+        .addr-tap .addr-go { flex-shrink: 0; font-size: 12px; }
+        .addr-tap:active { background: #e2e8f0; }
         .contact-phone-none { font-size: 11px; color: #94a3b8; font-weight: 700; }
         .contact-filter-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; flex-shrink: 0; }
         .contact-filter-row input { flex: 1 1 100%; min-width: 0; }
@@ -1161,15 +1166,24 @@
         .commute-summary { display: none; font-size: 11px; color: #334155; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 8px; margin-bottom: 8px; line-height: 1.7; flex-shrink: 0; }
         .commute-summary b { color: #0f172a; margin-right: 4px; }
         .commute-summary .cs-item { white-space: nowrap; margin-right: 8px; }
+        /* v2.44.6: 등교 · 하교 요약을 표처럼 — 방법마다 한 칸, 위에 아이콘 · 이름, 아래에 인원 */
+        .commute-summary .cs-grid { display: grid; align-items: center; column-gap: 2px; row-gap: 3px; line-height: 1.25; text-align: center; }
+        .commute-summary .cs-grid > b { text-align: left; font-size: 11.5px; margin: 0; white-space: nowrap; }
+        .cs-h { display: flex; flex-direction: column; align-items: center; gap: 1px; font-size: 15px; padding-bottom: 3px; border-bottom: 1px solid #e2e8f0; }
+        .cs-h i { font-style: normal; font-size: 10px; font-weight: 800; color: #64748b; white-space: nowrap; }
+        .cs-hb { border-bottom: 1px solid #e2e8f0; align-self: stretch; }
+        .cs-n { font-size: 14px; font-weight: 900; color: #0f172a; }
+        .cs-n.car { color: #b45309; } .cs-n.subway { color: #1d4ed8; } .cs-n.bus { color: #047857; } .cs-n.walk { color: #475569; } .cs-n.academy { color: #7c3aed; }
+        .cs-n.zero { color: #cbd5e1; font-weight: 700; }
         .contact-quick-bar { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: #fef2f2; border: 1px solid #fecaca; padding: 6px 8px; border-radius: 8px; margin-bottom: 8px; }
         .btn-quick-action { background: #ffffff; border: 1px solid #cbd5e1; padding: 3px 6px; border-radius: 5px; font-size: 11px; font-weight: 700; cursor: pointer; color: #334155; }
         /* v2.44.5: 긴급 공지 · 단체 문자 상자 — 왼쪽 이름 칸 너비를 같게 해서 버튼 시작 위치를 맞춤 */
         .contact-quick-bar.cqb { display: grid; grid-template-columns: 68px minmax(0, 1fr); align-items: start; gap: 8px; }
         .cqb-l { font-size: 11px; font-weight: 800; white-space: nowrap; padding-top: 4px; line-height: 1.3; }
         .cqb-l small { display: block; font-size: 9.5px; font-weight: 700; color: #94a3b8; margin-top: 1px; letter-spacing: -0.3px; }
-        .cqb-l.red { color: #991b1b; } .cqb-l.blue { color: #0369a1; }
-        .cqb-grade { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
-        .cqb-grade .btn-quick-action { padding: 6px 4px; font-size: 12px; font-weight: 800; text-align: center; white-space: nowrap; }
+        .cqb-l.red { color: #991b1b; } .cqb-l.blue { color: #0369a1; } .cqb-l.ink { color: #334155; }
+        .cqb-g3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+        .cqb-g3 .btn-quick-action { padding: 6px 2px; font-size: 12px; font-weight: 800; text-align: center; white-space: nowrap; letter-spacing: -0.3px; }
         #emergencyContactsModal .modal-scroll-body { container-type: inline-size; }
         @container (max-width: 270px) {   /* 아주 좁은 화면: 이름은 위 한 줄, 버튼은 아래 전체 너비 */
             .contact-quick-bar.cqb { grid-template-columns: minmax(0, 1fr); gap: 5px; }
@@ -2032,13 +2046,18 @@
     .commute-chip.walk { color: #bcc6d4; }
     .commute-chip.academy { color: #ae8de7; }
     .contact-memo-box { color: #e6b699; background: #303431; border: 1px solid #a9902d; }
-    .btn-map { color: #99cae6; background: #151e2e; border: 1px solid #234964; }
+    .addr-tap .addr-t { color: #99cae6; text-decoration-color: #2f5a7a; }
+    .addr-tap:active { background: #223047; }
     .contact-phone-none { color: #6f7b91; }
     .commute-summary { color: #bcc6d4; background: #1b2638; border: 1px solid #2a374e; }
     .commute-summary b { color: #dde3ec; }
+    .cs-h, .cs-hb { border-bottom-color: #2a374e; } .cs-h i { color: #97a3b7; }
+    .cs-n { color: #dde3ec; }
+    .cs-n.car { color: #e7b48d; } .cs-n.subway { color: #8da5e7; } .cs-n.bus { color: #99e6d0; } .cs-n.walk { color: #bcc6d4; } .cs-n.academy { color: #ae8de7; }
+    .cs-n.zero { color: #4a5568; }
     .contact-quick-bar { background: #302331; border: 1px solid #532a34; }
     .btn-quick-action { background: #151e2e; border: 1px solid #58697e; color: #bcc6d4; }
-    .cqb-l.red { color: #f0a3a3; } .cqb-l.blue { color: #8ccbf0; } .cqb-l small { color: #7d8aa0; }
+    .cqb-l.red { color: #f0a3a3; } .cqb-l.blue { color: #8ccbf0; } .cqb-l.ink { color: #c8d2e0; } .cqb-l small { color: #7d8aa0; }
     .log-item-card { background: #151e2e; border: 1px solid #2a374e; }
     .log-tools { background: #1b2638; border-color: #2a374e; }
     .log-tools label { color: #bcc6d4; }
@@ -3261,24 +3280,26 @@
         </div>
         <div class="modal-scroll-body">
             <div class="commute-summary" id="commuteSummary"></div>
+            <!-- v2.44.6: 상자 3개 × 버튼 3개 — 같은 칸 · 이름은 두 글자 + 두 글자 (기능은 그대로) -->
             <div class="contact-quick-bar cqb" style="flex-shrink: 0;">
-                <span class="cqb-l red">⚡ 긴급 공지</span>
-                <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0;">
-                    <div style="display: flex; gap: 3px; flex-wrap: wrap;">
-                        <button class="btn-quick-action" onclick="copyAllContactPhones()">📋 비상연락망 전체 복사</button>
-                        <button class="btn-quick-action" onclick="copyAllContactPhonesOnly()">📱 단체문자용 전체 복사</button>
-                        <button class="btn-quick-action" onclick="copyDismissalList()">🏠 하교방법별 명단</button>
-                    </div>
-                    <div style="display: flex; gap: 3px; flex-wrap: wrap;">
-                        <button class="btn-quick-action" onclick="copyEmergencyTemplate('weather')">🌧️ 우천취소</button>
-                        <button class="btn-quick-action" onclick="copyEmergencyTemplate('match')">⚾ 경기시간</button>
-                        <button class="btn-quick-action" onclick="copyEmergencyTemplate('safe')">🏠 안전귀가</button>
-                    </div>
+                <span class="cqb-l red">⚡ 긴급 공지<small>문구 복사</small></span>
+                <div class="cqb-g3">
+                    <button class="btn-quick-action" onclick="copyEmergencyTemplate('weather')" title="🌧️ 우천취소 안내 문구 복사">우천 취소</button>
+                    <button class="btn-quick-action" onclick="copyEmergencyTemplate('match')" title="⚾ 경기시간 안내 문구 복사">경기 시간</button>
+                    <button class="btn-quick-action" onclick="copyEmergencyTemplate('safe')" title="🏠 안전귀가 안내 문구 복사">안전 귀가</button>
                 </div>
             </div>
             <div class="contact-quick-bar cqb" style="flex-shrink: 0; margin-top: 4px;">
-                <span class="cqb-l blue">📱 단체 문자<small>학년별 번호 복사</small></span>
-                <div class="cqb-grade">
+                <span class="cqb-l ink">📋 명단 복사<small>전체 선수</small></span>
+                <div class="cqb-g3">
+                    <button class="btn-quick-action" onclick="copyAllContactPhones()" title="비상연락망 전체 복사 (이름 + 번호)">전체 연락</button>
+                    <button class="btn-quick-action" onclick="copyAllContactPhonesOnly()" title="단체문자용 전체 복사 (번호만)">전체 번호</button>
+                    <button class="btn-quick-action" onclick="copyDismissalList()" title="하교방법별 명단 복사">하교 명단</button>
+                </div>
+            </div>
+            <div class="contact-quick-bar cqb" style="flex-shrink: 0; margin-top: 4px;">
+                <span class="cqb-l blue">📱 단체 문자<small>학년별 번호</small></span>
+                <div class="cqb-g3">
                     <button class="btn-quick-action" onclick="copyGradePhones('6')">6학년</button>
                     <button class="btn-quick-action" onclick="copyGradePhones('5')">5학년</button>
                     <button class="btn-quick-action" onclick="copyLowGradePhones()" title="저학년 (1~4학년) 한 번에">1~4학년</button>
@@ -7463,11 +7484,18 @@
         const count = (field) => {
             const m = {};
             list.forEach(c => parseCommute(contactCommute(c)[field]).forEach(x => { m[x.key] = (m[x.key] || 0) + 1; }));
-            return Object.keys(COMMUTE_TYPES).filter(k => m[k]).map(k => `<span class="cs-item">${COMMUTE_TYPES[k].icon} ${COMMUTE_TYPES[k].label} ${m[k]}</span>`).join('');
+            return m;
         };
         const go = count('go'), back = count('back');
-        if (!go && !back) { box.style.display = 'none'; return; }
-        box.innerHTML = `<div><b>등교</b>${go || '-'}</div><div><b>하교</b>${back || '-'}</div>`;
+        const keys = Object.keys(COMMUTE_TYPES).filter(k => go[k] || back[k]);   // 등교 · 하교 중 한 번이라도 있는 방법만 칸으로
+        if (!keys.length) { box.style.display = 'none'; return; }
+        // v2.44.6: 표처럼 정리 — 맨 윗줄 방법(아이콘 · 이름), 아래 두 줄 등교 · 하교 인원 (칸이 세로로 맞음)
+        const SHORT = { academy: '학원' };
+        const n = (m, k) => m[k] ? `<span class="cs-n ${k}">${m[k]}</span>` : '<span class="cs-n zero">–</span>';
+        box.innerHTML = `<div class="cs-grid" style="grid-template-columns: 34px repeat(${keys.length}, minmax(0, 1fr));">` +
+            '<span class="cs-hb"></span>' + keys.map(k => `<span class="cs-h">${COMMUTE_TYPES[k].icon}<i>${SHORT[k] || COMMUTE_TYPES[k].label}</i></span>`).join('') +
+            '<b>등교</b>' + keys.map(k => n(go, k)).join('') +
+            '<b>하교</b>' + keys.map(k => n(back, k)).join('') + '</div>';
         box.style.display = 'block';
     }
 
@@ -7525,11 +7553,19 @@
                         <div class="commute-cell"><b>하교</b>${commuteChips(cm.back)}</div>
                     </div>` : ''}
                     ${car1 || car2 ? `<div class="contact-car-box">🚗 <b>차량:</b> ${escapeHtml([car1, car2].filter(Boolean).join(' / '))}</div>` : ''}
-                    ${address ? `<div class="contact-address-box">🏠 <b>주소:</b> ${escapeHtml(address)}<a class="btn-map" href="https://map.kakao.com/link/search/${encodeURIComponent(address)}" target="_blank" rel="noopener">지도</a></div>` : ''}
+                    ${address ? `<button type="button" class="contact-address-box addr-tap" data-addr="${escapeHtml(address)}" onclick="contactAddrTap(this.dataset.addr)" aria-label="주소 복사하고 카카오맵 열기">🏠 <b>주소:</b> <span class="addr-t">${escapeHtml(address)}</span><span class="addr-go" aria-hidden="true">🗺️</span></button>` : ''}
                     ${memo ? `<div class="contact-memo-box">📝 ${escapeHtml(memo)}</div>` : ''}
                 </div>
             `;
         }).join('');
+    }
+
+    // v2.44.6: 주소를 누르면 → 주소 복사 + 카카오맵에서 검색 (내비 · 단톡방에 바로 붙여넣기)
+    function contactAddrTap(addr) {
+        addr = String(addr || '').trim();
+        if (!addr) return;
+        copyText(addr, '주소 복사했캉! 📋', '카카오맵으로 이동해요 · 내비에 붙여넣기 해도 돼요');
+        setTimeout(() => openUrl('https://map.kakao.com/link/search/' + encodeURIComponent(addr)), 150);   // 복사가 먼저 끝나게 잠깐 뒤에
     }
 
     // 현재 검색/학년/등하교 필터에 보이는 선수들의 연락처를 텍스트로 복사
@@ -7808,6 +7844,14 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.44.6', d: '2026-10-11', t: '🚨 비상연락망 정리 — 복사 버튼 3줄 · 등하교 표 · 주소 누르면 지도', items: [
+            '복사 버튼을 상자 3개 × 버튼 3개로 — 칸 크기가 모두 같고, 이름은 두 글자 + 두 글자 (누르면 하는 일은 그대로)',
+            '⚡ 긴급 공지(문구 복사): 우천 취소 · 경기 시간 · 안전 귀가',
+            '📋 명단 복사(전체 선수): 전체 연락 (= 비상연락망 전체 복사, 이름 + 번호) · 전체 번호 (= 단체문자용 전체 복사, 번호만) · 하교 명단 (= 하교방법별 명단)',
+            '📱 단체 문자(학년별 번호): 6학년 · 5학년 · 1~4학년',
+            '선수 카드 🏠 주소: 「지도」 버튼을 빼고 주소 줄을 누르면 주소가 복사되면서 카카오맵으로 이동',
+            '맨 위 등교 · 하교 요약을 표처럼 — 방법마다 한 칸(아이콘 · 이름), 아래에 등교 · 하교 인원이 세로로 나란히'
+        ] },
         { v: 'v2.44.5', d: '2026-10-11', t: '🚨 비상연락망 칸 정렬', items: [
             '「단체문자용 번호복사(학년별)」 상자를 「📱 단체 문자」로 — 위 「⚡ 긴급 공지」와 이름 칸 너비를 같게 해서 버튼 시작 위치가 맞음',
             '학년 버튼 3개(6학년 · 5학년 · 1~4학년)를 같은 크기로 한 줄에',
