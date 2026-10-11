@@ -32,7 +32,21 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.47.1 · b261011";
+        const APP_VERSION = "v2.48.0 · b261011";
+
+        // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
+        //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
+        //   완전히 닫았다가 다시 열면 비어 있음 → 남아 있던 로그인 흔적을 지우고 잠금 화면부터 (서버 세션은 아래에서 폐기)
+        var _dyStaleToken = '';
+        try {
+            if (!sessionStorage.getItem('daeyeon_alive')) {
+                if (localStorage.getItem('daeyeon_auth_expire') || localStorage.getItem('daeyeon_token')) {
+                    _dyStaleToken = localStorage.getItem('daeyeon_token') || '';
+                    ['daeyeon_auth_expire', 'daeyeon_token', 'daeyeon_admin_role', 'daeyeon_active_user'].forEach(function (k) { localStorage.removeItem(k); });
+                }
+            }
+            sessionStorage.setItem('daeyeon_alive', '1');
+        } catch (e) {}
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -3481,6 +3495,12 @@
             body: JSON.stringify(Object.assign({ key: API_KEY, token: getToken() }, payload))
         });
     }
+    // 🚪 v2.48.0: 앱이 닫히는 중에도 끝까지 가도록 (sendBeacon → 안 되면 keepalive fetch) — 응답은 못 읽음
+    function beaconApi(payload) {
+        const body = JSON.stringify(Object.assign({ key: API_KEY, token: getToken() }, payload));
+        try { if (navigator.sendBeacon && navigator.sendBeacon(GOOGLE_SCRIPT_UNIFORM_API_URL, new Blob([body], { type: 'text/plain;charset=utf-8' }))) return; } catch (e) {}
+        try { fetch(GOOGLE_SCRIPT_UNIFORM_API_URL, { method: 'POST', mode: 'no-cors', keepalive: true, headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: body }).catch(() => {}); } catch (e) {}
+    }
 
     function apiGetUrl(params) {
         return GOOGLE_SCRIPT_UNIFORM_API_URL + '?key=' + encodeURIComponent(API_KEY) + '&token=' + encodeURIComponent(getToken()) + '&' + params + '&_t=' + Date.now();
@@ -5838,7 +5858,7 @@
         if (ident) return ident.replace(/\s*·\s*\d{2,3}-\*{4}-\d{4}/, '').replace(/\s*\(\s*\)/, '').replace(/\s*\(([^()]*)\)\s*$/, ' $1').trim() || label || '-';
         return label || '-';
     }
-    function sendActivityLog(eventType, role, details) {
+    function sendActivityLog(eventType, role, details, beacon) {   // beacon: 앱이 닫히는 중 (v2.48.0)
         if (!GOOGLE_SCRIPT_UNIFORM_API_URL || GOOGLE_SCRIPT_UNIFORM_API_URL.trim() === "") return;
         const user = getActiveUser();
         // 로그에는 휴대폰 가운데 자리를 가린다 (010-****-1234)
@@ -5846,7 +5866,7 @@
         const identityStr = user ? `${user.name} (${user.role}${maskedPhone ? ' · ' + maskedPhone : ''})`
             : (['dev', 'super', 'sub', 'general'].includes(currentRole) ? '관리자' : (isAuthValid() ? '일반열람' : '미인증'));
 
-        postApi({
+        const payload = {
             action: "logActivity",
             clientId: getDeviceClientId(),
             eventType: eventType,
@@ -5855,7 +5875,9 @@
             screenRes: `${window.screen.width}x${window.screen.height}`,
             lang: navigator.language || navigator.userLanguage || "-",
             details: details || "-"
-        }).catch(err => console.warn("로그 전송 무시:", err));
+        };
+        if (beacon) { beaconApi(payload); return; }
+        postApi(payload).catch(err => console.warn("로그 전송 무시:", err));
     }
 
     // ==========================================================
@@ -5878,13 +5900,16 @@
     function presenceIn(why) { if (presIn || currentRole === 'dev' || !getToken()) return; presIn = true; presenceSend('in', why); }
     function presenceOut(why, beacon) { if (!presIn) return; presIn = false; presenceSend('out', why, beacon); }
     document.addEventListener('visibilitychange', () => {
-        if (document.hidden) { if (presIn) { presenceOut('앱 나감', true); presAway = true; } }
+        if (document.hidden) {
+            if (backArmed) { appExitLogout(); return; }   // 🚪 v2.48.0: 뒤로가기 두 번 → 앱이 닫히는 중 = 자동 로그아웃
+            if (presIn) { presenceOut('앱 나감', true); presAway = true; }
+        }
         else {
             if (presAway) { presAway = false; presenceIn('다시 들어옴'); }
             if (presenceFeedOn()) presencePoll();   // 개발자: 돌아오면 바로 확인
         }
     });
-    window.addEventListener('pagehide', () => { if (presIn) presenceOut('앱 나감', true); });
+    window.addEventListener('pagehide', () => { if (backArmed) appExitLogout(); else if (presIn) presenceOut('앱 나감', true); });
 
     let presSeq = -1, presTimer = 0, presPending = {}, presLog = [];
     function presenceFeedOn() { return currentRole === 'dev' && !!getToken(); }
@@ -5985,9 +6010,11 @@
         }, 1000);
     }
 
-    function lockScreenNow(why) {
-        presenceOut(why || '화면 잠금');   // 🟢 v2.47.0: 토큰을 지우기 전에 「나감」
-        try { if (getToken()) postApi({ action: 'logout', token: getToken() }); } catch (e) {}   // 서버 세션도 폐기
+    // quiet: 앱이 닫히는 중 (v2.48.0) — 알림 · 입력칸 포커스 없이, 서버에는 sendBeacon 으로
+    function lockScreenNow(why, quiet) {
+        presenceOut(why || '화면 잠금', !!quiet);   // 🟢 v2.47.0: 토큰을 지우기 전에 「나감」
+        if (quiet) sendActivityLog("앱종료", currentRole, "뒤로가기 두 번으로 앱 종료 · 자동 로그아웃", true);   // 누가인지 지우기 전에
+        try { if (getToken()) (quiet ? beaconApi : postApi)({ action: 'logout', token: getToken() }); } catch (e) {}   // 서버 세션도 폐기
         localStorage.removeItem('daeyeon_auth_expire');
         clearAdminRoleStorage();
         clearToken();
@@ -6007,16 +6034,22 @@
         updateUserIdentityBadge();
         render();
 
-        sendActivityLog("화면잠금", prevRole, "화면 잠금 및 완전 로그아웃");
+        if (!quiet) sendActivityLog("화면잠금", prevRole, "화면 잠금 및 완전 로그아웃");
 
         const overlay = document.getElementById('lockOverlay');
         if (overlay) {
             overlay.style.display = 'flex';
             const pwInput = document.getElementById('lockPasswordInput');
             pwInput.value = '';
-            setTimeout(() => pwInput.focus(), 50);
+            if (!quiet) setTimeout(() => pwInput.focus(), 50);
         }
-        bkNotify('sleep', '화면을 잠갔캉 💤', '다시 쓰려면 로그인해 주세요', { ms: 3500 });
+        if (!quiet) bkNotify('sleep', '화면을 잠갔캉 💤', '다시 쓰려면 로그인해 주세요', { ms: 3500 });
+    }
+    // 🚪 v2.48.0: 뒤로가기 두 번으로 앱을 닫을 때 자동 로그아웃 (로그인 상태일 때만 · 한 번만)
+    function appExitLogout() {
+        backArmed = false; clearTimeout(backTimer);
+        if (!getToken() && !isAuthValid()) return;
+        lockScreenNow('앱 종료', true);
     }
 
     // (개발자 코드는 더 이상 날짜로 계산하지 않는다 → 서버 Script Property `ADMIN_PW_DEV` 로만 로그인)
@@ -8256,6 +8289,12 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.48.0', d: '2026-10-11', t: '🚪 앱을 닫으면 자동 로그아웃', items: [
+            '뒤로가기 두 번으로 앱을 닫으면 그 자리에서 로그아웃 (서버 로그인도 함께 끝냄) — 첫 번째 뒤로가기 알림에 「닫으면 자동으로 로그아웃돼요」',
+            '최근 앱 목록에서 밀어서 닫았다가 다시 열어도 로그아웃 상태로 시작 (잠금 화면부터)',
+            '홈 버튼 · 카톡 · 지도 · 사진 고르기처럼 잠깐 다녀오는 건 로그인 유지 · 새로고침도 유지',
+            '개발자 실시간 접속 알림에는 「⚪ ○○ 나감 · 앱 종료」로 바로 표시 · 접속기록 탭에 「앱종료」'
+        ] },
         { v: 'v2.47.1', d: '2026-10-11', t: '🟢 접속 알림 확인 간격 15초 → 10초', items: [
             '개발자 화면의 실시간 접속 알림을 10초마다 확인 — 알림이 늦게 뜨는 시간이 최대 약 17초 → 약 12초로 줄어듦 (앱이 화면에 떠 있을 때만 확인 · 서버 부담은 거의 그대로)'
         ] },
@@ -9302,7 +9341,7 @@
     }
     function backArm() {
         backArmed = true;
-        bkNotify('info', '뒤로가기를 한 번 더 누르면 앱이 닫혀캉', '', { ms: 3000 });
+        bkNotify('info', '뒤로가기를 한 번 더 누르면 앱이 닫혀캉', isAuthValid() ? '닫으면 자동으로 로그아웃돼요' : '', { ms: 3000 });
         clearTimeout(backTimer);
         backTimer = setTimeout(() => { backArmed = false; backRestoreGuard(); }, 3000);   // 3초 안에 한 번 더 → 앱 종료
     }
@@ -9334,6 +9373,8 @@
         backTopUpQ = setTimeout(() => backGuardTopUp(ep), 0);
         setTimeout(() => backGuardTopUp(ep), 450);   // 조금 늦게 열리는 창 대비
     }, { capture: true, passive: true }));
+    // 🚪 v2.48.0: 완전히 닫혔던 앱을 새로 켰으면, 남아 있던 서버 세션도 폐기 (화면 쪽은 맨 위에서 이미 지움)
+    if (window._dyStaleToken) setTimeout(() => { try { postApi({ action: 'logout', token: window._dyStaleToken }); } catch (e) {} window._dyStaleToken = ''; }, 1500);
     function isOff(val) { if (!val) return false; const v = String(val).toUpperCase().trim(); return v === 'OFF' || v === '비공개'; }
 
     // ==========================================================
