@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.43.6 · b261011";
+        const APP_VERSION = "v2.44.0 · b261011";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1604,6 +1604,11 @@
         .vn-map { height: 210px; border-radius: 14px; overflow: hidden; border: 1px solid var(--card-border); background: #eef1ea; }
         .vn-card { background: #ffffff; border: 1px solid var(--card-border); border-radius: 14px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(15,23,42,0.04); overflow: hidden; }
         .vn-card.open { border-color: #cbd5e1; box-shadow: 0 2px 10px rgba(11,34,64,0.08); }
+        .vn-card.has-fav { position: relative; }
+        .vn-card.has-fav .vn-main { padding-right: 26px; }
+        .vn-fav { position: absolute; top: 6px; right: 28px; z-index: 1; width: 32px; height: 32px; border: none; background: none; padding: 0; font-size: 21px; line-height: 32px; text-align: center; color: #cbd5e1; cursor: pointer; }
+        .vn-fav.on { color: #f59e0b; }
+        .vn-fav.ro { cursor: default; font-size: 18px; }
         .vn-sum { display: flex; align-items: flex-start; gap: 10px; width: 100%; text-align: left; border: none; background: transparent; padding: 12px; cursor: pointer; font: inherit; color: inherit; }
         .vn-n { flex: 0 0 22px; height: 22px; border-radius: 50%; background: #e53935; color: #ffffff; font-size: 11.5px; font-weight: 800; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
         .vn-card.open .vn-n { background: #0b2240; }
@@ -2148,6 +2153,8 @@
     .vn-addr, .vn-row .k, .vn-sub { color: #97a3b7; }
     .vn-next { color: #9fc4ff; }
     .vn-kind { background: #1e2a44; color: #9fc4ff; }
+    .vn-fav { color: #58697e; }
+    .vn-fav.on { color: #fbbf24; }
     .vn-kind.train { background: #14301f; color: #86efac; }
     .vn-info, .vn-evs { border-top-color: #2a374e; }
     .vn-map { border-color: #2a374e; }
@@ -2790,7 +2797,7 @@
         <div class="modal-header ps-head"><span>📍 장소 찾기</span><button type="button" class="ps-x" onclick="closeModal('placeSearchModal')" aria-label="닫기">✕</button></div>
         <div class="modal-scroll-body">
             <form class="ps-bar" onsubmit="runPlaceSearch(); return false;"><input type="search" id="psQuery" maxlength="40" placeholder="예: 기장 야구장, 대연초등학교" enterkeyhint="search" autocomplete="off"><button type="submit" class="ps-go">검색</button></form>
-            <div class="ps-sec" id="psChipsHead"><span class="ps-l">자주 쓰는 곳</span><small>많이 쓴 순서 · 📍 = 지도 연결됨</small></div>
+            <div class="ps-sec" id="psChipsHead"><span class="ps-l">등록된 구장</span><small>⭐ 즐겨쓰는 구장 먼저 · 구장 탭에서 ⭐ 표시</small></div>
             <div class="ev-place-chips" id="psChips"></div>
             <div class="ps-sec" id="psResHead" hidden><span class="ps-l">검색 결과</span><small>카카오맵 기준 · 줄을 누르면 지도에서 보여요</small></div>
             <div class="ps-map" id="psMap" hidden></div>
@@ -3953,19 +3960,16 @@
         }));
     }
     // 자주 쓰는 곳: 지난 일정에서 많이 쓴 장소(괄호 앞 이름) + 등록된 구장
-    function placeChipNames() {
-        const cnt = {};
-        schedEvents.forEach(ev => { const p = String(ev.place || '').trim(); if (!p) return; const v = findVenue(p), n = v ? v.name : venueLabel(p); cnt[n] = (cnt[n] || 0) + 1; });   // 「기장 (리틀구장)」도 등록된 이름(기장리틀구장)으로 묶음
-        schedVenues.forEach(v => { const n = String(v.name || '').trim(); if (n && !cnt[n]) cnt[n] = 0.5; });
-        const seen = {}, out = [];
-        Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a]).forEach(n => { const v = findVenue(n), k = (v && v.kid) ? 'k' + v.kid : venueNorm(n); if (!seen[k]) { seen[k] = 1; out.push(n); } });   // 같은 장소(카카오 ID)는 칩 하나만
-        return out.slice(0, 10);
+    function placeChipNames() {   // v2.44.0: 구장 탭에 등록된 구장만 — ⭐ 즐겨쓰는 구장 먼저, 나머지는 구장 탭 순서
+        const list = schedVenues.filter(v => v && String(v.name || '').trim() && (v.addr || venueLatLngNow(v)));
+        return list.filter(isFavVenue).concat(list.filter(v => !isFavVenue(v))).map(v => String(v.name).trim());
     }
+    function isFavVenue(v) { const f = String((v && v.fav) || '').trim(); return !!f && f !== '0'; }
     function placeChipsHtml(fn, cur) {
-        const c = venueNorm(cur), cb = venueNorm(venueBase(cur));
+        const cv = cur ? findVenue(cur) : null, cn = cv ? venueNorm(cv.name) : '';
         const names = placeChipNames();
         if (!names.length) return '';
-        const chip = n => `<button type="button" class="pl-chip${(venueNorm(n) === c || venueNorm(n) === cb) ? ' on' : ''}" data-n="${escapeHtml(n)}" onclick="${fn}(this.dataset.n)">${findVenue(n) ? '<span class="pin">📍</span>' : ''}${escapeHtml(n)}</button>`;
+        const chip = n => { const v = findVenue(n); return `<button type="button" class="pl-chip${venueNorm(n) === cn ? ' on' : ''}" data-n="${escapeHtml(n)}" onclick="${fn}(this.dataset.n)">${isFavVenue(v) ? '<span class="pin">⭐</span>' : ''}${escapeHtml(n)}</button>`; };
         // v2.43.4: 두 줄 — 많이 쓴 순서대로 짧은 줄에 하나씩 넣어 두 줄 길이를 비슷하게 (3곳 이하면 한 줄)
         const rows = names.length <= 3 ? [names] : [[], []], len = [0, 0];
         if (names.length > 3) names.forEach(n => { const r = len[1] < len[0] ? 1 : 0; rows[r].push(n); len[r] += String(n).length + 3; });
@@ -4078,7 +4082,10 @@
             psOverlays.forEach(o => o.setMap(null)); psOverlays = [];
             if (!psResults.length) return;
             const pts = psResults.map(p => new k.maps.LatLng(+p.y, +p.x));
-            if (!psMapObj) psMapObj = new k.maps.Map(el, Object.assign({}, KMAP_OPTS, { center: pts[0], level: 5 }));
+            if (!psMapObj) {   // v2.44.0: 손가락으로 끌기 · 두 손가락 확대 · [+][-] 버튼
+                psMapObj = new k.maps.Map(el, Object.assign({}, KMAP_OPTS, { center: pts[0], level: 5, draggable: true, zoomable: true, scrollwheel: true, disableDoubleClick: false, disableDoubleClickZoom: false }));   // PC: 지도 위 휠 = 확대/축소
+                if (k.maps.ZoomControl && k.maps.ControlPosition) psMapObj.addControl(new k.maps.ZoomControl(), k.maps.ControlPosition.RIGHT);
+            }
             psMapObj.relayout();
             psOverlays = pts.map((pt, i) => {
                 const c = pinEl(i + 1, i === psSel);
@@ -4156,7 +4163,7 @@
     function plOpenMap() {
         if (!plCur) return;
         const v = plCur.v, p = venueLatLngNow(v), nm = plName(), enc = encodeURIComponent;
-        openUrl(v.kid ? 'https://place.map.kakao.com/' + enc(v.kid) : p ? `https://map.kakao.com/link/map/${enc(nm)},${p.lat},${p.lng}` : 'https://map.kakao.com/link/search/' + enc(v.addr || nm));
+        openUrl(v.kid ? 'https://map.kakao.com/link/map/' + enc(v.kid) : p ? `https://map.kakao.com/link/map/${enc(nm)},${p.lat},${p.lng}` : 'https://map.kakao.com/link/search/' + enc(v.addr || nm));
     }
     function plCopyAddr() {
         if (!plCur) return;
@@ -4236,7 +4243,9 @@
     function venueCardHtml(r, i, today) {
         const v = r.v, open = venueOpenName === v.name;
         const next = r.evs.find(e => e.date >= today), nh = next ? eventHeadline(next) : null;
-        return `<div class="vn-card${open ? ' open' : ''}" id="vnCard${i}"><button type="button" class="vn-sum" onclick="toggleVenue(${i})"><span class="vn-n">${i + 1}</span><div class="vn-main">` +
+        const fav = isFavVenue(v), ed = canEditVenues();   // v2.44.0: ⭐ 즐겨쓰는 구장 — 대표님이 누르면 켜고 끔, 다른 분은 표시만
+        const star = ed ? `<button type="button" class="vn-fav${fav ? ' on' : ''}" onclick="toggleVenueFav(${i}, event)" aria-pressed="${fav}" aria-label="즐겨쓰는 구장 ${fav ? '빼기' : '표시'}">${fav ? '★' : '☆'}</button>` : (fav ? '<span class="vn-fav on ro" aria-label="즐겨쓰는 구장">★</span>' : '');
+        return `<div class="vn-card${open ? ' open' : ''}${star ? ' has-fav' : ''}" id="vnCard${i}">${star}<button type="button" class="vn-sum" onclick="toggleVenue(${i})"><span class="vn-n">${i + 1}</span><div class="vn-main">` +
             `<div class="vn-title"><b>${escapeHtml(v.name)}</b><span class="vn-kind${r.kind === '훈련장' ? ' train' : ''}">${r.kind}</span></div>` +
             `<div class="vn-addr">${escapeHtml(v.addr || v.kname || '')}</div>` +
             (next ? `<div class="vn-next">📅 다음 ${fmtMD(next.date)} · ${typeMeta(next.type).i} ${escapeHtml(nh.title || next.type)} ${escapeHtml(nh.vs)}</div>` : '') +
@@ -4259,6 +4268,18 @@
             `<div class="pl-route" id="vnRoute${i}" hidden><button type="button" onclick="vnUse(${i});plRoute('kakao')">카카오맵</button><button type="button" onclick="vnUse(${i});plRoute('naver')">네이버지도</button><button type="button" onclick="vnUse(${i});plRoute('tmap')">티맵</button></div>` +
             (canEditVenues() ? `<button type="button" class="vn-edit" onclick="openVenueEditor(${i})">✏️ 구장 정보 수정</button>` : '') + '</div>';
     }
+    async function toggleVenueFav(i, e) {
+        if (e) { e.stopPropagation(); e.preventDefault(); }
+        const r = vnRowsCur[i];
+        if (!r || !canEditVenues()) return;
+        const v = r.v, was = isFavVenue(v);
+        v.fav = was ? '' : '1';
+        renderVenueCards();
+        try {
+            await postApi({ action: 'saveVenue', venue: { oldName: v.name, name: v.name, fav: v.fav } });   // 즐겨찾기 칸만 바뀜 (나머지 칸은 그대로)
+            bkNotify('done', was ? '즐겨쓰는 구장에서 뺐캉' : '⭐ 즐겨쓰는 구장으로 표시했캉', '일정 추가 · 수정의 장소 칩에서 맨 앞에 나와요');
+        } catch (err) { v.fav = was ? '1' : ''; renderVenueCards(); bkNotify('fail', null, err.message); }
+    }
     function vnUse(i) { const r = vnRowsCur[i]; if (r) plCur = { name: r.v.name, v: r.v }; }
     function vnToggleRoute(i) { const el = document.getElementById('vnRoute' + i); if (el) el.hidden = !el.hidden; }
     function toggleVenue(i, fromMap) {
@@ -4270,7 +4291,7 @@
         const c = document.getElementById('vnCard' + i);
         if (c && venueOpenName) c.scrollIntoView({ behavior: 'smooth', block: fromMap ? 'start' : 'nearest' });
     }
-    // 위쪽 전체 지도 — 움직이고 확대할 수 있음 (마우스 휠 확대는 끔: 화면 스크롤과 헷갈리지 않게)
+    // 위쪽 전체 지도 — 움직이고 확대할 수 있음 (v2.44.0: PC는 지도 위 마우스 휠로 확대 · 축소, 지도 밖은 화면 스크롤)
     function drawVenueMap() {
         const wrap = document.getElementById('vnMapWrap'), el = document.getElementById('vnMap');
         if (!KAKAO_JS_KEY) { wrap.hidden = true; return; }
@@ -4283,7 +4304,7 @@
             if (!ok.length) { wrap.hidden = true; return; }
             vnPts = ok.map(o => ({ i: o.i, ll: new k.maps.LatLng(o.p.lat, o.p.lng) }));
             if (!vnMapObj) {
-                vnMapObj = new k.maps.Map(el, { center: vnPts[0].ll, level: 9, scrollwheel: false, keyboardShortcuts: false });
+                vnMapObj = new k.maps.Map(el, { center: vnPts[0].ll, level: 9, scrollwheel: true, keyboardShortcuts: false });   // v2.44.0: PC — 지도 위 마우스 휠 = 확대/축소, 지도 밖 = 화면 스크롤
                 if (k.maps.ZoomControl && k.maps.ControlPosition) vnMapObj.addControl(new k.maps.ZoomControl(), k.maps.ControlPosition.RIGHT);
             }
             vnMapObj.relayout();
@@ -7705,6 +7726,13 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.44.0', d: '2026-10-11', t: '⭐ 즐겨쓰는 구장 · 장소 칩은 구장 탭 목록', items: [
+            '🏟️ 구장 탭 카드 오른쪽 ☆을 누르면 ⭐ 즐겨쓰는 구장 (대표님만 켜고 끔, 다른 분들은 ⭐ 표시만 보임)',
+            '일정 추가 · 수정의 장소 칩 · 장소 찾기의 칩을 「자주 쓴 곳」 대신 구장 탭에 등록된 구장으로 — ⭐ 즐겨쓰는 구장이 맨 앞, 나머지는 구장 탭 순서 (📍 표시는 뺌)',
+            '📍 장소 찾기 검색 결과 지도를 손가락으로 끌고 확대 · 축소할 수 있게 ([+][-] 버튼도)',
+            'PC: 구장 탭 지도 · 검색 결과 지도 위에서 마우스 휠 = 확대 · 축소 (지도 밖에서는 화면 스크롤)',
+            '🗺️ 크게 보기 — PC에서 카카오맵 장소 소개 화면 대신 지도 화면으로 열림'
+        ] },
         { v: 'v2.43.6', d: '2026-10-11', t: '구장 수정 「이미 있는 이름」 오류 고침', items: [
             '구장 정보를 저장한 직후 다른 구장을 고치면, 수정 중인 구장 자기 이름 때문에 「이미 있는 이름」이라며 저장이 안 되던 것 고침 (새로고침 안 해도 됨)',
             '진짜로 이름이 겹칠 때는 어떤 이름이 어느 구장과 겹치는지 알려 줌'
