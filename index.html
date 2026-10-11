@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.44.0 · b261011";
+        const APP_VERSION = "v2.44.1 · b261011";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1553,6 +1553,17 @@
         #placeSearchModal .modal-content { max-width: 460px; border-radius: 16px 16px 0 0; padding: 12px 12px 10px; max-height: calc(88vh / var(--ui-zoom, 1)); max-height: calc(90dvh / var(--ui-zoom, 1)); height: calc(88vh / var(--ui-zoom, 1)); height: calc(90dvh / var(--ui-zoom, 1)); }   /* v2.43.4: 검색 창을 처음부터 크게 (자판이 올라오면 남은 화면의 90%) */
         @media (min-width: 600px) { #placeSearchModal { align-items: center; padding: 10px; } #placeSearchModal .modal-content { border-radius: 14px; height: min(calc(90dvh / var(--ui-zoom, 1)), 720px); } }
         .ps-head { display: flex; justify-content: space-between; align-items: center; }
+        /* 🗺️ 큰 지도 (v2.44.1) — 휴대폰은 화면 가득, PC는 가운데 큰 창 */
+        #bigMapModal { z-index: 1003; padding: 0; }
+        #bigMapModal [hidden] { display: none !important; }
+        #bigMapModal .modal-content { max-width: 760px; height: calc(100vh / var(--ui-zoom, 1)); height: calc(100dvh / var(--ui-zoom, 1)); max-height: none; border-radius: 0; padding: 10px 10px 12px; gap: 6px; container-type: inline-size; }
+        @media (min-width: 780px) { #bigMapModal { padding: 16px; } #bigMapModal .modal-content { height: min(calc(88dvh / var(--ui-zoom, 1)), 820px); border-radius: 14px; } }
+        #bigMapModal .modal-header { margin-bottom: 0; }
+        #bmTitle { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .bm-addr { font-size: 12px; color: #64748b; margin-top: -2px; }
+        .bm-addr:empty { display: none; }
+        .bm-map { flex: 1; min-height: 220px; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; background: #eef1ea; }
+        .bm-btns { flex-shrink: 0; }
         .ps-x { border: 0; background: none; font-size: 18px; line-height: 1; color: #94a3b8; padding: 2px 6px; cursor: pointer; }
         .ps-bar { display: flex; gap: 5px; margin-bottom: 8px; }
         .ps-bar input { flex: 1; min-width: 0; padding: 8px 10px; border: 1.5px solid #0b2240; border-radius: 8px; font-size: 14px; outline: none; background: #fff; color: #0f172a; }
@@ -2137,7 +2148,8 @@
     .ev-place-card .pc-btn, .pl-btns button, .ps-pick { background: #1b2638; border-color: #2a374e; color: #dde3ec; }
     .pl-btns button.pri { background: #fee500; border-color: #f2d900; color: #191600; }
     .pl-route button { background: #151e2e; border-color: #2a374e; color: #bcc6d4; }
-    .pl-addr, .ps-rt span, .ps-sec, .ps-msg { color: #97a3b7; }
+    .pl-addr, .ps-rt span, .ps-sec, .ps-msg, .bm-addr { color: #97a3b7; }
+    .bm-map { border-color: #2a374e; }
     .ps-rt b { color: #dde3ec; }
     .ps-res, .ps-map, .pl-map { border-color: #2a374e; }
     .pl-ext { border-bottom-color: #2a374e; }
@@ -2580,11 +2592,11 @@
     </div></div>
     <!-- 상단 메뉴 탭 (로그인 후 표시) -->
     <nav class="main-tabs" id="mainTabs" style="display: none;">
-        <button type="button" class="main-tab active" data-tab="roster" onclick="showMainTab('roster')"><span class="tab-ico">👥</span><span class="tab-txt">선수 명단</span></button>
+        <button type="button" class="main-tab active" data-tab="roster" onclick="showMainTab('roster')"><span class="tab-ico">👥</span><span class="tab-txt">명단</span></button>
         <button type="button" class="main-tab" data-tab="schedule" id="tabBtnSchedule" onclick="showMainTab('schedule')"><span class="tab-ico">📅</span><span class="tab-txt">일정</span></button>
         <button type="button" class="main-tab" data-tab="notice" id="tabBtnNotice" onclick="showMainTab('notice')"><span class="tab-ico">📢</span><span class="tab-txt">공지</span><span class="tab-dot" id="noticeDot"></span></button>
         <button type="button" class="main-tab" data-tab="venue" id="tabBtnVenue" onclick="showMainTab('venue')"><span class="tab-ico">🏟️</span><span class="tab-txt">구장</span></button>
-        <button type="button" class="main-tab admin-tab" data-tab="admin" id="tabBtnAdmin" style="display: none;" onclick="showMainTab('admin')"><span class="tab-ico">⚙️</span><span class="tab-txt">관리자</span></button>
+        <button type="button" class="main-tab admin-tab" data-tab="admin" id="tabBtnAdmin" style="display: none;" onclick="showMainTab('admin')"><span class="tab-ico">⚙️</span><span class="tab-txt">관리</span></button>
     </nav>
     <div class="next-event-banner" id="nextEventBanner"></div>
 
@@ -2788,6 +2800,17 @@
             <button class="btn-cancel" id="btnVenueDelete" style="color:#b91c1c;border-color:#fecaca;background:#fff5f5;" onclick="deleteVenueEditor()">삭제</button>
             <div style="display:flex;gap:6px;"><button class="btn-cancel" onclick="closeModal('venueEditModal')">취소</button><button class="btn-save" id="btnVenueSave" onclick="saveVenueEditor()">저장</button></div>
         </div>
+    </div>
+</div>
+
+<!-- 🗺️ 큰 지도 (v2.44.1) — 크게 보기를 누르면 앱 안에서 바로 지도 -->
+<div id="bigMapModal" class="modal" onclick="if (event.target === this) closeModal('bigMapModal')">
+    <div class="modal-content">
+        <div class="modal-header ps-head"><span id="bmTitle">🗺️ 지도</span><button type="button" class="ps-x" onclick="closeModal('bigMapModal')" aria-label="닫기">✕</button></div>
+        <div class="bm-addr" id="bmAddr"></div>
+        <div class="bm-map" id="bmMap"></div>
+        <div class="pl-btns bm-btns"><button type="button" class="pri" onclick="bmToggleRoute()">🚗 길찾기</button><button type="button" onclick="bmOpenKakao()">카카오맵에서 보기</button><button type="button" onclick="plCopyAddr()">📋 주소 복사</button></div>
+        <div class="pl-route" id="bmRoute" hidden><button type="button" onclick="plRoute('kakao')">카카오맵</button><button type="button" onclick="plRoute('naver')">네이버지도</button><button type="button" onclick="plRoute('tmap')">티맵</button></div>
     </div>
 </div>
 
@@ -4160,9 +4183,34 @@
     }
     function plName() { return plCur ? venueLabel(plCur.name) : ''; }
     function plToggleRoute() { const r = document.getElementById('plRoute'); if (r) r.hidden = !r.hidden; }
+    // v2.44.1: 🗺️ 크게 보기 → 앱 안에서 바로 큰 지도 (휴대폰에서 카카오맵 「플레이스」 화면으로 가지 않게)
+    let bmMapObj = null, bmPin = [];
     function plOpenMap() {
         if (!plCur) return;
-        const v = plCur.v, p = venueLatLngNow(v), nm = plName(), enc = encodeURIComponent;
+        if (!KAKAO_JS_KEY) { bmOpenKakao(); return; }
+        const cur = plCur, v = cur.v, nm = plName();
+        document.getElementById('bmTitle').textContent = '🗺️ ' + nm;
+        document.getElementById('bmAddr').textContent = v.addr || '';
+        document.getElementById('bmRoute').hidden = true;
+        document.getElementById('bigMapModal').style.display = 'flex';
+        loadKakaoMaps().then(k => venueLatLng(v).then(p => {
+            if (plCur !== cur || document.getElementById('bigMapModal').style.display !== 'flex') return;
+            const el = document.getElementById('bmMap'), pos = new k.maps.LatLng(p.lat, p.lng);
+            if (!bmMapObj) {
+                bmMapObj = new k.maps.Map(el, { center: pos, level: 3, draggable: true, zoomable: true, scrollwheel: true, keyboardShortcuts: false });
+                if (k.maps.ZoomControl && k.maps.ControlPosition) bmMapObj.addControl(new k.maps.ZoomControl(), k.maps.ControlPosition.RIGHT);
+            }
+            bmPin.forEach(o => o.setMap(null));
+            const lb = document.createElement('div'); lb.className = 'kpin-label'; lb.textContent = nm;
+            bmPin = [new k.maps.CustomOverlay({ map: bmMapObj, position: pos, content: pinEl(0, false), xAnchor: 0.5, yAnchor: 1, zIndex: 3 }),
+                     new k.maps.CustomOverlay({ map: bmMapObj, position: pos, content: lb, xAnchor: 0.5, yAnchor: 0, zIndex: 4 })];
+            requestAnimationFrame(() => { bmMapObj.relayout(); bmMapObj.setLevel(3); bmMapObj.setCenter(pos); });
+        })).catch(() => { closeModal('bigMapModal'); bmOpenKakao(); });
+    }
+    function bmToggleRoute() { const r = document.getElementById('bmRoute'); r.hidden = !r.hidden; }
+    function bmOpenKakao() {   // 카카오맵에서 보기 (PC는 지도 화면, 휴대폰은 카카오맵 장소 화면)
+        if (!plCur) return;
+        const v = plCur.v, p = venueLatLngNow(v), nm = plName().replace(/,/g, ' '), enc = encodeURIComponent;
         openUrl(v.kid ? 'https://map.kakao.com/link/map/' + enc(v.kid) : p ? `https://map.kakao.com/link/map/${enc(nm)},${p.lat},${p.lng}` : 'https://map.kakao.com/link/search/' + enc(v.addr || nm));
     }
     function plCopyAddr() {
@@ -7726,6 +7774,13 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.44.1', d: '2026-10-11', t: '🗺️ 큰 지도 · ⬅️ 뒤로가기 두 번 종료 · 탭 이름 두 글자', items: [
+            '🗺️ 크게 보기를 누르면 카카오맵 장소(플레이스) 화면 대신 앱 안에서 바로 큰 지도가 열림 (휴대폰은 화면 가득 · PC는 큰 창)',
+            '큰 지도는 손가락으로 끌기 · 두 손가락 확대 · [+][-] · PC 마우스 휠 확대 — 아래 🚗 길찾기 · 카카오맵에서 보기 · 주소 복사',
+            '일정 상세의 작은 지도를 눌러도 같은 큰 지도',
+            '⬅️ 뒤로가기: 창이 열려 있으면 창부터 닫고, 탭 화면에서는 「한 번 더 누르면 앱이 닫혀요」 — 2초 안에 한 번 더 누르면 앱 종료',
+            '맨 위 탭 이름을 두 글자로: 「선수 명단」→「명단」, 「관리자」→「관리」'
+        ] },
         { v: 'v2.44.0', d: '2026-10-11', t: '⭐ 즐겨쓰는 구장 · 장소 칩은 구장 탭 목록', items: [
             '🏟️ 구장 탭 카드 오른쪽 ☆을 누르면 ⭐ 즐겨쓰는 구장 (대표님만 켜고 끔, 다른 분들은 ⭐ 표시만 보임)',
             '일정 추가 · 수정의 장소 칩 · 장소 찾기의 칩을 「자주 쓴 곳」 대신 구장 탭에 등록된 구장으로 — ⭐ 즐겨쓰는 구장이 맨 앞, 나머지는 구장 탭 순서 (📍 표시는 뺌)',
@@ -8671,6 +8726,42 @@
     }
 
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    // ==========================================================
+    // ⬅️ 뒤로가기 (v2.44.1) — 실수로 눌러도 앱이 바로 닫히지 않게
+    //   · 창(팝업) · 확인 창 · 고르기 메뉴가 열려 있으면 → 그것부터 닫음
+    //   · 탭 화면에서는 → 「한 번 더 누르면 앱이 닫혀요」, 2초 안에 한 번 더 누르면 앱 종료
+    //   방법: 화면을 누를 때 기록(history)에 「지킴이」 한 칸을 넣어 두고, 뒤로가기로 그 칸이 빠지면(popstate) 처리
+    // ==========================================================
+    let backArmed = false, backTimer = null;
+    function backGuardOn() {
+        try { if (!(history.state && history.state.dyBack)) history.pushState(Object.assign({}, history.state || {}, { dyBack: 1 }), ''); } catch (e) {}
+    }
+    function closeTopLayer() {
+        if (bkAskResolve) { bkAskClose(false); return true; }   // 부캉이 확인 창 → 취소
+        const cf = document.querySelector('.cf-layer:not(.out)'); if (cf) { cf.click(); return true; }   // 승리 축하 화면
+        const open = [...document.querySelectorAll('.modal')].filter(m => m.style.display === 'flex');
+        if (open.length) {   // 맨 위 창 하나만 닫음 (예: 장소 찾기 → 일정 수정 창은 그대로)
+            const z = m => parseInt(getComputedStyle(m).zIndex, 10) || 0;
+            const top = open.reduce((a, b) => (z(b) >= z(a) ? b : a));
+            closeModal(top.id);
+            return true;
+        }
+        const dd = document.querySelector('.gsel-wrap.open, .cgsel-wrap.open'); if (dd) { dd.classList.remove('open'); return true; }
+        return false;
+    }
+    window.addEventListener('popstate', () => {
+        if (closeTopLayer()) { backGuardOn(); return; }
+        if (backArmed) return;
+        backArmed = true;
+        bkNotify('info', '뒤로가기를 한 번 더 누르면 앱이 닫혀캉', '', { ms: 2000 });
+        clearTimeout(backTimer);
+        backTimer = setTimeout(() => { backArmed = false; backGuardOn(); }, 2000);   // 2초 지나면 다시 지킴이
+    });
+    ['pointerdown', 'keydown'].forEach(t => document.addEventListener(t, () => {   // 화면을 누를 때 지킴이 넣기 (누른 뒤에 넣어야 뒤로가기가 건너뛰지 않음)
+        if (backArmed) { backArmed = false; clearTimeout(backTimer); }
+        backGuardOn();
+    }, { capture: true, passive: true }));
     function isOff(val) { if (!val) return false; const v = String(val).toUpperCase().trim(); return v === 'OFF' || v === '비공개'; }
 
     // ==========================================================
