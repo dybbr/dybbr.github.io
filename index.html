@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.53.0 · b261012";
+        const APP_VERSION = "v2.53.1 · b261012";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -8661,6 +8661,11 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.53.1', d: '2026-10-12', t: '🗑 활동 로그 「전체 삭제」 안 되던 문제 고침', items: [
+            '구글 시트는 맨 위 제목 줄만 남기고 아래 줄을 전부 지우는 걸 막아서, 로그 탭이 꽉 차 있으면 전체 삭제가 거절되던 문제 — 서버에서 빈 줄 하나를 먼저 붙이고 지우게 고침 (Apps Script v2.11.1)',
+            '기간 삭제 · 선택 삭제로 남은 로그를 전부 지울 때, 일정 · 공지 · 구장 마지막 1개를 지울 때도 같은 방식으로 안전하게',
+            '삭제가 실패하면 서버가 알려 준 이유를 그대로 보여 줌 · 전체 삭제 뒤 남는 「로그삭제」 기록 1줄 안내'
+        ] },
         { v: 'v2.53.0', d: '2026-10-12', t: '🗂️ 비상연락망 「자세히」 — 태블릿에서 3칸', items: [
             '태블릿 가로는 3칸 · 세로는 2칸으로 카드를 나란히 (휴대폰은 지금처럼 1칸) — 한 화면에 카드 1개 반 → 6개',
             '넓은 화면에서는 긴급 공지 · 명단 복사 · 단체 문자 줄을 한 줄에 나란히 → 목록이 더 위에서 시작',
@@ -9468,9 +9473,10 @@
         bkNotify('saving', '로그 지우는 중이캉');
         try {
             const res = await apiGetJson('action=deleteLogs&' + params + extra);
-            if (!res || res.result !== 'success') bkNotify('fail', '앗, 삭제가 안 됐캉…', (res && res.message) || '삭제하지 못했습니다');
+            if (!res || res.result !== 'success') bkNotify('fail', '앗, 삭제가 안 됐캉…', (res && (res.message || res.error)) || '삭제하지 못했습니다');   // v2.53.1: 서버 오류 내용(error)도 보여 줌
             else if (!res.deleted) bkNotify('info', '지울 로그가 없다캉!', '그 사이 바뀐 로그는 지우지 않아요');
-            else bkNotify('done', typeof res.deleted === 'number' ? `로그 ${res.deleted}건 삭제 완료캉! ✓` : '로그 삭제 완료캉! ✓');
+            else bkNotify('done', typeof res.deleted === 'number' ? `로그 ${res.deleted}건 삭제 완료캉! ✓` : '로그 삭제 완료캉! ✓',
+                logCat !== 'access' && /^mode=all\b/.test(params) ? '누가 지웠는지 남기는 「로그삭제」 1줄은 남아요' : undefined);
         } catch (err) {
             bkNotify('fail', '앗, 삭제가 안 됐캉…', '잠시 후 다시 시도해 주세요');
         }
