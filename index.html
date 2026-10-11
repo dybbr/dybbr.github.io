@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.44.2 · b261011";
+        const APP_VERSION = "v2.44.3 · b261011";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -7774,6 +7774,10 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.44.3', d: '2026-10-11', t: '⬅️ 알림이 사라진 뒤 뒤로가기 → 알림 다시', items: [
+            '「뒤로가기를 한 번 더 누르면 앱이 닫혀캉」 알림 뒤 3초 안에 안 누르고 기다렸다가 뒤로가기를 누르면 앱이 닫히던 것 고침 → 알림이 다시 뜸 (3초 안에 두 번 눌러야 종료)',
+            '뒤로가기로 창을 닫거나 알림이 사라질 때 보던 화면 위치(스크롤)가 그대로 유지되게'
+        ] },
         { v: 'v2.44.2', d: '2026-10-11', t: '⬅️ 뒤로가기 알림 고침 · 3초', items: [
             '앱(APK)에서 큰 지도 · 창을 연 채 뒤로가기를 누르면 창 대신 앱이 닫히던 것 고침 — 뒤로가기 한 번에 맨 위 창 하나씩 닫히고, 창을 다 닫으면 「한 번 더 누르면 앱이 닫혀요」',
             '원인: 크롬은 「화면을 누른 뒤」 넣은 기록 칸만 지켜 줌 — 뒤로가기를 처리하면서 칸을 다시 넣던 것이 앱 기록 전체를 건너뛰게 만들었음 → 이제 화면을 누르고 뗄 때만 (열린 창 수 + 1)칸을 넣음',
@@ -8775,10 +8779,22 @@
         backArmed = true;
         bkNotify('info', '뒤로가기를 한 번 더 누르면 앱이 닫혀캉', '', { ms: 3000 });
         clearTimeout(backTimer);
-        backTimer = setTimeout(() => { backArmed = false; }, 3000);   // 3초 안에 한 번 더 → 앱 종료
+        backTimer = setTimeout(() => { backArmed = false; backRestoreGuard(); }, 3000);   // 3초 안에 한 번 더 → 앱 종료
     }
+    // v2.44.3: 3초가 지나면 비워 둔 지킴이 칸으로 「앞으로 가기」 한 칸 — 새 칸을 넣는 게 아니라서 화면을 안 눌러도 크롬이 건너뛰지 않음
+    //          → 알림이 사라진 뒤 뒤로가기를 누르면 앱이 닫히지 않고 알림이 다시 뜸 (3초 안에 두 번 눌러야 종료)
+    let backFwdPop = false, backFwdT = 0;
+    function backRestoreGuard() {
+        if (backDepth() > 0) return;
+        if (window.navigation && 'canGoForward' in navigation && !navigation.canGoForward) return;   // 앞 칸이 없으면 그대로
+        backFwdPop = true;
+        clearTimeout(backFwdT); backFwdT = setTimeout(() => { backFwdPop = false; }, 800);
+        try { history.forward(); } catch (e) { backFwdPop = false; }
+    }
+    try { history.scrollRestoration = 'manual'; } catch (e) {}   // v2.44.3: 지킴이 칸을 오갈 때 보던 화면 위치(스크롤)가 튀지 않게
     window.addEventListener('popstate', () => {
         backEpoch++;   // 뒤로가기가 일어남 → 다시 화면을 누르기 전까지 새 칸 금지
+        if (backFwdPop) { backFwdPop = false; clearTimeout(backFwdT); return; }   // 3초 뒤 지킴이 칸으로 돌아온 것 (뒤로가기 아님)
         if (backSkipPop) { backSkipPop = false; backArm(); return; }   // 남은 지킴이를 비우고 맨 처음 칸에 도착
         if (closeTopLayer()) return;   // 창 닫기 (아래에 지킴이 칸이 남아 있음)
         if (backArmed) return;
