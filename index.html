@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.45.0 · b261011";
+        const APP_VERSION = "v2.46.0 · b261011";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1639,6 +1639,12 @@
         .bm-addr { font-size: 12px; color: #64748b; margin-top: -2px; }
         .bm-addr:empty { display: none; }
         .bm-map { flex: 1; min-height: 220px; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; background: #eef1ea; }
+        /* 🛰️ 지도 / 스카이뷰 버튼 (v2.46.0) — 지도 왼쪽 위 */
+        .bm-map, .vn-map, .ps-map { position: relative; }
+        .mt-tog { position: absolute; top: 8px; left: 8px; z-index: 5; display: flex; background: #fff; border: 1px solid rgba(15,23,42,.18); border-radius: 9px; box-shadow: 0 1px 4px rgba(0,0,0,.22); overflow: hidden; }
+        .mt-tog button { border: 0; background: #fff; color: #334155; font: inherit; font-size: 12px; font-weight: 800; padding: 6px 10px; line-height: 1.2; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        .mt-tog button + button { border-left: 1px solid #e2e8f0; }
+        .mt-tog button.on { background: #0b2240; color: #fff; }
         .bm-btns { flex-shrink: 0; }
         .ps-x { border: 0; background: none; font-size: 18px; line-height: 1; color: #94a3b8; padding: 2px 6px; cursor: pointer; }
         .ps-bar { display: flex; gap: 5px; margin-bottom: 8px; }
@@ -4102,12 +4108,40 @@
         return d;
     }
     const KMAP_OPTS = { level: 4, draggable: false, scrollwheel: false, disableDoubleClick: true, disableDoubleClickZoom: true, keyboardShortcuts: false };
+    // ==========================================================
+    // 🛰️ 지도 / 스카이뷰 (v2.46.0) — 카카오맵 스카이뷰(위성사진 + 이름)
+    //   큰 지도 · 구장 탭 지도 · 장소 찾기 지도 왼쪽 위에 [지도 | 스카이뷰] 버튼, 고른 모드는 이 기기에 기억하고 모든 지도에 같이 적용
+    // ==========================================================
+    let mapTypeMaps = [];   // { m: 지도, el: 지도 칸 }
+    function mapTypePref() { try { return localStorage.getItem('daeyeon_map_type') === 'sky' ? 'sky' : 'road'; } catch (e) { return 'road'; } }
+    function mapTypeApply(map, t) { try { const T = kakao.maps.MapTypeId; map.setMapTypeId(t === 'sky' ? T.HYBRID : T.ROADMAP); } catch (e) {} }
+    function mapTypeSet(t) {
+        try { localStorage.setItem('daeyeon_map_type', t); } catch (e) {}
+        mapTypeMaps = mapTypeMaps.filter(x => x.el && x.el.isConnected);
+        mapTypeMaps.forEach(x => mapTypeApply(x.m, t));
+        document.querySelectorAll('.mt-tog button').forEach(b => { const on = b.dataset.t === t; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+    }
+    function mapTypeAttach(map, el, withToggle) {   // 지도를 만든 직후 부름 (작은 미리보기 지도는 버튼 없이 모드만 따라감)
+        if (!map) return;
+        mapTypeMaps = mapTypeMaps.filter(x => x.el && x.el.isConnected && x.m !== map);
+        mapTypeMaps.push({ m: map, el: el });
+        const t = mapTypePref();
+        if (t === 'sky') mapTypeApply(map, t);
+        if (!withToggle || !el || el.querySelector(':scope > .mt-tog')) return;
+        const box = document.createElement('div');
+        box.className = 'mt-tog';
+        box.innerHTML = ['road', 'sky'].map(k => `<button type="button" data-t="${k}" class="${k === t ? 'on' : ''}" aria-pressed="${k === t}">${k === 'sky' ? '스카이뷰' : '지도'}</button>`).join('');
+        ['mousedown', 'touchstart', 'pointerdown', 'dblclick', 'wheel'].forEach(ev => box.addEventListener(ev, e => e.stopPropagation(), { passive: true }));
+        box.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; e.stopPropagation(); mapTypeSet(b.dataset.t); });
+        el.appendChild(box);
+    }
     function staticVenueMap(el, v, label) {   // 움직이지 않는 작은 지도 + 핀 (+ 이름표)
         return loadKakaoMaps().then(k => venueLatLng(v).then(p => {
             if (!el.isConnected) return;
             el.textContent = '';
             const pos = new k.maps.LatLng(p.lat, p.lng);
             const map = new k.maps.Map(el, Object.assign({}, KMAP_OPTS, { center: pos }));
+            mapTypeAttach(map, el, false);   // 🛰️ 고른 모드(지도 / 스카이뷰) 따라감
             new k.maps.CustomOverlay({ map: map, position: pos, content: pinEl(0, false), xAnchor: 0.5, yAnchor: 1 });
             if (label) { const lb = document.createElement('div'); lb.className = 'kpin-label'; lb.textContent = label; new k.maps.CustomOverlay({ map: map, position: pos, content: lb, xAnchor: 0.5, yAnchor: 0, zIndex: 2 }); }
             requestAnimationFrame(() => { map.relayout(); map.setCenter(pos); });
@@ -4240,6 +4274,7 @@
             if (!psMapObj) {   // v2.44.0: 손가락으로 끌기 · 두 손가락 확대 · [+][-] 버튼
                 psMapObj = new k.maps.Map(el, Object.assign({}, KMAP_OPTS, { center: pts[0], level: 5, draggable: true, zoomable: true, scrollwheel: true, disableDoubleClick: false, disableDoubleClickZoom: false }));   // PC: 지도 위 휠 = 확대/축소
                 if (k.maps.ZoomControl && k.maps.ControlPosition) psMapObj.addControl(new k.maps.ZoomControl(), k.maps.ControlPosition.RIGHT);
+                mapTypeAttach(psMapObj, el, true);   // 🛰️ 지도 / 스카이뷰
             }
             psMapObj.relayout();
             psOverlays = pts.map((pt, i) => {
@@ -4331,6 +4366,7 @@
             if (!bmMapObj) {
                 bmMapObj = new k.maps.Map(el, { center: pos, level: 3, draggable: true, zoomable: true, scrollwheel: true, keyboardShortcuts: false });
                 if (k.maps.ZoomControl && k.maps.ControlPosition) bmMapObj.addControl(new k.maps.ZoomControl(), k.maps.ControlPosition.RIGHT);
+                mapTypeAttach(bmMapObj, el, true);   // 🛰️ 지도 / 스카이뷰
             }
             bmPin.forEach(o => o.setMap(null));
             const lb = document.createElement('div'); lb.className = 'kpin-label'; lb.textContent = nm;
@@ -4486,6 +4522,7 @@
             if (!vnMapObj) {
                 vnMapObj = new k.maps.Map(el, { center: vnPts[0].ll, level: 9, scrollwheel: true, keyboardShortcuts: false });   // v2.44.0: PC — 지도 위 마우스 휠 = 확대/축소, 지도 밖 = 화면 스크롤
                 if (k.maps.ZoomControl && k.maps.ControlPosition) vnMapObj.addControl(new k.maps.ZoomControl(), k.maps.ControlPosition.RIGHT);
+                mapTypeAttach(vnMapObj, el, true);   // 🛰️ 지도 / 스카이뷰
             }
             vnMapObj.relayout();
             vnOverlays = vnPts.map(o => {
@@ -8119,6 +8156,10 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.46.0', d: '2026-10-11', t: '🛰️ 지도 · 스카이뷰 바꾸기', items: [
+            '큰 지도 · 구장 탭 지도 · 장소 찾기 지도 왼쪽 위에 [지도 | 스카이뷰] 버튼 — 스카이뷰는 카카오맵 스카이뷰(위성사진 + 이름)',
+            '한 번 고르면 이 기기에 기억해서 다른 지도(일정 상세 · 구장 카드의 작은 지도 포함)도 같은 모드로 보여 줌'
+        ] },
         { v: 'v2.45.0', d: '2026-10-11', t: '🎓 새 학년도 넘기기 · 졸업생(OB) 명단', items: [
             '관리 탭 「🎓 새 학년도」(대표님 · 개발자): 1년에 한 번 누르면 미리보기 → 확인 → 6학년 졸업 + 나머지 한 학년씩 올리기를 한꺼번에',
             '넘기기 전에 시트 전체를 드라이브에 자동 백업 · 미리보기 뒤에 시트가 바뀌었거나 같은 학년도를 두 번 누르면 멈춤',
