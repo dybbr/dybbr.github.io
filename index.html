@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.43.4 · b261011";
+        const APP_VERSION = "v2.43.5 · b261011";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1025,7 +1025,8 @@
         .modal-content { background: #ffffff; width: 100%; max-width: 480px; max-height: 75vh; display: flex; flex-direction: column; border-radius: 14px; padding: 14px 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow: hidden; }
         .modal-content { max-height: calc(75vh / var(--ui-zoom, 1)); max-height: calc(80dvh / var(--ui-zoom, 1)); }   /* v2.41.12: 화면 크기(110~130%)를 키워도 팝업 창 위아래가 안 잘리게 — 배율만큼 나눔 */
         .modal-header { font-size: 17px; font-weight: 800; margin-bottom: 8px; flex-shrink: 0; }
-        .modal-scroll-body { flex: 1; overflow-y: auto; padding-right: 2px; }
+        .modal-scroll-body { flex: 1; overflow-y: auto; padding-right: 2px; overscroll-behavior: contain; }   /* v2.43.5: 창 안을 끝까지 밀어도 뒤 화면이 같이 안 움직이게 */
+        @media (pointer: coarse) { html:has(.modal[style*="display: flex"]), html:has(.modal[style*="display: flex"]) body { overflow: hidden; } }   /* v2.43.5: 창이 열려 있는 동안 뒤 화면 고정 (제목 줄 · 버튼 줄을 밀어도) */
         .form-group { margin-bottom: 10px; display: flex; flex-direction: column; gap: 4px; }
         .form-group label { font-size: 12px; font-weight: 700; color: #475569; }
         .form-group input, .form-group select, .form-group textarea { padding: 7px 10px; border: 1px solid var(--card-border); border-radius: 6px; font-size: 13px; outline: none; }
@@ -7699,6 +7700,9 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.43.5', d: '2026-10-11', t: '창 뒤 화면 고정', items: [
+            '구장 정보 수정 · 일정 수정 같은 창이 열려 있을 때 뒤 화면이 같이 밀리던 것 고침 (창 안을 끝까지 밀거나, 제목 줄 · 버튼 줄을 밀어도 뒤 화면은 그대로)'
+        ] },
         { v: 'v2.43.4', d: '2026-10-11', t: '장소 칩 두 줄 · 찾기 창 크게', items: [
             '일정 추가 · 수정의 장소 칩(자주 쓰는 곳)을 두 줄로 — 옆으로 밀면 두 줄이 같이 넘어감',
             '📍 장소 찾기 창을 처음부터 크게 (자판이 올라와도 남은 화면을 거의 다 씀) · 검색 결과 지도도 조금 크게'
