@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.43.5 · b261011";
+        const APP_VERSION = "v2.43.6 · b261011";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -4313,7 +4313,7 @@
     function openVenueEditor(i) {
         if (!canEditVenues()) return;
         const r = (i === null || i === undefined) ? null : vnRowsCur[i], v = r ? r.v : null;
-        vnEditCtx = { orig: v, loc: v ? { addr: v.addr || '', jibun: v.jibun || '', lat: v.lat || '', lng: v.lng || '', kid: v.kid || '', kname: v.kname || '', phone: v.phone || '' } : null };
+        vnEditCtx = { orig: v, origName: v ? v.name : '', loc: v ? { addr: v.addr || '', jibun: v.jibun || '', lat: v.lat || '', lng: v.lng || '', kid: v.kid || '', kname: v.kname || '', phone: v.phone || '' } : null };
         document.getElementById('venueEditTitle').textContent = v ? '🏟️ 구장 정보 수정' : '🏟️ 구장 추가';
         document.getElementById('vnName').value = v ? v.name : '';
         document.getElementById('vnAliases').value = v ? venueNames(v).slice(1).join(', ') : '';
@@ -4343,12 +4343,15 @@
         if (!name) { bkNotify('info', '구장 이름을 넣어줘캉!'); return; }
         const L = vnEditCtx.loc;
         if (!L || !(L.addr || venueLatLngNow(L))) { bkNotify('info', '위치를 골라줘캉!', '🔍 카카오맵에서 위치 찾기로 연결해야 지도 · 길찾기가 나와요'); return; }
-        const orig = vnEditCtx.orig;
+        const orig = vnEditCtx.orig, oKey = venueNorm(vnEditCtx.origName);
+        // v2.43.6: 창을 연 사이 목록을 새로 받아도(저장 2.5초 뒤 · 새로고침) 자기 자신은 「이미 있는 이름」 검사에서 뺌
+        const isSelf = x => !!orig && (x === orig || venueNorm(x.name) === oKey);
         const al = document.getElementById('vnAliases').value.split(/[,，]/).map(s => s.trim()).filter(Boolean)
             .filter((s, i, a) => a.findIndex(x => venueNorm(x) === venueNorm(s)) === i && venueNorm(s) !== venueNorm(name));
         const mine = [name].concat(al).map(venueNorm);
-        const clash = schedVenues.find(x => x !== orig && venueNames(x).some(n => mine.indexOf(venueNorm(n)) !== -1));
-        if (clash) { bkNotify('info', `「${clash.name}」 구장에 이미 있는 이름이캉`, '이름이나 다른 이름을 바꿔 주세요'); return; }
+        let hit = '';
+        const clash = schedVenues.find(x => !isSelf(x) && venueNames(x).some(n => { if (mine.indexOf(venueNorm(n)) === -1) return false; hit = n; return true; }));
+        if (clash) { bkNotify('info', `「${hit}」 이름은 「${clash.name}」 구장에 이미 있어캉`, '이름이나 다른 이름을 바꿔 주세요'); return; }
         const val = id => document.getElementById(id).value.trim();
         const venue = { name: name, aliases: al.join(', ').slice(0, 200), kind: document.getElementById('vnKind').dataset.k || '',
             addr: L.addr || '', jibun: L.jibun || '', lat: L.lat || '', lng: L.lng || '', kid: L.kid || '', kname: L.kname || '', phone: L.phone || '',
@@ -4357,8 +4360,9 @@
         btn.disabled = true; btn.textContent = '저장 중...';
         bkNotify('saving', '구장 저장하는 중이캉');
         try {
-            await postApi({ action: 'saveVenue', venue: Object.assign({ oldName: orig ? orig.name : '' }, venue) });
-            if (orig) { Object.assign(orig, venue); orig._geo = null; } else schedVenues.push(venue);
+            await postApi({ action: 'saveVenue', venue: Object.assign({ oldName: orig ? vnEditCtx.origName : '' }, venue) });
+            const cur = orig ? (schedVenues.find(isSelf) || orig) : null;
+            if (cur) { Object.assign(cur, venue); cur._geo = null; } else schedVenues.push(venue);
             venueOpenName = name;
             closeModal('venueEditModal');
             renderVenues();
@@ -4373,8 +4377,9 @@
         if (!(await bkConfirm(`「${orig.name}」 구장을 지울까캉?`, { sub: '일정은 그대로 남고, 지도 연결만 없어져요', ok: '삭제', danger: true }))) return;
         bkNotify('saving', '구장 지우는 중이캉');
         try {
-            await postApi({ action: 'deleteVenue', name: orig.name });
-            schedVenues = schedVenues.filter(x => x !== orig);
+            const oKey = venueNorm(vnEditCtx.origName || orig.name);
+            await postApi({ action: 'deleteVenue', name: vnEditCtx.origName || orig.name });
+            schedVenues = schedVenues.filter(x => x !== orig && venueNorm(x.name) !== oKey);   // v2.43.6: 목록을 새로 받았어도 같은 이름은 지움
             venueOpenName = null;
             closeModal('venueEditModal');
             renderVenues();
@@ -7700,6 +7705,10 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.43.6', d: '2026-10-11', t: '구장 수정 「이미 있는 이름」 오류 고침', items: [
+            '구장 정보를 저장한 직후 다른 구장을 고치면, 수정 중인 구장 자기 이름 때문에 「이미 있는 이름」이라며 저장이 안 되던 것 고침 (새로고침 안 해도 됨)',
+            '진짜로 이름이 겹칠 때는 어떤 이름이 어느 구장과 겹치는지 알려 줌'
+        ] },
         { v: 'v2.43.5', d: '2026-10-11', t: '창 뒤 화면 고정', items: [
             '구장 정보 수정 · 일정 수정 같은 창이 열려 있을 때 뒤 화면이 같이 밀리던 것 고침 (창 안을 끝까지 밀거나, 제목 줄 · 버튼 줄을 밀어도 뒤 화면은 그대로)'
         ] },
