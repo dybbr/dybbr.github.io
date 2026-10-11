@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.53.1 · b261012";
+        const APP_VERSION = "v2.54.0 · b261012";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -1785,6 +1785,19 @@
         .pres-log-row .w i { font-style: normal; font-weight: 600; color: #64748b; }
         .pres-log-row .w i::before { content: ' · '; }
         .pres-log-empty { color: #94a3b8; font-weight: 700; }
+        /* 👤 v2.54.0: 한 사람 한 칸 — 같은 사람은 그 칸에서 딱지 · 시간만 바뀜 · 폰 2칸, 태블릿은 폭에 맞춰 5~7칸 */
+        .pres-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(122px, 1fr)); gap: 6px; }
+        .pres-card { min-width: 0; display: flex; flex-direction: column; gap: 3px; padding: 6px 7px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; }
+        .pres-card .h { display: flex; align-items: center; justify-content: space-between; gap: 4px; min-width: 0; }
+        .pres-card .pres-tag { min-width: 64px; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; }
+        .pres-card .t { flex: 0 0 auto; font-size: 11px; font-weight: 700; color: #94a3b8; font-variant-numeric: tabular-nums; }
+        .pres-card .w { font-size: 12.5px; font-weight: 800; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .pres-card .n { font-size: 11px; font-weight: 600; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: -2px; }
+        /* 방금 바뀐 칸 · 칩 — 잠깐 노란 테두리로 반짝 */
+        .pres-card.pres-upd { animation: presCardUpd 1.5s ease-out; }
+        @keyframes presCardUpd { 0% { box-shadow: 0 0 0 3px #facc15; } 100% { box-shadow: 0 0 0 0 rgba(250,204,21,0); } }
+        .pres-chip.pres-upd { animation: presChipUpd .9s ease-out; }
+        @keyframes presChipUpd { 0% { box-shadow: 0 0 0 3px #facc15, 0 6px 18px rgba(15,23,42,.18); } 100% { box-shadow: 0 6px 18px rgba(15,23,42,.18); } }
         /* 🛰️ 지도 / 스카이뷰 버튼 (v2.46.0) — 지도 왼쪽 위 */
         .bm-map, .vn-map, .ps-map { position: relative; }
         .mt-tog { position: absolute; top: 8px; left: 8px; z-index: 5; display: flex; background: #fff; border: 1px solid rgba(15,23,42,.18); border-radius: 9px; box-shadow: 0 1px 4px rgba(0,0,0,.22); overflow: hidden; }
@@ -2607,6 +2620,7 @@
     .pres-chip { background: #1b2638; color: #dde3ec; border-color: #2a374e; box-shadow: 0 6px 18px rgba(0,0,0,.45); }
     .pres-who i, .pres-log-row .w i { color: #97a3b7; } .pres-at, .pres-log-h small { color: #7d8aa0; }
     .pres-log { color: #bcc6d4; } .pres-log-h { color: #bcc6d4; } .pres-log-row { border-bottom-color: #2a374e; }
+    .pres-card { background: #1b2638; border-color: #2a374e; } .pres-card .w { color: #dde3ec; } .pres-card .n { color: #97a3b7; } .pres-card .t { color: #7d8aa0; }
     .pres-cd { background: #1b2638; border-color: #2a374e; color: #bcc6d4; } .pres-cd .bar { background: #2a374e; }
     .pt-login { background: #15803d; } .pt-launch { background: #14532d; color: #bbf7d0; border-color: #166534; }
     .pt-rejoin { background: #0c4a6e; color: #bae6fd; border-color: #075985; } .pt-logout { background: #e2e8f0; color: #0f172a; border-color: #e2e8f0; }
@@ -3029,7 +3043,7 @@
                     <button id="btnViewLogs" class="btn-manage-pw" style="background: #4338ca;" onclick="openLogsModal()">📜 보안 활동 로그</button>
                     <button id="btnViewHistory" class="btn-manage-pw" style="background: #0f766e;" onclick="openHistoryModal()">🕘 업데이트 히스토리</button>
                 </div>
-                <div class="pres-log" id="presLog"><div class="pres-log-h">🟢 실시간 접속 알림 <small>10초마다 확인 · 최근 50건</small><button type="button" class="pres-cd" data-pres-cd onclick="presencePoll()" title="누르면 지금 바로 확인"><span class="n">다음 확인 10초</span><span class="bar"><i></i></span></button></div><div class="pres-log-empty">아직 들어오고 나간 사람이 없어요</div></div>
+                <div class="pres-log" id="presLog"><div class="pres-log-h">🟢 실시간 접속 알림 <small>10초마다 확인 · 한 사람 한 칸 (최근 50명)</small><button type="button" class="pres-cd" data-pres-cd onclick="presencePoll()" title="누르면 지금 바로 확인"><span class="n">다음 확인 10초</span><span class="bar"><i></i></span></button></div><div class="pres-log-empty">아직 들어오고 나간 사람이 없어요</div></div>
             </div>
         </div>
     </section>
@@ -6066,7 +6080,7 @@
     window.addEventListener('pagehide', () => { if (backArmed) appExitLogout(); else if (presIn) presenceOut('앱 나감', true); });
 
     // ---- 개발자 화면 ----
-    let presCur = -1, presTimer = 0, presPending = {}, presLog = [], presSeen = new Set();
+    let presCur = -1, presTimer = 0, presPending = {}, presLog = [], presSeen = new Set();   // presLog: v2.54.0부터 사람마다 한 줄 { k, it, upd }
     const PRES_OLD = { '앱 열기': '앱 실행', '다시 들어옴': '재접속', '세션 만료': '시간 만료' };   // 아직 예전 앱을 쓰는 사람이 보낸 이름
     const PRES_TAG = {
         '로그인': 'login', '앱 실행': 'launch', '재접속': 'rejoin',
@@ -6119,27 +6133,39 @@
         } else if (it.kind === 'view') presenceAddLog(it);   // 보는 화면은 칩 없이 기록에만
         else presenceChip(it);
     }
+    // 👤 v2.54.0: 같은 사람은 한 줄 — 그 자리에서 상황 딱지 · 시간만 바뀜 (새 사람만 맨 위에 한 줄 추가)
+    //   「김승원 아버님 기기」(로그인 실패 경고)도 「김승원 아버님」 줄로 · 처음 보는 기기는 기기마다 따로
+    function presKey(it) { return String(it.who || '').replace(/\s*기기$/, '').trim() || ('기기 ' + (it.cid || '?')); }
     function presenceAddLog(it) {
         if (!presenceFeedOn()) return;
-        presLog.unshift(it); presLog = presLog.slice(0, 50); renderPresLog();
+        const k = presKey(it), row = presLog.find(r => r.k === k);
+        if (row) { row.it = it; row.upd = Date.now(); }
+        else { presLog.unshift({ k, it, upd: Date.now() }); if (presLog.length > 50) presLog.length = 50; }
+        renderPresLog();
     }
     function presenceChip(it) {
         if (!presenceFeedOn()) return;
         presenceAddLog(it);
         let st = document.getElementById('presStack');
         if (!st) { st = document.createElement('div'); st.id = 'presStack'; st.className = 'pres-stack'; st.setAttribute('aria-live', 'polite'); document.body.appendChild(st); }
-        const c = document.createElement('div');
-        c.className = 'pres-chip';
-        c.innerHTML = presTagHtml(it) + `<span class="pres-who">${presWhoHtml(it)}</span><small class="pres-at">${escapeHtml(it.at || '')}</small>`;
-        c.onclick = () => c.remove();
-        st.prepend(c);
-        while (st.children.length > 4) st.lastChild.remove();
-        setTimeout(() => { c.classList.add('bye'); setTimeout(() => c.remove(), 400); }, 7000);
+        const k = presKey(it), html = presTagHtml(it) + `<span class="pres-who">${presWhoHtml(it)}</span><small class="pres-at">${escapeHtml(it.at || '')}</small>`;
+        let c = [...st.children].find(x => x.dataset.k === k && !x.classList.contains('bye'));   // v2.54.0: 같은 사람 칩이 떠 있으면 그 칩을 바꿈
+        if (c) { clearTimeout(c._t); c.innerHTML = html; c.classList.remove('pres-upd'); void c.offsetWidth; c.classList.add('pres-upd'); }
+        else {
+            c = document.createElement('div');
+            c.className = 'pres-chip'; c.dataset.k = k; c.innerHTML = html;
+            c.onclick = () => c.remove();
+            st.prepend(c);
+            while (st.children.length > 4) st.lastChild.remove();
+        }
+        const me = c;
+        me._t = setTimeout(() => { me.classList.add('bye'); setTimeout(() => me.remove(), 400); }, 7000);
     }
     function renderPresLog() {
         const box = document.getElementById('presLog'); if (!box) return;
-        box.innerHTML = '<div class="pres-log-h">🟢 실시간 접속 알림 <small>10초마다 확인 · 최근 50건</small><button type="button" class="pres-cd" data-pres-cd onclick="presencePoll()" title="누르면 지금 바로 확인"><span class="n">다음 확인 10초</span><span class="bar"><i></i></span></button></div>' + (presLog.length
-            ? presLog.map(it => `<div class="pres-log-row"><span class="t">${escapeHtml(it.at || '')}</span>${presTagHtml(it)}<span class="w">${presWhoHtml(it)}</span></div>`).join('')
+        const now = Date.now();
+        box.innerHTML = '<div class="pres-log-h">🟢 실시간 접속 알림 <small>10초마다 확인 · 한 사람 한 칸 (최근 50명)</small><button type="button" class="pres-cd" data-pres-cd onclick="presencePoll()" title="누르면 지금 바로 확인"><span class="n">다음 확인 10초</span><span class="bar"><i></i></span></button></div>' + (presLog.length
+            ? '<div class="pres-grid">' + presLog.map(r => `<div class="pres-card${now - r.upd < 1500 ? ' pres-upd' : ''}" title="${escapeHtml((r.it.who || '') + (r.it.note ? ' · ' + r.it.note : ''))}"><div class="h">${presTagHtml(r.it)}<span class="t">${escapeHtml(r.it.at || '')}</span></div><div class="w">${escapeHtml(r.it.who || '')}</div>${r.it.note ? `<div class="n">${escapeHtml(r.it.note)}</div>` : ''}</div>`).join('') + '</div>'
             : '<div class="pres-log-empty">아직 들어오고 나간 사람이 없어요</div>');
         presCdTick();
     }
@@ -8661,6 +8687,11 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.54.0', d: '2026-10-12', t: '👤 실시간 접속 알림 — 한 사람 한 칸', items: [
+            '같은 사람은 그 칸 자리 그대로에서 상황 딱지(로그인 · 공지 보기 · 앱 종료 …)와 시간만 바뀜 — 하나하나 쌓여 나열되던 방식 대신',
+            '새 사람만 맨 앞에 칸 추가 · 휴대폰은 한 줄에 2명, 태블릿은 폭에 맞춰 세로 5명 · 가로 7명 · 방금 바뀐 칸은 노란 테두리로 잠깐 반짝',
+            '화면 위 알림 칩도 같은 사람 칩이 떠 있으면 새로 쌓지 않고 그 칩을 바꿈'
+        ] },
         { v: 'v2.53.1', d: '2026-10-12', t: '🗑 활동 로그 「전체 삭제」 안 되던 문제 고침', items: [
             '구글 시트는 맨 위 제목 줄만 남기고 아래 줄을 전부 지우는 걸 막아서, 로그 탭이 꽉 차 있으면 전체 삭제가 거절되던 문제 — 서버에서 빈 줄 하나를 먼저 붙이고 지우게 고침 (Apps Script v2.11.1)',
             '기간 삭제 · 선택 삭제로 남은 로그를 전부 지울 때, 일정 · 공지 · 구장 마지막 1개를 지울 때도 같은 방식으로 안전하게',
