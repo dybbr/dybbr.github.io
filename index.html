@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.46.0 · b261011";
+        const APP_VERSION = "v2.47.0 · b261011";
 
         // 새로고침 시 로그인 유지 & 잠금창 깜빡임 원천 차단
         const _savedExpire = localStorage.getItem('daeyeon_auth_expire');
@@ -1639,6 +1639,21 @@
         .bm-addr { font-size: 12px; color: #64748b; margin-top: -2px; }
         .bm-addr:empty { display: none; }
         .bm-map { flex: 1; min-height: 220px; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; background: #eef1ea; }
+        /* 🟢 실시간 접속 알림 (v2.47.0) — 개발자 화면 위쪽 칩 */
+        .pres-stack { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 10px); left: 50%; transform: translateX(-50%); z-index: 4000; display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; width: max-content; max-width: calc(100vw - 24px); }
+        .pres-chip { pointer-events: auto; display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 6px; background: #fff; color: #0f172a; border: 1px solid #e2e8f0; border-left: 4px solid #22c55e; border-radius: 12px; padding: 8px 12px; box-shadow: 0 6px 18px rgba(15,23,42,.18); font-size: 13px; font-weight: 700; cursor: pointer; animation: presIn .25s ease; }
+        .pres-chip.out { border-left-color: #94a3b8; }
+        .pres-chip b { font-weight: 900; }
+        .pres-chip small { font-size: 11px; color: #64748b; font-weight: 700; }
+        .pres-chip.bye { opacity: 0; transform: translateY(-6px); transition: opacity .35s, transform .35s; }
+        @keyframes presIn { from { opacity: 0; transform: translateY(-8px); } }
+        .pres-log { margin-top: 10px; font-size: 12px; line-height: 1.6; color: #334155; }
+        .pres-log-h { font-size: 12px; font-weight: 800; color: #64748b; margin-bottom: 4px; }
+        .pres-log-row { display: flex; gap: 6px; padding: 3px 0; border-bottom: 1px dashed #e2e8f0; }
+        .pres-log-row:last-child { border-bottom: 0; }
+        .pres-log-row .t { flex: 0 0 auto; color: #94a3b8; font-weight: 700; font-variant-numeric: tabular-nums; }
+        .pres-log-row .w { flex: 1 1 auto; min-width: 0; }
+        .pres-log-empty { color: #94a3b8; font-weight: 700; }
         /* 🛰️ 지도 / 스카이뷰 버튼 (v2.46.0) — 지도 왼쪽 위 */
         .bm-map, .vn-map, .ps-map { position: relative; }
         .mt-tog { position: absolute; top: 8px; left: 8px; z-index: 5; display: flex; background: #fff; border: 1px solid rgba(15,23,42,.18); border-radius: 9px; box-shadow: 0 1px 4px rgba(0,0,0,.22); overflow: hidden; }
@@ -2448,6 +2463,9 @@
     .grade-2 { background: #213450; color: #a8b8d3; }
     .grade-1 { background: #1a2840; color: #8fa2c2; border-color: #2c3d5a; }
     .grade-grad { background: rgba(251,191,36,.14); color: #f5cf6b; border-color: rgba(251,191,36,.4); }
+    .pres-chip { background: #1b2638; color: #dde3ec; border-color: #2a374e; box-shadow: 0 6px 18px rgba(0,0,0,.45); }
+    .pres-chip small { color: #97a3b7; }
+    .pres-log { color: #bcc6d4; } .pres-log-row { border-bottom-color: #2a374e; }
     tr.ob-year-row td { background: #2a2416; color: #f5cf6b; border-bottom-color: #4a3d1c; }
     .ob-year-head { color: #f5cf6b; } .ob-year-head::after { background: #4a3d1c; }
     .ob-lock { background: #1b2638; color: #97a3b7; }
@@ -2861,6 +2879,7 @@
                     <button id="btnViewLogs" class="btn-manage-pw" style="background: #4338ca;" onclick="openLogsModal()">📜 보안 활동 로그</button>
                     <button id="btnViewHistory" class="btn-manage-pw" style="background: #0f766e;" onclick="openHistoryModal()">🕘 업데이트 히스토리</button>
                 </div>
+                <div class="pres-log" id="presLog"><div class="pres-log-h">🟢 실시간 접속 알림 (앱이 켜져 있는 동안 · 15초마다 확인)</div><div class="pres-log-empty">아직 들어오고 나간 사람이 없어요</div></div>
             </div>
         </div>
     </section>
@@ -3656,6 +3675,7 @@
             if (rest.length % 2) rest[rest.length - 1].classList.add('ops-wide');
         });
         refreshSeasonStatus();   // 🎓 새 학년도 (대표님 · 개발자)
+        if (presenceFeedOn() && !presTimer) presencePoll();   // 🟢 개발자: 실시간 접속 알림 시작
         document.getElementById('adminGroupContent').style.display = canEditSchedule() ? '' : 'none';
         const devGroup = document.getElementById('adminGroupDev');
         if (devGroup) devGroup.style.display = (currentRole === 'dev') ? '' : 'none';   // 개발 카테고리는 개발자만
@@ -5838,6 +5858,83 @@
         }).catch(err => console.warn("로그 전송 무시:", err));
     }
 
+    // ==========================================================
+    // 🟢 실시간 접속 알림 (v2.47.0)
+    //   ① 개발자를 뺀 모든 사람: 들어올 때(로그인 · 앱 열기 · 다시 들어옴) / 나갈 때(로그아웃 · 화면 잠금 · 세션 만료 · 앱 나감) 서버에 짧게 알림
+    //      — 시트에는 안 남고 서버 캐시에 최근 60건만 (누가인지는 서버가 토큰으로 확인)
+    //   ② 개발자: 앱이 켜져 있는 동안 15초마다 새 알림을 받아 화면 위쪽에 「🟢 대표님 접속」 칩 + 관리 탭 「개발」에 최근 목록
+    //      앱을 잠깐 내렸다가 1분 안에 다시 올리면(다른 앱 잠깐 보기) 「나감 · 들어옴」 둘 다 안 띄움
+    // ==========================================================
+    let presIn = false, presAway = false, presFirstWhy = '앱 열기';
+    function presenceSend(kind, why, beacon) {
+        try {
+            if (currentRole === 'dev' || !getToken()) return;
+            const user = getActiveUser();
+            const body = JSON.stringify({ key: API_KEY, token: getToken(), action: 'presence', kind: kind, why: why, clientId: getDeviceClientId(), roleHint: currentRole, nameHint: user && user.name ? user.name : '' });
+            if (beacon && navigator.sendBeacon && navigator.sendBeacon(GOOGLE_SCRIPT_UNIFORM_API_URL, new Blob([body], { type: 'text/plain;charset=utf-8' }))) return;
+            fetch(GOOGLE_SCRIPT_UNIFORM_API_URL, { method: 'POST', mode: 'no-cors', keepalive: true, headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: body }).catch(() => {});
+        } catch (e) {}
+    }
+    function presenceIn(why) { if (presIn || currentRole === 'dev' || !getToken()) return; presIn = true; presenceSend('in', why); }
+    function presenceOut(why, beacon) { if (!presIn) return; presIn = false; presenceSend('out', why, beacon); }
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) { if (presIn) { presenceOut('앱 나감', true); presAway = true; } }
+        else {
+            if (presAway) { presAway = false; presenceIn('다시 들어옴'); }
+            if (presenceFeedOn()) presencePoll();   // 개발자: 돌아오면 바로 확인
+        }
+    });
+    window.addEventListener('pagehide', () => { if (presIn) presenceOut('앱 나감', true); });
+
+    let presSeq = -1, presTimer = 0, presPending = {}, presLog = [];
+    function presenceFeedOn() { return currentRole === 'dev' && !!getToken(); }
+    async function presencePoll() {
+        clearTimeout(presTimer); presTimer = 0;
+        if (!presenceFeedOn()) { presSeq = -1; return; }
+        if (!document.hidden) {
+            try {
+                const r = await apiGetJson('action=presenceFeed&after=' + Math.max(presSeq, 0));
+                if (r && r.result === 'success') {
+                    const seq = Number(r.seq) || 0;
+                    if (presSeq < 0 || seq < presSeq) presSeq = seq;   // 처음(또는 서버 캐시가 비워진 뒤)엔 지난 것은 안 띄움
+                    else { (r.items || []).filter(it => it.seq > presSeq).forEach(presenceShow); presSeq = seq; }
+                }
+            } catch (e) {}
+        }
+        if (presenceFeedOn()) presTimer = setTimeout(presencePoll, 15000);
+    }
+    function presenceShow(it) {
+        const cid = it.cid || ('?' + it.seq);
+        if (it.kind === 'in') {
+            const p = presPending[cid];
+            if (p) { clearTimeout(p.t); delete presPending[cid]; if (it.why === '다시 들어옴') return; }   // 잠깐 나갔다 바로 돌아옴 → 둘 다 조용히
+            presenceChip(it);
+        } else if (it.why === '앱 나감') {   // 앱을 내린 것 — 1분 안에 안 돌아오면 그때 「나감」
+            if (presPending[cid]) clearTimeout(presPending[cid].t);
+            presPending[cid] = { t: setTimeout(() => { delete presPending[cid]; presenceChip(it); }, 60000) };
+        } else presenceChip(it);
+    }
+    function presenceChip(it) {
+        if (!presenceFeedOn()) return;
+        presLog.unshift(it); presLog = presLog.slice(0, 30); renderPresLog();
+        let st = document.getElementById('presStack');
+        if (!st) { st = document.createElement('div'); st.id = 'presStack'; st.className = 'pres-stack'; st.setAttribute('aria-live', 'polite'); document.body.appendChild(st); }
+        const inn = it.kind === 'in';
+        const c = document.createElement('div');
+        c.className = 'pres-chip ' + (inn ? 'in' : 'out');
+        c.innerHTML = `<b>${inn ? '🟢' : '⚪'} ${escapeHtml(it.who || '')}</b>${inn ? '접속' : '나감'}<small>${escapeHtml(it.at || '')}${it.why ? ' · ' + escapeHtml(it.why) : ''}</small>`;
+        c.onclick = () => c.remove();
+        st.prepend(c);
+        while (st.children.length > 4) st.lastChild.remove();
+        setTimeout(() => { c.classList.add('bye'); setTimeout(() => c.remove(), 400); }, 7000);
+    }
+    function renderPresLog() {
+        const box = document.getElementById('presLog'); if (!box) return;
+        box.innerHTML = '<div class="pres-log-h">🟢 실시간 접속 알림 (앱이 켜져 있는 동안 · 15초마다 확인)</div>' + (presLog.length
+            ? presLog.map(it => `<div class="pres-log-row"><span class="t">${escapeHtml(it.at || '')}</span><span class="w">${it.kind === 'in' ? '🟢' : '⚪'} ${escapeHtml(it.who || '')} ${it.kind === 'in' ? '접속' : '나감'}${it.why ? ' · ' + escapeHtml(it.why) : ''}</span></div>`).join('')
+            : '<div class="pres-log-empty">아직 들어오고 나간 사람이 없어요</div>');
+    }
+
     function startSessionCountdown() {
         const badge = document.getElementById('sessionTimerBadge');
         const countdownEl = document.getElementById('timerCountdown');
@@ -5856,6 +5953,7 @@
 
             const diff = parseInt(authExpire, 10) - Date.now();
             if (diff <= 0) {
+                presenceOut('세션 만료');   // 🟢 v2.47.0
                 localStorage.removeItem('daeyeon_auth_expire');
                 clearAdminRoleStorage();
                 clearToken();
@@ -5887,7 +5985,8 @@
         }, 1000);
     }
 
-    function lockScreenNow() {
+    function lockScreenNow(why) {
+        presenceOut(why || '화면 잠금');   // 🟢 v2.47.0: 토큰을 지우기 전에 「나감」
         try { if (getToken()) postApi({ action: 'logout', token: getToken() }); } catch (e) {}   // 서버 세션도 폐기
         localStorage.removeItem('daeyeon_auth_expire');
         clearAdminRoleStorage();
@@ -5929,6 +6028,7 @@
     };
 
     function finishUnlock() {
+        presFirstWhy = '로그인';   // 🟢 v2.47.0: 명단을 불러오면 「접속 · 로그인」
         document.documentElement.classList.add('is-authenticated');
         const overlay = document.getElementById('lockOverlay');
         if (overlay) overlay.style.display = 'none';
@@ -8156,6 +8256,11 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.47.0', d: '2026-10-11', t: '🟢 개발자 실시간 접속 알림', items: [
+            '개발자로 로그인해 앱이 켜져 있으면, 대표님 · 총무님 · 코치진 · 보호자 · 일반 열람자가 들어오고 나갈 때 화면 위쪽에 「🟢 대표님 접속」 · 「⚪ 보호자 (김OO) 나감」 칩 (15초마다 확인)',
+            '들어옴: 로그인 · 앱 열기 · 다시 들어옴 / 나감: 로그아웃 · 화면 잠금 · 세션 만료 · 앱 나감 — 앱을 잠깐 내렸다가 1분 안에 돌아오면 안 띄움',
+            '관리 탭 「개발」에 최근 30건 목록 · 시트에는 따로 남기지 않음 (서버 캐시에 최근 60건만)'
+        ] },
         { v: 'v2.46.0', d: '2026-10-11', t: '🛰️ 지도 · 스카이뷰 바꾸기', items: [
             '큰 지도 · 구장 탭 지도 · 장소 찾기 지도 왼쪽 위에 [지도 | 스카이뷰] 버튼 — 스카이뷰는 카카오맵 스카이뷰(위성사진 + 이름)',
             '한 번 고르면 이 기기에 기억해서 다른 지도(일정 상세 · 구장 카드의 작은 지도 포함)도 같은 모드로 보여 줌'
@@ -8928,7 +9033,7 @@
         if (currentRole !== 'guest') {
             if (await bkConfirm('로그아웃할까캉?', { sub: '로그아웃하면 잠금화면으로 돌아가요', ok: '로그아웃' })) {
                 sendActivityLog("로그아웃", currentRole, "로그아웃");
-                lockScreenNow();   // 토큰·세션 완전 폐기 후 잠금화면으로
+                lockScreenNow('로그아웃');   // 토큰·세션 완전 폐기 후 잠금화면으로
             }
         } else {
             const pwInput = document.getElementById('adminPw');
@@ -9274,6 +9379,7 @@
             })).filter(g => g.name);
             rosterSeason = parseInt(res.season, 10) || 0;
             syncGradFilter();
+            presenceIn(presFirstWhy); presFirstWhy = '앱 열기';   // 🟢 v2.47.0: 들어옴 (개발자는 안 보냄)
 
             updateNewSeen();   // 🦈 NEW 스티커용: 이 기기에서 처음 보는 선수 기록
             switchView(currentView);
