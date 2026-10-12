@@ -20,6 +20,7 @@ on:
       - '.github/workflows/android-apk.yml'
       - 'icons/icon-512.png'
       - 'icons/icon-maskable-512.png'
+      - 'icons/splash.webp'
 
 permissions:
   contents: write
@@ -267,7 +268,8 @@ jobs:
 
           # 앱 아이콘/스플래시는 사이트의 icons 폴더 이미지를 그대로 사용
           cp icons/icon-maskable-512.png $R/drawable-nodpi/ic_foreground.png
-          cp icons/icon-maskable-512.png $R/drawable-nodpi/splash.png
+          # 앱 첫 화면(스플래시): 부캉이 그림 (680x850, 남색 바탕 가운데 · 원래 크기 그대로 보여서 작은 폰에서도 안 잘리는 크기)
+          cp icons/splash.webp $R/drawable-nodpi/splash.webp
           cp icons/icon-512.png $R/mipmap-xxxhdpi/ic_launcher.png
 
           echo "생성된 파일:"; find $P -type f | sort
