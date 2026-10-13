@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.57.0 · b261013";
+        const APP_VERSION = "v2.58.0 · b261013";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -1365,6 +1365,30 @@
         .acc-filter { display: flex; align-items: center; justify-content: space-between; gap: 6px; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; border-radius: 8px; padding: 6px 8px; font-size: 12px; font-weight: 700; margin-bottom: 8px; }
         .acc-filter button { flex: 0 0 auto; white-space: nowrap; border: 1px solid #bfdbfe; background: #ffffff; color: #1e40af; border-radius: 6px; height: 26px; font-size: 12px; font-weight: 800; cursor: pointer; padding: 0 8px; }
         .acc-day { font-size: 12px; font-weight: 800; color: #475569; margin: 10px 2px 4px; }
+        /* 📜 v2.58.0 보안 활동 로그 창 정리 */
+        .log-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+        .log-icon-btn { flex: 0 0 auto; width: 36px; height: 32px; border: 1px solid #cbd5e1; border-radius: 9px; background: #ffffff; font-size: 15px; line-height: 1; cursor: pointer; }
+        .log-desc { font-size: 11.5px; color: #64748b; margin: 0 2px 6px; line-height: 1.45; word-break: keep-all; }
+        .log-tools { flex-wrap: nowrap; padding: 6px; gap: 6px; }
+        .log-tools > * { flex: 0 0 auto; }
+        .log-tools label.lt-check { gap: 5px; padding: 0 4px; }
+        .log-tools label.lt-check input { width: 17px; height: 17px; margin: 0; }
+        .log-tools button.lt-pick { background: #0b2240; border-color: #0b2240; color: #ffffff; }
+        #logsModal .lt-check, #logsModal .lt-del, #logsModal .lt-cancel { display: none; }
+        #logsModal.log-picking .lt-check, #logsModal.log-picking .lt-del { display: inline-flex; align-items: center; }
+        #logsModal.log-picking .lt-pick { display: none; }
+        #logsModal.log-picking.log-pick-toggle .lt-cancel { display: inline-flex; align-items: center; }
+        #logsModal.log-picking.log-pick-toggle .lt-clean { display: none; }
+        #logsModal:not(.log-picking) .log-check { display: none; }
+        #logsModal:not(.log-picking) .log-item-card.log-selectable, #logsModal:not(.log-picking) .acc-row.log-selectable { padding-left: 10px; }
+        #logsModal .log-del-btn { background: #f1f5f9; border-color: transparent; border-radius: 8px; opacity: .85; }
+        #logsModal .log-del-btn:active { background: #fee2e2; opacity: 1; }
+        .acc-sum { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 2px; }
+        .acc-sum > div { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; text-align: left; }
+        .acc-sum b { display: inline; font-size: 14px; line-height: 1.2; }
+        .acc-sum span { font-size: 11.5px; }
+        .app-pick .lc-head { font-size: 11px; font-weight: 800; color: #64748b; padding: 4px 8px 0; }
+        .app-pick button.lc-danger { color: #b91c1c; background: #fff5f5; }
         .acc-row { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 7px 10px; margin-bottom: 5px; font-size: 12px; }
         .acc-l1 { display: flex; align-items: center; gap: 6px; }
         .acc-dot { width: 9px; height: 9px; border-radius: 50%; background: #94a3b8; flex: 0 0 auto; }
@@ -2330,6 +2354,12 @@
     .acc-filter { background: #1b2c46; border-color: #33425c; color: #a8c2ec; }
     .acc-filter button { background: #151e2e; border-color: #33425c; color: #a8c2ec; }
     .acc-day { color: #94a3b8; }
+    .log-icon-btn { background: #151e2e; border-color: #58697e; }
+    .log-desc { color: #94a3b8; }
+    .log-tools button.lt-pick { background: #2c4a7a; border-color: #2c4a7a; color: #ffffff; }
+    #logsModal .log-del-btn { background: #1b2638; }
+    #logsModal .log-del-btn:active { background: #2a1b22; }
+    .app-pick button.lc-danger { color: #f19aa6; background: #2a1b22; }
     .acc-row { background: #151e2e; border-color: #2a374e; }
     .acc-who { color: #e2e8f0; }
     .acc-role { background: #22304a; color: #bcc6d4; }
@@ -3643,12 +3673,12 @@
     </div>
 </div>
 
-<!-- 7. 보안 활동 로그 모달 -->
+<!-- 7. 보안 활동 로그 모달 (v2.58.0 정리: 제목 줄 🔄 · 한 줄 설명 · 도구 한 줄 [골라서 지우기 | 🧹 기록 정리 ▾]) -->
 <div id="logsModal" class="modal">
     <div class="modal-content" style="max-width: 600px; width: 95%;">
-        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
-            <span>📜 시스템 접속 및 활동 로그</span>
-            <button class="btn-quick-action" onclick="loadSecurityLogs()">🔄 새로고침</button>
+        <div class="modal-header log-head">
+            <span>📜 보안 활동 로그</span>
+            <button type="button" class="log-icon-btn" onclick="loadSecurityLogs()" title="새로고침" aria-label="새로고침">🔄</button>
         </div>
         <div class="log-tabs" id="logTabs">
             <button type="button" data-cat="access" class="on" onclick="setLogCat('access')">👥 접속</button>
@@ -3656,18 +3686,14 @@
             <button type="button" data-cat="view" onclick="setLogCat('view')">👀 열람·복사</button>
             <button type="button" data-cat="all" onclick="setLogCat('all')">📋 전체</button>
         </div>
-        <p id="logDesc" style="font-size: 11px; color: #64748b; margin-bottom: 8px;"></p>
+        <p id="logDesc" class="log-desc"></p>
         <div class="log-tools" id="logTools">
-            <label id="logCheckAllWrap"><input type="checkbox" id="logCheckAll" onchange="toggleAllLogChecks(this.checked)"> 전체 선택</label>
-            <button type="button" class="danger" id="logDelSelBtn" onclick="deleteSelectedLogs()" disabled>선택 삭제</button>
+            <button type="button" class="lt-pick" id="logPickBtn" onclick="setLogPicking(true)">☑️ 골라서 지우기</button>
+            <label class="lt-check" id="logCheckAllWrap"><input type="checkbox" id="logCheckAll" onchange="toggleAllLogChecks(this.checked)"> 전체</label>
+            <button type="button" class="danger lt-del" id="logDelSelBtn" onclick="deleteSelectedLogs()" disabled>🗑 선택 삭제</button>
+            <button type="button" class="lt-cancel" onclick="setLogPicking(false)">취소</button>
             <span class="log-tools-spacer"></span>
-            <select id="logDelDays" aria-label="삭제 기간">
-                <option value="7">7일 지난 로그</option>
-                <option value="30" selected>30일 지난 로그</option>
-                <option value="90">90일 지난 로그</option>
-            </select>
-            <button type="button" class="danger" onclick="deleteOldLogs()">기간 삭제</button>
-            <button type="button" class="danger" onclick="deleteAllLogs()">전체 삭제</button>
+            <button type="button" class="lt-clean" id="logCleanBtn" onclick="openLogCleanMenu(this)" aria-haspopup="menu">🧹 기록 정리 ▾</button>
         </div>
         <div class="modal-scroll-body" id="logsListContent">
             <div style="text-align: center; padding: 40px; color: #94a3b8;">로그 데이터를 불러오는 중...</div>
@@ -8776,6 +8802,12 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.58.0', d: '2026-10-13', t: '📜 보안 활동 로그 창 정리', items: [
+            '제목 줄 오른쪽에 🔄 새로고침 · 탭 아래 설명은 한 줄로 짧게',
+            '도구는 한 줄: 「☑️ 골라서 지우기」 · 「🧹 기록 정리 ▾」(7 · 30 · 90일 지난 기록 / 전부 지우기를 메뉴로)',
+            '체크 상자는 「골라서 지우기」를 눌렀을 때만 나옴 → 전체 · 선택 삭제 · 취소 (지우고 나면 자동으로 끝, 뒤로 가기로도 끝)',
+            '접속 탭의 큰 숫자 칸 3개(오늘 · 접속 중 · 인증실패)를 작은 알약 한 줄로 → 기록 목록이 더 넓게 · 칸의 🗑는 덜 튀는 회색'
+        ] },
         { v: 'v2.57.0', d: '2026-10-13', t: '🗑 접속 기록도 한 칸씩 · 골라서 삭제', items: [
             '보안 활동 로그의 👥 접속 탭에도 칸마다 🗑 버튼과 체크 상자 — 「전체 선택」 · 「선택 삭제」도 이제 접속 탭에서 쓸 수 있음',
             '한 칸을 지우면 그 칸을 만든 들어옴 · 나감 기록(인증실패는 묶인 횟수만큼)이 시트 "접속기록" 탭에서 함께 지워짐',
@@ -9453,19 +9485,46 @@
         view: ['열람', '복사']
     };
     const LOG_CAT_DESC = {
-        access: '들어옴(로그인)과 나감(로그아웃·앱 종료·자동 잠김)을 기기별로 한 줄씩 묶어 보여줍니다. 구글 시트 "접속기록" 탭에 따로 보관돼요 (최근 300건). 🗑 · 선택 삭제는 그 칸의 들어옴·나감 기록을 함께 지워요.',
-        change: '비밀번호·일정·공지·사진·선수 정보·유니폼 주문/설정 등 내용을 바꾼 기록입니다 (최근 200건).',
-        view: '비상연락망 열람, 번호 복사 기록입니다 (최근 200건).',
-        all: '모든 활동의 최근 100건입니다.'
+        access: '기기별 들어옴(로그인) → 나감을 한 칸에 · 최근 300건',
+        change: '비밀번호 · 일정 · 공지 · 사진 · 선수 · 유니폼을 바꾼 기록 · 최근 200건',
+        view: '비상연락망 열람 · 번호 복사 기록 · 최근 200건',
+        all: '모든 활동 · 최근 100건'
     };
     let logCat = 'access', logWho = '';
+    // v2.58.0: 체크 상자는 「☑️ 골라서 지우기」를 눌렀을 때만 (평소엔 칸이 깔끔하게) · false 면 체크 상자가 늘 보임
+    const LOG_PICK_TOGGLE = true;
+    function setLogPicking(on) {
+        const md = document.getElementById('logsModal');
+        if (!md) return;
+        md.classList.toggle('log-pick-toggle', LOG_PICK_TOGGLE);
+        md.classList.toggle('log-picking', !LOG_PICK_TOGGLE || !!on);
+        if (!on) { const ca = document.getElementById('logCheckAll'); if (ca) ca.checked = false; toggleAllLogChecks(false); }
+    }
+    // 🧹 기록 정리 메뉴 — 기간 지난 기록 / 전부 지우기 (앱 고르기 메뉴와 같은 모양)
+    function openLogCleanMenu(btn) {
+        appPickClose();
+        const items = [[7, '7일 지난 기록 지우기'], [30, '30일 지난 기록 지우기'], [90, '90일 지난 기록 지우기'], [0, '⚠️ 전부 지우기']];
+        const bg = document.createElement('div'); bg.className = 'app-pick-bg'; bg.id = 'appPickBg';
+        bg.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); appPickClose(); });
+        const m = document.createElement('div'); m.className = 'app-pick'; m.id = 'appPick'; m.setAttribute('role', 'menu');
+        m.innerHTML = `<div class="lc-head">${logCat === 'access' ? '👥 접속 기록' : '📜 활동 로그'} 정리</div>` +
+            items.map(([d, t]) => `<button type="button" role="menuitem" data-d="${d}"${d ? '' : ' class="lc-danger"'}>${t}</button>`).join('');
+        m.addEventListener('click', e => {
+            const b = e.target.closest('button[data-d]'); if (!b) return;
+            e.stopPropagation(); appPickClose();
+            const d = +b.dataset.d;
+            if (d) deleteOldLogs(d); else deleteAllLogs();
+        });
+        document.body.append(bg, m);
+        const r = btn.getBoundingClientRect(), vw = window.innerWidth, vh = window.innerHeight, mr = m.getBoundingClientRect();
+        let top = r.bottom + 4; if (top + mr.height > vh - 8) top = Math.max(8, r.top - mr.height - 4);
+        m.style.left = Math.min(Math.max(8, r.right - mr.width), vw - mr.width - 8) + 'px'; m.style.top = top + 'px';
+    }
     function setLogCat(cat) {
         logCat = cat; logWho = '';
         document.querySelectorAll('#logTabs button').forEach(b => b.classList.toggle('on', b.dataset.cat === cat));
         document.getElementById('logDesc').textContent = LOG_CAT_DESC[cat] || '';
-        // v2.57.0: 접속 탭도 칸마다 선택 · 🗑 삭제 (한 칸 = 그 칸의 들어옴 · 나감 기록 줄)
-        document.getElementById('logCheckAllWrap').style.display = '';
-        document.getElementById('logDelSelBtn').style.display = '';
+        setLogPicking(false);   // 탭을 바꾸면 고르기는 처음부터
         loadSecurityLogs();
     }
 
@@ -9526,7 +9585,7 @@
         const todayWho = new Set(rows.filter(r => r.kind === 'session' && r.start && accDayKey(r.start) === today).map(r => r.who));
         const onlineN = rows.filter(r => r.status === 'online').length;
         const failN = rows.filter(r => r.kind === 'fail' && accDayKey(r.start) === today).reduce((a, r) => a + r.count, 0);
-        let html = `<div class="acc-sum"><div><b>${todayWho.size}</b><span>오늘 접속 (명)</span></div><div class="on"><b>${onlineN}</b><span>지금 접속 중</span></div><div class="${failN ? 'warn' : ''}"><b>${failN}</b><span>오늘 인증실패</span></div></div>`;
+        let html = `<div class="acc-sum"><div title="오늘 접속한 사람"><span>👥 오늘</span><b>${todayWho.size}</b><span>명</span></div><div class="on" title="지금 접속 중"><span>🟢 접속 중</span><b>${onlineN}</b></div><div class="${failN ? 'warn' : ''}" title="오늘 인증실패"><span>⚠️ 인증실패</span><b>${failN}</b></div></div>`;
         const shown = logWho ? rows.filter(r => r.who === logWho) : rows;
         if (logWho) html += `<div class="acc-filter"><span>👤 ${escapeHtml(logWho)} 기록만 보는 중</span><button type="button" onclick="setLogWho('')">✕ 전체 보기</button></div>`;
         if (!shown.length) { content.innerHTML = html + '<div style="text-align:center; padding:30px;">접속 기록 없음</div>'; return; }
@@ -9599,7 +9658,7 @@
         if (!btn) return;
         const n = checkedLogKeys().length;
         btn.disabled = n === 0;
-        btn.textContent = n ? `선택 삭제 (${n})` : '선택 삭제';
+        btn.textContent = n ? `🗑 선택 삭제 (${n})` : '🗑 선택 삭제';
     }
     function onLogCheck(cb) {
         const card = cb.closest('.log-item-card, .acc-row');
@@ -9643,8 +9702,8 @@
             }
             if (bad) bkNotify('fail', '앗, 삭제가 안 됐캉…', (bad.message || bad.error || '삭제하지 못했습니다') + (total ? ` (먼저 ${total}건은 지워짐)` : ''));   // v2.53.1: 서버 오류 내용(error)도 보여 줌
             else if (!total) bkNotify('info', '지울 로그가 없다캉!', '그 사이 바뀐 로그는 지우지 않아요');
-            else bkNotify('done', `로그 ${total}건 삭제 완료캉! ✓`,
-                logCat !== 'access' && /^mode=all\b/.test(list[0]) ? '누가 지웠는지 남기는 「로그삭제」 1줄은 남아요' : undefined);
+            else { if (LOG_PICK_TOGGLE) setLogPicking(false); bkNotify('done', `로그 ${total}건 삭제 완료캉! ✓`,
+                logCat !== 'access' && /^mode=all\b/.test(list[0]) ? '누가 지웠는지 남기는 「로그삭제」 1줄은 남아요' : undefined); }
         } catch (err) {
             bkNotify('fail', '앗, 삭제가 안 됐캉…', '잠시 후 다시 시도해 주세요');
         }
@@ -9672,8 +9731,8 @@
         if (!(await bkConfirm(`선택한 로그 ${keys.length}건을 삭제할까캉?`, { sub: '지운 로그는 되돌릴 수 없어요', ok: '삭제', danger: true }))) return;
         requestDeleteLogs(logDelBatches(keys));
     }
-    async function deleteOldLogs() {
-        const days = parseInt(document.getElementById('logDelDays').value, 10) || 30;
+    async function deleteOldLogs(d) {
+        const days = parseInt(d, 10) || 30;
         if (!(await bkConfirm(`${logCat === 'access' ? '접속기록 중 ' : ''}${days}일 지난 로그를 모두 삭제할까캉?`, { sub: '화면에 안 보이는 오래된 로그도 포함, 되돌릴 수 없어요', ok: '삭제', danger: true }))) return;
         requestDeleteLogs('mode=before&days=' + days);
     }
@@ -9946,6 +10005,9 @@
     function closeTopLayer() {
         if (document.getElementById('appPick')) { appPickClose(); return true; }   // v2.52.0: 고르기 메뉴부터
         if (bkAskResolve) { bkAskClose(false); return true; }   // 부캉이 확인 창 → 취소
+        const ag = document.getElementById('apkGuide'); if (ag && !ag.hidden) { apkGuideClose(); return true; }   // v2.58.0: APK 설치 안내 창
+        const lm = document.getElementById('logsModal');
+        if (lm && lm.style.display === 'flex' && LOG_PICK_TOGGLE && lm.classList.contains('log-picking')) { setLogPicking(false); return true; }   // v2.58.0: 로그 「골라서 지우기」 중이면 고르기만 끝
         const cf = document.querySelector('.cf-layer:not(.out)'); if (cf) { cf.click(); return true; }   // 승리 축하 화면
         const dd0 = document.querySelector('.modal .cgsel-wrap.open'); if (dd0) { dd0.classList.remove('open'); return true; }   // v2.51.2: 창 안의 고르기 메뉴는 창보다 먼저 닫음
         const open = [...document.querySelectorAll('.modal')].filter(m => m.style.display === 'flex');
