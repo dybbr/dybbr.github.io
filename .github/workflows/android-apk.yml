@@ -18,7 +18,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/android-apk.yml'
-      - 'icons/icon-512.png'
+      - 'icons/icon-192.png'
       - 'icons/icon-maskable-512.png'
       - 'icons/splash.webp'
 
@@ -119,7 +119,7 @@ jobs:
           set -e
           P=android-build
           R=$P/app/src/main/res
-          mkdir -p $P/app/src/main $R/values $R/xml $R/drawable-nodpi $R/mipmap-anydpi-v26 $R/mipmap-xxxhdpi
+          mkdir -p $P/app/src/main $R/values $R/xml $R/drawable-nodpi $R/drawable-xxhdpi $R/mipmap-anydpi-v26 $R/mipmap-xxxhdpi
 
           cat > $P/settings.gradle <<'EOF'
           pluginManagement {
@@ -268,9 +268,12 @@ jobs:
 
           # 앱 아이콘/스플래시는 사이트의 icons 폴더 이미지를 그대로 사용
           cp icons/icon-maskable-512.png $R/drawable-nodpi/ic_foreground.png
-          # 앱 첫 화면(스플래시): 부캉이 그림 (680x850, 남색 바탕 가운데 · 원래 크기 그대로 보여서 작은 폰에서도 안 잘리는 크기)
-          cp icons/splash.webp $R/drawable-nodpi/splash.webp
-          cp icons/icon-512.png $R/mipmap-xxxhdpi/ic_launcher.png
+          # 앱 첫 화면(스플래시): 부캉이 그림 (680x850, 남색 바탕 가운데)
+          #  - drawable-xxhdpi 에 두면 화면 밀도에 맞춰 크기가 자동 조절됨 (≈227x283dp)
+          #    → 폰에서는 지금 크기 그대로, 해상도 낮은 차량용 헤드유닛(가로 화면)에서는 작게 줄어 안 잘림
+          cp icons/splash.webp $R/drawable-xxhdpi/splash.webp
+          # 옛날 안드로이드(7 이하)용 아이콘: 부캉이 + 「대연초 야구부」 (192x192)
+          cp icons/icon-192.png $R/mipmap-xxxhdpi/ic_launcher.png
 
           echo "생성된 파일:"; find $P -type f | sort
 
