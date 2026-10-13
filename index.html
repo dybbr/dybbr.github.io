@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.56.1 · b261013";
+        const APP_VERSION = "v2.57.0 · b261013";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -1381,6 +1381,11 @@
         .acc-l3 { margin-top: 1px; font-size: 11px; color: #64748b; }
         .acc-row.acc-fail { background: #fff5f5; border-color: #fecaca; }
         .acc-row.acc-fail .acc-who { color: #b91c1c; text-decoration: none; cursor: default; }
+        /* 🗑 v2.57.0: 접속 칸도 선택 · 한 칸 삭제 */
+        .acc-row.log-selectable { position: relative; padding-left: 32px; }
+        .acc-row .log-check { top: 9px; }
+        .acc-row .log-del-btn { height: 22px; width: 26px; font-size: 12px; }
+        .acc-row.is-checked { border-color: #fca5a5; background: #fff7f7; }
 
         @media (max-width: 600px) {
             header { padding: 10px 10px 14px; gap: 8px; }
@@ -2334,6 +2339,7 @@
     .acc-row.st-unknown .acc-l2 .out { color: #f5c26b; }
     .acc-row.acc-fail { background: #2a1b22; border-color: #6b2a35; }
     .acc-row.acc-fail .acc-who { color: #f19aa6; }
+    .acc-row.is-checked { background: #2a1b22; border-color: #6b2a35; }
     .main-tabs { background: #151e2e; border: 1px solid #2a374e; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
     .main-tab { border: none; background: transparent; color: #97a3b7; }
     .main-tab.active { background: #22354f; color: #f1f4f9; box-shadow: 0 2px 6px rgba(0,0,0,0.375); }
@@ -8770,6 +8776,11 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.57.0', d: '2026-10-13', t: '🗑 접속 기록도 한 칸씩 · 골라서 삭제', items: [
+            '보안 활동 로그의 👥 접속 탭에도 칸마다 🗑 버튼과 체크 상자 — 「전체 선택」 · 「선택 삭제」도 이제 접속 탭에서 쓸 수 있음',
+            '한 칸을 지우면 그 칸을 만든 들어옴 · 나감 기록(인증실패는 묶인 횟수만큼)이 시트 "접속기록" 탭에서 함께 지워짐',
+            '한꺼번에 200줄이 넘게 골라도 나눠서 지움'
+        ] },
         { v: 'v2.56.1', d: '2026-10-13', t: '📥 APK 받은 뒤 설치 순서 안내', items: [
             '로그인 화면의 「📱 안드로이드 앱(APK)」을 누르면 브라우저가 조용히 받기만 해서 아무 일도 안 일어난 것처럼 보이던 문제',
             '이제 누르자마자 부캉이 안내 창이 떠서 받은 파일 열기 → 「출처를 알 수 없는 앱」 허용 → 설치 순서를 보여 줌 (삼성 인터넷 · 크롬에 맞춘 메뉴 이름)',
@@ -9442,7 +9453,7 @@
         view: ['열람', '복사']
     };
     const LOG_CAT_DESC = {
-        access: '들어옴(로그인)과 나감(로그아웃·앱 종료·자동 잠김)을 기기별로 한 줄씩 묶어 보여줍니다. 구글 시트 "접속기록" 탭에 따로 보관돼요 (최근 300건).',
+        access: '들어옴(로그인)과 나감(로그아웃·앱 종료·자동 잠김)을 기기별로 한 줄씩 묶어 보여줍니다. 구글 시트 "접속기록" 탭에 따로 보관돼요 (최근 300건). 🗑 · 선택 삭제는 그 칸의 들어옴·나감 기록을 함께 지워요.',
         change: '비밀번호·일정·공지·사진·선수 정보·유니폼 주문/설정 등 내용을 바꾼 기록입니다 (최근 200건).',
         view: '비상연락망 열람, 번호 복사 기록입니다 (최근 200건).',
         all: '모든 활동의 최근 100건입니다.'
@@ -9452,9 +9463,9 @@
         logCat = cat; logWho = '';
         document.querySelectorAll('#logTabs button').forEach(b => b.classList.toggle('on', b.dataset.cat === cat));
         document.getElementById('logDesc').textContent = LOG_CAT_DESC[cat] || '';
-        const sel = cat !== 'access';   // 접속 탭은 줄을 묶어 보여주므로 기간·전체 삭제만
-        document.getElementById('logCheckAllWrap').style.display = sel ? '' : 'none';
-        document.getElementById('logDelSelBtn').style.display = sel ? '' : 'none';
+        // v2.57.0: 접속 탭도 칸마다 선택 · 🗑 삭제 (한 칸 = 그 칸의 들어옴 · 나감 기록 줄)
+        document.getElementById('logCheckAllWrap').style.display = '';
+        document.getElementById('logDelSelBtn').style.display = '';
         loadSecurityLogs();
     }
 
@@ -9482,22 +9493,23 @@
     const accHM = d => d ? String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') : '--:--';
     function accDur(ms) { const m = Math.floor(ms / 60000); if (m < 1) return '1분 미만'; if (m < 60) return m + '분'; return Math.floor(m / 60) + '시간' + (m % 60 ? ' ' + (m % 60) + '분' : ''); }
     function accDayKey(d) { return d ? `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}` : '날짜 없음'; }
+    const accKey = log => (log.row && log.sig) ? `${Number(log.row)}:${String(log.sig).replace(/[^0-9a-f]/gi, '')}` : '';   // 시트 줄 번호:지문
     function buildAccessRows(logs) {
         const items = [], open = {}, now = Date.now();
         logs.slice().reverse().forEach(log => {   // 오래된 것부터
-            const t = accDate(log.date), cid = log.clientId || '-', w = accWho(log);
+            const t = accDate(log.date), cid = log.clientId || '-', w = accWho(log), k = accKey(log);
             if (ACC_IN.includes(log.eventType)) {
                 if (open[cid]) { open[cid].endType = 'relogin'; delete open[cid]; }
-                const s = { kind: 'session', who: w.who, label: w.label, start: t, end: null, endType: '', device: log.device, cid };
+                const s = { kind: 'session', who: w.who, label: w.label, start: t, end: null, endType: '', device: log.device, cid, keys: [k] };
                 open[cid] = s; items.push(s);
             } else if (ACC_OUT.includes(log.eventType)) {
                 const s = open[cid];
-                if (s) { s.end = t; s.endType = log.eventType; delete open[cid]; }
-                else items.push({ kind: 'session', who: (w.who && w.who !== '시스템') ? w.who : '알 수 없음', label: w.label, start: null, end: t, endType: log.eventType, device: log.device, cid });
+                if (s) { s.end = t; s.endType = log.eventType; s.keys.push(k); delete open[cid]; }
+                else items.push({ kind: 'session', who: (w.who && w.who !== '시스템') ? w.who : '알 수 없음', label: w.label, start: null, end: t, endType: log.eventType, device: log.device, cid, keys: [k] });
             } else if (log.eventType === '인증실패') {
                 const last = items[items.length - 1];
-                if (last && last.kind === 'fail' && last.cid === cid && t && last.end && (t - last.end) < 10 * 60000) { last.count++; last.end = t; }
-                else items.push({ kind: 'fail', who: '⚠ 인증실패', start: t, end: t, count: 1, device: log.device, cid });
+                if (last && last.kind === 'fail' && last.cid === cid && t && last.end && (t - last.end) < 10 * 60000) { last.count++; last.end = t; last.keys.push(k); }
+                else items.push({ kind: 'fail', who: '⚠ 인증실패', start: t, end: t, count: 1, device: log.device, cid, keys: [k] });
             }
         });
         items.forEach(s => {
@@ -9522,8 +9534,12 @@
         shown.forEach(r => {
             const d = r.start || r.end, k = accDayKey(d);
             if (k !== day) { day = k; html += `<div class="acc-day">📅 ${k}${k === today ? ' (오늘)' : ''}</div>`; }
+            const ks = (r.keys || []).filter(Boolean).join(',');
+            const sel = ks ? ' log-selectable' : '';
+            const chk = ks ? `<input type="checkbox" class="log-check" data-key="${ks}" onchange="onLogCheck(this)" aria-label="이 접속 기록 선택">` : '';
+            const del = ks ? `<button type="button" class="log-del-btn" title="이 접속 기록 삭제" onclick="deleteAccRow('${ks}', '${r.kind}')">🗑</button>` : '';
             if (r.kind === 'fail') {
-                html += `<div class="acc-row acc-fail"><div class="acc-l1"><span class="acc-dot" style="background:#ef4444"></span><span class="acc-who">⚠ 인증실패 ${r.count}회</span></div>` +
+                html += `<div class="acc-row acc-fail${sel}">${chk}<div class="acc-l1"><span class="acc-dot" style="background:#ef4444"></span><span class="acc-who">⚠ 인증실패 ${r.count}회</span><span class="acc-dur"></span>${del}</div>` +
                         `<div class="acc-l2">${accHM(r.start)}${r.count > 1 ? ' ~ ' + accHM(r.end) : ''} · 비밀번호/번호 틀림</div><div class="acc-l3">📱 ${escapeHtml(r.device || '-')}</div></div>`;
                 return;
             }
@@ -9536,13 +9552,17 @@
             const inTxt = r.start ? `<span class="in">${accHM(r.start)} 들어옴</span> → ` : '<span class="in">들어온 기록 없음</span> → ';
             const dur = (r.start && r.end) ? accDur(r.end - r.start) : (r.status === 'online' ? accDur(Date.now() - r.start) + '째' : '');
             const whoArg = escapeHtml(JSON.stringify(r.who));
-            html += `<div class="acc-row st-${st}"><div class="acc-l1"><span class="acc-dot"></span><span class="acc-who" onclick="setLogWho(${whoArg})" title="이 사람 기록만 보기">${escapeHtml(r.who)}</span>${r.label ? `<span class="acc-role">${escapeHtml(r.label)}</span>` : ''}<span class="acc-dur">${dur}</span></div>` +
+            html += `<div class="acc-row st-${st}${sel}">${chk}<div class="acc-l1"><span class="acc-dot"></span><span class="acc-who" onclick="setLogWho(${whoArg})" title="이 사람 기록만 보기">${escapeHtml(r.who)}</span>${r.label ? `<span class="acc-role">${escapeHtml(r.label)}</span>` : ''}<span class="acc-dur">${dur}</span>${del}</div>` +
                     `<div class="acc-l2">${inTxt}${out}</div><div class="acc-l3">📱 ${escapeHtml(r.device || '-')}</div></div>`;
         });
         content.innerHTML = html;
     }
     let _accLogs = [];
-    function setLogWho(w) { logWho = w || ''; renderAccessLogs(_accLogs); document.getElementById('logsListContent').scrollTop = 0; }
+    function setLogWho(w) {
+        logWho = w || ''; renderAccessLogs(_accLogs); document.getElementById('logsListContent').scrollTop = 0;
+        const checkAll = document.getElementById('logCheckAll'); if (checkAll) checkAll.checked = false;
+        updateLogDelBtn();
+    }
 
     async function loadSecurityLogs() {
         const content = document.getElementById('logsListContent');
@@ -9582,7 +9602,7 @@
         btn.textContent = n ? `선택 삭제 (${n})` : '선택 삭제';
     }
     function onLogCheck(cb) {
-        const card = cb.closest('.log-item-card');
+        const card = cb.closest('.log-item-card, .acc-row');
         if (card) card.classList.toggle('is-checked', cb.checked);
         const all = document.querySelectorAll('#logsListContent .log-check');
         const checkAll = document.getElementById('logCheckAll');
@@ -9592,13 +9612,21 @@
     function toggleAllLogChecks(on) {
         document.querySelectorAll('#logsListContent .log-check').forEach(c => {
             c.checked = on;
-            const card = c.closest('.log-item-card');
+            const card = c.closest('.log-item-card, .acc-row');
             if (card) card.classList.toggle('is-checked', on);
         });
         updateLogDelBtn();
     }
+    // v2.57.0: 지울 줄이 200개가 넘으면 아래쪽 줄부터 200개씩 나눠 보냄 (아래 줄을 먼저 지워야 위쪽 줄 번호가 안 밀림)
+    function logDelBatches(keys) {
+        const ks = keys.filter(Boolean).sort((a, b) => parseInt(b, 10) - parseInt(a, 10)), out = [];
+        for (let i = 0; i < ks.length; i += 200) out.push('mode=rows&items=' + encodeURIComponent(ks.slice(i, i + 200).join(',')));
+        return out;
+    }
     async function requestDeleteLogs(params) {
         if (currentRole !== 'dev') { bkNotify('info', '로그 삭제는 개발자만 할 수 있캉!'); return; }
+        const list = Array.isArray(params) ? params : [params];
+        if (!list.length) return;
         const extra = (logCat === 'access' ? '&sheet=access' : '') + '&clientId=' + encodeURIComponent(getDeviceClientId()) +
             '&device=' + encodeURIComponent(getDeviceInfo()) +
             '&screenRes=' + encodeURIComponent(`${window.screen.width}x${window.screen.height}`) +
@@ -9607,11 +9635,16 @@
         content.innerHTML = '<div style="text-align:center; padding:40px;">삭제하는 중...</div>';
         bkNotify('saving', '로그 지우는 중이캉');
         try {
-            const res = await apiGetJson('action=deleteLogs&' + params + extra);
-            if (!res || res.result !== 'success') bkNotify('fail', '앗, 삭제가 안 됐캉…', (res && (res.message || res.error)) || '삭제하지 못했습니다');   // v2.53.1: 서버 오류 내용(error)도 보여 줌
-            else if (!res.deleted) bkNotify('info', '지울 로그가 없다캉!', '그 사이 바뀐 로그는 지우지 않아요');
-            else bkNotify('done', typeof res.deleted === 'number' ? `로그 ${res.deleted}건 삭제 완료캉! ✓` : '로그 삭제 완료캉! ✓',
-                logCat !== 'access' && /^mode=all\b/.test(params) ? '누가 지웠는지 남기는 「로그삭제」 1줄은 남아요' : undefined);
+            let total = 0, bad = null;
+            for (const pp of list) {
+                const res = await apiGetJson('action=deleteLogs&' + pp + extra);
+                if (!res || res.result !== 'success') { bad = res || {}; break; }
+                total += Number(res.deleted) || 0;
+            }
+            if (bad) bkNotify('fail', '앗, 삭제가 안 됐캉…', (bad.message || bad.error || '삭제하지 못했습니다') + (total ? ` (먼저 ${total}건은 지워짐)` : ''));   // v2.53.1: 서버 오류 내용(error)도 보여 줌
+            else if (!total) bkNotify('info', '지울 로그가 없다캉!', '그 사이 바뀐 로그는 지우지 않아요');
+            else bkNotify('done', `로그 ${total}건 삭제 완료캉! ✓`,
+                logCat !== 'access' && /^mode=all\b/.test(list[0]) ? '누가 지웠는지 남기는 「로그삭제」 1줄은 남아요' : undefined);
         } catch (err) {
             bkNotify('fail', '앗, 삭제가 안 됐캉…', '잠시 후 다시 시도해 주세요');
         }
@@ -9621,11 +9654,23 @@
         if (!(await bkConfirm('이 로그 1건을 삭제할까캉?', { sub: '지운 로그는 되돌릴 수 없어요', ok: '삭제', danger: true }))) return;
         requestDeleteLogs('mode=rows&items=' + encodeURIComponent(key));
     }
+    async function deleteAccRow(ks, kind) {   // 👥 접속 칸 하나 = 그 칸의 들어옴 · 나감(또는 인증실패) 줄 전부
+        const keys = String(ks).split(',').filter(Boolean);
+        const sub = keys.length > 1 ? `${kind === 'fail' ? '인증실패' : '들어옴 · 나감'} 기록 ${keys.length}줄이 함께 지워지고 되돌릴 수 없어요` : '지운 기록은 되돌릴 수 없어요';
+        if (!(await bkConfirm('이 접속 기록을 삭제할까캉?', { sub, ok: '삭제', danger: true }))) return;
+        requestDeleteLogs(logDelBatches(keys));
+    }
     async function deleteSelectedLogs() {
         const keys = checkedLogKeys();
         if (!keys.length) return;
+        if (logCat === 'access') {
+            const all = keys.join(',').split(',').filter(Boolean);
+            if (!(await bkConfirm(`선택한 접속 기록 ${keys.length}칸을 삭제할까캉?`, { sub: `시트 "접속기록" 탭의 ${all.length}줄(들어옴 · 나감)이 함께 지워지고 되돌릴 수 없어요`, ok: '삭제', danger: true }))) return;
+            requestDeleteLogs(logDelBatches(all));
+            return;
+        }
         if (!(await bkConfirm(`선택한 로그 ${keys.length}건을 삭제할까캉?`, { sub: '지운 로그는 되돌릴 수 없어요', ok: '삭제', danger: true }))) return;
-        requestDeleteLogs('mode=rows&items=' + encodeURIComponent(keys.join(',')));
+        requestDeleteLogs(logDelBatches(keys));
     }
     async function deleteOldLogs() {
         const days = parseInt(document.getElementById('logDelDays').value, 10) || 30;
