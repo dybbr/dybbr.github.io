@@ -2,7 +2,7 @@
 // ⚾ 대연초 야구부 명단 - 서비스워커 (앱 설치/APK 변환용)
 // ==========================================================
 // 원칙: "항상 최신 화면" 우선 (네트워크 우선).
-//   - 같은 사이트(dybbr.github.io)의 파일은 매번 네트워크에서 새로 받고,
+//   - 같은 사이트(dybbr.github.io)의 파일은 매번 서버에 "바뀌었는지" 물어보고 바뀐 것만 새로 받고 (v2.60.0: 안 바뀌었으면 짧은 답만 — 매번 통째로 받지 않음),
 //     인터넷이 끊겼을 때만 마지막으로 받아둔 화면을 보여준다.
 //   - 구글 시트 / 앱스 스크립트 / 구글 드라이브 사진 등 외부 주소는 절대 건드리지 않는다
 //     (명단·비밀번호·주문 데이터가 캐시에 남아 옛날 값이 보이는 일을 막기 위함).
@@ -30,7 +30,7 @@ self.addEventListener('fetch', function (event) {
     if (url.searchParams.has('vcheck')) return;                        // 🆕 새 버전 확인(맨 앞 몇 KB만 읽음)은 그대로 통과 — 저장 안 함
 
     event.respondWith(
-        fetch(req, { cache: 'no-store' }).then(function (res) {
+        fetch(req, { cache: 'no-cache' }).then(function (res) {   // v2.60.0: no-store → no-cache (바뀌었는지 확인 후 같으면 받아 둔 것 사용 · 늘 최신은 그대로)
             if (res && res.ok) {
                 const copy = res.clone();
                 // 화면(페이지)은 주소 뒤 ?… 를 떼고 한 칸에만 저장 (player.html?path=… 마다 따로 쌓이지 않게)
