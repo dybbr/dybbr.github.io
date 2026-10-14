@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.59.0 · b261013";
+        const APP_VERSION = "v2.59.1 · b261013";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -3759,8 +3759,29 @@
     // 응답을 읽어야 하는 조회/처리 전용 (비밀번호 검증/변경 등).
     // 앱스 스크립트는 읽을 수 있는(GET) 응답은 안정적으로 지원하지만, 읽을 수 있는 POST 응답은
     // 배포 환경에 따라 브라우저 CORS로 막혀 "Failed to fetch"가 나는 경우가 있어 GET 방식을 쓴다.
-    function apiGetJson(params) {
-        return fetch(apiGetUrl(params)).then(function (res) { return res.json(); });
+    // 🛟 v2.59.1: 서버(구글)는 1~3초 만에 처리를 끝냈는데, 응답을 돌려받는 길(구글 중간 주소)에서 가끔 응답이 멈춰
+    //   「선수 명단을 불러오고 있습니다…」 · 실시간 접속 「확인 중…」이 끝나지 않던 문제
+    //   → 읽기 요청(명단 · 일정 · 공지 · 설정 · 로그 · 로그인 등)은 12초 안에 안 오면 끊고 다시 보냄 (최대 3번: 12 · 15 · 20초)
+    //   → 그 밖의 요청(비밀번호 변경 · 로그 삭제 등)은 다시 보내지 않고 40초면 끊어서 「응답이 늦어요」로 알림 (멈춘 채로 두지 않음)
+    const API_RETRY_RE = /^action=(get\w+|presenceFeed|seasonStatus|seasonPreview|login)\b/;
+    async function apiFetchJson(url, ms) {
+        const ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+        const t = ctl ? setTimeout(() => ctl.abort(), ms) : 0;
+        try {
+            const res = await fetch(url, ctl ? { cache: 'no-store', signal: ctl.signal } : { cache: 'no-store' });
+            return await res.json();   // 본문을 받는 동안에도 시간 제한 안에서
+        } finally { clearTimeout(t); }
+    }
+    async function apiGetJson(params) {
+        const waits = /^action=presenceFeed\b/.test(params) ? [12000]   // 실시간 알림은 10초마다 다시 물어보므로 한 번만
+                    : API_RETRY_RE.test(params) ? [12000, 15000, 20000] : [40000];
+        let err = null;
+        for (let i = 0; i < waits.length; i++) {
+            try { return await apiFetchJson(apiGetUrl(params), waits[i]); }
+            catch (e) { err = e; if (navigator.onLine === false) break; }
+        }
+        if (err && err.name === 'AbortError') throw new Error('서버 응답이 늦어요. 잠시 후 다시 시도해 주세요');
+        throw err;
     }
 
     // 🔐 통합 로그인: 입력값(code)을 서버로 보내 관리자/개발자/익명코드/학부모 번호를 한 번에 판별한다.
@@ -6821,8 +6842,7 @@
     // ==========================================================
     async function fetchSettings() {
         try {
-            const res = await fetch(apiGetUrl('action=getSettings'), { cache: 'no-store' });
-            const json = await res.json();
+            const json = await apiGetJson('action=getSettings');   // v2.59.1: 시간 제한 · 다시 보내기
             if (json && typeof json.uniformActive === 'boolean') {
                 isUniformActive = json.uniformActive;
                 localStorage.setItem('daeyeon_uniform_active', isUniformActive ? 'true' : 'false');
@@ -8817,6 +8837,11 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.59.1', d: '2026-10-14', t: '🛟 「불러오는 중…」에서 멈추던 문제', items: [
+            '서버(구글)는 1~3초 만에 처리했는데 응답을 돌려받는 길에서 가끔 멈춰, 명단 「불러오고 있습니다…」 · 실시간 접속 「확인 중…」이 끝나지 않던 문제 (접속자가 많아서가 아님)',
+            '명단 · 일정 · 공지 · 설정 · 로그 · 로그인 요청은 12초 안에 답이 없으면 알아서 다시 보냄 (최대 3번)',
+            '비밀번호 변경 · 로그 삭제처럼 바꾸는 요청은 다시 보내지 않고, 40초가 넘으면 「서버 응답이 늦어요」로 알려서 멈춘 채로 두지 않음'
+        ] },
         { v: 'v2.59.0', d: '2026-10-13', t: '🪪 이미지형 카드 낮게 — 생일 · 키 · 몸무게 한 줄', items: [
             '이미지형 카드의 🎂 생년월일 · 📏 키 · 몸무게를 두 줄 → 한 줄로 (예: 🎂 2015.09.17 · 153cm / 57kg) — 카드 아래 정보 칸이 낮아짐',
             '칸이 좁거나 글씨를 크게 해서 넘치면 글자를 조금 줄이고, 그래도 넘치면 「15.09.17」처럼 앞 두 자리를 빼서 한 줄 유지'
@@ -9648,8 +9673,7 @@
         try {
             const q = logCat === 'access' ? 'action=getLogs&sheet=access'
                     : (LOG_CAT_TYPES[logCat] ? 'action=getLogs&types=' + encodeURIComponent(LOG_CAT_TYPES[logCat].join(',')) : 'action=getLogs');
-            const res = await fetch(apiGetUrl(q), { cache: 'no-store' });
-            const json = await res.json();
+            const json = await apiGetJson(q);   // v2.59.1: 시간 제한 · 다시 보내기
             const checkAll = document.getElementById('logCheckAll');
             if (checkAll) checkAll.checked = false;
             updateLogDelBtn();
