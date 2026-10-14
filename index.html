@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.66.0 · b261015";
+        const APP_VERSION = "v2.67.0 · b261015";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -3527,6 +3527,14 @@
 
     function apiGetUrl(params) {
         return GOOGLE_SCRIPT_UNIFORM_API_URL + '?key=' + encodeURIComponent(API_KEY) + '&token=' + encodeURIComponent(getToken()) + '&' + params + '&_t=' + Date.now();
+    }
+    // 🔥 v2.67.0: 로그인 화면이 뜨면(또는 비번 칸을 누르면) 서버를 미리 데워 둠 — 비번을 치는 동안 서버가 명단 · 일정 · 공지를 시트에서 읽어 보관
+    //   → 로그인 후 명단이 약 4초 빨리 뜸 · 서버는 데이터를 돌려주지 않고 「보관만」 함 · 5분에 한 번까지만
+    let warmAt = 0;
+    function warmServer() {
+        if (Date.now() - warmAt < 5 * 60 * 1000) return;
+        warmAt = Date.now();
+        try { fetch(apiGetUrl('action=warm'), { cache: 'no-store' }).catch(() => {}); } catch (e) {}
     }
 
     // 응답을 읽어야 하는 조회/처리 전용 (비밀번호 검증/변경 등).
@@ -8507,6 +8515,12 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.67.0', d: '2026-10-15', t: '⚡ 로그인 · 처음 불러오기 빠르게', items: [
+            '로그인 화면이 뜨면 서버를 미리 데워 둠 — 비밀번호를 치는 동안 서버가 명단 · 일정 · 공지를 미리 읽어 둬서, 로그인 후 명단이 약 4초 빨리 뜸',
+            '서버(v2.16.0): 읽어 둔 명단 · 일정 · 공지를 1분 → 10분 동안 보관 — 한동안 아무도 안 쓴 뒤 처음 열 때 4~6초 걸리던 것이 1~2초로',
+            '서버: 구글 시트에서 칸 내용을 직접 고치면 보관본을 바로 비워 앱에 바로 보이게 (줄 넣기 · 지우기는 최대 10분 뒤)',
+            '서버: 보관본 6칸을 한 번에 꺼냄 (예전엔 12번 나눠 꺼냄)'
+        ] },
         { v: 'v2.66.0', d: '2026-10-15', t: '🧹 보안 활동 로그 없앰', items: [
             '관리 탭 「개발」의 📜 보안 활동 로그(👥 접속 · ✏️ 변경 · 👀 열람·복사 기록 창)를 없앰',
             '로그인 · 로그아웃 · 수정 · 열람 때마다 서버에 보내던 기록 요청도 안 보냄 — 구글 요청이 그만큼 줄어듦',
@@ -9706,6 +9720,8 @@
     updateAdminUI();
     updateUserIdentityBadge();
     loadGoogleSheetData();
+    if (!getToken() || !isAuthValid()) warmServer();   // 🔥 v2.67.0: 로그인 화면이면 서버를 미리 데워 둠
+    try { document.getElementById('lockPasswordInput').addEventListener('focus', warmServer); } catch (e) {}   // 잠금화면을 오래 켜 뒀다가 비번 칸을 누를 때도
 </script>
 </body>
 </html>
