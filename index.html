@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.64.0 · b261014";
+        const APP_VERSION = "v2.65.0 · b261014";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -1803,67 +1803,6 @@
         .bm-addr { font-size: 12px; color: #64748b; margin-top: -2px; }
         .bm-addr:empty { display: none; }
         .bm-map { flex: 1; min-height: 220px; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; background: #eef1ea; }
-        /* 🟢 실시간 접속 알림 (v2.47.0 · v2.49.0 정리) — 개발자 화면 위쪽 칩 「[로그인] 김승원 아버님 22:10」 */
-        .pres-stack { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 10px); left: 50%; transform: translateX(-50%); z-index: 4000; display: flex; flex-direction: column; align-items: stretch; gap: 6px; pointer-events: none; width: min(380px, calc(100vw - 24px)); }   /* 칩 너비를 맞춰 딱지가 세로로 줄 맞춤 */
-        .pres-chip { pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 100%; box-sizing: border-box; background: #fff; color: #0f172a; border: 1px solid #e2e8f0; border-radius: 12px; padding: 7px 12px 7px 8px; box-shadow: 0 6px 18px rgba(15,23,42,.18); font-size: 13px; cursor: pointer; animation: presIn .25s ease; }
-        .pres-chip.bye { opacity: 0; transform: translateY(-6px); transition: opacity .35s, transform .35s; }
-        @keyframes presIn { from { opacity: 0; transform: translateY(-8px); } }
-        .pres-who { flex: 1 1 auto; min-width: 0; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .pres-who i { font-style: normal; font-weight: 600; color: #64748b; }
-        .pres-who i::before { content: ' · '; }
-        .pres-at { flex: 0 0 auto; font-size: 11px; font-weight: 700; color: #94a3b8; font-variant-numeric: tabular-nums; }
-        /* 상황 딱지 — 맨 앞, 같은 너비로 줄 맞춤 */
-        .pres-tag { flex: 0 0 auto; box-sizing: border-box; min-width: 70px; padding: 2px 6px; border-radius: 6px; border: 1px solid transparent; font-size: 11px; font-weight: 800; line-height: 1.5; text-align: center; white-space: nowrap; letter-spacing: -0.3px; }
-        .pt-login  { background: #16a34a; color: #fff; }                              /* 로그인 — 초록 */
-        .pt-launch { background: #dcfce7; color: #166534; border-color: #bbf7d0; }   /* 앱 실행 — 연초록 */
-        .pt-rejoin { background: #e0f2fe; color: #075985; border-color: #bae6fd; }   /* 재접속 — 하늘 */
-        .pt-logout { background: #fff; color: #111827; border-color: #cbd5e1; }      /* 로그아웃 — 흰색 */
-        .pt-lock   { background: #64748b; color: #fff; }                              /* 화면 잠금 — 회색 */
-        .pt-expire { background: #fde68a; color: #78350f; border-color: #fcd34d; }   /* 시간 만료 — 노랑 */
-        .pt-away   { background: #dc2626; color: #fff; }                              /* 앱 나감 — 빨강 */
-        .pt-exit   { background: #7f1d1d; color: #fff; }                              /* 앱 종료 — 검붉은색 */
-        .pt-warn   { background: #ea580c; color: #fff; }                              /* 로그인 실패 · 졸업생 번호 — 주황 */
-        .pt-warn2  { background: #ea580c; color: #fff; border: 2px solid #7c2d12; }   /* 로그인 잠김 — 주황 + 굵은 테두리 */
-        .pt-save   { background: #2563eb; color: #fff; }                              /* 저장 · 변경 — 파랑 */
-        .pt-del    { background: #6d28d9; color: #fff; }                              /* 삭제 — 진보라 */
-        .pt-pink   { background: #db2777; color: #fff; }                              /* 신규 등록 · 유니폼 주문 — 분홍 */
-        .pt-teal   { background: #0d9488; color: #fff; }                              /* 사진 · 정보 수정 — 청록 */
-        .pt-light  { background: #e5e7eb; color: #4b5563; }                           /* 공지 확인 — 연회색 */
-        .pt-view   { background: #f8fafc; color: #64748b; border: 1px dashed #cbd5e1; } /* 보는 화면 — 점선 */
-        .pres-log { margin-top: 10px; font-size: 12px; line-height: 1.5; color: #334155; }
-        .pres-log-h { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; color: #475569; margin-bottom: 4px; }
-        .pres-log-h small { font-size: 11px; font-weight: 700; color: #94a3b8; }
-        .pres-log-h { flex-wrap: wrap; row-gap: 1px; white-space: nowrap; }   /* 1줄: 제목 + 카운트다운 / 2줄: 10초마다 확인 · 최근 50건 */
-        .pres-log-h small { order: 3; flex-basis: 100%; }
-        /* ⏳ 다음 확인까지 카운트다운 (v2.49.1) — 개발 기록 제목 오른쪽 · 누르면 바로 확인 */
-        .pres-cd { margin-left: auto; flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; border: 1px solid #e2e8f0; background: #f8fafc; color: #475569; border-radius: 999px; padding: 2px 8px; font: inherit; font-size: 11px; font-weight: 800; cursor: pointer; font-variant-numeric: tabular-nums; white-space: nowrap; }
-        .pres-cd .bar { width: 36px; height: 4px; border-radius: 2px; background: #e2e8f0; overflow: hidden; }
-        .pres-cd .bar i { display: block; height: 100%; width: 0; background: #22c55e; transition: width 1s linear; }
-        /* 위쪽 줄 작은 버튼 (개발자만) — 📡 남은 초 · 누르면 바로 확인 */
-        .pres-cd-btn { display: inline-flex; align-items: center; gap: 3px; height: 30px; padding: 0 8px; border-radius: 6px; background: rgba(34,197,94,.18); border: 1px solid rgba(134,239,172,.5); color: #fff; font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums; cursor: pointer; white-space: nowrap; }
-        .pres-cd-btn b { display: inline-block; min-width: 14px; text-align: center; font-weight: 900; }
-        .pres-cd-btn.busy { opacity: .75; }
-        .pres-cd-btn[hidden] { display: none !important; }
-        .pres-log-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px dashed #e2e8f0; }
-        .pres-log-row:last-child { border-bottom: 0; }
-        .pres-log-row .t { flex: 0 0 34px; color: #94a3b8; font-weight: 700; font-variant-numeric: tabular-nums; }
-        .pres-log-row .w { flex: 1 1 auto; min-width: 0; font-weight: 700; overflow-wrap: anywhere; }
-        .pres-log-row .w i { font-style: normal; font-weight: 600; color: #64748b; }
-        .pres-log-row .w i::before { content: ' · '; }
-        .pres-log-empty { color: #94a3b8; font-weight: 700; }
-        /* 👤 v2.54.0: 한 사람 한 칸 — 같은 사람은 그 칸에서 딱지 · 시간만 바뀜 · 폰 2칸, 태블릿은 폭에 맞춰 5~7칸 */
-        .pres-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(122px, 1fr)); gap: 6px; }
-        .pres-card { min-width: 0; display: flex; flex-direction: column; gap: 3px; padding: 6px 7px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; }
-        .pres-card .h { display: flex; align-items: center; justify-content: space-between; gap: 4px; min-width: 0; }
-        .pres-card .pres-tag { min-width: 64px; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; }
-        .pres-card .t { flex: 0 0 auto; font-size: 11px; font-weight: 700; color: #94a3b8; font-variant-numeric: tabular-nums; }
-        .pres-card .w { font-size: 12.5px; font-weight: 800; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .pres-card .n { font-size: 11px; font-weight: 600; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: -2px; }
-        /* 방금 바뀐 칸 · 칩 — 잠깐 노란 테두리로 반짝 */
-        .pres-card.pres-upd { animation: presCardUpd 1.5s ease-out; }
-        @keyframes presCardUpd { 0% { box-shadow: 0 0 0 3px #facc15; } 100% { box-shadow: 0 0 0 0 rgba(250,204,21,0); } }
-        .pres-chip.pres-upd { animation: presChipUpd .9s ease-out; }
-        @keyframes presChipUpd { 0% { box-shadow: 0 0 0 3px #facc15, 0 6px 18px rgba(15,23,42,.18); } 100% { box-shadow: 0 6px 18px rgba(15,23,42,.18); } }
         /* 🛰️ 지도 / 스카이뷰 버튼 (v2.46.0) — 지도 왼쪽 위 */
         .bm-map, .vn-map, .ps-map { position: relative; }
         .mt-tog { position: absolute; top: 8px; left: 8px; z-index: 5; display: flex; background: #fff; border: 1px solid rgba(15,23,42,.18); border-radius: 9px; box-shadow: 0 1px 4px rgba(0,0,0,.22); overflow: hidden; }
@@ -2691,18 +2630,6 @@
     .grade-2 { background: #213450; color: #a8b8d3; }
     .grade-1 { background: #1a2840; color: #8fa2c2; border-color: #2c3d5a; }
     .grade-grad { background: rgba(251,191,36,.14); color: #f5cf6b; border-color: rgba(251,191,36,.4); }
-    .pres-chip { background: #1b2638; color: #dde3ec; border-color: #2a374e; box-shadow: 0 6px 18px rgba(0,0,0,.45); }
-    .pres-who i, .pres-log-row .w i { color: #97a3b7; } .pres-at, .pres-log-h small { color: #7d8aa0; }
-    .pres-log { color: #bcc6d4; } .pres-log-h { color: #bcc6d4; } .pres-log-row { border-bottom-color: #2a374e; }
-    .pres-card { background: #1b2638; border-color: #2a374e; } .pres-card .w { color: #dde3ec; } .pres-card .n { color: #97a3b7; } .pres-card .t { color: #7d8aa0; }
-    .pres-cd { background: #1b2638; border-color: #2a374e; color: #bcc6d4; } .pres-cd .bar { background: #2a374e; }
-    .pt-login { background: #15803d; } .pt-launch { background: #14532d; color: #bbf7d0; border-color: #166534; }
-    .pt-rejoin { background: #0c4a6e; color: #bae6fd; border-color: #075985; } .pt-logout { background: #e2e8f0; color: #0f172a; border-color: #e2e8f0; }
-    .pt-lock { background: #475569; } .pt-expire { background: #a16207; color: #fef3c7; border-color: #a16207; }
-    .pt-away { background: #b91c1c; } .pt-exit { background: #7f1d1d; color: #fecaca; }
-    .pt-warn, .pt-warn2 { background: #c2410c; } .pt-warn2 { border-color: #fdba74; }
-    .pt-save { background: #1d4ed8; } .pt-del { background: #5b21b6; } .pt-pink { background: #be185d; } .pt-teal { background: #0f766e; }
-    .pt-light { background: #334155; color: #cbd5e1; } .pt-view { background: transparent; color: #97a3b7; border-color: #475569; }
     tr.ob-year-row td { background: #2a2416; color: #f5cf6b; border-bottom-color: #4a3d1c; }
     .ob-year-head { color: #f5cf6b; } .ob-year-head::after { background: #4a3d1c; }
     .ob-lock { background: #1b2638; color: #97a3b7; }
@@ -2928,7 +2855,6 @@
                 ⏱️ <span id="timerCountdown">--:--:--</span>
             </div>
             <!-- v2.50.0: 「🔒 화면 잠금」은 로그아웃과 하는 일이 같아 빼고, 오른쪽 위 「🔓 로그아웃」 하나로 (보호자 · 열람자에게도 보임) -->
-            <button type="button" id="presCdBtn" class="pres-cd-btn" hidden onclick="presencePoll()" title="실시간 접속 알림 — 다음 확인까지 남은 초 (누르면 지금 확인)">📡 <b>10</b></button>
         </div>
 
         <div class="header-top-center">
@@ -3140,7 +3066,6 @@
                     <button id="btnViewLogs" class="btn-manage-pw" style="background: #4338ca;" onclick="openLogsModal()">📜 보안 활동 로그</button>
                     <button id="btnViewHistory" class="btn-manage-pw" style="background: #0f766e;" onclick="openHistoryModal()">🕘 업데이트 히스토리</button>
                 </div>
-                <div class="pres-log" id="presLog"><div class="pres-log-h">🟢 실시간 접속 알림 <small>10초마다 확인 · 한 사람 한 칸 (최근 50명)</small><button type="button" class="pres-cd" data-pres-cd onclick="presencePoll()" title="누르면 지금 바로 확인"><span class="n">다음 확인 10초</span><span class="bar"><i></i></span></button></div><div class="pres-log-empty">아직 들어오고 나간 사람이 없어요</div></div>
             </div>
         </div>
     </section>
@@ -3762,7 +3687,7 @@
     //   「선수 명단을 불러오고 있습니다…」 · 실시간 접속 「확인 중…」이 끝나지 않던 문제
     //   → 읽기 요청(명단 · 일정 · 공지 · 설정 · 로그 · 로그인 등)은 12초 안에 안 오면 끊고 다시 보냄 (최대 3번: 12 · 15 · 20초)
     //   → 그 밖의 요청(비밀번호 변경 · 로그 삭제 등)은 다시 보내지 않고 40초면 끊어서 「응답이 늦어요」로 알림 (멈춘 채로 두지 않음)
-    const API_RETRY_RE = /^action=(get\w+|bootstrap|presenceFeed|seasonStatus|seasonPreview|login)\b/;
+    const API_RETRY_RE = /^action=(get\w+|bootstrap|seasonStatus|seasonPreview|login)\b/;
     async function apiFetchJson(url, ms) {
         const ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
         const t = ctl ? setTimeout(() => ctl.abort(), ms) : 0;
@@ -3778,10 +3703,9 @@
     // 🏇 v2.63.1: 다시 재 보니 안 오는 요청은 서버에 아예 닿지도 않음(실행 기록 없음) → 하나 더 보내도 서버 일은 안 늘어남
     //   → 더 일찍 · 더 여러 번 (최대 5개) · 로그인 · 실시간 접속 확인도 같은 방식 (로그인 기록은 화면에서 한 번만 남김)
     // ⚖️ v2.64.0: 로그인은 다시 뺌 — 비번이 틀렸는데 답까지 늦으면 같은 요청이 여러 번 「틀림」으로 세어져 10분 잠금에 빨리 닿을 수 있어서 (아래 6 · 9 · 15초 하나씩)
-    const API_HEDGE_RE = /^action=(bootstrap|getRoster|getSettings|getSchedule|getNotices|getNoticeReaders|getLogs|getUniformRows|seasonStatus|seasonPreview|presenceFeed)\b/;
+    const API_HEDGE_RE = /^action=(bootstrap|getRoster|getSettings|getSchedule|getNotices|getNoticeReaders|getLogs|getUniformRows|seasonStatus|seasonPreview)\b/;
     function apiHedgePlan(params) {
         const a = (params.match(/^action=(\w+)/) || [])[1] || '';
-        if (a === 'presenceFeed') return { first: 3000, gap: 3000, extra: 2, cap: 10000 };   // 10초마다 다시 물어봄
         if (a === 'bootstrap' || a === 'getRoster') return { first: 5000, gap: 3500, extra: 4, cap: 30000 };   // 보통 4초
         if (a === 'getSettings' || a === 'seasonStatus' || a === 'getNoticeReaders') return { first: 3000, gap: 3500, extra: 4, cap: 30000 };   // 보통 1~2초
         return { first: 4500, gap: 3500, extra: 4, cap: 30000 };                               // 일정 · 공지 · 로그 목록 등 보통 2~4초
@@ -3818,8 +3742,7 @@
     }
     async function apiGetJson(params) {
         if (API_HEDGE_RE.test(params) && typeof AbortController !== 'undefined') return apiHedgeJson(params);
-        const waits = /^action=presenceFeed\b/.test(params) ? [12000]   // 실시간 알림은 10초마다 다시 물어보므로 한 번만
-                    : /^action=login\b/.test(params) ? [6000, 9000, 15000]   // v2.64.0: 로그인은 보통 2초 — 막힌 요청은 서버에 닿지도 않으므로 6초면 끊고 다시
+        const waits = /^action=login\b/.test(params) ? [6000, 9000, 15000]   // v2.64.0: 로그인은 보통 2초 — 막힌 요청은 서버에 닿지도 않으므로 6초면 끊고 다시
                     : API_RETRY_RE.test(params) ? [12000, 15000, 20000] : [40000];
         let err = null;
         for (let i = 0; i < waits.length; i++) {
@@ -4012,7 +3935,6 @@
             if (rest.length % 2) rest[rest.length - 1].classList.add('ops-wide');
         });
         refreshSeasonStatus(false, currentMainTab !== 'admin');   // 🎓 새 학년도 (대표님 · 개발자) — v2.64.0: 관리 탭을 열 때만 서버에 물음
-        if (presenceFeedOn() && !presTimer) presencePoll();   // 🟢 개발자: 실시간 접속 알림 시작
         document.getElementById('adminGroupContent').style.display = canEditSchedule() ? '' : 'none';
         const devGroup = document.getElementById('adminGroupDev');
         if (devGroup) devGroup.style.display = (currentRole === 'dev') ? '' : 'none';   // 개발 카테고리는 개발자만
@@ -4168,7 +4090,6 @@
         if (tab === 'venue') { renderVenues(); if (!silent) loadSchedule(Date.now() - schedFetchedAt > TAB_STALE_MS); }   // v2.43.0: 🏟️ 구장 (구장 목록은 일정과 함께 받음)
         renderNextEventBanner();
         if (!silent) window.scrollTo({ top: 0 });
-        presenceView(tab);   // 🟢 v2.49.0: 보는 화면 (2초 머물면 개발자 기록에)
     }
 
     // 명단 탭 위의 "다음 일정" 한 줄
@@ -6273,165 +6194,11 @@
         postApi(payload).catch(err => console.warn("로그 전송 무시:", err));
     }
 
-    // ==========================================================
-    // 🟢 실시간 접속 알림 (v2.47.0 · v2.49.0 정리)
-    //   ① 개발자를 뺀 모든 사람이 서버에 짧게 알림 (누가인지는 서버가 토큰으로 확인 — 보호자는 아버님 · 어머님까지)
-    //      들어옴: 로그인 · 앱 실행 · 재접속 / 나감: 로그아웃 · 시간 만료 · 앱 나감 · 앱 종료 (화면 잠금은 v2.50.0부터 로그아웃으로 합침)
-    //      보는 화면: 탭을 바꾸고 2초 머물면 한 번 (빨리 넘기는 건 안 보냄)
-    //      작업(일정 · 공지 · 사진 · 주문 · 신규 등록 …) · 경고(로그인 실패 · 잠김 · 졸업생 번호)는 서버가 직접 기록 (성공한 것만)
-    //   ② 개발자: 앱이 켜져 있는 동안 10초마다 새 알림을 받아 화면 위쪽에 「[로그인] 김승원 아버님 22:10」 칩 + 「개발」에 최근 50건
-    //      앱을 잠깐 내렸다가 1분 안에 다시 올리면(다른 앱 잠깐 보기) 「앱 나감 · 재접속」 둘 다 안 띄움 · 보는 화면은 칩 없이 기록에만
-    // ==========================================================
-    // 📉 v2.64.0: 접속 알림 줄이기 — 학부모 기기마다 「앱 나감 · 재접속 · 보는 화면」을 계속 보내던 것(구글 요청 1번씩)을
-    //   「들어옴」(로그인 · 앱 실행) · 「나감」(로그아웃 · 앱 종료 · 시간 만료 · 페이지 닫힘)만으로. 다른 앱을 5분 넘게 보다 돌아오면 「재접속」 한 번
-    //   · 선수 상세 화면을 갔다 오는 건 앱 안 이동이라 나감 · 들어옴을 보내지 않음
-    let presIn = false, presAway = false, presFirstWhy = '앱 실행', presViewQ = 0, presViewLast = '', presHiddenAt = 0;
-    try { if (sessionStorage.getItem('daeyeon_pres_in') === '1' && localStorage.getItem('daeyeon_token')) presIn = true; } catch (e) {}   // 선수 상세에서 돌아옴 → 이미 「들어옴」 보냄
-    function presInnerNav() { try { return Date.now() - Number(sessionStorage.getItem('daeyeon_inner_nav') || 0) < 5000; } catch (e) { return false; } }
-    function presenceSend(kind, why, beacon) {
-        try {
-            if (currentRole === 'dev' || !getToken()) return;
-            const user = getActiveUser(), parent = !!(user && user.role === '보호자');
-            const body = JSON.stringify({ key: API_KEY, token: getToken(), action: 'presence', kind: kind, why: why, clientId: getDeviceClientId(),
-                roleHint: parent ? 'parent' : currentRole, nameHint: user && user.name ? user.name : '', relHint: (user && user.rel) || '' });   // 힌트는 토큰이 끝난 뒤의 「나감」에만 씀
-            if (beacon && navigator.sendBeacon && navigator.sendBeacon(GOOGLE_SCRIPT_UNIFORM_API_URL, new Blob([body], { type: 'text/plain;charset=utf-8' }))) return;
-            fetch(GOOGLE_SCRIPT_UNIFORM_API_URL, { method: 'POST', mode: 'no-cors', keepalive: true, headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: body }).catch(() => {});
-        } catch (e) {}
-    }
-    function presenceIn(why) { if (presIn || currentRole === 'dev' || !getToken()) return; presIn = true; presViewLast = currentMainTab; try { sessionStorage.setItem('daeyeon_pres_in', '1'); } catch (e) {} presenceSend('in', why); }
-    function presenceOut(why, beacon) { try { sessionStorage.removeItem('daeyeon_pres_in'); } catch (e) {} if (!presIn) return; presIn = false; clearTimeout(presViewQ); presenceSend('out', why, beacon); }
-    const PRES_TAB = { roster: '명단 보기', schedule: '일정 보기', notice: '공지 보기', venue: '구장 보기', admin: '관리 보기' };
-    function presenceView(tab) {
-        return;   // v2.64.0: 보는 화면 알림은 보내지 않음 (요청 줄이기)
-        if (!presIn || !PRES_TAB[tab]) return;
-        clearTimeout(presViewQ);
-        presViewQ = setTimeout(() => {
-            if (presIn && currentMainTab === tab && presViewLast !== tab) { presViewLast = tab; presenceSend('view', PRES_TAB[tab]); }
-        }, 2000);
-    }
+    // 🧹 v2.65.0: 실시간 접속 알림(개발자 화면 칩 · 「개발」 기록 · 📡 버튼)을 없앰 — 학부모 기기가 보내던 들어옴 · 나감 알림도 안 보냄
     document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-            if (backArmed) { appExitLogout(); return; }   // 🚪 v2.48.0: 뒤로가기 두 번 → 앱이 닫히는 중 = 자동 로그아웃
-            if (presIn) presHiddenAt = Date.now();   // v2.64.0: 내려도 바로 「나감」은 안 보냄
-        }
-        else {
-            if (presIn && presHiddenAt && Date.now() - presHiddenAt > 5 * 60 * 1000) presenceSend('in', '재접속');   // 5분 넘게 떠났다 돌아올 때만
-            presHiddenAt = 0;
-            if (presAway) { presAway = false; presenceIn('재접속'); }
-            if (presenceFeedOn()) presencePoll();   // 개발자: 돌아오면 바로 확인
-        }
+        if (document.hidden && backArmed) appExitLogout();   // 🚪 v2.48.0: 뒤로가기 두 번 → 앱이 닫히는 중 = 자동 로그아웃
     });
-    window.addEventListener('pagehide', () => { if (backArmed) appExitLogout(); else if (presIn && !presInnerNav()) presenceOut('앱 나감', true); });   // 선수 상세로 가는 건 앱 안 이동
-
-    // ---- 개발자 화면 ----
-    let presCur = -1, presTimer = 0, presPending = {}, presLog = [], presSeen = new Set();   // presLog: v2.54.0부터 사람마다 한 줄 { k, it, upd }
-    const PRES_OLD = { '앱 열기': '앱 실행', '다시 들어옴': '재접속', '세션 만료': '시간 만료' };   // 아직 예전 앱을 쓰는 사람이 보낸 이름
-    const PRES_TAG = {
-        '로그인': 'login', '앱 실행': 'launch', '재접속': 'rejoin',
-        '로그아웃': 'logout', '화면 잠금': 'lock', '시간 만료': 'expire', '앱 나감': 'away', '앱 종료': 'exit',
-        '로그인 실패': 'warn', '졸업생 번호': 'warn', '로그인 잠김': 'warn2',
-        '일정 삭제': 'del', '공지 삭제': 'del', '구장 삭제': 'del',
-        '신규 등록': 'pink', '유니폼 주문': 'pink', '사진 올림': 'teal', '사진 삭제': 'teal', '정보 수정': 'teal', '공지 확인': 'light'
-    };
-    function presTagHtml(it) {
-        const cls = PRES_TAG[it.why] || ({ in: 'login', out: 'logout', act: 'save', warn: 'warn', view: 'view' })[it.kind] || 'light';
-        return `<span class="pres-tag pt-${cls}">${escapeHtml(it.why || '-')}</span>`;
-    }
-    function presWhoHtml(it) { return escapeHtml(it.who || '') + (it.note ? `<i>${escapeHtml(it.note)}</i>` : ''); }
-    function presenceFeedOn() { return currentRole === 'dev' && !!getToken(); }
-    async function presencePoll() {
-        if (presBusy) return;   // v2.49.1: 이미 확인 중이면 겹치지 않게 (예전엔 시작할 때 두 번 불려 10초마다 두 번씩 확인하던 것 고침)
-        clearTimeout(presTimer); presTimer = 0;
-        if (!presenceFeedOn()) { presCur = -1; presSeen.clear(); presCdTick(); return; }
-        if (!document.hidden) {
-            presBusy = true; presCdTick();
-            try {
-                const r = await apiGetJson('action=presenceFeed&after=' + Math.max(presCur, 0));
-                if (r && r.result === 'success' && Array.isArray(r.items)) {
-                    const first = presCur < 0;   // 처음 받은 것(앱을 켜기 전 일)은 띄우지 않고 「본 것」으로만
-                    r.items.forEach(it => {
-                        const key = it.cid + '|' + it.ts;
-                        if (presSeen.has(key)) return;   // 서버가 앞 1분을 겹쳐 보내므로 이미 본 건 거름
-                        presSeen.add(key);
-                        if (!first) presenceShow(it);
-                    });
-                    presCur = Math.max(presCur, Number(r.latest) || 0, first ? Number(r.now) || 0 : 0);
-                    if (presSeen.size > 600) presSeen = new Set([...presSeen].slice(-300));
-                }
-            } catch (e) {}
-            presBusy = false;
-        }
-        if (presenceFeedOn()) { clearTimeout(presTimer); presNextAt = Date.now() + 10000; presTimer = setTimeout(presencePoll, 10000); }   // v2.47.1: 15초 → 10초
-        presCdTick();
-    }
-    function presenceShow(it) {
-        it.why = PRES_OLD[it.why] || it.why || '';
-        const cid = it.cid || '?';
-        if (it.kind === 'in') {
-            const p = presPending[cid];
-            if (p) { clearTimeout(p.t); delete presPending[cid]; if (it.why === '재접속') return; }   // 잠깐 나갔다 바로 돌아옴 → 둘 다 조용히
-            presenceChip(it);
-        } else if (it.kind === 'out' && it.why === '앱 나감') {   // 앱을 내린 것 — 1분 안에 안 돌아오면 그때 「앱 나감」
-            if (presPending[cid]) clearTimeout(presPending[cid].t);
-            presPending[cid] = { t: setTimeout(() => { delete presPending[cid]; presenceChip(it); }, 60000) };
-        } else if (it.kind === 'view') presenceAddLog(it);   // 보는 화면은 칩 없이 기록에만
-        else presenceChip(it);
-    }
-    // 👤 v2.54.0: 같은 사람은 한 줄 — 그 자리에서 상황 딱지 · 시간만 바뀜 (새 사람만 맨 위에 한 줄 추가)
-    //   「김승원 아버님 기기」(로그인 실패 경고)도 「김승원 아버님」 줄로 · 처음 보는 기기는 기기마다 따로
-    function presKey(it) { return String(it.who || '').replace(/\s*기기$/, '').trim() || ('기기 ' + (it.cid || '?')); }
-    function presenceAddLog(it) {
-        if (!presenceFeedOn()) return;
-        const k = presKey(it), row = presLog.find(r => r.k === k);
-        if (row) { row.it = it; row.upd = Date.now(); }
-        else { presLog.unshift({ k, it, upd: Date.now() }); if (presLog.length > 50) presLog.length = 50; }
-        renderPresLog();
-    }
-    function presenceChip(it) {
-        if (!presenceFeedOn()) return;
-        presenceAddLog(it);
-        let st = document.getElementById('presStack');
-        if (!st) { st = document.createElement('div'); st.id = 'presStack'; st.className = 'pres-stack'; st.setAttribute('aria-live', 'polite'); document.body.appendChild(st); }
-        const k = presKey(it), html = presTagHtml(it) + `<span class="pres-who">${presWhoHtml(it)}</span><small class="pres-at">${escapeHtml(it.at || '')}</small>`;
-        let c = [...st.children].find(x => x.dataset.k === k && !x.classList.contains('bye'));   // v2.54.0: 같은 사람 칩이 떠 있으면 그 칩을 바꿈
-        if (c) { clearTimeout(c._t); c.innerHTML = html; c.classList.remove('pres-upd'); void c.offsetWidth; c.classList.add('pres-upd'); }
-        else {
-            c = document.createElement('div');
-            c.className = 'pres-chip'; c.dataset.k = k; c.innerHTML = html;
-            c.onclick = () => c.remove();
-            st.prepend(c);
-            while (st.children.length > 4) st.lastChild.remove();
-        }
-        const me = c;
-        me._t = setTimeout(() => { me.classList.add('bye'); setTimeout(() => me.remove(), 400); }, 7000);
-    }
-    function renderPresLog() {
-        const box = document.getElementById('presLog'); if (!box) return;
-        const now = Date.now();
-        box.innerHTML = '<div class="pres-log-h">🟢 실시간 접속 알림 <small>10초마다 확인 · 한 사람 한 칸 (최근 50명)</small><button type="button" class="pres-cd" data-pres-cd onclick="presencePoll()" title="누르면 지금 바로 확인"><span class="n">다음 확인 10초</span><span class="bar"><i></i></span></button></div>' + (presLog.length
-            ? '<div class="pres-grid">' + presLog.map(r => `<div class="pres-card${now - r.upd < 1500 ? ' pres-upd' : ''}" title="${escapeHtml((r.it.who || '') + (r.it.note ? ' · ' + r.it.note : ''))}"><div class="h">${presTagHtml(r.it)}<span class="t">${escapeHtml(r.it.at || '')}</span></div><div class="w">${escapeHtml(r.it.who || '')}</div>${r.it.note ? `<div class="n">${escapeHtml(r.it.note)}</div>` : ''}</div>`).join('') + '</div>'
-            : '<div class="pres-log-empty">아직 들어오고 나간 사람이 없어요</div>');
-        presCdTick();
-    }
-    // ⏳ v2.49.1: 다음 확인까지 카운트다운 — 위쪽 줄 📡 버튼 + 개발 기록 제목 오른쪽 (1초마다, 개발자만)
-    let presNextAt = 0, presBusy = false, presCdT = 0, presCdPct = 0;
-    function presCdTick() {
-        const on = presenceFeedOn();
-        const btn = document.getElementById('presCdBtn');
-        if (btn && btn.hidden === on) { btn.hidden = !on; try { fitHeaderTopBar(); } catch (e) {} }
-        if (!on) { clearInterval(presCdT); presCdT = 0; return; }
-        if (!presCdT) presCdT = setInterval(presCdTick, 1000);
-        const left = presBusy ? 0 : Math.max(0, Math.min(10, Math.ceil((presNextAt - Date.now()) / 1000)));
-        if (btn) { btn.querySelector('b').textContent = presBusy ? '…' : left; btn.classList.toggle('busy', presBusy); }
-        const pct = presBusy ? 100 : Math.round((10 - left) * 10);
-        document.querySelectorAll('[data-pres-cd]').forEach(el => {
-            el.querySelector('.n').textContent = presBusy ? '확인 중…' : '다음 확인 ' + left + '초';
-            const bar = el.querySelector('.bar i');
-            if (pct < presCdPct) { bar.style.transition = 'none'; bar.style.width = pct + '%'; void bar.offsetWidth; bar.style.transition = ''; }   // 다시 처음부터 → 거꾸로 줄어드는 애니메이션 없이
-            else bar.style.width = pct + '%';
-        });
-        presCdPct = pct;
-    }
+    window.addEventListener('pagehide', () => { if (backArmed) appExitLogout(); });
 
     function startSessionCountdown() {
         const badge = document.getElementById('sessionTimerBadge');
@@ -6451,7 +6218,6 @@
 
             const diff = parseInt(authExpire, 10) - Date.now();
             if (diff <= 0) {
-                presenceOut('시간 만료');   // 🟢 v2.47.0 (v2.49.0: 세션 만료 → 시간 만료)
                 localStorage.removeItem('daeyeon_auth_expire');
                 clearAdminRoleStorage();
                 clearToken();
@@ -6488,7 +6254,6 @@
     function lockScreenNow(why, quiet) {
         why = why || '로그아웃';
         if (why === '로그아웃') snapClear();   // 💾 v2.64.0: 로그아웃을 누르면 기기에 저장한 명단 · 일정 · 공지도 지움
-        presenceOut(why, !!quiet);   // 🟢 v2.47.0: 토큰을 지우기 전에 「나감」
         if (quiet) sendActivityLog("앱종료", currentRole, "뒤로가기 두 번으로 앱 종료 · 자동 로그아웃", true);
         else sendActivityLog(why === '로그아웃' ? "로그아웃" : "화면잠금", currentRole, why === '로그아웃' ? "로그아웃" : why + " · 완전 로그아웃");
         try { if (getToken()) (quiet ? beaconApi : postApi)({ action: 'logout', token: getToken() }); } catch (e) {}   // 서버 세션도 폐기
@@ -6535,7 +6300,6 @@
     };
 
     function finishUnlock() {
-        presFirstWhy = '로그인';   // 🟢 v2.47.0: 명단을 불러오면 「접속 · 로그인」
         document.documentElement.classList.add('is-authenticated');
         const overlay = document.getElementById('lockOverlay');
         if (overlay) overlay.style.display = 'none';
@@ -6917,7 +6681,6 @@
     }
 
     function goToPlayer(path) {
-        try { sessionStorage.setItem('daeyeon_inner_nav', String(Date.now())); } catch (e) {}   // v2.64.0: 앱 안 이동 (접속 알림 「나감」 안 보냄)
         window.location.href = `player.html?path=${encodeURIComponent(path)}`;
     }
 
@@ -8971,6 +8734,11 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.65.0', d: '2026-10-14', t: '🧹 실시간 접속 알림 없앰', items: [
+            '개발자 화면의 실시간 접속 알림(위쪽 칩 · 관리 탭 「개발」의 한 사람 한 칸 기록 · 📡 남은 초 버튼)을 없앰',
+            '학부모 · 관리자 기기가 서버에 보내던 들어옴 · 나감 알림도 안 보냄 — 구글 요청이 그만큼 줄어듦 (서버 v2.14.0에서도 제거)',
+            '보안 활동 로그(접속 기록 · 활동 로그)는 그대로'
+        ] },
         { v: 'v2.64.0', d: '2026-10-14', t: '💾 저장본 먼저 보여 주기 · 요청 줄이기', items: [
             '앱을 켜거나 로그인하면 이 기기에 저장해 둔 지난 명단 · 일정 · 공지를 바로 보여 주고, 서버 답은 뒤에서 받아 바꿔 끼움 (구글이 늦어도 화면은 바로) · 로그아웃을 누르면 저장본도 지움',
             '선수 상세 보기: 저장본으로 바로 그림 (서버 요청 2개 → 0개) · 목록으로 돌아올 때도 90초 안이면 다시 안 물음',
@@ -10334,7 +10102,7 @@
 
             // 토큰이 없으면(미로그인) 서버가 데이터를 안 주므로 명단 로딩을 건너뛴다
             if (!getToken()) return;
-            if (snap) { presenceIn(presFirstWhy); presFirstWhy = '앱 실행'; bkWelcome(); }   // 🟢 들어옴 · 🦈 인사 (저장본으로 이미 화면이 있음)
+            if (snap) bkWelcome();   // 🦈 인사 (저장본으로 이미 화면이 있음)
             if (!bootReq) return;
 
             // 👥 명단: 서버가 역할에 맞게 걸러서 JSON으로 내려준다 (시트 직접 접근 아님)
@@ -10353,7 +10121,6 @@
             }
             snapSave(res);   // 💾 다음에 바로 보여 줄 저장본
             applyRosterRes(res);
-            presenceIn(presFirstWhy); presFirstWhy = '앱 실행';   // 🟢 v2.47.0: 들어옴 (개발자는 안 보냄)
             bkWelcome();   // 🦈 표정·말풍선·승리 축하
 
         } catch (error) {
