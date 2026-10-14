@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.62.0 · b261014";
+        const APP_VERSION = "v2.63.0 · b261014";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -3771,7 +3771,43 @@
             return await res.json();   // 본문을 받는 동안에도 시간 제한 안에서
         } finally { clearTimeout(t); }
     }
+    // 🏇 v2.63.0: 2026-10-14 잰 값 — 서버는 0.5~4초에 다 끝냈는데, 요청 10개 중 3~4개는 구글이 답을 끝내 안 보냄 (40초를 기다려도 안 옴)
+    //   → 12초 기다렸다 끊고 다시 보내던 것 대신, 답이 늦으면 같은 요청을 하나 더 보내 「먼저 온 답」을 쓰고 나머지는 바로 끊음 (최대 3개 · 30초)
+    //   · 몇 번 보내도 결과가 같은 읽기 요청만 (명단 · 설정 · 일정 · 공지 · 로그 목록 · 시즌 · 유니폼 · 공지 읽은 사람)
+    //   · 로그인 · 비상연락망 · 비밀번호 보기 · 저장/삭제는 지금처럼 하나씩 (두 번 처리되면 안 되거나 열람 기록이 두 번 남을 수 있어서)
+    const API_HEDGE_RE = /^action=(bootstrap|getRoster|getSettings|getSchedule|getNotices|getNoticeReaders|getLogs|getUniformRows|seasonStatus|seasonPreview)\b/;
+    function apiHedgeJson(params) {
+        const big = /^action=(bootstrap|getRoster)\b/.test(params);
+        const hedges = big ? [5000, 10000] : [4000, 9000];   // 보통 답이 오는 시간(명단 4초 · 나머지 1~3.5초)을 조금 넘기면 하나 더
+        return new Promise((resolve, reject) => {
+            const ctls = [], timers = []; let settled = false, live = 0, n = 0, lastErr = null;
+            const end = (ok, v) => {
+                if (settled) return; settled = true;
+                timers.forEach(clearTimeout); ctls.forEach(c => { try { c.abort(); } catch (e) {} });
+                if (ok) resolve(v); else reject(v);
+            };
+            const fire = () => {
+                if (settled || n > hedges.length) return;
+                n++; live++;
+                const ctl = new AbortController(); ctls.push(ctl);
+                fetch(apiGetUrl(params) + '&_h=' + n, { cache: 'no-store', signal: ctl.signal })
+                    .then(r => r.json())
+                    .then(j => end(true, j))
+                    .catch(e => {
+                        live--; lastErr = e;
+                        if (settled) return;
+                        if (navigator.onLine === false) { end(false, e); return; }
+                        if (n <= hedges.length) fire();          // 바로 실패(연결 끊김 · 구글 오류 화면)면 기다리지 말고 다음 것
+                        else if (!live) end(false, e);
+                    });
+            };
+            fire();
+            hedges.forEach(ms => timers.push(setTimeout(fire, ms)));
+            timers.push(setTimeout(() => end(false, new Error('서버 응답이 늦어요. 잠시 후 다시 시도해 주세요')), 30000));
+        });
+    }
     async function apiGetJson(params) {
+        if (API_HEDGE_RE.test(params) && typeof AbortController !== 'undefined') return apiHedgeJson(params);
         const waits = /^action=presenceFeed\b/.test(params) ? [12000]   // 실시간 알림은 10초마다 다시 물어보므로 한 번만
                     : API_RETRY_RE.test(params) ? [12000, 15000, 20000] : [40000];
         let err = null;
@@ -8886,6 +8922,11 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.63.0', d: '2026-10-14', t: '🏇 서버 답이 안 올 때 덜 기다리기', items: [
+            '오늘 잰 값: 서버(구글)는 0.5~4초에 처리를 끝내는데, 요청 10개 중 3~4개는 구글이 답을 끝내 안 보내 12초를 기다렸다 다시 보내느라 명단이 16초 넘게 걸리기도 함',
+            '이제 명단 · 설정 · 일정 · 공지 · 로그 목록 같은 읽기 요청은 답이 4~5초 안에 안 오면 같은 요청을 하나 더 보내고 먼저 온 답을 씀 (최대 3개, 나머지는 바로 끊음)',
+            '로그인 · 비상연락망 · 저장 · 삭제는 두 번 처리되면 안 돼서 예전처럼 하나씩'
+        ] },
         { v: 'v2.62.0', d: '2026-10-14', t: '⚡ 이미지형 명단 버벅임 해결', items: [
             '이미지형 카드의 이름 · 생일 줄 맞춤을 카드마다 따로 재던 것을 한꺼번에 재도록 바꿈 — 휴대폰 속도로 잰 값: 앱 켤 때 3.5초 → 1초, 「전체」 학년 누를 때 3.2초 → 0.5초, 검색 글자 칠 때 최대 3초 → 0.5초',
             '휴대폰에서 스크롤하다 주소창이 숨었다 나타날 때마다 카드를 다시 맞추느라 화면이 3초쯤 멈칫하던 것 없앰 (화면 폭이 바뀔 때만 다시 맞춤)',
