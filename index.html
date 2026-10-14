@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.70.0 · b261015";
+        const APP_VERSION = "v2.71.0 · b261015";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -1907,12 +1907,6 @@
         .nt-admin button { border: 1px solid #cbd5e1; background: #ffffff; border-radius: 8px; font-size: 12px; font-weight: 800; padding: 6px 10px; cursor: pointer; color: #334155; }
         .nt-admin button.danger { color: #b91c1c; border-color: #fecaca; background: #fff5f5; }
         .nt-author { font-size: 12px; color: #94a3b8; font-weight: 700; margin-top: 6px; }
-        .nt-views { margin-left: 8px; color: #64748b; }
-        .nt-readers:empty { display: none; }
-        .nt-readers { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; margin-top: 10px; }
-        .nt-readers-title { font-size: 12px; font-weight: 800; color: #334155; margin-bottom: 6px; }
-        .nt-reader-chips { display: flex; flex-wrap: wrap; gap: 5px; }
-        .nt-reader { font-size: 11px; font-weight: 700; color: #334155; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; padding: 3px 8px; }
 
         /* 🔍 화면 크기(확대/축소) 조절 버튼 — 지도 +/- 처럼 오른쪽 아래에 떠 있음 (터치 기기에서만 표시) */
         body { zoom: var(--ui-zoom, 1); }
@@ -2374,10 +2368,6 @@
     .nt-admin button { border: 1px solid #58697e; background: #151e2e; color: #bcc6d4; }
     .nt-admin button.danger { color: #e78d8d; border-color: #532a34; background: #302331; }
     .nt-author { color: #6f7b91; }
-    .nt-views { color: #97a3b7; }
-    .nt-readers { background: #1b2638; border: 1px solid #2a374e; }
-    .nt-readers-title { color: #bcc6d4; }
-    .nt-reader { color: #bcc6d4; background: #151e2e; border: 1px solid #58697e; }
     .ui-zoom-ctrl { background: rgba(11,34,64,0.95); border: 1px solid rgba(255,255,255,0.25); box-shadow: 0 4px 14px rgba(0,0,0,0.375); }
     .ui-zoom-ctrl button { border: none; background: transparent; color: #f1f4f9; }
     .pw-cur-val { color: #99cae6; background: #1b2638; border: 1px solid #234964; }
@@ -3569,11 +3559,11 @@
     // 🏇 v2.63.1: 다시 재 보니 안 오는 요청은 서버에 아예 닿지도 않음(실행 기록 없음) → 하나 더 보내도 서버 일은 안 늘어남
     //   → 더 일찍 · 더 여러 번 (최대 5개) · 로그인 · 실시간 접속 확인도 같은 방식 (로그인 기록은 화면에서 한 번만 남김)
     // ⚖️ v2.64.0: 로그인은 다시 뺌 — 비번이 틀렸는데 답까지 늦으면 같은 요청이 여러 번 「틀림」으로 세어져 10분 잠금에 빨리 닿을 수 있어서 (아래 6 · 9 · 15초 하나씩)
-    const API_HEDGE_RE = /^action=(bootstrap|getRoster|getSettings|getSchedule|getNotices|getNoticeReaders|getUniformRows|seasonStatus|seasonPreview)\b/;
+    const API_HEDGE_RE = /^action=(bootstrap|getRoster|getSettings|getSchedule|getNotices|getUniformRows|seasonStatus|seasonPreview)\b/;
     function apiHedgePlan(params) {
         const a = (params.match(/^action=(\w+)/) || [])[1] || '';
         if (a === 'bootstrap' || a === 'getRoster') return { first: 5000, gap: 3500, extra: 4, cap: 30000 };   // 보통 4초
-        if (a === 'getSettings' || a === 'seasonStatus' || a === 'getNoticeReaders') return { first: 3000, gap: 3500, extra: 4, cap: 30000 };   // 보통 1~2초
+        if (a === 'getSettings' || a === 'seasonStatus') return { first: 3000, gap: 3500, extra: 4, cap: 30000 };   // 보통 1~2초
         return { first: 4500, gap: 3500, extra: 4, cap: 30000 };                               // 일정 · 공지 · 로그 목록 등 보통 2~4초
     }
     function apiHedgeJson(params) {
@@ -5566,7 +5556,7 @@
                         ${n.pinned === 'Y' ? '<span class="nt-pin">📌 고정</span>' : ''}
                         <span class="nt-cat" style="--c:${cm.c};--bg:${cm.bg}">${escapeHtml(n.category || '일반')}</span>
                         ${isNewNotice(n) ? '<span class="nt-new">NEW</span>' : ''}
-                        <span class="nt-date">${escapeHtml(String(n.created || '').slice(0, 10).replace(/-/g, '.'))}<span class="nt-views" title="읽은 사람 수">👁 ${Number(n.views) || 0}</span></span>
+                        <span class="nt-date">${escapeHtml(String(n.created || '').slice(0, 10).replace(/-/g, '.'))}</span>
                     </div>
                     <div class="nt-title"><span>${escapeHtml(n.title)}</span><span class="chev">▾</span></div>
                     <div class="nt-preview">${escapeHtml(preview)}</div>
@@ -5574,12 +5564,10 @@
                 <div class="nt-body">
                     ${formatNoticeBody(n.body)}
                     ${n.author ? `<div class="nt-author">작성: ${escapeHtml(n.author)}${n.updated && n.updated !== n.created ? ' · 수정 ' + escapeHtml(String(n.updated).slice(0, 16)) : ''}</div>` : ''}
-                    ${canViewAdmin() ? `<div class="nt-readers" id="ntReaders-${escapeHtml(n.id)}"></div>` : ''}
-                    ${canViewAdmin() || canEditSchedule() ? `<div class="nt-admin">
-                        ${canViewAdmin() ? `<button type="button" onclick="toggleNoticeReaders('${escapeHtml(n.id)}')">👁 읽은 사람</button>` : ''}
-                        ${canEditSchedule() ? `<button type="button" onclick="toggleNoticePin('${escapeHtml(n.id)}')">${n.pinned === 'Y' ? '고정 해제' : '📌 고정'}</button>
+                    ${canEditSchedule() ? `<div class="nt-admin">
+                        <button type="button" onclick="toggleNoticePin('${escapeHtml(n.id)}')">${n.pinned === 'Y' ? '고정 해제' : '📌 고정'}</button>
                         <button type="button" onclick="openNoticeEditor('${escapeHtml(n.id)}')">수정</button>
-                        <button type="button" class="danger" onclick="deleteNotice('${escapeHtml(n.id)}')">삭제</button>` : ''}
+                        <button type="button" class="danger" onclick="deleteNotice('${escapeHtml(n.id)}')">삭제</button>
                     </div>` : ''}
                 </div>
             </div>`;
@@ -5587,78 +5575,10 @@
     }
     function toggleNotice(id) {
         noticeOpenId = noticeOpenId === id ? null : id;
-        if (noticeOpenId) recordNoticeView(noticeOpenId);
         renderNotices();
     }
 
-    // 👁 조회수: 공지를 펼친 사람을 1인 1회만 기록 (같은 사람이 다시 열어도 다시 세지 않음)
-    function noticeViewer() {
-        const u = getActiveUser();
-        if (u && u.name) {
-            const ph = digitsOnly(u.rawPhone || u.phone || '').slice(-8);
-            const rs = PARENT_REL_SHORT[u.rel] || '';   // v2.55.0: 시트 「공지조회」 이름 칸도 「보호자 [김민준 부]」처럼 짧게
-            return { key: 'P:' + (ph || (u.name + u.role)), name: `보호자 [${u.name}${rs ? ' ' + rs : ''}]` };
-        }
-        const roleName = ({ dev: '개발자', super: '대표님', sub: '코치진', general: '총무님' })[currentRole];
-        // 관리자는 기기와 상관없이 역할당 1명으로 기록 (휴대폰·태블릿·PC에서 각각 열어도 중복으로 세지 않음) · v2.55.0: 「관리자 (대표)」 → 「대표님」
-        if (roleName) return { key: 'A:' + currentRole, name: roleName };
-        return { key: 'G:' + getDeviceClientId(), name: '일반 열람자' };
-    }
-    function recordNoticeView(id) {
-        const v = noticeViewer();
-        const mark = v.key + '|' + id;
-        let seen = [];
-        try { seen = JSON.parse(localStorage.getItem('daeyeon_notice_views') || '[]'); } catch (e) {}
-        if (seen.indexOf(mark) !== -1) return;
-        seen.push(mark);
-        try { localStorage.setItem('daeyeon_notice_views', JSON.stringify(seen.slice(-500))); } catch (e) {}
-        const n = noticeList.find(x => x.id === id);
-        if (n) n.views = (Number(n.views) || 0) + 1;
-        postApi({ action: 'viewNotice', id: id, viewerKey: v.key, viewerName: v.name, title: n ? String(n.title || '').slice(0, 40) : '' }).catch(() => {});   // title: 개발자 「공지 확인」 알림용 (v2.49.0)
-    }
-    // 읽은 사람 목록 정리: 같은 사람이 여러 기기에서 읽어 생긴 중복을 이름 기준으로 하나로 합침.
-    // v2.55.0: 시트 이름 칸이 짧아짐 — 「보호자 [김민준 부]」 → 「김민준 아버님」, 「관리자 (대표)」 · 「관리자 (대표님)」 → 「대표님」 (예전 · 새 표기가 같은 사람으로 합쳐짐)
-    // 로그인하지 않은 '일반 열람자'는 서로 다른 사람일 수 있어 합치지 않고 인원수로 표시.
-    function noticeReaderLabel(raw) {
-        let s = String(raw || '').trim();
-        const a = s.match(/^관리자\s*\((.*)\)$/);
-        if (a) s = ({ '대표': '대표님', '총무': '총무님' })[a[1].trim()] || a[1].trim();
-        const p = s.match(/^보호자\s*\[(.*)\]$/);
-        if (p) s = p[1].trim().replace(/\s(부|모|본인|기타)$/, (m, r) => ' ' + PARENT_REL_LONG[r]);
-        return s || '일반 열람자';
-    }
-    function mergeNoticeReaders(list) {
-        const out = [], byName = {};
-        list.forEach(r => {
-            const name = noticeReaderLabel(r.name);
-            const isGuest = name === '일반 열람자';
-            if (byName[name]) {
-                if (isGuest) byName[name].count++;
-                if (String(r.time || '') < String(byName[name].time || '')) byName[name].time = r.time;
-                return;
-            }
-            byName[name] = { name: name, time: r.time, count: 1 };
-            out.push(byName[name]);
-        });
-        return out;
-    }
-    async function toggleNoticeReaders(id) {
-        const box = document.getElementById('ntReaders-' + id);
-        if (!box) return;
-        if (box.dataset.open === '1') { box.dataset.open = ''; box.innerHTML = ''; return; }
-        box.dataset.open = '1';
-        box.innerHTML = '<div class="form-hint">불러오는 중...</div>';
-        try {
-            const res = await apiGetJson('action=getNoticeReaders&id=' + encodeURIComponent(id));
-            const list = mergeNoticeReaders((res && res.readers) || []);
-            box.innerHTML = list.length
-                ? `<div class="nt-readers-title">읽은 사람 ${list.reduce((s, r) => s + r.count, 0)}명</div><div class="nt-reader-chips">` +
-                  list.map(r => `<span class="nt-reader" title="${escapeHtml(r.time)}">${escapeHtml(r.name)}${r.count > 1 ? ' ' + r.count + '명' : ''}</span>`).join('') + '</div>'
-                : '<div class="form-hint">아직 읽은 사람이 없습니다.</div>';
-        } catch (err) {
-            box.innerHTML = '<div class="form-hint">목록을 불러오지 못했습니다.</div>';
-        }
-    }
+    // 🧹 v2.71.0: 공지 조회수(👁) · 「읽은 사람」 기능을 없앰 — 공지를 펼쳐도 서버에 기록을 보내지 않음
     function noticeStamp(n) { return String(n.updated || n.created || ''); }
     function updateNoticeDot() {
         const dot = document.getElementById('noticeDot');
@@ -6002,10 +5922,6 @@
         }
         return cid;
     }
-
-    // 보호자 관계 줄임말 — 시트 「공지조회」 이름 칸에는 한 글자로 (v2.55.0) · 앱 화면에는 다시 풀어서
-    const PARENT_REL_SHORT = { '아버님': '부', '어머님': '모', '학생': '본인', '기타': '기타' };
-    const PARENT_REL_LONG = { '부': '아버님', '모': '어머님', '본인': '선수', '기타': '보호자' };
 
     // 🧹 v2.65.0: 실시간 접속 알림(개발자 화면 칩 · 「개발」 기록 · 📡 버튼)을 없앰 — 학부모 기기가 보내던 들어옴 · 나감 알림도 안 보냄
     document.addEventListener('visibilitychange', () => {
@@ -8524,6 +8440,10 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.71.0', d: '2026-10-15', t: '🧹 공지 조회수 · 읽은 사람 없앰', items: [
+            '공지 목록의 👁 조회수와 관리자용 「👁 읽은 사람」 버튼을 없앰',
+            '공지를 펼쳐도 서버에 「읽음」 기록을 보내지 않음 — 새 공지에 학부모님이 몰릴 때 서버 요청이 그만큼 줄어듦 (서버 v2.20.0에서도 제거)'
+        ] },
         { v: 'v2.70.0', d: '2026-10-15', t: '📉 서버 요청 줄이기 (여러 명 동시 사용 대비)', items: [
             '로그인 화면 미리 읽기: 먼저 하나만 보내 비어 있는 묶음만 확인하고, 빈 것만 나눠서 읽음 — 보관본이 다 있으면 요청 3개 → 1개 (다른 사람이 이미 읽는 중인 묶음도 빠짐)',
             '서버(v2.19.0): 공지 조회수는 누가 읽을 때마다 새로 세던 것을 2분마다 한 번만 — 새 공지에 학부모님이 몰려도 시트를 수십 번 다시 읽지 않음 (👁 숫자는 최대 2분 늦게 올라감 · 「읽은 사람」 목록은 그대로 바로 보임)'
@@ -9735,6 +9655,7 @@
     // 초기화 실행
     // 예전 버전이 기기에 저장해 둔 비상연락망 사본 삭제 (이제는 서버에서 권한 확인 후 그때그때만 받음)
     try { localStorage.removeItem('daeyeon_emergency_contacts'); } catch (e) {}
+    try { localStorage.removeItem('daeyeon_notice_views'); } catch (e) {}   // v2.71.0: 공지 조회 기록 기능을 없애 기기에 남은 목록도 지움
     if (isAuthValid()) {
         startSessionCountdown();
     }
