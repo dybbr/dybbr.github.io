@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.69.0 · b261015";
+        const APP_VERSION = "v2.70.0 · b261015";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -3536,9 +3536,14 @@
     function warmServer() {
         if (Date.now() - warmAt < 5 * 60 * 1000) return;
         warmAt = Date.now();
-        ['roster', 'sched', 'notice'].forEach(part => {
-            try { fetch(apiGetUrl('action=warm&part=' + part), { cache: 'no-store' }).then(r => r.text()).catch(() => {}); } catch (e) {}
-        });
+        // v2.70.0: 먼저 하나만 보내 「비어 있는 묶음」만 물어보고(시트 안 읽음 · 1초 안팎), 빈 묶음만 나눠서 미리 읽게 함
+        //   → 보관본이 다 있으면(여러 명이 쓰는 중이면 대부분) 요청 3개 → 1개 · 다른 사람이 읽는 중인 묶음도 빠짐 (서버 v2.19.0)
+        const part = p => { try { fetch(apiGetUrl('action=warm&part=' + p), { cache: 'no-store' }).then(r => r.text()).catch(() => {}); } catch (e) {} };
+        try {
+            fetch(apiGetUrl('action=warm&part=check'), { cache: 'no-store' }).then(r => r.json()).then(j => {
+                if (j && Array.isArray(j.cold)) j.cold.filter(p => ['roster', 'sched', 'notice'].includes(p)).forEach(part);
+            }).catch(() => {});
+        } catch (e) {}
     }
 
     // 응답을 읽어야 하는 조회/처리 전용 (비밀번호 검증/변경 등).
@@ -8519,6 +8524,10 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.70.0', d: '2026-10-15', t: '📉 서버 요청 줄이기 (여러 명 동시 사용 대비)', items: [
+            '로그인 화면 미리 읽기: 먼저 하나만 보내 비어 있는 묶음만 확인하고, 빈 것만 나눠서 읽음 — 보관본이 다 있으면 요청 3개 → 1개 (다른 사람이 이미 읽는 중인 묶음도 빠짐)',
+            '서버(v2.19.0): 공지 조회수는 누가 읽을 때마다 새로 세던 것을 2분마다 한 번만 — 새 공지에 학부모님이 몰려도 시트를 수십 번 다시 읽지 않음 (👁 숫자는 최대 2분 늦게 올라감 · 「읽은 사람」 목록은 그대로 바로 보임)'
+        ] },
         { v: 'v2.69.0', d: '2026-10-15', t: '⏱ 로그인 유지 시간 조정', items: [
             '서버 v2.18.0: 일반 열람자 10분 · 보호자 1시간 (그대로) · 코치진 2시간 → 1시간 · 총무님 1시간 → 5시간 · 대표님 4시간 → 5시간 · 개발자 6시간 → 5시간'
         ] },
