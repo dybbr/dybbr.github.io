@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.65.0 · b261014";
+        const APP_VERSION = "v2.66.0 · b261015";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -1337,86 +1337,6 @@
             .cqb-l small { display: inline; margin-left: 5px; }
         }
 
-        .log-item-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; font-size: 12px; display: flex; flex-direction: column; gap: 2px; }
-        .log-header-row { display: flex; justify-content: space-between; align-items: center; }
-        .log-type-tag { font-weight: 800; font-size: 11px; padding: 2px 6px; border-radius: 4px; }
-        /* 🗑 로그 삭제 (개발자 전용) */
-        .log-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 8px; padding: 8px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; }
-        .log-tools label { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; color: #334155; cursor: pointer; }
-        .log-tools select, .log-tools button { height: 30px; border: 1px solid #d1d5db; border-radius: 6px; background: #ffffff; font-size: 12px; font-weight: 700; color: #334155; padding: 0 8px; cursor: pointer; }
-        .log-tools .log-tools-spacer { flex: 1; }
-        .log-tools button.danger, .log-del-btn { color: #b91c1c; border-color: #fecaca; background: #fff5f5; }
-        .log-tools button:disabled { opacity: 0.45; cursor: default; }
-        .log-item-card { position: relative; }
-        .log-item-card.log-selectable { padding-left: 34px; }
-        .log-check { position: absolute; left: 10px; top: 10px; width: 16px; height: 16px; margin: 0; cursor: pointer; }
-        .log-del-btn { border: 1px solid #fecaca; border-radius: 6px; width: 28px; height: 24px; font-size: 13px; line-height: 1; cursor: pointer; margin-left: 6px; flex: 0 0 auto; }
-        .log-item-card.is-checked { border-color: #fca5a5; background: #fff7f7; }
-        .log-type-unlock  { background: #dcfce7; color: #166534; }
-        .log-type-lock    { background: #fee2e2; color: #991b1b; }
-        .log-type-admin   { background: #ede9fe; color: #5b21b6; }
-        .log-type-contact { background: #eff6ff; color: #1e40af; }
-        .log-type-order   { background: #fef3c7; color: #92400e; }
-        .log-type-photo   { background: #e0f2fe; color: #0369a1; }
-        /* 👥 로그 분류 탭 + 접속 기록 (v2.35.0) */
-        .log-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 6px; }
-        .log-tabs button { height: 34px; border: 1px solid #d1d5db; border-radius: 8px; background: #ffffff; font-size: 12px; font-weight: 800; color: #475569; cursor: pointer; padding: 0 2px; white-space: nowrap; }
-        .log-tabs button.on { background: #0b2240; border-color: #0b2240; color: #ffffff; }
-        .acc-sum { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 8px; }
-        .acc-sum > div { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 4px; text-align: center; }
-        .acc-sum b { display: block; font-size: 18px; line-height: 1.2; color: #0b2240; }
-        .acc-sum span { font-size: 11px; color: #64748b; font-weight: 700; }
-        .acc-sum .on b { color: #15803d; }
-        .acc-sum .warn b { color: #b91c1c; }
-        .acc-filter { display: flex; align-items: center; justify-content: space-between; gap: 6px; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; border-radius: 8px; padding: 6px 8px; font-size: 12px; font-weight: 700; margin-bottom: 8px; }
-        .acc-filter button { flex: 0 0 auto; white-space: nowrap; border: 1px solid #bfdbfe; background: #ffffff; color: #1e40af; border-radius: 6px; height: 26px; font-size: 12px; font-weight: 800; cursor: pointer; padding: 0 8px; }
-        .acc-day { font-size: 12px; font-weight: 800; color: #475569; margin: 10px 2px 4px; }
-        /* 📜 v2.58.0 보안 활동 로그 창 정리 */
-        .log-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-        .log-icon-btn { flex: 0 0 auto; width: 36px; height: 32px; border: 1px solid #cbd5e1; border-radius: 9px; background: #ffffff; font-size: 15px; line-height: 1; cursor: pointer; }
-        .log-desc { font-size: 11.5px; color: #64748b; margin: 0 2px 6px; line-height: 1.45; word-break: keep-all; }
-        .log-tools { flex-wrap: nowrap; padding: 6px; gap: 6px; }
-        .log-tools > * { flex: 0 0 auto; }
-        .log-tools label.lt-check { gap: 5px; padding: 0 4px; }
-        .log-tools label.lt-check input { width: 17px; height: 17px; margin: 0; }
-        .log-tools button.lt-pick { background: #0b2240; border-color: #0b2240; color: #ffffff; }
-        #logsModal .lt-check, #logsModal .lt-del, #logsModal .lt-cancel { display: none; }
-        #logsModal.log-picking .lt-check, #logsModal.log-picking .lt-del { display: inline-flex; align-items: center; }
-        #logsModal.log-picking .lt-pick { display: none; }
-        #logsModal.log-picking.log-pick-toggle .lt-cancel { display: inline-flex; align-items: center; }
-        #logsModal.log-picking.log-pick-toggle .lt-clean { display: none; }
-        #logsModal:not(.log-picking) .log-check { display: none; }
-        #logsModal:not(.log-picking) .log-item-card.log-selectable, #logsModal:not(.log-picking) .acc-row.log-selectable { padding-left: 10px; }
-        #logsModal .log-del-btn { background: #f1f5f9; border-color: transparent; border-radius: 8px; opacity: .85; }
-        #logsModal .log-del-btn:active { background: #fee2e2; opacity: 1; }
-        .acc-sum { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 2px; }
-        .acc-sum > div { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; text-align: left; }
-        .acc-sum b { display: inline; font-size: 14px; line-height: 1.2; }
-        .acc-sum span { font-size: 11.5px; }
-        .app-pick .lc-head { font-size: 11px; font-weight: 800; color: #64748b; padding: 4px 8px 0; }
-        .app-pick button.lc-danger { color: #b91c1c; background: #fff5f5; }
-        .acc-row { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 7px 10px; margin-bottom: 5px; font-size: 12px; }
-        .acc-l1 { display: flex; align-items: center; gap: 6px; }
-        .acc-dot { width: 9px; height: 9px; border-radius: 50%; background: #94a3b8; flex: 0 0 auto; }
-        .acc-row.st-online .acc-dot { background: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,.22); }
-        .acc-row.st-unknown .acc-dot { background: #f59e0b; }
-        .acc-who { font-weight: 800; color: #0f172a; cursor: pointer; text-decoration: underline dotted #94a3b8; text-underline-offset: 3px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .acc-role { font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 10px; background: #eef2f7; color: #334155; flex: 0 0 auto; }
-        .acc-dur { margin-left: auto; font-size: 11px; font-weight: 800; color: #64748b; flex: 0 0 auto; }
-        .acc-l2 { margin-top: 2px; color: #334155; font-weight: 600; }
-        .acc-l2 .in { color: #15803d; font-weight: 800; }
-        .acc-l2 .out { color: #475569; font-weight: 800; }
-        .acc-row.st-online .acc-l2 .out { color: #15803d; }
-        .acc-row.st-unknown .acc-l2 .out { color: #b45309; }
-        .acc-l3 { margin-top: 1px; font-size: 11px; color: #64748b; }
-        .acc-row.acc-fail { background: #fff5f5; border-color: #fecaca; }
-        .acc-row.acc-fail .acc-who { color: #b91c1c; text-decoration: none; cursor: default; }
-        /* 🗑 v2.57.0: 접속 칸도 선택 · 한 칸 삭제 */
-        .acc-row.log-selectable { position: relative; padding-left: 32px; }
-        .acc-row .log-check { top: 9px; }
-        .acc-row .log-del-btn { height: 22px; width: 26px; font-size: 12px; }
-        .acc-row.is-checked { border-color: #fca5a5; background: #fff7f7; }
-
         @media (max-width: 600px) {
             header { padding: 10px 10px 14px; gap: 8px; }
             .header-title { font-size: 21px; }
@@ -2278,44 +2198,6 @@
     .contact-quick-bar { background: #302331; border: 1px solid #532a34; }
     .btn-quick-action { background: #151e2e; border: 1px solid #58697e; color: #bcc6d4; }
     .cqb-l.red { color: #f0a3a3; } .cqb-l.blue { color: #8ccbf0; } .cqb-l.ink { color: #c8d2e0; } .cqb-l small { color: #7d8aa0; }
-    .log-item-card { background: #151e2e; border: 1px solid #2a374e; }
-    .log-tools { background: #1b2638; border-color: #2a374e; }
-    .log-tools label { color: #bcc6d4; }
-    .log-tools select, .log-tools button { background: #151e2e; border-color: #33425c; color: #bcc6d4; }
-    .log-tools button.danger, .log-del-btn { background: #2a1b22; border-color: #6b2a35; color: #f19aa6; }
-    .log-item-card.is-checked { background: #2a1b22; border-color: #6b2a35; }
-    .log-type-unlock { background: #1b3838; color: #99e6b6; }
-    .log-type-lock { background: #302331; color: #e78d8d; }
-    .log-type-admin { background: #1f2346; color: #b08de7; }
-    .log-type-contact { background: #1b2c46; color: #8da2e7; }
-    .log-type-order { background: #444333; color: #e6b699; }
-    .log-type-photo { background: #1b3046; color: #99cae6; }
-    .log-tabs button { background: #151e2e; border-color: #33425c; color: #bcc6d4; }
-    .log-tabs button.on { background: #557cb9; border-color: #557cb9; color: #ffffff; }
-    .acc-sum > div { background: #1b2638; border-color: #2a374e; }
-    .acc-sum b { color: #dbe4f0; }
-    .acc-sum span { color: #94a3b8; }
-    .acc-sum .on b { color: #6ee7a0; }
-    .acc-sum .warn b { color: #f19aa6; }
-    .acc-filter { background: #1b2c46; border-color: #33425c; color: #a8c2ec; }
-    .acc-filter button { background: #151e2e; border-color: #33425c; color: #a8c2ec; }
-    .acc-day { color: #94a3b8; }
-    .log-icon-btn { background: #151e2e; border-color: #58697e; }
-    .log-desc { color: #94a3b8; }
-    .log-tools button.lt-pick { background: #2c4a7a; border-color: #2c4a7a; color: #ffffff; }
-    #logsModal .log-del-btn { background: #1b2638; }
-    #logsModal .log-del-btn:active { background: #2a1b22; }
-    .app-pick button.lc-danger { color: #f19aa6; background: #2a1b22; }
-    .acc-row { background: #151e2e; border-color: #2a374e; }
-    .acc-who { color: #e2e8f0; }
-    .acc-role { background: #22304a; color: #bcc6d4; }
-    .acc-l2 { color: #bcc6d4; }
-    .acc-l2 .in, .acc-row.st-online .acc-l2 .out { color: #6ee7a0; }
-    .acc-l2 .out { color: #94a3b8; }
-    .acc-row.st-unknown .acc-l2 .out { color: #f5c26b; }
-    .acc-row.acc-fail { background: #2a1b22; border-color: #6b2a35; }
-    .acc-row.acc-fail .acc-who { color: #f19aa6; }
-    .acc-row.is-checked { background: #2a1b22; border-color: #6b2a35; }
     .main-tabs { background: #151e2e; border: 1px solid #2a374e; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
     .main-tab { border: none; background: transparent; color: #97a3b7; }
     .main-tab.active { background: #22354f; color: #f1f4f9; box-shadow: 0 2px 6px rgba(0,0,0,0.375); }
@@ -3063,7 +2945,6 @@
             <div class="admin-group" id="adminGroupDev" style="display: none;">
                 <div class="admin-group-title">개발</div>
                 <div class="admin-bar-btns">
-                    <button id="btnViewLogs" class="btn-manage-pw" style="background: #4338ca;" onclick="openLogsModal()">📜 보안 활동 로그</button>
                     <button id="btnViewHistory" class="btn-manage-pw" style="background: #0f766e;" onclick="openHistoryModal()">🕘 업데이트 히스토리</button>
                 </div>
             </div>
@@ -3605,38 +3486,6 @@
     </div>
 </div>
 
-<!-- 7. 보안 활동 로그 모달 (v2.58.0 정리: 제목 줄 🔄 · 한 줄 설명 · 도구 한 줄 [골라서 지우기 | 🧹 기록 정리 ▾]) -->
-<div id="logsModal" class="modal">
-    <div class="modal-content" style="max-width: 600px; width: 95%;">
-        <div class="modal-header log-head">
-            <span>📜 보안 활동 로그</span>
-            <button type="button" class="log-icon-btn" onclick="loadSecurityLogs()" title="새로고침" aria-label="새로고침">🔄</button>
-        </div>
-        <div class="log-tabs" id="logTabs">
-            <button type="button" data-cat="access" class="on" onclick="setLogCat('access')">👥 접속</button>
-            <button type="button" data-cat="change" onclick="setLogCat('change')">✏️ 변경</button>
-            <button type="button" data-cat="view" onclick="setLogCat('view')">👀 열람·복사</button>
-            <button type="button" data-cat="all" onclick="setLogCat('all')">📋 전체</button>
-        </div>
-        <p id="logDesc" class="log-desc"></p>
-        <div class="log-tools" id="logTools">
-            <button type="button" class="lt-pick" id="logPickBtn" onclick="setLogPicking(true)">☑️ 골라서 지우기</button>
-            <label class="lt-check" id="logCheckAllWrap"><input type="checkbox" id="logCheckAll" onchange="toggleAllLogChecks(this.checked)"> 전체</label>
-            <button type="button" class="danger lt-del" id="logDelSelBtn" onclick="deleteSelectedLogs()" disabled>🗑 선택 삭제</button>
-            <button type="button" class="lt-cancel" onclick="setLogPicking(false)">취소</button>
-            <span class="log-tools-spacer"></span>
-            <button type="button" class="lt-clean" id="logCleanBtn" onclick="openLogCleanMenu(this)" aria-haspopup="menu">🧹 기록 정리 ▾</button>
-        </div>
-        <div class="modal-scroll-body" id="logsListContent">
-            <div style="text-align: center; padding: 40px; color: #94a3b8;">로그 데이터를 불러오는 중...</div>
-        </div>
-        <div class="modal-btns" style="justify-content: space-between;">
-            <button class="btn-sheet-link" onclick="window.open(GOOGLE_SHEET_EDIT_URL, '_blank')">📊 시트 원본 열기</button>
-            <button class="btn-save" onclick="closeModal('logsModal')">닫기</button>
-        </div>
-    </div>
-</div>
-
 <!-- 8. 🕘 업데이트 히스토리 (개발자 전용) -->
 <div id="historyModal" class="modal">
     <div class="modal-content" style="max-width: 600px; width: 95%;">
@@ -3703,7 +3552,7 @@
     // 🏇 v2.63.1: 다시 재 보니 안 오는 요청은 서버에 아예 닿지도 않음(실행 기록 없음) → 하나 더 보내도 서버 일은 안 늘어남
     //   → 더 일찍 · 더 여러 번 (최대 5개) · 로그인 · 실시간 접속 확인도 같은 방식 (로그인 기록은 화면에서 한 번만 남김)
     // ⚖️ v2.64.0: 로그인은 다시 뺌 — 비번이 틀렸는데 답까지 늦으면 같은 요청이 여러 번 「틀림」으로 세어져 10분 잠금에 빨리 닿을 수 있어서 (아래 6 · 9 · 15초 하나씩)
-    const API_HEDGE_RE = /^action=(bootstrap|getRoster|getSettings|getSchedule|getNotices|getNoticeReaders|getLogs|getUniformRows|seasonStatus|seasonPreview)\b/;
+    const API_HEDGE_RE = /^action=(bootstrap|getRoster|getSettings|getSchedule|getNotices|getNoticeReaders|getUniformRows|seasonStatus|seasonPreview)\b/;
     function apiHedgePlan(params) {
         const a = (params.match(/^action=(\w+)/) || [])[1] || '';
         if (a === 'bootstrap' || a === 'getRoster') return { first: 5000, gap: 3500, extra: 4, cap: 30000 };   // 보통 4초
@@ -3918,7 +3767,7 @@
         if (!desc) return;
         renderJerseyPanel();   // 👕 학년별 유니폼 색 (대표님·개발자)
         desc.textContent = ({
-            dev: '모든 관리자 기능 + 비밀번호 확인, 아래 "개발" 메뉴(보안 활동 로그)까지 사용할 수 있습니다.',
+            dev: '모든 관리자 기능 + 비밀번호 확인, 아래 "개발" 메뉴(업데이트 히스토리)까지 사용할 수 있습니다.',
             super: '모든 기능을 사용할 수 있습니다. (비상연락망, 유니폼 접수·발주, 비밀번호 관리, 구글 시트 편집, 일정·공지 관리, 선수 사진 등록)',
             sub: '비공개 정보(사진·생년월일·신장·몸무게)를 볼 수 있습니다.',
             general: '학부모 비상연락망과 비공개 정보(사진·생년월일·신장·몸무게)를 볼 수 있고, 일정·공지 관리와 총무님 비밀번호 변경을 할 수 있습니다.'
@@ -5197,7 +5046,6 @@
         bkNotify('saving', '일정 저장하는 중이캉');
         try {
             await saveEventsToServer([ev]);
-            sendActivityLog('일정저장', currentRole, `${ev.date} ${ev.title}${ev.opponent ? ' VS ' + ev.opponent : ''}`);
             closeModal('eventEditModal');
             calSelected = ev.date; calCursor = dateOf(ev.date);
             renderSchedule();
@@ -5226,7 +5074,6 @@
         try {
             await postApi({ action: 'deleteEvent', id: id });
             schedEvents = schedEvents.filter(x => x.id !== id);
-            sendActivityLog('일정삭제', currentRole, `${ev.date} ${ev.title}`);
             closeModal('eventDetailModal');
             renderSchedule(); renderNextEventBanner();
             bkVerifyLater('event', [{ id: id }], 'delete');
@@ -5293,7 +5140,6 @@
         bkNotify('saving', `일정 ${list.length}개 저장하는 중이캉`);
         try {
             await saveEventsToServer(list);
-            sendActivityLog('일정가져오기', currentRole, `공지 붙여넣기로 ${list.length}건 저장`);
             closeModal('eventImportModal');
             calSelected = list[0].date; calCursor = dateOf(list[0].date);
             renderSchedule();
@@ -5851,7 +5697,6 @@
         bkNotify('saving', '공지 저장하는 중이캉');
         try {
             await saveNoticeToServer(n);
-            sendActivityLog('공지저장', currentRole, n.title);
             noticeOpenId = n.id;
             closeModal('noticeEditModal');
             renderNotices();
@@ -5874,7 +5719,6 @@
         try {
             await postApi({ action: 'deleteNotice', id: id });
             noticeList = noticeList.filter(x => x.id !== id);
-            sendActivityLog('공지삭제', currentRole, n.title);
             renderNotices();
             bkVerifyLater('notice', [{ id: id }], 'delete');
             bkNotify('done', '공지 삭제 완료캉! ✓', null, { img: 'megaphone' });
@@ -6142,57 +5986,9 @@
         return cid;
     }
 
-    function getDeviceInfo() {
-        const ua = navigator.userAgent;
-        const env = bkEnv();   // v2.41.0: PC 버전으로 보는 태블릿·아이패드도 알아봄, 카톡·엣지·파이어폭스 추가
-        const browser = { kakao: '카톡', naver: '네이버앱', inapp: '앱 안 브라우저', samsung: '삼성인터넷', whale: '웨일', edge: '엣지', firefox: '파이어폭스', opera: '오페라', chrome: '크롬', safari: '사파리' }[env.br] || '브라우저';
-
-        let os = "기기";
-        if (env.tabletDesk) os = "안드로이드 태블릿";
-        else if (/android/i.test(ua)) os = env.tablet ? "안드로이드 태블릿" : "안드로이드";
-        else if (env.ipadDesk || /ipad/i.test(ua)) os = "아이패드";
-        else if (/iphone|ipod/i.test(ua)) os = "아이폰/iOS";
-        else if (/windows/i.test(ua)) os = "윈도우";
-        else if (/macintosh/i.test(ua)) os = "맥";
-
-        return `${os} (${browser})`;
-    }
-
-    // 로그에 남길·보여줄 역할 이름 (v2.37.1) — super/sub 같은 코드 대신 대표님·코치진처럼
-    const ROLE_KO = { dev: '개발자', super: '대표님', sub: '코치진', general: '총무님', parent: '보호자', guest: '일반 열람자', '미상': '미인증' };
-    const PARENT_REL_SHORT = { '아버님': '부', '어머님': '모', '학생': '본인', '기타': '기타' };   // v2.55.0: 시트에는 한 글자로
-    const PARENT_REL_LONG = { '부': '아버님', '모': '어머님', '본인': '선수', '기타': '보호자' };   // 앱 로그 화면에는 다시 풀어서
-    // 로그 목록에 보일 짧은 이름: "super [관리자]" → "대표님", "보호자 [김승원 (어머님 · 010-****-1234)]" → "김승원 어머님"
-    function logWhoLabel(raw) {
-        const m = String(raw || '').match(/^(.*?)\s*\[(.*)\]\s*$/);
-        let label = (m ? m[1] : String(raw || '')).trim();
-        let ident = m ? m[2].trim() : '';
-        label = ROLE_KO[label] || label;
-        if (['관리자', '일반열람', '미인증'].includes(ident)) ident = '';
-        if (ident) return ident.replace(/\s*·\s*\d{2,3}-\*{4}-\d{4}/, '').replace(/\s*\(\s*\)/, '').replace(/\s*\(([^()]*)\)\s*$/, ' $1').replace(/\s(부|모|본인|기타)$/, (m, r) => ' ' + PARENT_REL_LONG[r]).trim() || label || '-';   // v2.55.0: 「김민준 부」 → 「김민준 아버님」
-        return label || '-';
-    }
-    function sendActivityLog(eventType, role, details, beacon) {   // beacon: 앱이 닫히는 중 (v2.48.0)
-        if (!GOOGLE_SCRIPT_UNIFORM_API_URL || GOOGLE_SCRIPT_UNIFORM_API_URL.trim() === "") return;
-        const user = getActiveUser();
-        // v2.55.0: 시트 「인증등급」 칸 — 보호자는 「보호자 [김민준 부]」 · 「보호자 [김민준 모]」처럼 짧게, 연락처는 남기지 않음
-        const relShort = user ? (PARENT_REL_SHORT[user.rel] || '') : '';
-        const roleStr = !user ? (ROLE_KO[role] || role || '-')
-            : (user.role === '보호자' ? `보호자 [${user.name || '-'}${relShort ? ' ' + relShort : ''}]` : `${ROLE_KO[role] || role || '-'} [${user.name || '-'}]`);
-
-        const payload = {
-            action: "logActivity",
-            clientId: getDeviceClientId(),
-            eventType: eventType,
-            role: roleStr,   // v2.37.1: 관리자는 "대표님"처럼 짧게
-            device: getDeviceInfo(),
-            screenRes: `${window.screen.width}x${window.screen.height}`,
-            lang: navigator.language || navigator.userLanguage || "-",
-            details: details || "-"
-        };
-        if (beacon) { beaconApi(payload); return; }
-        postApi(payload).catch(err => console.warn("로그 전송 무시:", err));
-    }
+    // 보호자 관계 줄임말 — 시트 「공지조회」 이름 칸에는 한 글자로 (v2.55.0) · 앱 화면에는 다시 풀어서
+    const PARENT_REL_SHORT = { '아버님': '부', '어머님': '모', '학생': '본인', '기타': '기타' };
+    const PARENT_REL_LONG = { '부': '아버님', '모': '어머님', '본인': '선수', '기타': '보호자' };
 
     // 🧹 v2.65.0: 실시간 접속 알림(개발자 화면 칩 · 「개발」 기록 · 📡 버튼)을 없앰 — 학부모 기기가 보내던 들어옴 · 나감 알림도 안 보냄
     document.addEventListener('visibilitychange', () => {
@@ -6232,7 +6028,6 @@
                 updateUserIdentityBadge();
                 render();
 
-                sendActivityLog("세션만료", "시스템", "세션 만료로 화면 잠김 및 완전 로그아웃");
                 const overlay = document.getElementById('lockOverlay');
                 if (overlay) overlay.style.display = 'flex';
                 bkNotify('sleep', '시간이 다 돼서 잠갔캉 💤', '다시 로그인해 주세요', { ms: 6000 });
@@ -6250,12 +6045,9 @@
     }
 
     // quiet: 앱이 닫히는 중 (v2.48.0) — 알림 · 입력칸 포커스 없이, 서버에는 sendBeacon 으로
-    //        v2.50.0: 기록은 여기서 한 번만 (예전엔 로그아웃하면 「로그아웃」 + 「화면잠금」 두 줄) · 누가인지 지우기 전에 남김
     function lockScreenNow(why, quiet) {
         why = why || '로그아웃';
         if (why === '로그아웃') snapClear();   // 💾 v2.64.0: 로그아웃을 누르면 기기에 저장한 명단 · 일정 · 공지도 지움
-        if (quiet) sendActivityLog("앱종료", currentRole, "뒤로가기 두 번으로 앱 종료 · 자동 로그아웃", true);
-        else sendActivityLog(why === '로그아웃' ? "로그아웃" : "화면잠금", currentRole, why === '로그아웃' ? "로그아웃" : why + " · 완전 로그아웃");
         try { if (getToken()) (quiet ? beaconApi : postApi)({ action: 'logout', token: getToken() }); } catch (e) {}   // 서버 세션도 폐기
         localStorage.removeItem('daeyeon_auth_expire');
         clearAdminRoleStorage();
@@ -6351,7 +6143,6 @@
                 const login = await serverLogin(cleanPhone);
                 if (applyLoginResult(login)) {
                     finishUnlock();
-                    setTimeout(() => sendActivityLog('최초등록', roleSelect, `${nameInput} (${roleSelect}) 등록 후 로그인`), 5000);   // v2.36.1: 명단 먼저
                     bkNotify('done', '등록 완료캉! 🎉', `${login.name || nameInput} 보호자님으로 등록됐어요 (1시간 동안 유지)`, { ms: 5000, img: 'heart' });
                 } else {
                     bkNotify('fail', '앗, 등록이 안 됐캉…', '자녀 이름과 생년월일이 공식 명단과 똑같은지 확인해 주세요. 계속 안 되면 관리자에게 문의해 주세요', { ms: 8000 });
@@ -6375,19 +6166,15 @@
         finally { submitBtn.disabled = false; submitBtn.textContent = prevText; }
 
         if (applyLoginResult(res)) {
-            const label = ({ dev: '개발자', super: '대표님', sub: '코치진', general: '총무님', parent: '보호자', guest: '일반 열람자' })[res.role] || res.role;
             finishUnlock();
-            setTimeout(() => sendActivityLog('잠금해제', label, `${label} 로그인`), 5000);   // v2.36.1: 명단을 먼저 불러온 뒤 기록 (로그 저장이 명단 읽기와 겹쳐 느려지지 않게)
             return;
         }
 
         if (res && res.locked) {
             bkNotify('fail', '로그인 시도가 너무 많캉…', res.message || '잠시 후 다시 시도해 주세요', { ms: 6000 });
         } else if (res && res.grad) {   // 🎓 v2.45.0: 졸업생 보호자 번호
-            sendActivityLog('인증실패', '미상', '졸업생 보호자 번호');
             bkNotify('info', '졸업을 축하해캉! 🎓', res.message || '졸업 처리가 끝나 더 이상 들어올 수 없어요', { ms: 8000 });
         } else {
-            sendActivityLog('인증실패', '미상', '로그인 실패');   // ← 입력한 비번/번호는 더 이상 기록하지 않는다
             bkNotify('fail', '번호나 비밀번호가 맞지 않캉…', '등록된 휴대폰 번호 또는 관리자 비밀번호를 확인해 주세요');
         }
         document.getElementById('lockPasswordInput').value = '';
@@ -6522,7 +6309,6 @@
             const j = await fetchSettings();
             if (!j || !j.jerseyColors || normJerseyColor(j.jerseyColors[key]) !== color) throw new Error('서버에 반영되지 않았어요 (권한 또는 네트워크)');
             bkNotify('done', name + ' 유니폼 색 저장 완료캉! ✓', null, { img: 'uniform' });
-            sendActivityLog('유니폼색설정', currentRole, `${name} 유니폼 배지 색 → ${color}`);
         } catch (err) {
             jerseyColors = prev; try { localStorage.setItem('daeyeon_jersey_colors', JSON.stringify(jerseyColors)); } catch (e) {}
             renderJerseyPanel(); render();
@@ -6759,7 +6545,6 @@
         bkNotify('saving', `유니폼 접수 ${next ? 'ON' : 'OFF'} 저장하는 중이캉`);
         try {
             await postApi({ action: 'setUniformActive', active: next });
-            sendActivityLog("유니폼접수설정", currentRole, `유니폼 접수 상태 변경: [${next ? 'ON' : 'OFF'}]`);
             bkNotify('done', `유니폼 접수 ${next ? 'ON' : 'OFF'} 저장 완료캉! ✓`, null, { img: 'uniform' });
         } catch (err) {
             bkNotify('fail', null, err.message);
@@ -8083,7 +7868,6 @@
                 asAdmin: isSuperOrDev(),
                 applicant: activeUser ? `${activeUser.name} (${activeUser.role} · ${activeUser.phone})` : '웹 접속자'
             });
-            sendActivityLog("주문접수", playerName, `${playerName}${playerNo ? ' No.' + playerNo : ''} (${playerGrade}학년) 유니폼 주문 신청 완료`);
             closeModal('uniformModal');
             bkNotify('done', `${playerName} 선수 유니폼 신청 완료캉! ✓`, '접수 내역은 대표님·총무님이 확인해요', { img: 'uniform' });
         } catch (err) {
@@ -8103,7 +7887,6 @@
         applyEcMode();   // 📇 v2.51.0: 총무님은 「간단히」
         document.getElementById('emergencyContactsModal').style.display = 'flex';
         const content = document.getElementById('contactsListContent');
-        sendActivityLog("열람", currentRole, "학부모 비상연락망 열람");
         content.innerHTML = '<div style="text-align:center; padding:40px; color:#64748b;">불러오는 중...</div>';
 
         try {
@@ -8481,7 +8264,6 @@
             return `${no ? 'No.' + no + ' ' : ''}${name}${grade ? ` (${grade}학년)` : ''} - ${phones.join(' / ') || '연락처 없음'}${commute}`;
         });
 
-        sendActivityLog("복사", currentRole, `비상연락망 ${list.length}명 복사`);
         copyText('[대연초 야구부 비상연락망]\n' + lines.join('\n'), `비상연락망 연락처 ${list.length}명 복사했캉! 📋`);
     }
 
@@ -8500,7 +8282,6 @@
         const label = key => key === 'none' ? '❔ 미입력' : key.split('+').map(k => COMMUTE_TYPES[k].icon + ' ' + COMMUTE_TYPES[k].label).join(' 또는 ');
         const order = Object.keys(groups).sort((a, b) => groups[b].length - groups[a].length);
         const text = '[대연초 야구부 하교방법별 명단]\n' + order.map(k => `${label(k)} (${groups[k].length}명)\n${groups[k].join(', ')}`).join('\n\n');
-        sendActivityLog("복사", currentRole, `하교방법별 명단 ${list.length}명 복사`);
         copyText(text, `하교방법별 명단(${list.length}명) 복사했캉! 🏠`, '안전귀가 확인에 써 주세요');
     }
 
@@ -8519,7 +8300,6 @@
     // 뽑아낸 번호 목록을 콤마로 이어붙여 복사 (문자 앱 '받는사람'란에 바로 붙여넣기용)
     function copyPhoneNumberList(numbers, label) {
         if (numbers.length === 0) { bkNotify('info', '복사할 번호가 없다캉!'); return; }
-        sendActivityLog("복사", currentRole, `${label} 학부모 번호 ${numbers.length}건 복사 (문자 발송용)`);
         copyText(
             numbers.join(','),
             `[${label}] 학부모 번호 ${numbers.length}건 복사했캉! 📱`,
@@ -8592,7 +8372,6 @@
         };
         const t = templates[type];
         if (!t) return;
-        sendActivityLog("복사", currentRole, `긴급 공지 문구 복사: ${t.label}`);
         copyText(t.text, `[${t.label}] 공지 문구 복사했캉! 📋`, '○ 부분을 고친 뒤 단톡방에 붙여넣어 주세요', 5000);
     }
 
@@ -8658,7 +8437,6 @@
         bkNotify('saving', '사진 올리는 중이캉');
         try {
             await postApi({ action: "uploadPhoto", playerNo: uploadTargetPlayer.no, playerName: uploadTargetPlayer.name, base64Data: uploadOptimizedBase64 });
-            sendActivityLog("사진등록", currentRole, `${uploadTargetPlayer.name} 사진 등록`);
             closeModal('photoUploadModal');
             loadGoogleSheetData({ force: true });
             bkNotify('done', `${uploadTargetPlayer.name} 사진 등록 완료캉! ✓`, '명단에 보이기까지 잠시 걸릴 수 있어요', { img: 'camera' });
@@ -8670,7 +8448,6 @@
         bkNotify('saving', '사진 지우는 중이캉');
         try {
             await postApi({ action: "deletePhoto", playerNo: uploadTargetPlayer.no, playerName: uploadTargetPlayer.name });
-            sendActivityLog("사진삭제", currentRole, `${uploadTargetPlayer.name} 사진 삭제`);
             closeModal('photoUploadModal');
             loadGoogleSheetData({ force: true });
             bkNotify('done', '사진 삭제 완료캉! ✓', null, { img: 'camera' });
@@ -8715,7 +8492,6 @@
                 hideHeight: !document.getElementById('infoEditHeightOpen').checked,
                 hideWeight: !document.getElementById('infoEditWeightOpen').checked
             });
-            sendActivityLog("선수정보수정", currentRole, `${infoEditTargetPlayer.name} 정보 수정`);
             closeModal('playerInfoEditModal');
             loadGoogleSheetData({ force: true });
             bkNotify('done', `${infoEditTargetPlayer.name} 정보 저장 완료캉! ✓`, '명단에 보이기까지 잠시 걸릴 수 있어요', { img: 'heart' });
@@ -8727,13 +8503,15 @@
     }
 
     // ==========================================================
-    // 보안 활동 로그 (개발자 전용 화면)
-    // ==========================================================
-    // ==========================================================
     // 🕘 업데이트 히스토리 (개발자 전용) — 새 버전을 올릴 때 맨 위에 한 항목씩 추가
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.66.0', d: '2026-10-15', t: '🧹 보안 활동 로그 없앰', items: [
+            '관리 탭 「개발」의 📜 보안 활동 로그(👥 접속 · ✏️ 변경 · 👀 열람·복사 기록 창)를 없앰',
+            '로그인 · 로그아웃 · 수정 · 열람 때마다 서버에 보내던 기록 요청도 안 보냄 — 구글 요청이 그만큼 줄어듦',
+            '서버(v2.15.0)도 기록을 더 이상 남기지 않고, 구글 시트의 「접속활동로그」 · 「접속기록」 탭도 지움'
+        ] },
         { v: 'v2.65.0', d: '2026-10-14', t: '🧹 실시간 접속 알림 없앰', items: [
             '개발자 화면의 실시간 접속 알림(위쪽 칩 · 관리 탭 「개발」의 한 사람 한 칸 기록 · 📡 남은 초 버튼)을 없앰',
             '학부모 · 관리자 기기가 서버에 보내던 들어옴 · 나감 알림도 안 보냄 — 구글 요청이 그만큼 줄어듦 (서버 v2.14.0에서도 제거)',
@@ -9458,268 +9236,6 @@
         document.getElementById('historyModal').style.display = 'flex';
     }
 
-    // 📜 로그 분류 (v2.35.0) — 👥 접속(시트 '접속기록' 탭) / ✏️ 변경 / 👀 열람·복사 / 📋 전체
-    const LOG_CAT_TYPES = {
-        change: ['비밀번호변경', '일정저장', '일정삭제', '일정가져오기', '공지저장', '공지삭제', '사진등록', '사진삭제', '선수정보수정', '주문접수', '유니폼접수설정', '유니폼색설정', '로그삭제'],
-        view: ['열람', '복사']
-    };
-    const LOG_CAT_DESC = {
-        access: '기기별 들어옴(로그인) → 나감을 한 칸에 · 최근 300건',
-        change: '비밀번호 · 일정 · 공지 · 사진 · 선수 · 유니폼을 바꾼 기록 · 최근 200건',
-        view: '비상연락망 열람 · 번호 복사 기록 · 최근 200건',
-        all: '모든 활동 · 최근 100건'
-    };
-    let logCat = 'access', logWho = '';
-    // v2.58.0: 체크 상자는 「☑️ 골라서 지우기」를 눌렀을 때만 (평소엔 칸이 깔끔하게) · false 면 체크 상자가 늘 보임
-    const LOG_PICK_TOGGLE = true;
-    function setLogPicking(on) {
-        const md = document.getElementById('logsModal');
-        if (!md) return;
-        md.classList.toggle('log-pick-toggle', LOG_PICK_TOGGLE);
-        md.classList.toggle('log-picking', !LOG_PICK_TOGGLE || !!on);
-        if (!on) { const ca = document.getElementById('logCheckAll'); if (ca) ca.checked = false; toggleAllLogChecks(false); }
-    }
-    // 🧹 기록 정리 메뉴 — 기간 지난 기록 / 전부 지우기 (앱 고르기 메뉴와 같은 모양)
-    function openLogCleanMenu(btn) {
-        appPickClose();
-        const items = [[7, '7일 지난 기록 지우기'], [30, '30일 지난 기록 지우기'], [90, '90일 지난 기록 지우기'], [0, '⚠️ 전부 지우기']];
-        const bg = document.createElement('div'); bg.className = 'app-pick-bg'; bg.id = 'appPickBg';
-        bg.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); appPickClose(); });
-        const m = document.createElement('div'); m.className = 'app-pick'; m.id = 'appPick'; m.setAttribute('role', 'menu');
-        m.innerHTML = `<div class="lc-head">${logCat === 'access' ? '👥 접속 기록' : '📜 활동 로그'} 정리</div>` +
-            items.map(([d, t]) => `<button type="button" role="menuitem" data-d="${d}"${d ? '' : ' class="lc-danger"'}>${t}</button>`).join('');
-        m.addEventListener('click', e => {
-            const b = e.target.closest('button[data-d]'); if (!b) return;
-            e.stopPropagation(); appPickClose();
-            const d = +b.dataset.d;
-            if (d) deleteOldLogs(d); else deleteAllLogs();
-        });
-        document.body.append(bg, m);
-        const r = btn.getBoundingClientRect(), vw = window.innerWidth, vh = window.innerHeight, mr = m.getBoundingClientRect();
-        let top = r.bottom + 4; if (top + mr.height > vh - 8) top = Math.max(8, r.top - mr.height - 4);
-        m.style.left = Math.min(Math.max(8, r.right - mr.width), vw - mr.width - 8) + 'px'; m.style.top = top + 'px';
-    }
-    function setLogCat(cat) {
-        logCat = cat; logWho = '';
-        document.querySelectorAll('#logTabs button').forEach(b => b.classList.toggle('on', b.dataset.cat === cat));
-        document.getElementById('logDesc').textContent = LOG_CAT_DESC[cat] || '';
-        setLogPicking(false);   // 탭을 바꾸면 고르기는 처음부터
-        loadSecurityLogs();
-    }
-
-    async function openLogsModal() {
-        if (currentRole !== 'dev') return;   // 보안 활동 로그는 개발자 전용
-        document.getElementById('logsModal').style.display = 'flex';
-        setLogCat('access');
-    }
-
-    // ---- 👥 접속 기록: 같은 기기의 "들어옴 → 나감"을 한 줄로 ----
-    const ACC_IN = ['잠금해제', '최초등록'], ACC_OUT = ['로그아웃', '화면잠금', '세션만료', '앱종료'];
-    const ACC_OUT_LABEL = { '로그아웃': '로그아웃', '화면잠금': '화면 잠금', '세션만료': '자동 잠김 (시간 만료)', '앱종료': '앱 종료 (뒤로가기 두 번)' };
-    const ACC_TTL_MIN = { '개발자': 360, '대표님': 240, '코치진': 120, '총무님': 60, '보호자': 60, '일반 열람자': 10 };   // 서버 로그인 유지 시간과 같게
-    function accDate(v) { const m = String(v).match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})\D+(\d{1,2}):(\d{2}):(\d{2})/); return m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]) : null; }
-    function accWho(log) {   // 인증등급 칸: "역할 [누구]" → { who, label }
-        const m = String(log.role || '').match(/^(.*?)\s*\[(.*)\]\s*$/);
-        const raw = (m ? m[1] : String(log.role || '')).trim() || '-';
-        const label = ROLE_KO[raw] || raw;   // super → 대표님 (v2.37.1)
-        const ident = m ? m[2].trim() : '';
-        const generic = !ident || ['관리자', '일반열람', '미인증'].includes(ident);
-        if (!generic) return { who: logWhoLabel(log.role), label: log.eventType === '최초등록' ? '보호자' : label };
-        if (log.eventType === '최초등록') return { who: generic ? label : ident, label: '보호자' };
-        return { who: generic ? label : ident, label: generic ? '' : label };
-    }
-    const accHM = d => d ? String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') : '--:--';
-    function accDur(ms) { const m = Math.floor(ms / 60000); if (m < 1) return '1분 미만'; if (m < 60) return m + '분'; return Math.floor(m / 60) + '시간' + (m % 60 ? ' ' + (m % 60) + '분' : ''); }
-    function accDayKey(d) { return d ? `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}` : '날짜 없음'; }
-    const accKey = log => (log.row && log.sig) ? `${Number(log.row)}:${String(log.sig).replace(/[^0-9a-f]/gi, '')}` : '';   // 시트 줄 번호:지문
-    function buildAccessRows(logs) {
-        const items = [], open = {}, now = Date.now();
-        logs.slice().reverse().forEach(log => {   // 오래된 것부터
-            const t = accDate(log.date), cid = log.clientId || '-', w = accWho(log), k = accKey(log);
-            if (ACC_IN.includes(log.eventType)) {
-                if (open[cid]) { open[cid].endType = 'relogin'; delete open[cid]; }
-                const s = { kind: 'session', who: w.who, label: w.label, start: t, end: null, endType: '', device: log.device, cid, keys: [k] };
-                open[cid] = s; items.push(s);
-            } else if (ACC_OUT.includes(log.eventType)) {
-                const s = open[cid];
-                if (s) { s.end = t; s.endType = log.eventType; s.keys.push(k); delete open[cid]; }
-                else items.push({ kind: 'session', who: (w.who && w.who !== '시스템') ? w.who : '알 수 없음', label: w.label, start: null, end: t, endType: log.eventType, device: log.device, cid, keys: [k] });
-            } else if (log.eventType === '인증실패') {
-                const last = items[items.length - 1];
-                if (last && last.kind === 'fail' && last.cid === cid && t && last.end && (t - last.end) < 10 * 60000) { last.count++; last.end = t; last.keys.push(k); }
-                else items.push({ kind: 'fail', who: '⚠ 인증실패', start: t, end: t, count: 1, device: log.device, cid, keys: [k] });
-            }
-        });
-        items.forEach(s => {
-            if (s.kind !== 'session' || s.end || s.endType === 'relogin' || !s.start) return;
-            const ttl = (ACC_TTL_MIN[s.label] || ACC_TTL_MIN[s.who] || 60) * 60000;
-            s.expect = new Date(s.start.getTime() + ttl);
-            s.status = now < s.expect.getTime() ? 'online' : 'unknown';
-        });
-        return items.reverse();   // 최신순
-    }
-    function renderAccessLogs(logs) {
-        const content = document.getElementById('logsListContent');
-        const rows = buildAccessRows(logs), today = accDayKey(new Date());
-        const todayWho = new Set(rows.filter(r => r.kind === 'session' && r.start && accDayKey(r.start) === today).map(r => r.who));
-        const onlineN = rows.filter(r => r.status === 'online').length;
-        const failN = rows.filter(r => r.kind === 'fail' && accDayKey(r.start) === today).reduce((a, r) => a + r.count, 0);
-        let html = `<div class="acc-sum"><div title="오늘 접속한 사람"><span>👥 오늘</span><b>${todayWho.size}</b><span>명</span></div><div class="on" title="지금 접속 중"><span>🟢 접속 중</span><b>${onlineN}</b></div><div class="${failN ? 'warn' : ''}" title="오늘 인증실패"><span>⚠️ 인증실패</span><b>${failN}</b></div></div>`;
-        const shown = logWho ? rows.filter(r => r.who === logWho) : rows;
-        if (logWho) html += `<div class="acc-filter"><span>👤 ${escapeHtml(logWho)} 기록만 보는 중</span><button type="button" onclick="setLogWho('')">✕ 전체 보기</button></div>`;
-        if (!shown.length) { content.innerHTML = html + '<div style="text-align:center; padding:30px;">접속 기록 없음</div>'; return; }
-        let day = '';
-        shown.forEach(r => {
-            const d = r.start || r.end, k = accDayKey(d);
-            if (k !== day) { day = k; html += `<div class="acc-day">📅 ${k}${k === today ? ' (오늘)' : ''}</div>`; }
-            const ks = (r.keys || []).filter(Boolean).join(',');
-            const sel = ks ? ' log-selectable' : '';
-            const chk = ks ? `<input type="checkbox" class="log-check" data-key="${ks}" onchange="onLogCheck(this)" aria-label="이 접속 기록 선택">` : '';
-            const del = ks ? `<button type="button" class="log-del-btn" title="이 접속 기록 삭제" onclick="deleteAccRow('${ks}', '${r.kind}')">🗑</button>` : '';
-            if (r.kind === 'fail') {
-                html += `<div class="acc-row acc-fail${sel}">${chk}<div class="acc-l1"><span class="acc-dot" style="background:#ef4444"></span><span class="acc-who">⚠ 인증실패 ${r.count}회</span><span class="acc-dur"></span>${del}</div>` +
-                        `<div class="acc-l2">${accHM(r.start)}${r.count > 1 ? ' ~ ' + accHM(r.end) : ''} · 비밀번호/번호 틀림</div><div class="acc-l3">📱 ${escapeHtml(r.device || '-')}</div></div>`;
-                return;
-            }
-            const st = r.status || (r.end ? 'done' : (r.endType === 'relogin' ? 'unknown' : 'done'));
-            let out;
-            if (r.end) out = `<span class="out">${accHM(r.end)} ${escapeHtml(ACC_OUT_LABEL[r.endType] || r.endType)}</span>`;
-            else if (r.endType === 'relogin') out = `<span class="out">나감 기록 없음 (같은 기기에서 다시 로그인)</span>`;
-            else if (r.status === 'online') out = `<span class="out">접속 중 (${accHM(r.expect)} 자동 잠김 예정)</span>`;
-            else out = `<span class="out">나감 기록 없음 (앱을 그냥 닫은 듯)</span>`;
-            const inTxt = r.start ? `<span class="in">${accHM(r.start)} 들어옴</span> → ` : '<span class="in">들어온 기록 없음</span> → ';
-            const dur = (r.start && r.end) ? accDur(r.end - r.start) : (r.status === 'online' ? accDur(Date.now() - r.start) + '째' : '');
-            const whoArg = escapeHtml(JSON.stringify(r.who));
-            html += `<div class="acc-row st-${st}${sel}">${chk}<div class="acc-l1"><span class="acc-dot"></span><span class="acc-who" onclick="setLogWho(${whoArg})" title="이 사람 기록만 보기">${escapeHtml(r.who)}</span>${r.label ? `<span class="acc-role">${escapeHtml(r.label)}</span>` : ''}<span class="acc-dur">${dur}</span>${del}</div>` +
-                    `<div class="acc-l2">${inTxt}${out}</div><div class="acc-l3">📱 ${escapeHtml(r.device || '-')}</div></div>`;
-        });
-        content.innerHTML = html;
-    }
-    let _accLogs = [];
-    function setLogWho(w) {
-        logWho = w || ''; renderAccessLogs(_accLogs); document.getElementById('logsListContent').scrollTop = 0;
-        const checkAll = document.getElementById('logCheckAll'); if (checkAll) checkAll.checked = false;
-        updateLogDelBtn();
-    }
-
-    async function loadSecurityLogs() {
-        const content = document.getElementById('logsListContent');
-        content.innerHTML = '<div style="text-align:center; padding:40px;">불러오는 중...</div>';
-        try {
-            const q = logCat === 'access' ? 'action=getLogs&sheet=access'
-                    : (LOG_CAT_TYPES[logCat] ? 'action=getLogs&types=' + encodeURIComponent(LOG_CAT_TYPES[logCat].join(',')) : 'action=getLogs');
-            const json = await apiGetJson(q);   // v2.59.1: 시간 제한 · 다시 보내기
-            const checkAll = document.getElementById('logCheckAll');
-            if (checkAll) checkAll.checked = false;
-            updateLogDelBtn();
-            if (logCat === 'access') { _accLogs = (json && json.logs) || []; renderAccessLogs(_accLogs); return; }
-            if (!json || !json.logs || json.logs.length === 0) { content.innerHTML = '<div style="text-align:center; padding:40px;">로그 없음</div>'; return; }
-            content.innerHTML = json.logs.map(log => {
-                const delKey = (log.row && log.sig) ? `${Number(log.row)}:${String(log.sig).replace(/[^0-9a-f]/gi, '')}` : '';
-                return `
-                <div class="log-item-card${delKey ? ' log-selectable' : ''}">
-                    ${delKey ? `<input type="checkbox" class="log-check" data-key="${delKey}" onchange="onLogCheck(this)" aria-label="이 로그 선택">` : ''}
-                    <div class="log-header-row"><span class="log-type-tag log-type-unlock" title="${escapeHtml(log.role)}">[${escapeHtml(log.eventType)}] ${escapeHtml(logWhoLabel(log.role))}</span><span style="display:inline-flex; align-items:center;"><span style="font-size:11px; color:#94a3b8;">${escapeHtml(log.date)}</span>${delKey ? `<button type="button" class="log-del-btn" title="이 로그 삭제" onclick="deleteOneLog('${delKey}')">🗑</button>` : ''}</span></div>
-                    <div style="font-size:11px; color:#475569;">📱 <b>${escapeHtml(log.device)}</b>${log.screenRes && log.screenRes !== '-' ? ` · ${escapeHtml(log.screenRes)}` : ''}${log.lang && log.lang !== '-' ? ` · ${escapeHtml(log.lang)}` : ''}</div>
-                    <div style="font-size:12px; color:#0f172a; font-weight:600; margin-top:2px;">${escapeHtml(log.details)}</div>
-                </div>`;
-            }).join('');
-        } catch (err) { content.innerHTML = '<div style="text-align:center; padding:40px; color:red;">불러오기 실패</div>'; }
-    }
-
-    // 🗑 로그 삭제 (개발자 전용) — 서버(deleteLogs)도 개발자 토큰을 다시 확인한다
-    function checkedLogKeys() {
-        return [...document.querySelectorAll('#logsListContent .log-check:checked')].map(c => c.dataset.key);
-    }
-    function updateLogDelBtn() {
-        const btn = document.getElementById('logDelSelBtn');
-        if (!btn) return;
-        const n = checkedLogKeys().length;
-        btn.disabled = n === 0;
-        btn.textContent = n ? `🗑 선택 삭제 (${n})` : '🗑 선택 삭제';
-    }
-    function onLogCheck(cb) {
-        const card = cb.closest('.log-item-card, .acc-row');
-        if (card) card.classList.toggle('is-checked', cb.checked);
-        const all = document.querySelectorAll('#logsListContent .log-check');
-        const checkAll = document.getElementById('logCheckAll');
-        if (checkAll) checkAll.checked = all.length > 0 && checkedLogKeys().length === all.length;
-        updateLogDelBtn();
-    }
-    function toggleAllLogChecks(on) {
-        document.querySelectorAll('#logsListContent .log-check').forEach(c => {
-            c.checked = on;
-            const card = c.closest('.log-item-card, .acc-row');
-            if (card) card.classList.toggle('is-checked', on);
-        });
-        updateLogDelBtn();
-    }
-    // v2.57.0: 지울 줄이 200개가 넘으면 아래쪽 줄부터 200개씩 나눠 보냄 (아래 줄을 먼저 지워야 위쪽 줄 번호가 안 밀림)
-    function logDelBatches(keys) {
-        const ks = keys.filter(Boolean).sort((a, b) => parseInt(b, 10) - parseInt(a, 10)), out = [];
-        for (let i = 0; i < ks.length; i += 200) out.push('mode=rows&items=' + encodeURIComponent(ks.slice(i, i + 200).join(',')));
-        return out;
-    }
-    async function requestDeleteLogs(params) {
-        if (currentRole !== 'dev') { bkNotify('info', '로그 삭제는 개발자만 할 수 있캉!'); return; }
-        const list = Array.isArray(params) ? params : [params];
-        if (!list.length) return;
-        const extra = (logCat === 'access' ? '&sheet=access' : '') + '&clientId=' + encodeURIComponent(getDeviceClientId()) +
-            '&device=' + encodeURIComponent(getDeviceInfo()) +
-            '&screenRes=' + encodeURIComponent(`${window.screen.width}x${window.screen.height}`) +
-            '&lang=' + encodeURIComponent(navigator.language || '-');
-        const content = document.getElementById('logsListContent');
-        content.innerHTML = '<div style="text-align:center; padding:40px;">삭제하는 중...</div>';
-        bkNotify('saving', '로그 지우는 중이캉');
-        try {
-            let total = 0, bad = null;
-            for (const pp of list) {
-                const res = await apiGetJson('action=deleteLogs&' + pp + extra);
-                if (!res || res.result !== 'success') { bad = res || {}; break; }
-                total += Number(res.deleted) || 0;
-            }
-            if (bad) bkNotify('fail', '앗, 삭제가 안 됐캉…', (bad.message || bad.error || '삭제하지 못했습니다') + (total ? ` (먼저 ${total}건은 지워짐)` : ''));   // v2.53.1: 서버 오류 내용(error)도 보여 줌
-            else if (!total) bkNotify('info', '지울 로그가 없다캉!', '그 사이 바뀐 로그는 지우지 않아요');
-            else { if (LOG_PICK_TOGGLE) setLogPicking(false); bkNotify('done', `로그 ${total}건 삭제 완료캉! ✓`,
-                logCat !== 'access' && /^mode=all\b/.test(list[0]) ? '누가 지웠는지 남기는 「로그삭제」 1줄은 남아요' : undefined); }
-        } catch (err) {
-            bkNotify('fail', '앗, 삭제가 안 됐캉…', '잠시 후 다시 시도해 주세요');
-        }
-        loadSecurityLogs();
-    }
-    async function deleteOneLog(key) {
-        if (!(await bkConfirm('이 로그 1건을 삭제할까캉?', { sub: '지운 로그는 되돌릴 수 없어요', ok: '삭제', danger: true }))) return;
-        requestDeleteLogs('mode=rows&items=' + encodeURIComponent(key));
-    }
-    async function deleteAccRow(ks, kind) {   // 👥 접속 칸 하나 = 그 칸의 들어옴 · 나감(또는 인증실패) 줄 전부
-        const keys = String(ks).split(',').filter(Boolean);
-        const sub = keys.length > 1 ? `${kind === 'fail' ? '인증실패' : '들어옴 · 나감'} 기록 ${keys.length}줄이 함께 지워지고 되돌릴 수 없어요` : '지운 기록은 되돌릴 수 없어요';
-        if (!(await bkConfirm('이 접속 기록을 삭제할까캉?', { sub, ok: '삭제', danger: true }))) return;
-        requestDeleteLogs(logDelBatches(keys));
-    }
-    async function deleteSelectedLogs() {
-        const keys = checkedLogKeys();
-        if (!keys.length) return;
-        if (logCat === 'access') {
-            const all = keys.join(',').split(',').filter(Boolean);
-            if (!(await bkConfirm(`선택한 접속 기록 ${keys.length}칸을 삭제할까캉?`, { sub: `시트 "접속기록" 탭의 ${all.length}줄(들어옴 · 나감)이 함께 지워지고 되돌릴 수 없어요`, ok: '삭제', danger: true }))) return;
-            requestDeleteLogs(logDelBatches(all));
-            return;
-        }
-        if (!(await bkConfirm(`선택한 로그 ${keys.length}건을 삭제할까캉?`, { sub: '지운 로그는 되돌릴 수 없어요', ok: '삭제', danger: true }))) return;
-        requestDeleteLogs(logDelBatches(keys));
-    }
-    async function deleteOldLogs(d) {
-        const days = parseInt(d, 10) || 30;
-        if (!(await bkConfirm(`${logCat === 'access' ? '접속기록 중 ' : ''}${days}일 지난 로그를 모두 삭제할까캉?`, { sub: '화면에 안 보이는 오래된 로그도 포함, 되돌릴 수 없어요', ok: '삭제', danger: true }))) return;
-        requestDeleteLogs('mode=before&days=' + days);
-    }
-    async function deleteAllLogs() {
-        if (!(await bkConfirm(logCat === 'access' ? '접속기록을 전부 삭제할까캉?' : '로그를 전부 삭제할까캉?', { sub: logCat === 'access' ? '"접속기록" 탭만 지워지고(다른 활동 로그는 그대로) 되돌릴 수 없어요' : '화면에 안 보이는 오래된 로그까지 모두 지워지고 되돌릴 수 없어요', ok: '전부 삭제', danger: true }))) return;
-        if (!(await bkConfirm('정말 전부 지울까캉?', { sub: '한 번 더 확인해요', ok: '정말 전부 삭제', danger: true }))) return;
-        requestDeleteLogs('mode=all');
-    }
-
     // ==========================================================
     // 관리자 로그인
     // ==========================================================
@@ -9893,7 +9409,6 @@
         try {
             const res = await apiGetJson('action=changeAdminPw&currentPw=' + encodeURIComponent(cur) + '&newGeneral=' + encodeURIComponent(n1));
             if (res && res.result === 'success') {
-                sendActivityLog("비밀번호변경", currentRole, "총무님 본인 비밀번호 변경");
                 closeModal('passwordModal');
                 bkNotify('done', '총무님 비밀번호 변경 완료캉! ✓', '모든 기기에 바로 적용돼요');
             } else {
@@ -9938,7 +9453,6 @@
             if (newGeneral) qs += '&newGeneral=' + encodeURIComponent(newGeneral);
             const res = await apiGetJson(qs);
             if (res && res.result === 'success') {
-                sendActivityLog("비밀번호변경", currentRole, `관리자 비밀번호 변경: [${labels.join(', ')}]`);
                 closeModal('passwordModal');
                 bkNotify('done', `${labels.join(', ')} 비밀번호 변경 완료캉! ✓`, '모든 기기에 바로 적용돼요');
             } else {
@@ -9984,8 +9498,6 @@
         if (document.getElementById('appPick')) { appPickClose(); return true; }   // v2.52.0: 고르기 메뉴부터
         if (bkAskResolve) { bkAskClose(false); return true; }   // 부캉이 확인 창 → 취소
         const ag = document.getElementById('apkGuide'); if (ag && !ag.hidden) { apkGuideClose(); return true; }   // v2.58.0: APK 설치 안내 창
-        const lm = document.getElementById('logsModal');
-        if (lm && lm.style.display === 'flex' && LOG_PICK_TOGGLE && lm.classList.contains('log-picking')) { setLogPicking(false); return true; }   // v2.58.0: 로그 「골라서 지우기」 중이면 고르기만 끝
         const cf = document.querySelector('.cf-layer:not(.out)'); if (cf) { cf.click(); return true; }   // 승리 축하 화면
         const dd0 = document.querySelector('.modal .cgsel-wrap.open'); if (dd0) { dd0.classList.remove('open'); return true; }   // v2.51.2: 창 안의 고르기 메뉴는 창보다 먼저 닫음
         const open = [...document.querySelectorAll('.modal')].filter(m => m.style.display === 'flex');
