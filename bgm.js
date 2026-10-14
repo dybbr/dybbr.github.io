@@ -69,7 +69,7 @@
     // ---- 파일 찾기: list.json → 없으면 001~100.mp3 중 있는 것 ----
     function discover() {
         if (tracks && tracks.length) return Promise.resolve(tracks);
-        try { var c = JSON.parse(sessionStorage.getItem(K_LIST) || 'null'); if (c && c.length) { tracks = c; return Promise.resolve(c); } } catch (e) {}
+        try { var c = JSON.parse(sessionStorage.getItem(K_LIST) || 'null'); if (Array.isArray(c)) { tracks = c; return Promise.resolve(c); } } catch (e) {}   // v2.60.0: 못 찾은 결과(빈 목록)도 앱이 켜져 있는 동안 기억
         return fetch('audio/list.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }).then(function (j) {
             if (j && Array.isArray(j.tracks) && j.tracks.length) {
                 return j.tracks.map(function (t) { return typeof t === 'string' ? { file: t } : t; }).filter(function (t) { return t && /^[\w\-.가-힣 ]+\.mp3$/i.test(String(t.file || '')); });
@@ -77,6 +77,7 @@
             var found = [], start = 1;   // 20개씩 나눠서 확인 (한꺼번에 100개를 보내 휴대폰 통신을 막지 않게)
             function batch() {
                 if (start > MAX_NO) return Promise.resolve(found);
+                if (start > 1 && !found.length) return Promise.resolve(found);   // v2.60.0: 처음 20개 중 하나도 없으면 음악 폴더가 없는 것 → 더 묻지 않음
                 var ps = [];
                 for (var i = start; i < start + 20 && i <= MAX_NO; i++) {
                     (function (f) {
@@ -89,7 +90,7 @@
             return batch();
         }).then(function (l) {
             tracks = l || [];
-            if (tracks.length) { try { sessionStorage.setItem(K_LIST, JSON.stringify(tracks)); } catch (e) {} }   // 빈 목록은 기억하지 않음 (파일을 올리면 바로 잡히게)
+            try { sessionStorage.setItem(K_LIST, JSON.stringify(tracks)); } catch (e) {}   // v2.60.0: 빈 목록도 기억 (앱을 다시 켜면 새로 찾음)
             return tracks;
         });
     }
