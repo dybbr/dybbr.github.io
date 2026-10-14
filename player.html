@@ -47,7 +47,43 @@
         function apiGetUrl(params) {
             return GOOGLE_SCRIPT_UNIFORM_API_URL + '?key=' + encodeURIComponent(API_KEY) + '&token=' + encodeURIComponent(getToken()) + '&' + params + '&_t=' + Date.now();
         }
-        function apiGetJson(params) { return fetch(apiGetUrl(params)).then(function (r) { return r.json(); }); }
+        // 🏇 v2.64.0: 구글이 가끔 답을 안 보냄 → 4.5초 안에 답이 없으면 같은 요청을 하나 더 (최대 3개 · 25초, 먼저 온 답을 쓰고 나머지는 끊음) — 읽기 요청에만 씀
+        function apiGetJson(params) {
+            return new Promise(function (resolve, reject) {
+                var done = false, n = 0, live = 0, ctls = [], timers = [];
+                function end(ok, v) { if (done) return; done = true; timers.forEach(clearTimeout); ctls.forEach(function (c) { try { c.abort(); } catch (e) {} }); if (ok) resolve(v); else reject(v); }
+                function fire() {
+                    if (done || n >= 3) return; n++; live++;
+                    var c = (typeof AbortController !== 'undefined') ? new AbortController() : null; if (c) ctls.push(c);
+                    fetch(apiGetUrl(params) + '&_h=' + n, c ? { cache: 'no-store', signal: c.signal } : { cache: 'no-store' })
+                        .then(function (r) { return r.json(); })
+                        .then(function (j) { end(true, j); }, function (e) { live--; if (done) return; if (n < 3) timers.push(setTimeout(fire, 800)); else if (!live) end(false, e); });
+                }
+                fire(); timers.push(setTimeout(fire, 4500)); timers.push(setTimeout(fire, 9000));
+                timers.push(setTimeout(function () { end(false, new Error('서버 응답이 늦어요. 잠시 후 다시 시도해 주세요')); }, 25000));
+            });
+        }
+        // 💾 v2.64.0: 명단 화면(index.html)이 기기에 저장해 둔 명단(저장본)이 있으면 서버에 다시 묻지 않고 바로 그림 — snapWho 는 index.html 과 같아야 함
+        var SNAP_KEY = 'daeyeon_snap';
+        function snapWho() {
+            var r = '', u = '';
+            try { r = localStorage.getItem('daeyeon_admin_role') || sessionStorage.getItem('daeyeon_admin_role') || ''; u = localStorage.getItem('daeyeon_active_user') || sessionStorage.getItem('daeyeon_active_user') || ''; } catch (e) {}
+            var src = r + '|' + u, h = 5381;
+            for (var i = 0; i < src.length; i++) h = ((h * 33) ^ src.charCodeAt(i)) >>> 0;
+            return (r || 'u') + ':' + h.toString(36);
+        }
+        function snapLoad() {
+            if (!getToken()) return null;
+            try { var s = JSON.parse(localStorage.getItem(SNAP_KEY) || 'null'); if (s && s.v === 1 && s.who === snapWho() && s.data && Array.isArray(s.data.players) && s.t) return s; } catch (e) {}
+            return null;
+        }
+        // 여기서 사진 · 정보를 바꾸면 저장본을 「오래됨」으로 → 명단 화면으로 돌아가면 서버에서 새로 받음
+        function snapMarkStale(players) {
+            var s = snapLoad(); if (!s) return;
+            if (players) s.data.players = players;
+            s.t.roster = 0;
+            try { localStorage.setItem(SNAP_KEY, JSON.stringify(s)); } catch (e) {}
+        }
     </script>
 
     <style>
@@ -1090,7 +1126,7 @@
         notice.style.display = 'block';
         notice.innerHTML = `<div class="lost-box"><span class="bk-lost" role="img" aria-label="길 잃은 부캉이"></span><b>길을 잃었캉…</b><p>${escapeHtml(msg)}</p><a href="index.html" class="btn-home">명단으로 돌아가기</a></div>`;
     }
-    async function loadPlayerDetail() {
+    async function loadPlayerDetail(fresh) {
         const targetParam = getTargetParam();
         const notice = document.getElementById('statusNotice');
 
@@ -1098,10 +1134,22 @@
             showLost('어떤 선수를 볼지 정해지지 않았어요. 명단에서 선수를 골라 주세요.');
             return;
         }
+        if (!getToken()) return;   // v2.64.0: 로그인 전이면 위 checkAuth 가 메인으로 보냄 (빈 토큰으로 서버에 묻지 않음)
 
+        let usedSnap = false;
         try {
-            // 👥 명단은 서버가 역할에 맞게 걸러서 JSON으로 내려준다 (시트 직접 접근 아님)
-            const resJson = await apiGetJson('action=getRoster');
+            // 💾 v2.64.0: 명단 화면의 저장본(30분 안)이 있으면 서버에 묻지 않음 — 선수 상세를 열 때 요청 2개 → 0개
+            const snap = fresh ? null : snapLoad();
+            let resJson;
+            if (snap && Date.now() - snap.t.roster < 30 * 60 * 1000) {
+                resJson = { result: 'success', players: snap.data.players };
+                usedSnap = true;
+                if (snap.data.settings && snap.data.settings.jerseyColors) applyJerseyColors(snap.data.settings.jerseyColors);
+            } else {
+                // 👥 명단은 서버가 역할에 맞게 걸러서 JSON으로 내려준다 (시트 직접 접근 아님)
+                resJson = await apiGetJson('action=getRoster');
+                if (fresh && resJson && resJson.result === 'success' && Array.isArray(resJson.players)) snapMarkStale(resJson.players);
+            }
             if (!resJson || resJson.result !== 'success' || !Array.isArray(resJson.players)) {
                 showLost((resJson && resJson.message) ? resJson.message : "선수단 데이터를 읽어오지 못했어요. 메인에서 다시 로그인해 주세요.");
                 return;
@@ -1160,7 +1208,7 @@
             }
 
             currentPlayer = p;
-            refreshJerseyColorsFromServer();   // 👕 학년별 유니폼 색 최신값
+            if (!usedSnap) refreshJerseyColorsFromServer();   // 👕 학년별 유니폼 색 최신값 (저장본에 있으면 안 물음)
             renderPlayerCard(p);
             renderNavBar(p);
         } catch (error) {
@@ -1584,6 +1632,7 @@
             });
 
             savePhotoLocally(currentPlayer, dataUrl);
+            snapMarkStale();   // 💾 명단 화면으로 돌아가면 새로 받게
             closeModal('photoUploadModal');
             renderPlayerCard(currentPlayer);
             bkNotify('done', `${currentPlayer.name} 사진 등록 완료캉! ✓`);
@@ -1620,6 +1669,7 @@
             } catch (e) {}
 
             currentPlayer.photoLink = "";
+            snapMarkStale();   // 💾 명단 화면으로 돌아가면 새로 받게
             closeModal('photoUploadModal');
             renderPlayerCard(currentPlayer);
             bkNotify('done', '사진 삭제 완료캉! ✓', '기본 이미지로 돌아갔어요');
@@ -1668,7 +1718,7 @@
                 hideWeight: !document.getElementById('infoEditWeightOpen').checked
             });
             closeModal('playerInfoEditModal');
-            loadPlayerDetail();
+            loadPlayerDetail(true);   // v2.64.0: 서버에서 새로 (명단 화면 저장본은 「오래됨」 표시)
             bkNotify('done', `${currentPlayer.name} 정보 저장 완료캉! ✓`, '명단에 보이기까지 잠시 걸릴 수 있어요');
         } catch (err) {
             console.error("정보 수정 에러:", err);
