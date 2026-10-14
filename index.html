@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.68.0 · b261015";
+        const APP_VERSION = "v2.69.0 · b261015";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -8519,6 +8519,9 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.69.0', d: '2026-10-15', t: '⏱ 로그인 유지 시간 조정', items: [
+            '서버 v2.18.0: 일반 열람자 10분 · 보호자 1시간 (그대로) · 코치진 2시간 → 1시간 · 총무님 1시간 → 5시간 · 대표님 4시간 → 5시간 · 개발자 6시간 → 5시간'
+        ] },
         { v: 'v2.68.0', d: '2026-10-15', t: '🔥 미리 데우기 3배 빠르게', items: [
             '확인해 보니 미리 데우기(서버가 시트를 미리 읽어 둠)는 작동하지만, 한 번에 다 읽느라 7초 넘게 걸려서 로그인을 빨리 하면 소용이 없었음',
             '명단 · 일정 · 공지 세 묶음으로 나눠 동시에 미리 읽게 바꿈 (서버 v2.17.0)',
