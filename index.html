@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.60.0 · b261014";
+        const APP_VERSION = "v2.61.0 · b261014";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -8863,6 +8863,10 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.61.0', d: '2026-10-14', t: '🔇 배경음악 기능 없앰', items: [
+            '오른쪽 아래 🎵 배경음악 · ⏭ 다음 곡 버튼과 배경음악 기능을 없앰 (명단 · 선수 상세 화면 모두)',
+            '앱을 켤 때 배경음악 파일(bgm.js)을 받지 않아 그만큼 가벼워짐 — 🔊 효과음 · 화면 크기 조절은 그대로'
+        ] },
         { v: 'v2.60.0', d: '2026-10-14', t: '🚀 통신 줄이기 — 앱 켤 때 요청 한 번에', items: [
             '앱을 켤 때 명단 · 설정 · 일정 · 공지를 서버에 한 번에 받음 (요청 4개 → 1개, 서버 v2.12.0) — 여러 명이 한꺼번에 들어와도 서버가 덜 붐빔',
             '서버: 보안 활동 로그는 줄 서지 않고 바로 기록 + 로그 한 줄마다 제목 줄을 다시 꾸미던 것 없앰 (로그가 빠지는 일도 줄어듦)',
@@ -10271,7 +10275,5 @@
     updateUserIdentityBadge();
     loadGoogleSheetData();
 </script>
-
-<script src="bgm.js?v=2.60.0" defer></script>   <!-- 🎵 배경음악 (v2.36.0) -->
 </body>
 </html>
