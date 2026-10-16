@@ -82,6 +82,7 @@
             var s = snapLoad(); if (!s) return;
             if (players) s.data.players = players;
             s.t.roster = 0;
+            if (s.ver) s.ver.roster = '';   // v2.76.0: 명단 번호도 지워서 명단 화면이 꼭 새로 받게
             try { localStorage.setItem(SNAP_KEY, JSON.stringify(s)); } catch (e) {}
         }
     </script>
