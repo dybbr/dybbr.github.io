@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.76.0 · b261017";
+        const APP_VERSION = "v2.77.0 · b261017";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -3765,7 +3765,7 @@
 
     function canViewSchedule() { return isAuthValid() && (VALID_ROLES.indexOf(currentRole) !== -1 || !!getActiveUser()); }
     function canEditSchedule() { return isAuthValid() && ['dev', 'super', 'general'].indexOf(currentRole) !== -1; }
-    function canViewNotice() { return isAuthValid(); }
+    function canViewNotice() { return canViewSchedule(); }   // v2.77.0: 1922 일반 열람자는 공지도 안 보임 (보호자 · 관리자만 — 서버 v2.24.0도 안 보냄)
     function canViewAdmin() { return isAuthValid() && VALID_ROLES.indexOf(currentRole) !== -1; }
 
     // 관리자 탭 안내문 · 빈 그룹 처리
@@ -8508,6 +8508,11 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.77.0', d: '2026-10-17', t: '🔒 일반 열람자는 명단만', items: [
+            '1922 일반 열람자에게 📢 공지 탭이 안 보임 (일정 · 구장은 원래 안 보였음) — 탭이 명단 하나라 위쪽 탭 줄도 숨김',
+            '서버(v2.24.0)도 일반 열람자에게는 일정 · 공지를 아예 보내지 않음 — 화면에서만 숨기던 것을 데이터까지 막음 · 일반 열람자 응답도 그만큼 가벼워짐',
+            '보호자 · 코치진 · 총무님 · 대표님 · 개발자는 그대로'
+        ] },
         { v: 'v2.76.0', d: '2026-10-17', t: '🔢 바뀐 것만 받기 (명단 · 일정 · 공지 번호 확인)', items: [
             '기기에 저장해 둔 명단 · 일정 · 공지마다 「번호」(내용으로 만든 지문)를 같이 저장 — 서버에 물을 때 이 번호를 보내고, 같으면 그 묶음은 받지 않고 저장본을 그대로 씀',
             '바뀐 묶음만 실시간으로 새로 받음 · 아무것도 안 바뀌었으면 121KB 쯤 받던 것이 몇백 바이트로 (서버 v2.23.0)',
