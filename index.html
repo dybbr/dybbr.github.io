@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.78.0 · b261017";
+        const APP_VERSION = "v2.79.0 · b261017";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -3624,6 +3624,7 @@
     function applyLoginResult(res) {
         if (!res || res.result !== 'success' || !res.token) return false;
         setToken(res.token);
+        try { markActive(true); } catch (e) {}   // ⏳ v2.79.0: 로그인한 순간부터 10분 다시 셈
         localStorage.setItem('daeyeon_auth_expire', String(res.exp || (Date.now() + 60 * 60 * 1000)));
         clearAdminRoleStorage();
         localStorage.removeItem('daeyeon_active_user');
@@ -6071,10 +6072,46 @@
             overlay.style.display = 'flex';
             const pwInput = document.getElementById('lockPasswordInput');
             pwInput.value = '';
-            if (!quiet) setTimeout(() => pwInput.focus(), 50);
+            if (!quiet && why !== '자동 잠금') setTimeout(() => pwInput.focus(), 50);   // 자동 잠금이면 키보드를 바로 띄우지 않음
         }
-        if (!quiet) bkNotify('sleep', '로그아웃했캉 👋', '다시 쓰려면 로그인해 주세요', { ms: 3500 });
+        if (!quiet) {
+            if (why === '자동 잠금') bkNotify('sleep', '10분 동안 안 써서 잠갔캉 💤', '다시 로그인해 주세요', { ms: 6000 });
+            else bkNotify('sleep', '로그아웃했캉 👋', '다시 쓰려면 로그인해 주세요', { ms: 3500 });
+        }
     }
+    // ⏳ v2.79.0: 쓰는 동안 자동 연장 — 10분 동안 화면을 안 만지면 잠금 (로그인 최대 시간은 서버가 정함: 일반 30분 · 나머지 5시간)
+    //   누르기 · 스크롤 · 글자 입력이 있으면 「쓰는 중」 → 그때마다 10분이 다시 시작 · 폰 안에서만 재서 서버 요청은 늘지 않음
+    //   잠기기 30초 전에 알림 · 화면을 끄거나 다른 앱에 갔다 오면 돌아온 순간 계산해서 지났으면 바로 잠금
+    //   마지막으로 쓴 시각은 기기에 저장(daeyeon_last_active) → 앱을 닫았다 다시 열어도 · 선수 상세(player.html)에서 쓴 것도 이어서 셈
+    const IDLE_LOCK_MS = 10 * 60 * 1000, IDLE_WARN_MS = 30 * 1000, IDLE_KEY = 'daeyeon_last_active';
+    let idleLast = 0, idleSaved = 0, idleWarned = false;
+    function idleLoggedIn() { return !!getToken() && isAuthValid(); }
+    function idleStored() { try { return parseInt(localStorage.getItem(IDLE_KEY) || '0', 10) || 0; } catch (e) { return 0; } }
+    function markActive(force) {
+        idleLast = Date.now();
+        if (idleWarned) { idleWarned = false; force = true; try { bkNoteHide(); } catch (e) {} }
+        if (force || idleLast - idleSaved > 10000) { idleSaved = idleLast; try { localStorage.setItem(IDLE_KEY, String(idleLast)); } catch (e) {} }   // 기기 저장은 10초에 한 번까지만
+    }
+    function idleCheck() {
+        if (!idleLoggedIn()) { idleWarned = false; return; }
+        if (idleLast && idleLast - idleStored() > 1000) { idleSaved = idleLast; try { localStorage.setItem(IDLE_KEY, String(idleLast)); } catch (e) {} }   // 5초마다 저장본도 맞춤
+        const idle = Date.now() - Math.max(idleLast, idleStored());
+        if (idle >= IDLE_LOCK_MS) { idleWarned = false; lockScreenNow('자동 잠금'); return; }
+        if (idle >= IDLE_LOCK_MS - IDLE_WARN_MS && !idleWarned && !document.hidden) {
+            idleWarned = true;
+            bkNotify('info', '30초 뒤 잠겨요캉 ⏳', '화면을 누르면 계속 쓸 수 있어요', { ms: IDLE_WARN_MS });
+        }
+    }
+    function idleStartupCheck() {   // 앱을 열 때: 마지막으로 쓴 지 10분이 넘었으면 바로 잠금
+        if (!idleLoggedIn()) return;
+        const v = idleStored();
+        if (v && Date.now() - v >= IDLE_LOCK_MS) { lockScreenNow('자동 잠금'); return; }
+        markActive(true);
+    }
+    ['pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll'].forEach(ev => window.addEventListener(ev, () => markActive(), { passive: true, capture: true }));
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) idleCheck(); });
+    window.addEventListener('pageshow', () => idleCheck());
+    setInterval(idleCheck, 5000);
     // 🚪 v2.48.0: 뒤로가기 두 번으로 앱을 닫을 때 자동 로그아웃 (로그인 상태일 때만 · 한 번만)
     function appExitLogout() {
         backArmed = false; clearTimeout(backTimer);
@@ -8508,6 +8545,12 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.79.0', d: '2026-10-17', t: '⏳ 쓰는 동안 자동 연장 · 10분 안 쓰면 잠금', items: [
+            '화면을 누르거나 · 스크롤하거나 · 글자를 치면 「쓰는 중」 — 그때마다 10분이 다시 시작되고, 10분 동안 아무것도 안 만지면 자동으로 잠김',
+            '잠기기 30초 전에 「30초 뒤 잠겨요」 알림 · 화면을 끄거나 다른 앱에 갔다 와도 돌아온 순간 계산 · 앱을 닫았다 다시 열어도 이어서 셈',
+            '로그인 최대 시간(서버 v2.26.0): 일반 열람자 10분 → 30분 · 보호자 · 코치진 1시간 → 5시간 · 총무님 · 대표님 · 개발자 5시간 그대로',
+            '폰 안에서만 재서 서버 요청은 늘지 않음 · 잠겨도 저장본은 남아서 다시 로그인하면 바로 보임'
+        ] },
         { v: 'v2.78.0', d: '2026-10-17', t: '🔒 일반 열람자에게 생일 · 키 · 몸무게 · 졸업생 숨김', items: [
             '1922 일반 열람자에게는 선수별 공개 설정과 상관없이 생년월일 · 키 · 몸무게를 늘 「비공개」로 (서버 v2.25.0) — 보호자 · 코치진 · 총무님 · 대표님 · 개발자는 그대로',
             '1922 일반 열람자에게는 🎓 졸업생 명단도 보내지 않음 (학년 고르기의 「졸업생」 버튼도 안 보임)',
@@ -9758,6 +9801,7 @@
     // 예전 버전이 기기에 저장해 둔 비상연락망 사본 삭제 (이제는 서버에서 권한 확인 후 그때그때만 받음)
     try { localStorage.removeItem('daeyeon_emergency_contacts'); } catch (e) {}
     try { localStorage.removeItem('daeyeon_notice_views'); } catch (e) {}   // v2.71.0: 공지 조회 기록 기능을 없애 기기에 남은 목록도 지움
+    idleStartupCheck();   // ⏳ v2.79.0: 10분 넘게 안 쓰다가 다시 열었으면 바로 잠금 (저장본은 남김 · 다시 로그인하면 번호 확인으로 가볍게)
     if (isAuthValid()) {
         startSessionCountdown();
     }
