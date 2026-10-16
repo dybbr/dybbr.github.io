@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.72.0 · b261016";
+        const APP_VERSION = "v2.73.0 · b261016";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -2769,10 +2769,10 @@
         <div class="ptr-mitt" id="ptrMitt"></div>
     </div></div>
     <!-- 상단 메뉴 탭 (로그인 후 표시) -->
-    <nav class="main-tabs" id="mainTabs" style="display: none;">
-        <button type="button" class="main-tab active" data-tab="roster" onclick="showMainTab('roster')"><span class="tab-ico">👥</span><span class="tab-txt">명단</span></button>
+    <nav class="main-tabs" id="mainTabs" style="display: none;">   <!-- v2.73.0: 탭 순서 일정 · 공지 · 명단 · 구장 · 관리 -->
         <button type="button" class="main-tab" data-tab="schedule" id="tabBtnSchedule" onclick="showMainTab('schedule')"><span class="tab-ico">📅</span><span class="tab-txt">일정</span></button>
         <button type="button" class="main-tab" data-tab="notice" id="tabBtnNotice" onclick="showMainTab('notice')"><span class="tab-ico">📢</span><span class="tab-txt">공지</span><span class="tab-dot" id="noticeDot"></span></button>
+        <button type="button" class="main-tab active" data-tab="roster" onclick="showMainTab('roster')"><span class="tab-ico">👥</span><span class="tab-txt">명단</span></button>
         <button type="button" class="main-tab" data-tab="venue" id="tabBtnVenue" onclick="showMainTab('venue')"><span class="tab-ico">🏟️</span><span class="tab-txt">구장</span></button>
         <button type="button" class="main-tab admin-tab" data-tab="admin" id="tabBtnAdmin" style="display: none;" onclick="showMainTab('admin')"><span class="tab-ico">⚙️</span><span class="tab-txt">관리</span></button>
     </nav>
@@ -8464,6 +8464,9 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.73.0', d: '2026-10-16', t: '🗂 탭 순서 바꿈', items: [
+            '위쪽 탭 순서: 명단 · 일정 · 공지 · 구장 · 관리 → 📅 일정 · 📢 공지 · 👥 명단 · 🏟️ 구장 · ⚙️ 관리'
+        ] },
         { v: 'v2.72.0', d: '2026-10-16', t: '✏️ 구장 이름을 바꾸면 일정 장소도 같이', items: [
             '구장 이름을 바꾸면 그 이름으로 적힌 일정(지난 일정 포함)의 장소도 새 이름으로 바로 바뀜 — 시트 「일정」 탭의 장소 칸도 함께 (서버 v2.21.0)',
             '「옛이름 (3루측)」처럼 뒤에 괄호가 붙은 것은 괄호 부분을 그대로 두고 이름만 바꿈 · 다른 이름(별칭)으로 적힌 일정은 그대로',
