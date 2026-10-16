@@ -946,6 +946,20 @@
         }
     })();
 
+    // ⏳ v2.79.0: 쓰는 동안 자동 연장 — 명단 화면(index.html)과 같은 기록(daeyeon_last_active)을 씀
+    //   여기서 누르기 · 스크롤 · 글자 입력도 「쓰는 중」 · 10분 동안 안 만지면 메인으로 보냄 (메인이 열리면서 잠금)
+    (function idleWatch() {
+        var LOCK = 10 * 60 * 1000, KEY = 'daeyeon_last_active', saved = 0;
+        function loggedIn() { var e = localStorage.getItem('daeyeon_auth_expire'); return !!e && Date.now() <= parseInt(e, 10) && !!getToken(); }
+        function last() { try { return parseInt(localStorage.getItem(KEY) || '0', 10) || 0; } catch (e) { return 0; } }
+        function mark(force) { var n = Date.now(); if (force || n - saved > 10000) { saved = n; try { localStorage.setItem(KEY, String(n)); } catch (e) {} } }
+        function check() { if (!loggedIn()) return; var l = last(); if (l && Date.now() - l >= LOCK) window.location.href = 'index.html'; }
+        if (loggedIn()) { var l0 = last(); if (l0 && Date.now() - l0 >= LOCK) { window.location.href = 'index.html'; return; } mark(true); }
+        ['pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll'].forEach(function (ev) { window.addEventListener(ev, function () { mark(); }, { passive: true, capture: true }); });
+        document.addEventListener('visibilitychange', function () { if (!document.hidden) check(); });
+        setInterval(check, 5000);
+    })();
+
     const defaultAvatar = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23e2e8f0'/%3E%3Cpath d='M32 32 C32 18 42 12 50 12 C58 12 68 18 68 32 C68 40 58 48 50 48 C42 48 32 40 32 32 Z' fill='%2394a3b8'/%3E%3Cpath d='M44 14 C48 10 56 10 65 14 C74 18 84 18 86 21 C86 24 75 25 65 24 Z' fill='%230b2240'/%3E%3Cpath d='M20 92 C20 66 34 56 50 56 C66 56 80 66 80 92 Z' fill='%2364748b'/%3E%3C/svg%3E";
 
     function handleImgError(el) {
