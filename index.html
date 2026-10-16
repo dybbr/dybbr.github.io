@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.71.0 · b261015";
+        const APP_VERSION = "v2.72.0 · b261016";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -4229,6 +4229,29 @@
     // v2.42.1: 이름 맞추기 — ① 공백 무시 ② 괄호만 빼고(「기장 (리틀구장)」→ 기장리틀구장) ③ 괄호 앞 이름(「기장리틀구장 (3루측)」, 3글자 이상)
     //   ④ 끝의 구장/야구장/경기장 차이(「기장 (소프트)」→ 기장소프트구장, 「을숙도구장」↔ 을숙도야구장) — 한 곳으로만 맞을 때
     const venueSfx = s => s.replace(/(야구장|구장|경기장|운동장)$/, '');
+    // ✏️ v2.72.0: 구장 이름을 바꾸면 일정 「장소」 칸의 옛 이름도 새 이름으로 — 서버(v2.21.0)의 placeRenamed 와 같은 규칙
+    //   ① 「옛이름」(띄어쓰기 무시) · 「기장 (리틀구장)」처럼 괄호를 빼면 옛이름 → 「새이름」
+    //   ② 「옛이름 (3루측)」 → 「새이름 (3루측)」 (괄호 앞 이름이 3글자 이상일 때만)   ③ 「거제 하청야구장 (옛이름)」 → 괄호 안만
+    function placeRenamed(p, oldName, newName) {
+        p = String(p == null ? '' : p).trim();
+        const ok = venueNorm(oldName);
+        if (!p || !ok) return null;
+        if (venueNorm(p) === ok || venueNorm(p.replace(/[\(（\)）\[\]]/g, '')) === ok) return newName;
+        const m = p.match(/^(.*?)(\s*[\(（\[].*)$/);
+        if (m && venueNorm(m[1]).length >= 3 && venueNorm(m[1]) === ok) return newName + m[2];
+        const inner = p.match(/^(.*[\(（])([^\)）]+)([\)）].*)$/);
+        if (inner && venueNorm(inner[2]).length >= 3 && venueNorm(inner[2]) === ok) return inner[1] + newName + inner[3];
+        return null;
+    }
+    function renameVenueInLocalEvents(oldName, newName) {   // 화면에 있는 일정도 바로 바꿈 (시트는 서버가 바꿈)
+        let n = 0;
+        schedEvents.forEach(ev => { const np = placeRenamed(ev.place, oldName, newName); if (np !== null && np !== ev.place) { ev.place = np; n++; } });
+        if (n) {
+            try { renderSchedule(); renderNextEventBanner(); } catch (e) {}
+            snapPatch({ events: schedEvents, venues: schedVenues }, 'sched');
+        }
+        return n;
+    }
     function findVenue(name) {
         const full = String(name || '').trim();
         if (!full) return null;
@@ -4782,10 +4805,11 @@
             await postApi({ action: 'saveVenue', venue: Object.assign({ oldName: orig ? vnEditCtx.origName : '' }, venue) });
             const cur = orig ? (schedVenues.find(isSelf) || orig) : null;
             if (cur) { Object.assign(cur, venue); cur._geo = null; } else schedVenues.push(venue);
+            const moved = (orig && venueNorm(vnEditCtx.origName) !== venueNorm(name)) ? renameVenueInLocalEvents(vnEditCtx.origName, name) : 0;   // v2.72.0
             venueOpenName = name;
             closeModal('venueEditModal');
             renderVenues();
-            bkNotify('done', '구장 저장 완료캉! ✓');
+            bkNotify('done', '구장 저장 완료캉! ✓', moved ? `일정 ${moved}개의 장소도 「${name}」(으)로 바꿨어요` : undefined);
             setTimeout(() => loadSchedule(true), 2500);   // 시트에 잘 들어갔는지 다시 받아 맞춤
         } catch (err) { bkNotify('fail', null, err.message); }
         finally { btn.disabled = false; btn.textContent = '저장'; }
@@ -8440,6 +8464,11 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.72.0', d: '2026-10-16', t: '✏️ 구장 이름을 바꾸면 일정 장소도 같이', items: [
+            '구장 이름을 바꾸면 그 이름으로 적힌 일정(지난 일정 포함)의 장소도 새 이름으로 바로 바뀜 — 시트 「일정」 탭의 장소 칸도 함께 (서버 v2.21.0)',
+            '「옛이름 (3루측)」처럼 뒤에 괄호가 붙은 것은 괄호 부분을 그대로 두고 이름만 바꿈 · 다른 이름(별칭)으로 적힌 일정은 그대로',
+            '저장하면 「일정 ○개의 장소도 바꿨어요」로 알려 줌'
+        ] },
         { v: 'v2.71.0', d: '2026-10-15', t: '🧹 공지 조회수 · 읽은 사람 없앰', items: [
             '공지 목록의 👁 조회수와 관리자용 「👁 읽은 사람」 버튼을 없앰',
             '공지를 펼쳐도 서버에 「읽음」 기록을 보내지 않음 — 새 공지에 학부모님이 몰릴 때 서버 요청이 그만큼 줄어듦 (서버 v2.20.0에서도 제거)'
