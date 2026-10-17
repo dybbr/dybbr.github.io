@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.79.0 · b261017";
+        const APP_VERSION = "v2.80.0 · b261017";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -1385,6 +1385,8 @@
         .admin-role-pill.super { background: #fee2e2; color: #991b1b; }
         .admin-role-pill.sub { background: #eff6ff; color: #1e40af; }
         .admin-role-pill.general { background: #f0fdf4; color: #166534; }
+        .admin-role-pill.vsuper { background: #fff7ed; color: #9a3412; }
+        .admin-role-pill.vgeneral { background: #ecfeff; color: #155e75; }
         .admin-role-desc { font-size: 12px; color: #64748b; line-height: 1.6; margin: 8px 0 4px; }
         .admin-group { border-top: 1px solid #f1f5f9; margin-top: 12px; padding-top: 12px; }
         .admin-group-title { font-size: 12px; font-weight: 800; color: #94a3b8; margin-bottom: 8px; letter-spacing: 0.3px; }
@@ -2207,6 +2209,8 @@
     .admin-role-pill.super { background: #302331; color: #e78d8d; }
     .admin-role-pill.sub { background: #1b2c46; color: #8da2e7; }
     .admin-role-pill.general { background: #1b3837; color: #99e6b6; }
+    .admin-role-pill.vsuper { background: #3a2a1d; color: #f4b183; }
+    .admin-role-pill.vgeneral { background: #17333a; color: #8fdcea; }
     .admin-role-desc { color: #97a3b7; }
     .admin-group { border-top: 1px solid #2a374e; }
     .jsy-row { background: #151e2e; border-color: #2a374e; }
@@ -3192,6 +3196,7 @@
                 <span style="font-size: 11px; color: #64748b; line-height: 1.6; margin-top: 8px;">
                     • <b>대표님</b>: 모든 기능 (비상연락망, 유니폼 접수·발주, 비밀번호 관리, 일정·공지 관리 등)<br>
                     • <b>총무님</b>: 비상연락망 + 비공개 정보 열람 + 일정·공지 관리 + 총무님 비밀번호 변경<br>
+                    • <b>부대표님 · 부총무님</b>: 비상연락망 열람 + 본인 비밀번호 변경<br>
                     • <b>코치진</b>: 비공개 정보 열람
                 </span>
             </div>
@@ -3683,7 +3688,12 @@
     let players = [];
     let gradPlayers = [];     // 🎓 졸업생 (OB) 명단 — 서버 「졸업생 명단」 탭 (v2.45.0)
     let rosterSeason = 0;     // 명단 제목의 학년도 (서버가 알려 줌)
-    const VALID_ROLES = ['dev', 'super', 'sub', 'general'];
+    const VALID_ROLES = ['dev', 'super', 'sub', 'general', 'vsuper', 'vgeneral'];   // v2.80.0: 👥 부대표님(vsuper) · 부총무님(vgeneral)
+    const ADMIN_ROLE_LABEL = { dev: '개발자', super: '대표님', sub: '코치진', general: '총무님', vsuper: '부대표님', vgeneral: '부총무님' };
+    // 👥 v2.80.0: 부대표님 · 부총무님 — 🚨 비상 연락(총무님 화면 그대로) + 🔑 본인 비밀번호 변경만.
+    //   나머지는 보호자와 똑같이 봄 (일정 · 공지 · 구장 보기 / 숨긴 사진 · 생일 · 키 · 몸무게는 안 보임 — 서버 v2.27.0도 안 보냄)
+    function isContactOnlyRole() { return currentRole === 'vsuper' || currentRole === 'vgeneral'; }
+    function canSeeContacts() { return currentRole === 'super' || currentRole === 'dev' || currentRole === 'general' || isContactOnlyRole(); }
     let currentRole = (function () {
         if (!isAuthValid()) return 'guest';   // 만료된 관리자 권한이 되살아나지 않도록
         const r = localStorage.getItem('daeyeon_admin_role') || sessionStorage.getItem('daeyeon_admin_role') || 'guest';
@@ -3778,7 +3788,9 @@
             dev: '모든 관리자 기능 + 비밀번호 확인, 아래 "개발" 메뉴(업데이트 히스토리)까지 사용할 수 있습니다.',
             super: '모든 기능을 사용할 수 있습니다. (비상연락망, 유니폼 접수·발주, 비밀번호 관리, 구글 시트 편집, 일정·공지 관리, 선수 사진 등록)',
             sub: '비공개 정보(사진·생년월일·신장·몸무게)를 볼 수 있습니다.',
-            general: '학부모 비상연락망과 비공개 정보(사진·생년월일·신장·몸무게)를 볼 수 있고, 일정·공지 관리와 총무님 비밀번호 변경을 할 수 있습니다.'
+            general: '학부모 비상연락망과 비공개 정보(사진·생년월일·신장·몸무게)를 볼 수 있고, 일정·공지 관리와 총무님 비밀번호 변경을 할 수 있습니다.',
+            vsuper: '학부모 비상연락망을 볼 수 있고, 부대표님 비밀번호를 바꿀 수 있습니다. (일정 · 공지 · 명단은 보호자와 똑같이 보여요)',
+            vgeneral: '학부모 비상연락망을 볼 수 있고, 부총무님 비밀번호를 바꿀 수 있습니다. (일정 · 공지 · 명단은 보호자와 똑같이 보여요)'
         })[currentRole] || '';
         const bar = document.getElementById('adminBar');
         const anyOps = bar && Array.from(bar.querySelectorAll('button')).some(b => b.style.display !== 'none');
@@ -6403,7 +6415,7 @@
         const b = hasVal ? escapeHtml(p.birth) : '';
 
         if (bHidden) {
-            if (currentRole === 'guest') {
+            if (currentRole === 'guest' || isContactOnlyRole()) {   // v2.80.0: 부대표님 · 부총무님은 보호자처럼
                 return '<span class="text-private">비공개</span>';
             } else {
                 return hasVal ? `${b}<span class="admin-private-badge">비공개</span>` : '<span class="admin-private-badge">비공개</span>';
@@ -7920,15 +7932,15 @@
     // 학부모 비상연락망
     // ==========================================================
     async function openEmergencyContactsModal() {
-        if (!(isSuperOrDev() || currentRole === 'general')) { bkNotify('info', '비상연락망은 대표님·총무님만 볼 수 있캉!'); return; }
+        if (!canSeeContacts()) { bkNotify('info', '비상연락망은 대표님·총무님·부대표님·부총무님만 볼 수 있캉!'); return; }
         document.getElementById('btnContactsSheet').style.visibility = isSuperOrDev() ? 'visible' : 'hidden';   // 시트 원본은 대표님만
-        applyEcMode();   // 📇 v2.51.0: 총무님은 「간단히」
+        applyEcMode();   // 📇 v2.51.0: 총무님은 「간단히」 (v2.80.0: 부대표님 · 부총무님도 총무님과 똑같이)
         document.getElementById('emergencyContactsModal').style.display = 'flex';
         const content = document.getElementById('contactsListContent');
         content.innerHTML = '<div style="text-align:center; padding:40px; color:#64748b;">불러오는 중...</div>';
 
         try {
-            // 서버가 권한(대표/총무/개발자)을 확인하고 연락망을 내려준다. 기기에는 저장하지 않는다.
+            // 서버가 권한(대표/총무/부대표/부총무/개발자)을 확인하고 연락망을 내려준다. 기기에는 저장하지 않는다.
             const res = await apiGetJson('action=getContacts');
             if (res && Array.isArray(res.contacts) && res.contacts.length > 0) {
                 emergencyContactsData = res.contacts;
@@ -8210,7 +8222,7 @@
 
     const EC_GENERAL_SIMPLE_ONLY = false;   // true 면 총무님은 「간단히」만 (자세히로 못 바꿈) · false 면 기본 간단히 + 바꿀 수 있음
     function ecMode() {
-        if (currentRole === 'general') {
+        if (currentRole === 'general' || isContactOnlyRole()) {   // v2.80.0: 부대표님 · 부총무님도 총무님처럼 기본 「간단히」
             if (EC_GENERAL_SIMPLE_ONLY) return 'simple';
             try { return localStorage.getItem('daeyeon_ec_mode') || 'simple'; } catch (e) { return 'simple'; }
         }
@@ -8222,7 +8234,7 @@
         document.getElementById('emergencyContactsModal').classList.toggle('ec-simple', simple);
         const tg = document.getElementById('ecModeToggle');
         if (tg) {
-            tg.hidden = currentRole === 'general' && EC_GENERAL_SIMPLE_ONLY;   // 총무님은 바꾸는 버튼 없이 간단히만
+            tg.hidden = (currentRole === 'general' || isContactOnlyRole()) && EC_GENERAL_SIMPLE_ONLY;   // 총무님(· 부대표님 · 부총무님)은 바꾸는 버튼 없이 간단히만
             tg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.m === (simple ? 'simple' : 'full')));
         }
         const q = document.getElementById('contactSearchInput');
@@ -8545,6 +8557,13 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.80.0', d: '2026-10-17', t: '👥 부대표님 · 부총무님 관리자 추가', items: [
+            '새 관리자 등급 2개 — 🎖️ 부대표님 · 📒 부총무님 (각자 비밀번호로 로그인, 서버 v2.27.0)',
+            '할 수 있는 것: 🚨 비상 연락 보기(총무님 화면과 똑같이 「간단히 | 자세히」) + 🔑 본인 비밀번호 변경',
+            '나머지는 보호자와 똑같이 — 일정 · 공지 · 구장 · 명단은 보기만, 숨긴 사진 · 생일 · 키 · 몸무게는 안 보임 · 일정 · 공지 · 구장 수정 · 유니폼 · 시트 편집은 안 됨',
+            '대표님 · 개발자의 🔑 비번 관리에 부대표님 · 부총무님 칸 추가 (현재 값 표시 · 아직 안 정했으면 「아직 없음」) — 비밀번호를 넣기 전에는 로그인 안 됨',
+            '관리자 로그인 창 · 관리 탭 안내문 · 등급 표시에 부대표님 · 부총무님 이름 추가'
+        ] },
         { v: 'v2.79.0', d: '2026-10-17', t: '⏳ 쓰는 동안 자동 연장 · 10분 안 쓰면 잠금', items: [
             '화면을 누르거나 · 스크롤하거나 · 글자를 치면 「쓰는 중」 — 그때마다 10분이 다시 시작되고, 10분 동안 아무것도 안 만지면 자동으로 잠김',
             '잠기기 30초 전에 「30초 뒤 잠겨요」 알림 · 화면을 끄거나 다른 앱에 갔다 와도 돌아온 순간 계산 · 앱을 닫았다 다시 열어도 이어서 셈',
@@ -9364,13 +9383,13 @@
         finally { if (loginBtn) { loginBtn.disabled = false; loginBtn.textContent = prevText; } }
 
         // 관리자 로그인 창에서는 관리자/개발자만 허용 (학부모/익명은 잠금화면에서)
-        if (!res || res.result !== 'success' || !['super', 'sub', 'general', 'dev'].includes(res.role)) {
+        if (!res || res.result !== 'success' || !VALID_ROLES.includes(res.role)) {
             if (res && res.locked) bkNotify('fail', '로그인 시도가 너무 많캉…', res.message || '잠시 후 다시 시도해 주세요', { ms: 6000 });
             else bkNotify('fail', '비밀번호가 틀렸캉…');
             return;
         }
         applyLoginResult(res);
-        const label = ({ dev: '개발자', super: '대표님', sub: '코치진', general: '총무님' })[res.role] || res.role;
+        const label = ADMIN_ROLE_LABEL[res.role] || res.role;
 
         document.documentElement.classList.add('is-authenticated');
         closeModal('loginModal');
@@ -9389,18 +9408,18 @@
 
         adminBar.className = 'admin-bar';
 
-        if (currentRole === 'dev' || currentRole === 'super' || currentRole === 'sub' || currentRole === 'general') {
+        if (VALID_ROLES.indexOf(currentRole) !== -1) {
             adminBtn.style.display = '';
             adminBtn.textContent = '🔓 로그아웃';
             adminBtn.classList.add('logged-in');
             adminBar.style.display = 'flex';
-            roleText.textContent = ({ dev: '개발자', super: '대표님', sub: '코치진', general: '총무님' })[currentRole] || currentRole.toUpperCase();
+            roleText.textContent = ADMIN_ROLE_LABEL[currentRole] || currentRole.toUpperCase();
             roleText.className = 'admin-role-pill ' + currentRole;
             document.getElementById('btnSheetLink').style.display = isSuperOrDev() ? 'inline-flex' : 'none';
             document.getElementById('btnToggleUniform').style.display = isSuperOrDev() ? 'inline-block' : 'none';
             document.getElementById('btnViewOrders').style.display = isSuperOrDev() ? 'inline-block' : 'none';
-            document.getElementById('btnManagePw').style.display = (isSuperOrDev() || currentRole === 'general') ? 'inline-block' : 'none';   // 총무님은 본인 비밀번호만
-            document.getElementById('btnEmergencyContacts').style.display = (isSuperOrDev() || currentRole === 'general') ? 'inline-flex' : 'none';   // 대표님·총무님
+            document.getElementById('btnManagePw').style.display = (isSuperOrDev() || currentRole === 'general' || isContactOnlyRole()) ? 'inline-block' : 'none';   // 총무님 · 부대표님 · 부총무님은 본인 비밀번호만
+            document.getElementById('btnEmergencyContacts').style.display = canSeeContacts() ? 'inline-flex' : 'none';   // 대표님 · 총무님 · 부대표님 · 부총무님
         } else {
             // 보호자 · 일반 열람자: 관리 메뉴는 숨기고, 오른쪽 위 「🔓 로그아웃」만 (v2.50.0 — 예전 「화면 잠금」 자리)
             const loggedIn = isAuthValid() && !!getToken();
@@ -9418,7 +9437,7 @@
     // 특정 기기가 아니라 모든 접속자에게 동일하게 적용된다.
     //   ⚠️ 보안상 현재 저장된 비밀번호 값을 되돌려주는 기능은 제거됨 (잊었으면 새로 설정).
     async function openPasswordManageModal() {
-        if (currentRole === 'general') { openGeneralPasswordModal(); return; }
+        if (currentRole === 'general' || isContactOnlyRole()) { openOwnPasswordModal(); return; }   // v2.80.0: 부대표님 · 부총무님도 본인 것만
         if (!isSuperOrDev()) { bkNotify('info', '비밀번호 변경은 대표님만 할 수 있캉!'); return; }
         const isDev = (currentRole === 'dev');
 
@@ -9446,6 +9465,16 @@
                 <div id="pwCurValGeneral" class="pw-cur-val">현재 값 불러오는 중...</div>
                 <input type="password" id="pwNewGeneral" placeholder="변경하지 않으려면 비워두세요" autocomplete="off">
             </div>
+            <div class="form-group">
+                <label>🎖️ 부대표님 새 비밀번호 (4~20자, 선택)</label>
+                <div id="pwCurValVsuper" class="pw-cur-val">현재 값 불러오는 중...</div>
+                <input type="password" id="pwNewVsuper" placeholder="변경하지 않으려면 비워두세요" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label>📒 부총무님 새 비밀번호 (4~20자, 선택)</label>
+                <div id="pwCurValVgeneral" class="pw-cur-val">현재 값 불러오는 중...</div>
+                <input type="password" id="pwNewVgeneral" placeholder="변경하지 않으려면 비워두세요" autocomplete="off">
+            </div>
         `;
         document.getElementById('pwModalBtns').innerHTML = `
             <button class="btn-cancel" onclick="closeModal('passwordModal')">취소</button>
@@ -9454,32 +9483,37 @@
         document.getElementById('passwordModal').style.display = 'flex';
         setTimeout(() => document.getElementById('pwCurrentSuper').focus(), 50);
 
-        // 현재 저장된 비밀번호 표시 (서버가 토큰 역할 확인: 개발자=전부, 대표님=코치진·총무님)
-        const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = (v != null && v !== '') ? `현재 값: ${v}` : '현재 값을 불러오지 못했습니다.'; };
+        // 현재 저장된 비밀번호 표시 (서버가 토큰 역할 확인: 개발자=전부, 대표님=코치진·총무님·부대표님·부총무님)
+        //   v2.80.0: 아직 안 정한 비밀번호("")는 「아직 없음」 — 부대표님 · 부총무님은 여기서 넣어야 로그인할 수 있음
+        const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = (v != null && v !== '') ? `현재 값: ${v}` : (v === '' ? '현재 값: 아직 없음 (넣어야 로그인할 수 있어요)' : '현재 값을 불러오지 못했습니다.'); };
         try {
             const cur = await apiGetJson('action=getAdminPwView');
             const ok = cur && cur.result === 'success';
             if (isDev) setVal('pwCurValSuper', ok ? cur.super : null);
             setVal('pwCurValSub', ok ? cur.sub : null);
             setVal('pwCurValGeneral', ok ? cur.general : null);
+            setVal('pwCurValVsuper', ok ? cur.vsuper : null);
+            setVal('pwCurValVgeneral', ok ? cur.vgeneral : null);
         } catch (e) {
-            ['pwCurValSuper', 'pwCurValSub', 'pwCurValGeneral'].forEach(id => setVal(id, null));
+            ['pwCurValSuper', 'pwCurValSub', 'pwCurValGeneral', 'pwCurValVsuper', 'pwCurValVgeneral'].forEach(id => setVal(id, null));
         }
     }
 
-    // 총무님 전용: 본인(총무님) 비밀번호만 변경
-    function openGeneralPasswordModal() {
-        document.getElementById('pwModalTitle').textContent = '🔑 총무님 비밀번호 변경';
+    // 총무님 · 부대표님 · 부총무님: 본인 비밀번호만 변경 (v2.80.0: 부대표님 · 부총무님 추가)
+    const OWN_PW_KEY = { general: 'newGeneral', vsuper: 'newVsuper', vgeneral: 'newVgeneral' };
+    function openOwnPasswordModal() {
+        const who = ADMIN_ROLE_LABEL[currentRole] || '총무님';
+        document.getElementById('pwModalTitle').textContent = `🔑 ${who} 비밀번호 변경`;
         document.getElementById('pwModalBody').innerHTML = `
             <p style="font-size: 12px; color: #64748b; line-height: 1.5; margin-bottom: 12px;">
-                총무님 비밀번호만 바꿀 수 있습니다. 바꾸면 모든 기기에 바로 적용되니, 같은 비밀번호를 쓰는 분께 꼭 알려주세요.
+                ${who} 비밀번호만 바꿀 수 있습니다. 바꾸면 모든 기기에 바로 적용되니, 같은 비밀번호를 쓰는 분께 꼭 알려주세요.
             </p>
             <div class="form-group">
-                <label>현재 총무님 비밀번호 *</label>
+                <label>현재 ${who} 비밀번호 *</label>
                 <input type="password" id="pwGenCurrent" placeholder="현재 비밀번호" inputmode="numeric" autocomplete="off">
             </div>
             <div class="form-group">
-                <label>📋 새 비밀번호 (4~20자) *</label>
+                <label>${({ vsuper: '🎖️', vgeneral: '📒' })[currentRole] || '📋'} 새 비밀번호 (4~20자) *</label>
                 <input type="password" id="pwGenNew" placeholder="새 비밀번호" inputmode="numeric" autocomplete="off">
             </div>
             <div class="form-group">
@@ -9489,13 +9523,16 @@
         `;
         document.getElementById('pwModalBtns').innerHTML = `
             <button class="btn-cancel" onclick="closeModal('passwordModal')">취소</button>
-            <button class="btn-save" id="btnSavePw" onclick="executeChangeGeneralPassword()">저장</button>
+            <button class="btn-save" id="btnSavePw" onclick="executeChangeOwnPassword()">저장</button>
         `;
         document.getElementById('passwordModal').style.display = 'flex';
         setTimeout(() => document.getElementById('pwGenCurrent').focus(), 50);
     }
 
-    async function executeChangeGeneralPassword() {
+    async function executeChangeOwnPassword() {
+        const key = OWN_PW_KEY[currentRole];
+        if (!key) { closeModal('passwordModal'); return; }
+        const who = ADMIN_ROLE_LABEL[currentRole];
         const cur = document.getElementById('pwGenCurrent').value.trim();
         const n1 = document.getElementById('pwGenNew').value.trim();
         const n2 = document.getElementById('pwGenNew2').value.trim();
@@ -9507,10 +9544,10 @@
         btn.disabled = true; btn.textContent = '저장 중...';
         bkNotify('saving', '비밀번호 바꾸는 중이캉');
         try {
-            const res = await apiGetJson('action=changeAdminPw&currentPw=' + encodeURIComponent(cur) + '&newGeneral=' + encodeURIComponent(n1));
+            const res = await apiGetJson('action=changeAdminPw&currentPw=' + encodeURIComponent(cur) + '&' + key + '=' + encodeURIComponent(n1));
             if (res && res.result === 'success') {
                 closeModal('passwordModal');
-                bkNotify('done', '총무님 비밀번호 변경 완료캉! ✓', '모든 기기에 바로 적용돼요');
+                bkNotify('done', `${who} 비밀번호 변경 완료캉! ✓`, '모든 기기에 바로 적용돼요');
             } else {
                 bkNotify('fail', '앗, 비밀번호가 안 바뀌었캉…', (res && res.message) ? res.message : '비밀번호 변경에 실패했습니다.');
             }
@@ -9526,6 +9563,8 @@
         const newSuper = document.getElementById('pwNewSuper').value.trim();
         const newSub = document.getElementById('pwNewSub').value.trim();
         const newGeneral = document.getElementById('pwNewGeneral').value.trim();
+        const newVsuper = document.getElementById('pwNewVsuper').value.trim();
+        const newVgeneral = document.getElementById('pwNewVgeneral').value.trim();
 
         if (!curPw) { bkNotify('info', '현재 대표님 비밀번호를 넣어줘캉!'); return; }
 
@@ -9534,10 +9573,12 @@
         if (newSuper) { updates.super = newSuper; labels.push('대표님'); }
         if (newSub) { updates.sub = newSub; labels.push('코치진'); }
         if (newGeneral) { updates.general = newGeneral; labels.push('총무님'); }
+        if (newVsuper) { updates.vsuper = newVsuper; labels.push('부대표님'); }
+        if (newVgeneral) { updates.vgeneral = newVgeneral; labels.push('부총무님'); }
 
         if (labels.length === 0) { bkNotify('info', '바꿀 비밀번호를 하나 이상 넣어줘캉!'); return; }
 
-        for (const v of [newSuper, newSub, newGeneral]) {
+        for (const v of [newSuper, newSub, newGeneral, newVsuper, newVgeneral]) {
             if (v && (v.length < 4 || v.length > 20)) { bkNotify('info', '새 비밀번호는 4~20자로 해줘캉!'); return; }
         }
 
@@ -9551,6 +9592,8 @@
             if (newSuper) qs += '&newSuper=' + encodeURIComponent(newSuper);
             if (newSub) qs += '&newSub=' + encodeURIComponent(newSub);
             if (newGeneral) qs += '&newGeneral=' + encodeURIComponent(newGeneral);
+            if (newVsuper) qs += '&newVsuper=' + encodeURIComponent(newVsuper);
+            if (newVgeneral) qs += '&newVgeneral=' + encodeURIComponent(newVgeneral);
             const res = await apiGetJson(qs);
             if (res && res.result === 'success') {
                 closeModal('passwordModal');
