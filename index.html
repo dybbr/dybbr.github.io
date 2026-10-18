@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.83.0 · b261018";
+        const APP_VERSION = "v2.84.0 · b261018";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -827,6 +827,62 @@
         .ofa-foot button { flex: 0 0 auto; border: 1px solid #cbd5e1; background: #fff; border-radius: 8px; padding: 6px 10px; font: inherit; font-size: 12px; font-weight: 800; color: #0f2340; cursor: pointer; }
         .ofa-msg { font-size: 12.5px; color: #64748b; font-weight: 700; padding: 6px 2px; }
         #ofaModal .modal-content { max-width: 420px; }
+        /* 🧹 v2.84.0: 부실 청소 당번 */
+        .duty-banner { display: none; align-items: center; gap: 10px; background: #ffffff; border: 1px solid var(--card-border); border-left: 5px solid #0d9488; border-radius: 12px; padding: 10px 12px; margin-bottom: 12px; cursor: pointer; box-shadow: 0 2px 8px rgba(15,23,42,0.04); }
+        .duty-banner .db-ic { flex: 0 0 auto; width: 38px; height: 38px; border-radius: 10px; background: #ccfbf1; display: flex; align-items: center; justify-content: center; font-size: 21px; }
+        .duty-banner .db-body { flex: 1; min-width: 0; }
+        .duty-banner .db-when { font-size: 12px; font-weight: 800; color: #0f766e; }
+        .duty-banner .db-who { font-size: 14px; font-weight: 900; color: var(--text-title); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .duty-banner .db-who small { font-size: 12px; font-weight: 700; color: #64748b; }
+        .duty-banner .db-sub { font-size: 12px; color: #64748b; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .duty-banner .db-sub b { color: #b45309; font-weight: 800; }
+        .duty-banner .db-arrow { color: #94a3b8; font-size: 18px; font-weight: 800; }
+        .duty-banner.mine { background: #fffbeb; border-color: #fde68a; border-left-color: #f59e0b; }
+        .duty-banner.mine .db-ic { background: #fde68a; }
+        .duty-banner.mine .db-when { color: #b45309; }
+        .duty-band { display: none; align-items: center; gap: 8px; background: #fffbeb; border: 1px solid #fde68a; border-left: 5px solid #f59e0b; border-radius: 12px; padding: 9px 12px; margin-bottom: 12px; cursor: pointer; font-size: 13px; font-weight: 700; color: #78350f; }
+        .duty-band .ic { font-size: 18px; } .duty-band .tx { flex: 1; min-width: 0; line-height: 1.4; word-break: keep-all; } .duty-band b { font-weight: 900; } .duty-band .ar { color: #d97706; font-weight: 800; font-size: 17px; }
+        .duty-card { display: flex; gap: 10px; align-items: flex-start; background: #f0fdfa; border: 1px solid #99f6e4; border-left: 5px solid #0d9488; border-radius: 12px; padding: 9px 12px; margin-bottom: 8px; cursor: pointer; }
+        .duty-card .dc-ic { font-size: 19px; line-height: 1.2; }
+        .duty-card .dc-main { flex: 1; min-width: 0; }
+        .duty-card .dc-t { font-size: 12px; font-weight: 800; color: #0f766e; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .duty-card .dc-tag { font-size: 10.5px; font-weight: 900; color: #ffffff; background: #f59e0b; border-radius: 6px; padding: 1px 6px; }
+        .duty-card .dc-tag.ok { background: #64748b; }
+        .duty-card .dc-who { font-size: 14px; font-weight: 900; color: var(--text-title); line-height: 1.4; }
+        .duty-card .dc-who small { font-size: 12px; font-weight: 700; color: #64748b; }
+        .duty-card .dc-sub { font-size: 12px; color: #475569; margin-top: 2px; word-break: keep-all; }
+        .duty-card.mine { background: #fffbeb; border-color: #fde68a; border-left-color: #f59e0b; }
+        .duty-card.mine .dc-t { color: #b45309; }
+        .duty-card.done { opacity: .72; background: #f8fafc; border-color: #e2e8f0; border-left-color: #94a3b8; }
+        .duty-card.skip { background: #f8fafc; border-color: #e2e8f0; border-left-color: #94a3b8; }
+        .duty-card.skip .dc-t { color: #64748b; }
+        .cal-chip.duty { font-weight: 800; }
+        #dutyModal .modal-content, #dutySwapModal .modal-content { max-width: 440px; }
+        #dutyModal, #dutySwapModal, #adminGroupDuty { word-break: keep-all; }
+        .dm-head { font-size: 12.5px; font-weight: 700; color: #475569; margin: 2px 0 8px; }
+        .dm-mine { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; border-radius: 10px; padding: 8px 10px; font-size: 13.5px; font-weight: 800; margin-bottom: 8px; }
+        .dm-mine b { font-weight: 900; color: #b45309; }
+        .dm-sec { font-size: 12px; font-weight: 900; color: #0f766e; margin: 12px 0 4px; }
+        .dm-yr { font-size: 11px; font-weight: 800; color: #94a3b8; margin: 8px 0 2px 2px; }
+        .dm-row { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-bottom: 1px solid #f1f5f9; border-radius: 8px; }
+        .dm-row .dm-d { flex: 0 0 66px; line-height: 1.25; }
+        .dm-row .dm-d b { display: block; font-size: 14px; font-weight: 900; color: #0f172a; }
+        .dm-row .dm-d small { font-size: 11px; color: #64748b; font-weight: 700; }
+        .dm-row .dm-w { flex: 1; min-width: 0; line-height: 1.3; }
+        .dm-row .dm-w b { display: block; font-size: 13.5px; font-weight: 800; color: #1e293b; }
+        .dm-row .dm-w small { font-size: 11.5px; color: #64748b; font-weight: 600; }
+        .dm-row .dm-tag { flex: 0 0 auto; font-size: 10.5px; font-weight: 900; color: #ffffff; background: #f59e0b; border-radius: 6px; padding: 2px 6px; }
+        .dm-row.mine { background: #fffbeb; }
+        .dm-row.skip .dm-w b { color: #94a3b8; }
+        .dm-row.done { opacity: .68; }
+        .dm-foot { font-size: 11.5px; color: #94a3b8; font-weight: 600; margin: 12px 2px 2px; }
+        .dadm-stat { font-size: 12.5px; font-weight: 800; color: #0f766e; margin: 0 0 6px 2px; }
+        .ofa-row.dadm .dadm-btns { display: flex; gap: 6px; flex: 0 0 auto; }
+        .ofa-row.dadm button.ghost { background: #ffffff; color: #0b2240; border: 1px solid #cbd5e1; }
+        .ofa-row.dadm.skip { border-style: dashed; background: #ffffff; } .ofa-row.dadm.skip .who span { color: #94a3b8; }
+        .dadm-warn { margin-top: 8px; display: grid; gap: 5px; font-size: 12.5px; font-weight: 700; color: #92400e; background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 8px 10px; line-height: 1.45; }
+        .dadm-warn small { color: #a16207; font-weight: 600; }
+        @media (max-width: 380px) { .ofa-row.dadm button { padding: 8px 9px; } .dm-row .dm-d { flex-basis: 58px; } }
         .ofa-step { font-size: 12.5px; font-weight: 900; color: #0f2340; margin: 4px 0 6px; }
         .ofa-search { width: 100%; box-sizing: border-box; padding: 9px 11px; border: 1px solid #cbd5e1; border-radius: 8px; font: inherit; font-size: 14px; }
         .ofa-plist { display: grid; gap: 4px; margin: 8px 0 12px; max-height: 232px; overflow-y: auto; overscroll-behavior: contain; }
@@ -2214,6 +2270,13 @@
     .app-pick button { background: #1b2638; color: #bcc6d4; } .app-pick button.on { background: #2c4a7a; color: #fff; }
     .ofc-pick .ofc-t { color: #dde3ec; } .ofc-pick .ofc-t small { color: #97a3b7; }
     .ofa-row { background: #1b2638; border-color: #2a374e; } .ofa-row .who b { color: #dde3ec; } .ofa-row .who span { color: #bcc6d4; } .ofa-row .who small { color: #97a3b7; }
+    .duty-banner { background: #151e2e; border-color: #2a374e; border-left-color: #14b8a6; } .duty-banner .db-ic { background: #134e4a; } .duty-banner .db-when { color: #5eead4; } .duty-banner .db-sub, .duty-banner .db-who small { color: #97a3b7; }
+    .duty-banner.mine, .duty-band, .duty-card.mine, .dm-mine, .dm-row.mine, .dadm-warn { background: #2a2113; border-color: #5b4417; } .duty-banner.mine, .duty-band, .duty-card.mine { border-left-color: #f59e0b; }
+    .duty-banner.mine .db-ic { background: #5b4417; } .duty-banner.mine .db-when, .duty-band, .dm-mine, .dadm-warn, .duty-card.mine .dc-t { color: #fcd34d; } .dm-mine b, .duty-banner .db-sub b { color: #fbbf24; } .dadm-warn small { color: #e0b252; }
+    .duty-card { background: #10272a; border-color: #134e4a; border-left-color: #14b8a6; } .duty-card .dc-t { color: #5eead4; } .duty-card .dc-sub, .duty-card .dc-who small { color: #97a3b7; }
+    .duty-card.done, .duty-card.skip { background: #1b2638; border-color: #2a374e; border-left-color: #58697e; } .duty-card.skip .dc-t { color: #97a3b7; }
+    .dm-head { color: #bcc6d4; } .dm-sec, .dadm-stat { color: #5eead4; } .dm-row { border-bottom-color: #2a374e; } .dm-row .dm-d b, .dm-row .dm-w b { color: #dde3ec; } .dm-row .dm-d small, .dm-row .dm-w small { color: #97a3b7; } .dm-row.skip .dm-w b { color: #6f7b91; }
+    .ofa-row.dadm button.ghost { background: #151e2e; color: #dde3ec; border-color: #2a374e; } .ofa-row.dadm.skip { background: #151e2e; }
     .ofa-row button { background: #2c4a7a; } .ofa-row.warn { background: #3a1820; border-color: #7f1d1d; } .ofa-row.warn .who span { color: #fca5a5; }
     .ofa-row.empty { background: #151e2e; } .ofa-foot button { background: #1b2638; border-color: #2a374e; color: #dde3ec; }
     .ofa-step { color: #dde3ec; } .ofa-search { background: #1b2638; border-color: #2a374e; color: #dde3ec; }
@@ -2846,6 +2909,7 @@
         <button type="button" class="main-tab admin-tab" data-tab="admin" id="tabBtnAdmin" style="display: none;" onclick="showMainTab('admin')"><span class="tab-ico">⚙️</span><span class="tab-txt">관리</span></button>
     </nav>
     <div class="next-event-banner" id="nextEventBanner"></div>
+    <div class="duty-band" id="dutyMineBand" role="button" tabindex="0" onclick="openDutyModal()"></div>   <!-- 🧹 v2.84.0: 우리 집 청소 차례가 1주 안이면 (명단 탭) -->
 
     <div id="rosterSection">
     <div class="bday-band" id="bdayBand" aria-live="polite"></div>
@@ -2916,6 +2980,7 @@
 
     <!-- 📅 일정 탭 -->
     <section id="scheduleSection" class="app-section">
+        <div class="duty-banner" id="dutyBanner" role="button" tabindex="0" onclick="openDutyModal()"></div>   <!-- 🧹 v2.84.0: 다음 부실 청소 · 우리 집 차례 -->
         <div class="sched-card">
             <!-- v2.41.20: 윗부분 2줄 — ① ‹ 오늘 › 2026년 10월 …… [학년 ▾]  ② [＋ 일정 추가][📋 텍스트 분석 추가] …… [월|주|목록] -->
             <div class="cal-head">
@@ -2997,6 +3062,14 @@
                 <p class="admin-role-desc" style="margin-bottom: 8px;">색을 골라 저장하면 그 학년 선수들의 <b>등번호 유니폼 색</b>과 이미지형 카드의 <b>사진 테두리 색</b>이 함께 바뀌고, 모든 기기에 바로 반영됩니다.<br>색은 학년마다 정해져 있어서, 새 학기에 아이들 학년이 올라가면 올라간 학년의 색으로 자동으로 바뀌어요. (예: 5학년 색이 파랑이면, 6학년이 된 아이는 6학년 색으로 보여요)</p>
                 <div class="jsy-panel" id="jerseyPanel"></div>
                 <div class="jsy-panel-msg" id="jerseyPanelMsg"></div>
+            </div>
+
+            <!-- 🧹 부실 청소 당번 (v2.84.0) — 대표님 · 총무님 · 개발자 -->
+            <div class="admin-group" id="adminGroupDuty" style="display: none;">
+                <div class="admin-group-title">🧹 청소 당번</div>
+                <p class="admin-role-desc" style="margin-bottom: 8px;">격주 주말 부실 청소 당번이에요. <b>순서는 구글 시트 「당번」 탭</b>에 입단 순서대로 넣고, <b>쉬는 날 · 두 가정 바꾸기</b>는 여기서 해요.</p>
+                <div class="ofa-list" id="dutyAdm"><div class="ofa-msg">불러오는 중…</div></div>
+                <div class="ofa-foot"><button type="button" onclick="openDutyModal()">📋 전체 순서</button><button type="button" onclick="dutyOpenSheet()">📊 「당번」 탭 열기</button></div>
             </div>
 
             <div class="admin-group" id="adminGroupContent">
@@ -3257,6 +3330,32 @@
 </div>
 
 <!-- 📞 집행부 바꾸기 (v2.82.0) — 선수 고르기 → 아버님 · 어머님 · 기타 → 확인 -->
+<!-- 🧹 v2.84.0: 부실 청소 당번 — 전체 순서 -->
+<div id="dutyModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">🧹 부실 청소 당번</div>
+        <div class="modal-scroll-body" id="dutyModalBody"></div>
+        <div class="modal-btns" style="justify-content: space-between;">
+            <button class="btn-cancel" id="btnDutyAdm" style="visibility: hidden;" onclick="dutyGoAdmin()">⚙️ 관리</button>
+            <button class="btn-save" onclick="closeModal('dutyModal')">닫기</button>
+        </div>
+    </div>
+</div>
+<!-- 🧹 v2.84.0: 두 가정 바꾸기 (대표님 · 총무님 · 개발자) -->
+<div id="dutySwapModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header" id="dsTitle">🔁 바꾸기</div>
+        <div class="modal-scroll-body">
+            <div id="dsFromWrap"><p class="ofa-step">① 이 날 바꿀 가정</p><div class="ofa-plist" id="dsFrom"></div></div>
+            <p class="ofa-step" id="dsToT">누구와 바꿀까요?</p>
+            <div class="ofa-plist" id="dsTo" style="max-height: 300px;"></div>
+        </div>
+        <div class="modal-btns" style="justify-content: space-between;">
+            <button class="btn-cancel" onclick="closeModal('dutySwapModal')">취소</button>
+            <button class="btn-save" id="btnDsNext" onclick="dutySwapNext()">바꾸기</button>
+        </div>
+    </div>
+</div>
 <div id="ofaModal" class="modal">
     <div class="modal-content">
         <div class="modal-header" id="ofaTitle">바꾸기</div>
@@ -3773,6 +3872,7 @@
         localStorage.removeItem('daeyeon_admin_role');
         sessionStorage.removeItem('daeyeon_admin_role');
         ofcClear();   // 📞 v2.81.0: 로그아웃 · 다른 사람 로그인 → 집행부 번호도 지움
+        try { dutyClear(); } catch (e) {}   // 🧹 v2.84.0: 청소 당번도
     }
 
     // ==========================================================
@@ -4080,6 +4180,7 @@
         });
         refreshSeasonStatus(false, currentMainTab !== 'admin');   // 🎓 새 학년도 (대표님 · 개발자) — v2.64.0: 관리 탭을 열 때만 서버에 물음
         try { ofaRefresh(false, currentMainTab !== 'admin'); } catch (e) {}   // 📞 v2.82.0: 집행부 연락 버튼 (대표님 · 개발자)
+        try { dutyAdmRefresh(false, currentMainTab !== 'admin'); } catch (e) {}   // 🧹 v2.84.0: 청소 당번 (대표님 · 총무님 · 개발자)
         document.getElementById('adminGroupContent').style.display = canEditSchedule() ? '' : 'none';
         const devGroup = document.getElementById('adminGroupDev');
         if (devGroup) devGroup.style.display = (currentRole === 'dev') ? '' : 'none';   // 개발 카테고리는 개발자만
@@ -4180,13 +4281,14 @@
         t = t || {};
         try { if (applySettings(r.settings)) updateUniformButtonVisibility(); } catch (e) {}
         if (Array.isArray(r.officers) && canViewSchedule()) setOfficers(r.officers);   // 📞 v2.81.0: 집행부 단축 버튼 (서버 v2.28.0)
+        if (r.duty && canViewSchedule()) setDuty(r.duty, true);   // 🧹 v2.84.0: 부실 청소 당번 (서버 v2.31.0) — 아래 일정 그리기 때 같이 그림
         if (Array.isArray(r.events) && canViewSchedule()) {
             schedEvents = r.events; if (Array.isArray(r.venues)) schedVenues = r.venues; schedLoaded = true; schedFetchedAt = t.sched || Date.now();
             if (currentMainTab === 'schedule') renderSchedule();
             if (currentMainTab === 'venue') renderVenues();
             renderNextEventBanner();
             applyBkMood();
-        }
+        } else if (r.duty && canViewSchedule()) renderDutyAll();
         if (Array.isArray(r.notices) && canViewNotice()) {
             noticeList = r.notices; noticeLoaded = true; noticeFetchedAt = t.notice || Date.now();
             if (currentMainTab === 'notice') { renderNotices(); markNoticesSeen(); }
@@ -4204,6 +4306,7 @@
             const same = !!(res && Array.isArray(res.same) && res.same.indexOf('sched') !== -1);
             if (res && Array.isArray(res.events)) { schedEvents = res.events; schedLoaded = true; schedFetchedAt = Date.now(); }
             if (res && Array.isArray(res.venues)) schedVenues = res.venues;   // v2.42.0: 구장 목록 (시트 '구장')
+            if (res && res.duty) setDuty(res.duty, true);   // 🧹 v2.84.0: 일정을 새로 받을 때 청소 당번도 (아래에서 같이 그림)
             if (res && Array.isArray(res.events)) snapPatch(same ? null : { events: res.events, venues: Array.isArray(res.venues) ? res.venues : schedVenues }, 'sched', res.ver && res.ver.sched);   // 💾 v2.64.0
         }).catch(err => console.warn('일정 불러오기 실패:', err)).finally(() => {
             schedLoading = null;
@@ -4269,6 +4372,7 @@
 
     // 명단 탭 위의 "다음 일정" 한 줄
     function renderNextEventBanner() {
+        try { renderDutyMineBand(); } catch (e) {}   // 🧹 v2.84.0: 명단 탭 — 우리 집 청소 차례 알림
         const el = document.getElementById('nextEventBanner');
         if (!el) return;
         if (currentMainTab !== 'roster' || !canViewSchedule() || !schedLoaded) { el.style.display = 'none'; return; }
@@ -4292,6 +4396,247 @@
             <span class="neb-arrow">›</span>`;
         el.onclick = function () { calSelected = next.date; calCursor = dateOf(next.date); showMainTab('schedule'); };
         el.style.display = 'flex';
+    }
+
+    // ==========================================================
+    // 🧹 v2.84.0: 부실 청소 당번 (서버 v2.31.0 · 시트 「당번」 탭)
+    //   · 📅 일정 탭 맨 위 배너: 다음 청소 날 · 당번 (우리 집 차례면 노랗게) → 누르면 전체 순서
+    //   · 달력(월 · 주 · 목록 · 날짜 칸)에 청소 날 · 👥 명단 탭엔 우리 집 차례가 1주 안이면 한 줄 알림
+    //   · 관리 탭 (대표님 · 총무님 · 개발자): 다가오는 차례 · 쉬기 · 두 가정 바꾸기 · 순서표 점검
+    //   · 보호자 · 관리자만 (1922 일반 열람자는 안 보임 — 서버도 안 보냄) · 순서 · 날짜 계산은 서버가 함
+    // ==========================================================
+    var dutyData = null, dutyAsked = false, dutyReq = null;
+    function setDuty(d, noRender) {
+        if (d && typeof d === 'object' && Array.isArray(d.upcoming)) {
+            dutyData = d;
+            try { const s = snapLoad(); if (s && s.data && JSON.stringify(s.data.duty) !== JSON.stringify(d)) { s.data.duty = d; localStorage.setItem(SNAP_KEY, JSON.stringify(s)); } } catch (e) {}
+        }
+        dutyAsked = true;
+        if (!noRender) renderDutyAll();
+    }
+    function dutyClear() { dutyData = null; dutyAsked = false; dutyAdm = null; dutyAdmAt = 0; }
+    async function fetchDuty() {   // 서버 「한 번에」가 당번을 안 줬거나(예전 서버) 저장본으로 켜져 건너뛰었을 때만 (한 번)
+        if (dutyAsked || dutyReq) return;
+        dutyAsked = true;
+        dutyReq = apiGetJson('action=getDuty').then(r => { if (r && r.result === 'success' && r.duty) setDuty(r.duty); }).catch(() => {}).finally(() => { dutyReq = null; });
+    }
+    function dutyOk() { return !!(dutyData && dutyData.ok && canViewSchedule()); }
+    function dutyUp() { const t = ymdOf(new Date()); return dutyOk() ? dutyData.upcoming.filter(u => u.d >= t) : []; }
+    function dutyIsMine(u) {
+        const me = getActiveUser();
+        if (!me || !Array.isArray(me.children) || !me.children.length || !u || !Array.isArray(u.p)) return false;
+        const ns = x => String(x || '').replace(/\s+/g, '');
+        return u.p.some(x => me.children.some(c => (c.no && x.no) ? Number(c.no) === Number(x.no) : ns(c.name) === ns(x.n)));
+    }
+    function dutyMineNext() { return dutyUp().find(u => !u.s && dutyIsMine(u)) || null; }
+    function dutyOn(ds) {
+        if (!dutyOk()) return null;
+        if (ds >= ymdOf(new Date())) return dutyData.upcoming.find(u => u.d === ds) || null;
+        const r = (dutyData.recent || []).find(x => x.d === ds);
+        return r ? { d: r.d, p: r.p, done: 1 } : null;
+    }
+    function dutyAgenda(withPast) {
+        if (!dutyOk()) return [];
+        const t = ymdOf(new Date()), lim = ymdOf(new Date(Date.now() + 120 * 86400000));
+        return dutyData.upcoming.filter(u => u.d >= t && u.d <= lim).concat(withPast ? (dutyData.recent || []).filter(r => r.d < t).map(r => ({ d: r.d, p: r.p, done: 1 })) : []);
+    }
+    function dutyWhoText(p) { return (p && p.length) ? p.map(x => x.n).join(' · ') + ' 보호자' : '당번 없음'; }
+    function dutyWhoSub(p) { return (p || []).map(x => [x.g ? x.g + '학년' : '', x.no ? x.no + '번' : ''].filter(Boolean).join(' ')).filter(Boolean).join(' / '); }
+    function dutyFmt(ds) { const d = dateOf(ds); return (d.getFullYear() !== new Date().getFullYear() ? String(d.getFullYear()).slice(2) + '년 ' : '') + fmtMD(ds); }
+    function dutyDd(ds) { const n = dayDiff(ds); return n === 0 ? '오늘' : n === 1 ? '내일' : 'D-' + n; }
+    function dutyEveryOf(d) {
+        if (!d) return '';
+        const day = d.start ? DOW_KO[dateOf(d.start).getDay()] + '요일' : '';
+        const w = d.weeks === 1 ? '매주' : d.weeks === 2 ? '격주' : d.weeks + '주마다';
+        return [w + (day ? ' ' + day : ''), (d.per || 1) > 1 ? '회당 ' + d.per + '가정' : ''].filter(Boolean).join(' · ');
+    }
+    function renderDutyAll() {
+        if (currentMainTab === 'schedule') renderSchedule(); else renderDutyBanner();
+        renderDutyMineBand();
+        if (currentMainTab === 'admin' && dutyAdm) dutyAdmRender();
+    }
+    // 📅 일정 탭 맨 위 — 다음 부실 청소 (우리 집 차례면 노랗게)
+    function renderDutyBanner() {
+        const el = document.getElementById('dutyBanner');
+        if (!el) return;
+        const up = dutyUp(), next = up.find(u => !u.s);
+        if (!next) { el.style.display = 'none'; el.innerHTML = ''; return; }
+        const skip = up[0] && up[0].s && up[0].d < next.d ? up[0] : null, mineNext = dutyMineNext(), mine = !!mineNext && mineNext.d === next.d;
+        const sub = [];
+        if (skip) sub.push(`${fmtMD(skip.d)}는 쉬어요${skip.m ? ' (' + escapeHtml(skip.m) + ')' : ''}`);
+        if (!mine && mineNext) sub.push(`<b>⭐ 우리 집 ${dutyFmt(mineNext.d)}</b>`);
+        if (dutyData.info) sub.push(escapeHtml(dutyData.info));
+        if (!sub.length) sub.push(escapeHtml(dutyEveryOf(dutyData)) + ' · 전체 순서 보기');
+        el.classList.toggle('mine', mine);
+        el.innerHTML = `<span class="db-ic" aria-hidden="true">🧹</span><div class="db-body">
+                <div class="db-when">${mine ? '🙋 이번엔 우리 집 차례예요!' : '다음 부실 청소'} · ${dutyDd(next.d)}</div>
+                <div class="db-who">${fmtMD(next.d)} · ${escapeHtml(dutyWhoText(next.p))} <small>${escapeHtml(dutyWhoSub(next.p))}</small></div>
+                <div class="db-sub">${sub.join(' · ')}</div></div><span class="db-arrow">›</span>`;
+        el.style.display = 'flex';
+    }
+    // 👥 명단 탭 — 우리 집 차례가 1주 안이면 한 줄
+    function renderDutyMineBand() {
+        const el = document.getElementById('dutyMineBand');
+        if (!el) return;
+        const m = currentMainTab === 'roster' ? dutyMineNext() : null, n = m ? dayDiff(m.d) : 99;
+        if (!m || n > 7) { el.style.display = 'none'; return; }
+        el.innerHTML = `<span class="ic" aria-hidden="true">🧹</span><span class="tx"><b>${n === 0 ? '오늘' : n === 1 ? '내일' : fmtMD(m.d)}</b> 우리 집이 부실 청소 당번이에요${dutyData.info ? ' · ' + escapeHtml(dutyData.info) : ''}</span><span class="ar">›</span>`;
+        el.style.display = 'flex';
+    }
+    function dutyChipHtml(u) {
+        if (!u || u.s) return '';
+        const mine = !u.done && dutyIsMine(u);
+        return `<div class="cal-chip duty${u.done ? ' done' : ''}" style="--c:${mine ? '#d97706' : u.done ? '#64748b' : '#0d9488'};--bg:${mine ? '#fef3c7' : u.done ? '#f1f5f9' : '#ccfbf1'}">${u.done ? '✓청소' : '🧹' + (mine ? '우리 집' : '청소')}</div>`;
+    }
+    function dutyCardHtml(u) {
+        if (!u) return '';
+        if (u.s) return `<div class="duty-card skip" onclick="openDutyModal()"><span class="dc-ic">🧹</span><div class="dc-main"><div class="dc-t">부실 청소 쉬는 날</div><div class="dc-sub">${u.m ? escapeHtml(u.m) + ' · ' : ''}이번 회는 청소가 없고 차례는 다음 회로 넘어가요</div></div></div>`;
+        const mine = !u.done && dutyIsMine(u);
+        const sub = u.done ? [] : [dutyData.info ? escapeHtml(dutyData.info) : '', u.o ? '원래 ' + fmtMD(u.o) + '에서 옮김' : '', u.f ? '바꾼 차례' : ''].filter(Boolean);
+        return `<div class="duty-card${mine ? ' mine' : ''}${u.done ? ' done' : ''}" onclick="openDutyModal()"><span class="dc-ic">🧹</span><div class="dc-main">
+            <div class="dc-t">부실 청소 당번${mine ? '<span class="dc-tag">우리 집</span>' : ''}${u.done ? '<span class="dc-tag ok">✓ 했어요</span>' : ''}</div>
+            <div class="dc-who">${escapeHtml(dutyWhoText(u.p))} <small>${escapeHtml(dutyWhoSub(u.p))}</small></div>${sub.length ? `<div class="dc-sub">${sub.join(' · ')}</div>` : ''}</div></div>`;
+    }
+    // 전체 순서 창
+    function openDutyModal() {
+        if (!dutyOk()) { bkNotify('info', '청소 당번은 준비 중이캉', canEditSchedule() ? '관리 탭 「🧹 청소 당번」에서 확인해 주세요' : '대표님 · 총무님이 순서를 정하는 중이에요'); return; }
+        const up = dutyUp(), mine = dutyMineNext(), body = document.getElementById('dutyModalBody');
+        let lastY = new Date().getFullYear();
+        const row = (u, done) => {
+            const d = dateOf(u.d), me = !done && !u.s && dutyIsMine(u);
+            let y = '';
+            if (!done && d.getFullYear() !== lastY) { lastY = d.getFullYear(); y = `<div class="dm-yr">${lastY}년</div>`; }
+            const who = u.s ? `<b>청소 쉼</b><small>${escapeHtml(u.m || '차례는 다음 회로')}</small>`
+                : `<b>${done ? '✓ ' : ''}${escapeHtml(dutyWhoText(u.p))}</b><small>${escapeHtml(dutyWhoSub(u.p))}${u.o ? ' · 원래 ' + fmtMD(u.o) : ''}${u.f ? ' · 바꾼 차례' : ''}</small>`;
+            return y + `<div class="dm-row${me ? ' mine' : ''}${u.s ? ' skip' : ''}${done ? ' done' : ''}"><div class="dm-d"><b>${d.getMonth() + 1}/${d.getDate()}</b><small>${DOW_KO[d.getDay()]}${done ? '' : ' · ' + dutyDd(u.d)}</small></div><div class="dm-w">${who}</div>${me ? '<span class="dm-tag">우리 집</span>' : ''}</div>`;
+        };
+        let h = `<div class="dm-head">${escapeHtml(dutyEveryOf(dutyData))}${dutyData.info ? ' · ' + escapeHtml(dutyData.info) : ''}</div>`;
+        if (mine) h += `<div class="dm-mine">⭐ 우리 집 차례: <b>${dutyFmt(mine.d)}</b> · ${dutyDd(mine.d)}</div>`;
+        h += '<div class="dm-sec">다가오는 차례</div>' + (up.length ? up.map(u => row(u)).join('') : '<div class="ofa-msg">다가오는 차례가 없어요</div>');
+        const rec = (dutyData.recent || []).filter(r => r.d < ymdOf(new Date()));
+        if (rec.length) h += '<div class="dm-sec">지난 청소</div>' + rec.map(r => row(r, true)).join('');
+        h += '<p class="dm-foot">순서는 입단 순서예요. 사정이 생기면 대표님 · 총무님께 말씀해 주세요.</p>';
+        body.innerHTML = h;
+        document.getElementById('btnDutyAdm').style.visibility = canEditSchedule() ? 'visible' : 'hidden';
+        document.getElementById('dutyModal').style.display = 'flex';
+        body.scrollTop = 0;
+    }
+    function dutyGoAdmin() {
+        closeModal('dutyModal');
+        showMainTab('admin');
+        setTimeout(() => { const g = document.getElementById('adminGroupDuty'); if (g) g.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 250);
+    }
+    function dutyOpenSheet() { window.open(`https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/edit#gid=${(dutyAdm && dutyAdm.gid) || 2026102}`, '_blank'); }
+
+    // ⚙️ 관리 탭 — 다가오는 차례 · 쉬기 · 바꾸기 · 순서표 점검 (대표님 · 총무님 · 개발자 · 서버도 다시 확인)
+    var dutyAdm = null, dutyAdmAt = 0, dutyAdmReq = null, dutySwapCtx = null;
+    async function dutyAdmRefresh(force, noFetch) {
+        const grp = document.getElementById('adminGroupDuty');
+        if (!grp) return;
+        const can = canEditSchedule();
+        grp.style.display = can ? '' : 'none';
+        if (!can) return;
+        if (dutyAdm && !force && Date.now() - dutyAdmAt < 60000) return dutyAdmRender();
+        if (dutyAdm) dutyAdmRender();
+        if (noFetch) return;   // 관리 탭이 안 보이면 묻지 않음 (탭을 열 때 물음)
+        if (dutyAdmReq) return dutyAdmReq;
+        dutyAdmReq = (async () => {
+            try {
+                const r = await apiGetJson('action=getDutyAdmin');
+                if (!r || r.result !== 'success' || !r.duty) throw new Error((r && r.message) || '못 불러왔어요');
+                dutyAdm = r.duty; dutyAdmAt = Date.now();
+                if (r.pub) setDuty(r.pub);
+            } catch (e) { if (!dutyAdm) document.getElementById('dutyAdm').innerHTML = `<div class="ofa-msg">못 불러왔캉… (${escapeHtml(e.message)}) · 관리 탭을 다시 열어 주세요</div>`; }
+            finally { dutyAdmReq = null; }
+            if (dutyAdm) dutyAdmRender();
+        })();
+        return dutyAdmReq;
+    }
+    function dutyAdmRender() {
+        const box = document.getElementById('dutyAdm');
+        if (!box || !dutyAdm) return;
+        const d = dutyAdm, rows = d.rows || [], act = rows.filter(r => r.st === 'ok'), t = ymdOf(new Date());
+        const names = st => rows.filter(r => r.st === st).map(r => escapeHtml(r.name));
+        const warn = [];
+        if (names('missing').length) warn.push(`⚠️ 선수 명단에 없는 이름 ${names('missing').length}명: ${names('missing').join(', ')} <small>(오타면 고쳐 주세요 · 졸업생이면 그대로 둬도 저절로 빠져요)</small>`);
+        if (names('ambig').length) warn.push(`⚠️ 같은 이름이 둘이에요: ${names('ambig').join(', ')} <small>(배번 칸을 채워 주세요)</small>`);
+        if (names('dup').length) warn.push(`⚠️ 두 번 적힌 선수: ${names('dup').join(', ')} <small>(위에 적힌 줄만 차례에 들어가요)</small>`);
+        if ((d.notInList || []).length && rows.length) warn.push(`📝 순서표에 없는 선수 ${d.notInList.length}명: ${d.notInList.map(x => escapeHtml(x.n)).join(', ')} <small>(형제라서 뺀 게 아니면 맨 아래에 추가해 주세요)</small>`);
+        let h = '';
+        if (!d.ok) {
+            const msg = d.reason === 'nosheet' ? '시트에 「당번」 탭이 없어요.'
+                : d.reason === 'nostart' ? `「당번」 탭 맨 위 <b>시작일</b>에 첫 청소 날짜를 넣으면 시작돼요.${rows.length ? ` (순서표 ${rows.length}줄 입력됨)` : ' 순서표(8줄부터)도 입단 순서대로 채워 주세요.'}`
+                : '「당번」 탭 8줄부터 입단 순서대로 선수 이름을 넣어 주세요.';
+            h += `<div class="ofa-row warn"><span class="ic">🧹</span><div class="who"><b>아직 시작 전</b><span>${msg}</span></div></div>`;
+        } else {
+            h += `<div class="dadm-stat">${escapeHtml(dutyEveryOf(d))} · 순서표 ${act.length}가정${d.info ? ' · ' + escapeHtml(d.info) : ''}</div>`;
+            h += (d.upcoming || []).filter(u => u.d >= t).slice(0, 6).map(u => {
+                const key = u.o || u.d, when = `${fmtMD(u.d)} · ${dutyDd(u.d)}`;
+                if (u.s) return `<div class="ofa-row dadm skip"><div class="who"><b>${when}</b><span>청소 쉼</span><small>${escapeHtml(u.m || '')}</small></div><div class="dadm-btns"><button type="button" class="ghost" onclick="dutySkip('${key}', 0)">쉼 취소</button></div></div>`;
+                return `<div class="ofa-row dadm"><div class="who"><b>${when}</b><span>${escapeHtml(dutyWhoText(u.p))}</span><small>${escapeHtml(dutyWhoSub(u.p))}${u.o ? ' · 원래 ' + fmtMD(u.o) : ''}${u.f ? ' · 바꾼 차례' : ''}</small></div><div class="dadm-btns"><button type="button" onclick="dutySwapOpen('${key}')">바꾸기</button><button type="button" class="ghost" onclick="dutySkip('${key}', 1)">쉬기</button></div></div>`;
+            }).join('');
+        }
+        if (warn.length) h += `<div class="dadm-warn">${warn.map(w => `<div>${w}</div>`).join('')}</div>`;
+        box.innerHTML = h;
+    }
+    async function dutyAdmSave(q, okMsg) {
+        bkNotify('saving', '바꾸는 중이캉');
+        try {
+            const r = await apiGetJson(Object.keys(q).map(k => k + '=' + encodeURIComponent(q[k])).join('&'));
+            if (!r || r.result !== 'success' || !r.duty) {
+                bkNotify('fail', '앗, 안 바뀌었캉…', (r && r.message) || '저장에 실패했습니다.');
+                if (r && /바뀌었/.test(r.message || '')) dutyAdmRefresh(true);
+                return false;
+            }
+            dutyAdm = r.duty; dutyAdmAt = Date.now();
+            if (r.pub) setDuty(r.pub);
+            dutyAdmRender();
+            bkNotify('done', okMsg, '모든 사람 화면에 바로 반영돼요');
+            return true;
+        } catch (e) { bkNotify('fail', '앗, 안 바뀌었캉…', '서버 연결 오류: ' + e.message); return false; }
+    }
+    async function dutySkip(date, on) {
+        const u = dutyAdm && (dutyAdm.upcoming || []).find(x => (x.o || x.d) === date);
+        if (!u) return;
+        const ok = await bkConfirm(on ? `${fmtMD(u.d)} 청소를 쉴까캉?` : `${fmtMD(u.d)} 쉼을 취소할까캉?`, { sub: on ? `${dutyWhoText(u.p)}부터 한 회씩 뒤로 밀려요` : '그날 다시 청소하고, 뒤 차례는 한 회씩 당겨져요', ok: on ? '쉬기' : '쉼 취소' });
+        if (!ok) return;
+        await dutyAdmSave({ action: 'dutySkip', date: date, on: on ? '1' : '0' }, on ? '쉬는 날로 바꿨캉! ✓' : '쉼을 취소했캉! ✓');
+    }
+    function dutySwapOpen(date) {
+        if (!dutyAdm) return;
+        const t = ymdOf(new Date()), A = (dutyAdm.upcoming || []).find(u => u.d >= t && !u.s && (u.o || u.d) === date);
+        if (!A || !A.p.length) return;
+        dutySwapCtx = { A: A, ia: A.p.length === 1 ? 0 : -1, B: null, ib: -1 };
+        document.getElementById('dsTitle').textContent = `🔁 ${fmtMD(A.d)} 당번 바꾸기`;
+        dutySwapRender();
+        document.getElementById('dutySwapModal').style.display = 'flex';
+    }
+    function dutySwapRender() {
+        const c = dutySwapCtx, t = ymdOf(new Date());
+        if (!c) return;
+        const one = c.A.p.length === 1;
+        document.getElementById('dsFromWrap').style.display = one ? 'none' : '';
+        document.getElementById('dsToT').textContent = one ? `${c.A.p[0].n} 보호자와 누구를 바꿀까요?` : '② 누구와 바꿀까요?';
+        document.getElementById('dsFrom').innerHTML = c.A.p.map((x, i) => `<button type="button" class="ofa-p${c.ia === i ? ' on' : ''}" onclick="dutySwapFrom(${i})">${x.g ? `<span class="g">${escapeHtml(x.g)}학년</span>` : ''}${escapeHtml(x.n)} <span class="n">· ${x.no ? x.no + '번' : '번호 없음'}</span></button>`).join('');
+        const all = dutyAdm.upcoming || [];
+        const list = all.filter(u => u.d >= t && !u.s && u !== c.A).slice(0, 16);
+        document.getElementById('dsTo').innerHTML = list.length ? list.map(u => u.p.map((x, i) => `<button type="button" class="ofa-p${c.B === u && c.ib === i ? ' on' : ''}" onclick="dutySwapTo(${all.indexOf(u)}, ${i})"><span class="g">${fmtMD(u.d)}</span>${escapeHtml(x.n)} <span class="n">· ${[x.g ? x.g + '학년' : '', x.no ? x.no + '번' : ''].filter(Boolean).join(' ')}</span></button>`).join('')).join('') : '<div class="ofa-msg">바꿀 수 있는 다른 날이 없어요</div>';
+    }
+    function dutySwapFrom(i) { if (dutySwapCtx) { dutySwapCtx.ia = i; dutySwapRender(); } }
+    function dutySwapTo(ui, i) { if (dutySwapCtx) { dutySwapCtx.B = dutyAdm.upcoming[ui]; dutySwapCtx.ib = i; dutySwapRender(); } }
+    async function dutySwapNext() {
+        const c = dutySwapCtx;
+        if (!c) return;
+        if (c.ia < 0) { bkNotify('info', '이 날 바꿀 가정을 먼저 골라줘캉!'); return; }
+        if (!c.B || c.ib < 0) { bkNotify('info', '누구와 바꿀지 골라줘캉!'); return; }
+        const a = c.A.p[c.ia], b = c.B.p[c.ib];
+        const ok = await bkConfirm('두 가정 차례를 바꿀까캉?', { sub: `${fmtMD(c.A.d)} ${a.n} ↔ ${fmtMD(c.B.d)} ${b.n}\n다른 가정 차례는 그대로예요`, ok: '바꾸기' });
+        if (!ok) return;
+        const btn = document.getElementById('btnDsNext');
+        btn.disabled = true;
+        const done = await dutyAdmSave({ action: 'dutySwap', da: c.A.o || c.A.d, db: c.B.o || c.B.d, ra: c.A.rs[c.ia], rb: c.B.rs[c.ib] }, '차례를 바꿨캉! ✓');
+        btn.disabled = false;
+        if (done) { closeModal('dutySwapModal'); dutySwapCtx = null; }
     }
 
     // ---------------- 달력 ----------------
@@ -4349,6 +4694,7 @@
     function renderSchedule() {
         const body = document.getElementById('calBody');
         if (!body) return;
+        try { renderDutyBanner(); } catch (e) {}   // 🧹 v2.84.0: 일정 탭 맨 위 — 다음 부실 청소
         if (!canViewSchedule()) { body.innerHTML = '<div class="sched-empty">학부모 인증(휴대폰 번호 로그인) 후 볼 수 있습니다.</div>'; return; }
 
         document.querySelectorAll('.cal-view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === calView));
@@ -4385,12 +4731,13 @@
             const ds = ymdOf(d);
             const evs = eventsOn(ds, list);
             const cls = ['cal-cell', d.getMonth() !== m ? 'out' : '', ds === today ? 'today' : '', ds === calSelected ? 'selected' : '', d.getDay() === 0 ? 'sun' : d.getDay() === 6 ? 'sat' : ''].join(' ');
-            const chips = evs.slice(0, 3).map(ev => {
+            const du = dutyOn(ds), dchip = dutyChipHtml(du), lim = dchip ? 2 : 3;   // 🧹 v2.84.0: 청소 날이면 한 칸은 청소
+            const chips = evs.slice(0, lim).map(ev => {
                 const mt = typeMeta(ev.type);
                 const label = ev.opponent || ((ev.title && ev.title !== ev.type) ? ev.title : ev.type);
                 return `<div class="cal-chip" style="--c:${mt.c};--bg:${mt.bg}">${ev.start ? '<span class="chip-time">' + escapeHtml(ev.start) + '</span>' : ''}${escapeHtml(label)}</div>`;
-            }).join('');
-            const more = evs.length > 3 ? `<div class="cal-more">+${evs.length - 3}</div>` : '';
+            }).join('') + dchip;
+            const more = evs.length > lim ? `<div class="cal-more">+${evs.length - lim}</div>` : '';
             html += `<button type="button" class="${cls}" onclick="selectCalDate('${ds}')"><span class="cal-num">${d.getDate()}</span>${chips}${more}</button>`;
         }
         html += '</div>';
@@ -4413,7 +4760,7 @@
                 <div class="day-panel-title">${fmtKDate(ds)}${dd ? `<span class="dday ${dd === '오늘' ? 'today' : ''}">${dd}</span>` : ''}</div>
                 ${canEditSchedule() ? `<button type="button" class="btn-day-add" onclick="openEventEditor(null, '${ds}')">＋ 이 날 추가</button>` : ''}
             </div>
-            ${evs.length ? evs.map(eventCardHtml).join('') : '<div class="sched-empty" style="padding:10px;">일정이 없습니다</div>'}
+            ${evs.length ? evs.map(eventCardHtml).join('') : (dutyOn(ds) ? '' : '<div class="sched-empty" style="padding:10px;">일정이 없습니다</div>')}${dutyCardHtml(dutyOn(ds))}
         </div>`;
     }
 
@@ -4428,10 +4775,10 @@
             const dc = d.getDay() === 0 ? 'sun' : d.getDay() === 6 ? 'sat' : '';
             strip += `<button type="button" class="week-strip-day ${dc} ${ds === today ? 'today' : ''}" onclick="document.getElementById('wd-${ds}').scrollIntoView({behavior:'smooth',block:'start'})">
                 <span class="wd">${DOW_KO[i]}</span><span class="dn">${d.getDate()}</span>
-                <span class="dots">${evs.slice(0, 4).map(ev => `<i style="--c:${typeMeta(ev.type).c}"></i>`).join('')}</span></button>`;
+                <span class="dots">${evs.slice(0, 4).map(ev => `<i style="--c:${typeMeta(ev.type).c}"></i>`).join('')}${(dutyOn(ds) && !dutyOn(ds).s) ? '<i style="--c:#0d9488"></i>' : ''}</span></button>`;
             body += `<div class="week-day" id="wd-${ds}">
                 <div class="week-day-head ${dc}">${d.getMonth() + 1}/${d.getDate()} (${DOW_KO[i]})${ds === today ? '<span class="today-pill">오늘</span>' : ''}</div>
-                ${evs.length ? evs.map(eventCardHtml).join('') : '<div class="week-day-empty">일정 없음</div>'}
+                ${evs.length ? evs.map(eventCardHtml).join('') : (dutyOn(ds) ? '' : '<div class="week-day-empty">일정 없음</div>')}${dutyCardHtml(dutyOn(ds))}
             </div>`;
         }
         return strip + '</div>' + body + '</div>';
@@ -4440,17 +4787,16 @@
     function renderAgenda(list) {
         const today = ymdOf(new Date());
         const items = calShowPast ? list : list.filter(ev => ev.date >= today);
+        const dus = dutyAgenda(calShowPast);   // 🧹 v2.84.0: 청소 날 (앞으로 4달 · 지난 일정도 보기면 지난 청소도)
+        const dates = Array.from(new Set(items.map(ev => ev.date).concat(dus.map(u => u.d)))).sort();
         let html = '<div class="agenda">';
         if (!calShowPast) html += `<button type="button" class="agenda-past-toggle" onclick="calShowPast=true;renderSchedule()">▲ 지난 일정도 보기</button>`;
         if (!items.length) html += bkState('empty bk-s-calendar', '예정된 일정이 없습니다', '푹 쉬는 중이캉~');
-        let lastDate = '';
-        items.forEach(ev => {
-            if (ev.date !== lastDate) {
-                lastDate = ev.date;
-                const n = dayDiff(ev.date), dd = ddayLabel(ev.date);
-                html += `<div class="agenda-date" id="ag-${ev.date}">${fmtKDate(ev.date)}${dd ? `<span class="dday ${n === 0 ? 'today' : n <= 3 ? 'soon' : ''}">${dd}</span>` : ''}</div>`;
-            }
-            html += eventCardHtml(ev);
+        dates.forEach(ds => {
+            const n = dayDiff(ds), dd = ddayLabel(ds);
+            html += `<div class="agenda-date" id="ag-${ds}">${fmtKDate(ds)}${dd ? `<span class="dday ${n === 0 ? 'today' : n <= 3 ? 'soon' : ''}">${dd}</span>` : ''}</div>`;
+            items.forEach(ev => { if (ev.date === ds) html += eventCardHtml(ev); });
+            const du = dus.find(u => u.d === ds); if (du) html += dutyCardHtml(du);
         });
         if (calShowPast) html += `<button type="button" class="agenda-past-toggle" onclick="calShowPast=false;renderSchedule()">지난 일정 숨기기</button>`;
         return html + '</div>';
@@ -8835,6 +9181,14 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.84.0', d: '2026-10-18', t: '🧹 부실 청소 당번', items: [
+            '격주 주말 야구부실 대청소 당번 — 시트 「당번」 탭에 입단 순서대로 적으면 날짜와 당번을 서버가 계산 (서버 v2.31.0)',
+            '📅 일정 탭 맨 위에 「다음 부실 청소 · 당번」 배너 · 우리 집 차례면 노랗게 「이번엔 우리 집 차례예요!」 · 누르면 전체 순서 (지난 청소 ✓ 포함)',
+            '달력(월 · 주 · 목록 · 날짜 칸)에 청소 날 표시 · 👥 명단 탭엔 우리 집 차례가 1주 안이면 한 줄 알림',
+            '⚙️ 관리 탭 「🧹 청소 당번」 (대표님 · 총무님 · 개발자): 다가오는 차례 · 쉬기(그날 건너뜀, 차례는 다음 회로) · 두 가정 바꾸기 · 순서표 점검 (명단에 없는 이름 · 빠진 선수)',
+            '날짜가 지나면 그날 당번의 청소 횟수 · 마지막 청소를 시트에 자동으로 적음 → 순서표를 나중에 고쳐도 지난 차례는 그대로 · 한 바퀴 돌면 다시 1번부터',
+            '보호자 · 관리자만 보임 (1922 일반 열람자 X)'
+        ] },
         { v: 'v2.83.0', d: '2026-10-18', t: '✍️ 최초 등록 교차검증 보강', items: [
             '등록 결과를 서버에서 읽어 그대로 안내 — 이름 · 생년월일이 명단과 다르면 「등록이 안 됐어요」와 이유를 보여 주고 로그인하지 않음',
             '(고친 문제) 예전엔 서버 답을 못 읽고 그 번호로 로그인만 해 봐서, 이미 연락망에 있는 번호면 생년월일이 틀려도 「등록 완료」가 떴음',
@@ -10044,12 +10398,13 @@
                 if (!fresh) {
                     bootReq = apiGetJson('action=bootstrap' + snapVerQS(snap, ['roster', 'sched', 'notice'])).then(r => snapFillSame(r, snap)).catch(e => ({ __err: e }));   // 🔢 v2.76.0: 바뀐 묶음만
                     const done = bootReq.then(r => { if (r && r.result === 'success' && Array.isArray(r.players)) applyBootExtras(r); }).catch(() => {})
-                        .finally(() => { if (bootPromise === done) bootPromise = null; try { renderOfficers(); } catch (e) {} });   // 📞 v2.81.0: 서버가 번호를 안 줬으면 따로 물음
+                        .finally(() => { if (bootPromise === done) bootPromise = null; try { renderOfficers(); } catch (e) {} try { if (!dutyData && canViewSchedule()) fetchDuty(); } catch (e) {} });   // 📞 v2.81.0: 서버가 번호를 안 줬으면 따로 물음 · 🧹 v2.84.0: 당번도
                     bootPromise = done;
                 }
             }
             if (savedSearchQuery) document.getElementById('searchInput').value = savedSearchQuery;
             if (snap) { applyBootExtras(snap.data, snap.t); applyRosterRes(snap.data); }
+            if (snap && !bootReq && !snap.data.duty) { try { if (canViewSchedule()) fetchDuty(); } catch (e) {} }   // 🧹 v2.84.0: 「한 번에」를 건너뛰었는데 저장본에 당번이 없으면 따로 (한 번)
             updateAdminUI();
             updateUserIdentityBadge();
 
