@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.80.0 · b261017";
+        const APP_VERSION = "v2.81.0 · b261018";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -786,6 +786,31 @@
             height: 34px;
         }
         .btn-uniform-cta:hover { background: #d97706; }
+        /* 📞 v2.81.0: 집행부 단축 버튼 — 유니폼 버튼 양옆 (왼쪽 대표님 · 부대표님 / 오른쪽 총무님 · 부총무님 · 보호자 · 관리자만)
+           누르면 「전화 걸기 · 문자 보내기」 고르기 · 유니폼 버튼은 두 줄로 좁혀 자리를 냄 */
+        .ofc-side { display: none; }
+        .header-bottom-cta.has-ofc { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; }
+        .header-bottom-cta.has-ofc .ofc-side { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+        .header-bottom-cta.has-ofc .ofc-side.l { grid-column: 1; justify-self: end; }
+        .header-bottom-cta.has-ofc .ofc-side.r { grid-column: 3; justify-self: start; }
+        .header-bottom-cta.has-ofc .btn-uniform-cta { grid-column: 2; }   /* 유니폼이 마감돼 버튼이 없어도 양쪽이 가운데에 */
+        .ofc-btn { display: flex; align-items: center; justify-content: space-between; gap: 4px; height: 30px; padding: 0 9px; border-radius: 999px; background: rgba(9,24,46,.78); border: 1px solid rgba(255,255,255,.28); color: #fff; font: inherit; font-size: 12px; font-weight: 800; white-space: nowrap; box-shadow: 0 1px 3px rgba(0,0,0,.25); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        .ofc-btn .ph { font-size: 11px; letter-spacing: -1px; opacity: .9; }
+        .ofc-btn.on, .ofc-btn:active { background: #fff; color: #0b2240; }
+        .header-bottom-cta.has-ofc .btn-uniform-cta { flex-direction: column; justify-content: center; width: 84px; height: auto; min-height: 64px; padding: 6px 8px; gap: 1px; line-height: 1.25; text-align: center; white-space: normal; word-break: keep-all; }
+        @media (min-width: 600px) { .header-bottom-cta.has-ofc .btn-uniform-cta { width: auto; padding: 6px 18px; } }
+        @media (max-width: 380px) {   /* 작은 폰 (360px 등) */
+            .header-bottom-cta.has-ofc { gap: 6px; }
+            .header-bottom-cta.has-ofc .btn-uniform-cta { width: 76px; padding: 6px 6px; font-size: 12.5px; }
+            .ofc-btn { padding: 0 7px; font-size: 11.5px; }
+        }
+        @media (max-width: 340px) { .ofc-btn .ph { display: none; } }   /* 아주 작은 폰은 📞💬 표시 빼고 이름만 */
+        .app-pick.ofc-pick { min-width: 200px; }
+        .ofc-pick .ofc-t { padding: 6px 8px 4px; font-size: 13px; font-weight: 900; color: #0f172a; }
+        .ofc-pick .ofc-t small { display: block; margin-top: 1px; font-size: 12px; font-weight: 700; color: #64748b; }
+        .ofc-pick a { display: block; border-radius: 10px; padding: 12px; font-size: 15px; font-weight: 800; color: #fff; text-decoration: none; -webkit-tap-highlight-color: transparent; }
+        .ofc-pick a.call { background: #16a34a; } .ofc-pick a.sms { background: #2563eb; }
+        .ofc-pick a:active { filter: brightness(.92); }
 
         .container {
             max-width: 1040px;
@@ -2157,6 +2182,7 @@
     .ec-mode button { background: #1b2638; color: #bcc6d4; } .ec-mode button.on { background: #2c4a7a; color: #fff; }
     .app-pick { background: #151e2e; border-color: #2a374e; box-shadow: 0 12px 32px rgba(0,0,0,.55); } .app-pick-bg { background: rgba(0,0,0,.35); }
     .app-pick button { background: #1b2638; color: #bcc6d4; } .app-pick button.on { background: #2c4a7a; color: #fff; }
+    .ofc-pick .ofc-t { color: #dde3ec; } .ofc-pick .ofc-t small { color: #97a3b7; }
     .contact-header { border-bottom: 1px solid #2a374e; }
     .contact-player-name { color: #dde3ec; }
     .contact-row { background: #1b2638; border: 1px solid #2a374e; }
@@ -2749,7 +2775,9 @@
     </div>
 
     <div class="header-bottom-cta" id="headerCtaBar">
+        <div class="ofc-side l" id="ofcLeft"></div>   <!-- 📞 v2.81.0: 대표님 · 부대표님 -->
         <button id="btnUniformCTA" class="btn-uniform-cta" style="display: none;" onclick="openUniformModal()">👕 유니폼 주문 접수</button>
+        <div class="ofc-side r" id="ofcRight"></div>   <!-- 📞 v2.81.0: 총무님 · 부총무님 -->
     </div>
     <div class="bk-say" id="bkSay" role="status" onclick="hideBkSay()"></div>
 </header>
@@ -3680,6 +3708,62 @@
     function clearAdminRoleStorage() {
         localStorage.removeItem('daeyeon_admin_role');
         sessionStorage.removeItem('daeyeon_admin_role');
+        ofcClear();   // 📞 v2.81.0: 로그아웃 · 다른 사람 로그인 → 집행부 번호도 지움
+    }
+
+    // ==========================================================
+    // 📞 v2.81.0: 집행부 단축 버튼 — 헤더 유니폼 버튼 양옆 (왼쪽 대표님 · 부대표님 / 오른쪽 총무님 · 부총무님)
+    //   · 이름 버튼을 누르면 「📞 전화 걸기 · 💬 문자 보내기」 고르기 (휴대폰의 전화 · 문자 화면만 열림 — 바로 걸리지 않음)
+    //   · 번호는 서버(v2.28.0)가 비상연락망 시트에서 찾아 보호자 · 관리자에게만 보냄 (1922 일반 열람자는 버튼 없음)
+    //   · 기기에는 앱이 켜져 있는 동안만 둠(sessionStorage) — 선수 상세 갔다 와도 바로 보이고, 앱을 닫거나 로그아웃하면 지움
+    // ==========================================================
+    var OFC_META = { super: { i: '👑', side: 'l' }, vsuper: { i: '🎖️', side: 'l' }, general: { i: '📋', side: 'r' }, vgeneral: { i: '📒', side: 'r' } };
+    var officerList = (function () { try { const a = JSON.parse(sessionStorage.getItem('daeyeon_ofc') || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } })();
+    var ofcAsked = false;
+    function setOfficers(list) {
+        officerList = Array.isArray(list) ? list.filter(o => o && o.key && o.phone) : [];
+        ofcAsked = true;   // 서버가 답했으면(비어 있어도) 다시 묻지 않음
+        try { sessionStorage.setItem('daeyeon_ofc', JSON.stringify(officerList)); } catch (e) {}
+        try { renderOfficers(); } catch (e) {}
+    }
+    function ofcClear() { officerList = []; ofcAsked = false; try { sessionStorage.removeItem('daeyeon_ofc'); } catch (e) {} }
+    function renderOfficers() {
+        const bar = document.getElementById('headerCtaBar'), L = document.getElementById('ofcLeft'), R = document.getElementById('ofcRight');
+        if (!bar || !L || !R) return;
+        const list = officerList || [];
+        const can = canViewSchedule() && !!getToken();
+        const show = can && list.length > 0;
+        const btn = o => { const m = OFC_META[o.key] || { i: '📞' };
+            return `<button type="button" class="ofc-btn" data-k="${escapeHtml(o.key)}" onclick="ofcOpen(this)" aria-label="${escapeHtml(o.label)}께 전화 · 문자"><span>${m.i} ${escapeHtml(o.label)}</span><span class="ph" aria-hidden="true">📞💬</span></button>`; };
+        L.innerHTML = show ? list.filter(o => (OFC_META[o.key] || {}).side === 'l').map(btn).join('') : '';
+        R.innerHTML = show ? list.filter(o => (OFC_META[o.key] || {}).side !== 'l').map(btn).join('') : '';
+        bar.classList.toggle('has-ofc', show);
+        let booting = false; try { booting = !!bootPromise; } catch (e) {}
+        if (can && !list.length && !ofcAsked && !booting) fetchOfficers();   // 저장본으로 켜져 「한 번에」를 건너뛴 경우만 따로 물음 (한 번)
+    }
+    async function fetchOfficers() {
+        if (ofcAsked) return;
+        ofcAsked = true;
+        try { const r = await apiGetJson('action=getOfficers'); if (r && r.result === 'success') setOfficers(r.officers); } catch (e) {}
+    }
+    function ofcOpen(b) {
+        const o = (officerList || []).find(x => x.key === b.dataset.k);
+        if (!o) return;
+        appPickClose();
+        const d = String(o.phone).replace(/[^\d+]/g, ''), m0 = OFC_META[o.key] || { i: '📞' };
+        const bg = document.createElement('div'); bg.className = 'app-pick-bg'; bg.id = 'appPickBg';
+        const m = document.createElement('div'); m.className = 'app-pick ofc-pick'; m.id = 'appPick'; m.setAttribute('role', 'menu');
+        m.innerHTML = `<div class="ofc-t">${m0.i} ${escapeHtml(o.label)}께<small>${escapeHtml(o.phone)}</small></div>` +
+            `<a class="call" role="menuitem" href="tel:${escapeHtml(d)}">📞 전화 걸기</a><a class="sms" role="menuitem" href="sms:${escapeHtml(d)}">💬 문자 보내기</a>`;
+        bg.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); appPickClose(); });
+        m.addEventListener('click', e => { if (e.target.closest('a')) setTimeout(appPickClose, 300); });
+        document.body.append(bg, m);
+        b.classList.add('on');
+        const r = b.getBoundingClientRect(), vw = window.innerWidth, vh = window.innerHeight, mr = m.getBoundingClientRect();
+        const left = Math.min(Math.max(8, r.left), vw - mr.width - 8);
+        let top = r.bottom + 6;
+        if (top + mr.height > vh - 8) top = Math.max(8, r.top - mr.height - 6);   // 아래 자리가 모자라면 위로
+        m.style.left = left + 'px'; m.style.top = top + 'px';
     }
 
     // ==========================================================
@@ -3903,6 +3987,7 @@
     function applyBootExtras(r, t) {
         t = t || {};
         try { if (applySettings(r.settings)) updateUniformButtonVisibility(); } catch (e) {}
+        if (Array.isArray(r.officers) && canViewSchedule()) setOfficers(r.officers);   // 📞 v2.81.0: 집행부 단축 버튼 (서버 v2.28.0)
         if (Array.isArray(r.events) && canViewSchedule()) {
             schedEvents = r.events; if (Array.isArray(r.venues)) schedVenues = r.venues; schedLoaded = true; schedFetchedAt = t.sched || Date.now();
             if (currentMainTab === 'schedule') renderSchedule();
@@ -6562,6 +6647,7 @@
 
     function uniToggleLabel() { return `👕 접수 <span class="uni-st ${isUniformActive ? 'on' : 'off'}">${isUniformActive ? 'ON' : 'OFF'}</span>`; }   // v2.44.4: 초록 점 ON · 회색 점 OFF
     function updateUniformButtonVisibility() {
+        try { renderOfficers(); } catch (e) {}   // 📞 v2.81.0: 집행부 단축 버튼도 같이 (로그인 · 로그아웃 · 화면 갱신마다)
         const cta = document.getElementById('btnUniformCTA');
         // 1922(익명 열람) 접속자는 학부모 인증이 안 된 상태이므로 유니폼 주문 버튼 자체를 숨긴다.
         if (isAnonymousGuest()) {
@@ -8174,6 +8260,7 @@
     function appPickClose() {
         const a = document.getElementById('appPick'), b = document.getElementById('appPickBg');
         if (a) a.remove(); if (b) b.remove();
+        document.querySelectorAll('.ofc-btn.on').forEach(x => x.classList.remove('on'));   // 📞 v2.81.0
     }
     function appPickOpen(sel) {
         appPickClose();
@@ -8557,6 +8644,12 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.81.0', d: '2026-10-18', t: '📞 집행부 단축 버튼', items: [
+            '맨 위 유니폼 버튼 양옆에 집행부 버튼 — 왼쪽 👑 대표님 · 🎖️ 부대표님 / 오른쪽 📋 총무님 · 📒 부총무님',
+            '이름을 누르면 「📞 전화 걸기 · 💬 문자 보내기」 고르기 → 휴대폰의 전화 · 문자 화면이 열림 (바로 걸리지는 않음)',
+            '번호는 서버(v2.28.0)가 비상연락망 시트에서 찾아 줌 — 시트 번호를 고치면 버튼도 따라감',
+            '보호자 · 관리자에게만 보임 (1922 일반 열람자에게는 번호를 보내지 않음) · 유니폼 버튼은 두 줄로 좁혀 자리를 냄'
+        ] },
         { v: 'v2.80.0', d: '2026-10-17', t: '👥 부대표님 · 부총무님 관리자 추가', items: [
             '새 관리자 등급 2개 — 🎖️ 부대표님 · 📒 부총무님 (각자 비밀번호로 로그인, 서버 v2.27.0)',
             '할 수 있는 것: 🚨 비상 연락 보기(총무님 화면과 똑같이 「간단히 | 자세히」) + 🔑 본인 비밀번호 변경',
@@ -9746,7 +9839,7 @@
                 if (!fresh) {
                     bootReq = apiGetJson('action=bootstrap' + snapVerQS(snap, ['roster', 'sched', 'notice'])).then(r => snapFillSame(r, snap)).catch(e => ({ __err: e }));   // 🔢 v2.76.0: 바뀐 묶음만
                     const done = bootReq.then(r => { if (r && r.result === 'success' && Array.isArray(r.players)) applyBootExtras(r); }).catch(() => {})
-                        .finally(() => { if (bootPromise === done) bootPromise = null; });
+                        .finally(() => { if (bootPromise === done) bootPromise = null; try { renderOfficers(); } catch (e) {} });   // 📞 v2.81.0: 서버가 번호를 안 줬으면 따로 물음
                     bootPromise = done;
                 }
             }
