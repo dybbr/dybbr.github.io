@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.90.0 · b261018";
+        const APP_VERSION = "v2.91.0 · b261018";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -907,6 +907,8 @@
         .dord-pos { flex: 0 0 auto; width: 54px; padding: 6px 2px; border: 1px solid #cbd5e1; border-radius: 8px; font: inherit; font-size: 14px; font-weight: 900; text-align: center; background: #ffffff; color: #0f172a; }
         .dord-who { flex: 1; min-width: 0; line-height: 1.3; }
         .dord-who b { display: block; font-size: 13.5px; font-weight: 900; color: #0f172a; }
+        .dord-in { display: inline-block; margin-left: 5px; padding: 1px 5px; border-radius: 6px; font-size: 11px; font-weight: 800; line-height: 1.5; vertical-align: 1px; color: #0f766e; background: #ccfbf1; white-space: nowrap; }   /* v2.91.0: 입단 년월 */
+        @media (max-width: 380px) { .dord-in { margin-left: 4px; padding: 1px 4px; font-size: 10.5px; letter-spacing: -0.2px; } .dord-row { gap: 6px; } }
         .dord-who small { display: block; font-size: 11.5px; color: #64748b; font-weight: 600; }
         .dord-btns { display: flex; gap: 4px; flex: 0 0 auto; }
         .dord-btns button { border: 1px solid #cbd5e1; background: #ffffff; border-radius: 8px; padding: 6px 8px; font: inherit; font-size: 12px; font-weight: 800; color: #0f2340; cursor: pointer; min-width: 32px; }
@@ -2314,7 +2316,7 @@
     .dm-head { color: #bcc6d4; } .dm-sec, .dadm-stat { color: #5eead4; } .dm-row { border-bottom-color: #2a374e; } .dm-row .dm-d b, .dm-row .dm-w b { color: #dde3ec; } .dm-row .dm-d small, .dm-row .dm-w small { color: #97a3b7; } .dm-row.skip .dm-w b { color: #6f7b91; }
     .ofa-row.dadm button.ghost { background: #151e2e; color: #dde3ec; border-color: #2a374e; } .ofa-row.dadm.skip { background: #151e2e; }
     .dord-set label { color: #bcc6d4; } .dord-set input, .dord-set select, .dord-pos, .dord-btns button, .dord-add { background: #151e2e; color: #dde3ec; border-color: #2a374e; }
-    .dord-row { border-bottom-color: #2a374e; } .dord-who b { color: #dde3ec; } .dord-who small, .dord-help { color: #97a3b7; } .dord-row.warn .dord-who small { color: #f87171; }
+    .dord-row { border-bottom-color: #2a374e; } .dord-who b { color: #dde3ec; } .dord-in { color: #5eead4; background: #10272a; } .dord-who small, .dord-help { color: #97a3b7; } .dord-row.warn .dord-who small { color: #f87171; }
     .dord-row.new, .dord-row.moved .dord-pos { background: #10272a; } .dord-row.moved .dord-pos { color: #5eead4; border-color: #14b8a6; } .dord-addlist .six { background: #2a2113; color: #fcd34d; }
     .ofa-row button { background: #2c4a7a; } .ofa-row.warn { background: #3a1820; border-color: #7f1d1d; } .ofa-row.warn .who span { color: #fca5a5; }
     .ofa-row.empty { background: #151e2e; } .ofa-foot button { background: #1b2638; border-color: #2a374e; color: #dde3ec; }
@@ -4740,10 +4742,18 @@
     // 🔀 v2.86.0: 순서 · 가족 편집 (대표님 · 총무님 · 개발자) — 시트를 안 열어도 순서 바꾸기 · 빼기 · 가족 추가 · 시작일 · 안내 문구
     //   저장은 한 번에 (서버 v2.32.0 dutyOrder) · 그사이 누가 시트를 고쳤으면 서버가 거절 → 새로 불러옴
     var dutyOrd = null;
+    // v2.91.0: 입단 년월 — 당번 시트 비고 「24.10 이전 입단」 · 「25.3.4 입단 (전학)」 → 「24.10 전」 · 「25.3」
+    function dutyJoinOf(note) {
+        const m = String(note || '').match(/(\d{4}|\d{2})\.(\d{1,2})(?:\.\d{1,2})?\s*(이전)?/);
+        if (!m) return '';
+        const mo = parseInt(m[2], 10);
+        if (!(mo >= 1 && mo <= 12)) return '';
+        return (m[1].length === 4 ? m[1].slice(2) : m[1]) + '.' + mo + (m[3] ? ' 전' : '');   // 「이전」은 짧게 「전」
+    }
     function dutyOrdOpen() {
         if (!dutyAdm) return;
         const rows = (dutyAdm.rows || []).slice().sort((a, b) => ((a.order == null ? 1e9 : a.order) - (b.order == null ? 1e9 : b.order)) || a.r - b.r);
-        dutyOrd = { items: rows.map(r => ({ r: r.r, n: r.name, no: r.no, g: r.g, sib: r.sib || [], st: r.st, dupOf: r.dupOf || '', count: r.count || 0, out: r.st === 'out', orig: r.out })), base: rows.map(r => r.r), addOpen: false };
+        dutyOrd = { items: rows.map(r => ({ r: r.r, n: r.name, no: r.no, g: r.g, sib: r.sib || [], st: r.st, dupOf: r.dupOf || '', count: r.count || 0, out: r.st === 'out', orig: r.out, join: dutyJoinOf(r.note), note: r.note || '' })), base: rows.map(r => r.r), addOpen: false };
         dutyOrd.items.forEach(it => { it.out0 = it.out; });
         document.getElementById('dordStart').value = dutyAdm.start || '';
         document.getElementById('dordInfo').value = dutyAdm.info || '';
@@ -4768,7 +4778,7 @@
             const moved = !it.isNew && dutyOrd.base.indexOf(it.r) !== i;
             return `<div class="dord-row${it.out ? ' out' : ''}${warn ? ' warn' : ''}${it.isNew ? ' new' : ''}${moved ? ' moved' : ''}">
                 <select class="dord-pos" aria-label="자리" onchange="dutyOrdMove(${i}, +this.value)">${opts(i)}</select>
-                <div class="dord-who"><b>${escapeHtml(it.n)} 가족</b><small>${info}</small></div>
+                <div class="dord-who"><b>${escapeHtml(it.n)} 가족${it.join ? `<span class="dord-in" title="${escapeHtml(it.note)}">${escapeHtml(it.join)}</span>` : ''}</b><small>${info}</small></div>
                 <div class="dord-btns"><button type="button" aria-label="위로" onclick="dutyOrdMove(${i}, ${i - 1})"${i === 0 ? ' disabled' : ''}>▲</button><button type="button" aria-label="아래로" onclick="dutyOrdMove(${i}, ${i + 1})"${i === N - 1 ? ' disabled' : ''}>▼</button><button type="button" onclick="dutyOrdOut(${i})">${it.isNew ? '✕' : it.out ? '넣기' : '빼기'}</button></div>
             </div>`;
         }).join('') : '<div class="ofa-msg">아직 가족이 없어요 · 아래 「＋ 가족 추가」로 넣어 주세요</div>';
@@ -9427,6 +9437,9 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.91.0', d: '2026-10-18', t: '🧹 순서 편집에 입단 년월', items: [
+            '⚙️ 관리 탭 「🔀 순서 · 가족 편집」 — 「○○ 가족」 옆에 입단 년월 (예: 24.10 전 · 25.3) · 당번 시트 비고 칸의 날짜를 읽음'
+        ] },
         { v: 'v2.90.0', d: '2026-10-18', t: '🧹 청소 주기 고르기', items: [
             '⚙️ 관리 탭 「🔀 순서 · 가족 편집」에 「청소 주기」 — 매주 · 격주(2·4 / 1·3번째 주말) · 한 달에 한 번(1~4번째 주말) 중 고르기 (서버 v2.34.0)',
             '시트 「당번」 탭 「청소 주」 칸도 같은 드롭다운 · 주기를 바꿔도 청소 횟수 적은 가족부터 이어서 돎',
