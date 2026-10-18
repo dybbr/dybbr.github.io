@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.87.0 · b261018";
+        const APP_VERSION = "v2.88.0 · b261018";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -836,6 +836,8 @@
         .ofa-sum { font-size: 12.5px; color: #475569; font-weight: 700; margin-top: 6px; line-height: 1.45; }
         .ofa-sum .no { color: #94a3b8; }
         #ofaBody { margin-top: 8px; }
+        .jsy-sum { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; cursor: pointer; }   /* v2.88.0: 접힌 유니폼 색 */
+        #jsyBody { margin-top: 8px; }
         /* 🧹 v2.84.0: 부실 청소 당번 */
         .duty-banner { display: none; align-items: center; gap: 10px; background: #ffffff; border: 1px solid var(--card-border); border-left: 5px solid #0d9488; border-radius: 12px; padding: 10px 12px; margin-bottom: 12px; cursor: pointer; box-shadow: 0 2px 8px rgba(15,23,42,0.04); }
         .duty-banner .db-ic { flex: 0 0 auto; width: 38px; height: 38px; border-radius: 10px; background: #ccfbf1; display: flex; align-items: center; justify-content: center; font-size: 21px; }
@@ -3099,10 +3101,14 @@
             </div>
 
             <div class="admin-group" id="adminGroupJersey" style="display: none;">
-                <div class="admin-group-title">👕 학년별·코치진·감독님 유니폼 색</div>
+                <!-- v2.88.0: 접어 둠 -->
+                <button type="button" class="admin-fold" id="jsyFoldBtn" aria-expanded="false" aria-controls="jsyBody" onclick="jsyToggle()"><span class="admin-group-title">👕 학년별·코치진·감독님 유니폼 색</span><span class="fold-r"><span id="jsyFoldLbl">펼치기</span> <span class="fold-ar">▾</span></span></button>
+                <div class="jsy-sum" id="jsySum" onclick="jsyToggle()"></div>
+                <div id="jsyBody" style="display: none;">
                 <p class="admin-role-desc" style="margin-bottom: 8px;">색을 골라 저장하면 그 학년 선수들의 <b>등번호 유니폼 색</b>과 이미지형 카드의 <b>사진 테두리 색</b>이 함께 바뀌고, 모든 기기에 바로 반영됩니다.<br>색은 학년마다 정해져 있어서, 새 학기에 아이들 학년이 올라가면 올라간 학년의 색으로 자동으로 바뀌어요. (예: 5학년 색이 파랑이면, 6학년이 된 아이는 6학년 색으로 보여요)</p>
                 <div class="jsy-panel" id="jerseyPanel"></div>
                 <div class="jsy-panel-msg" id="jerseyPanelMsg"></div>
+                </div>
             </div>
 
             <!-- 🧹 부실 청소 당번 (v2.84.0) — 대표님 · 총무님 · 개발자 -->
@@ -4450,6 +4456,7 @@
         document.getElementById('venueSection').classList.toggle('active', tab === 'venue');
         document.getElementById('adminSection').classList.toggle('active', tab === 'admin');
         if (tab !== 'admin' && ofaOpenSt) { ofaOpenSt = false; try { ofaFoldSync(); } catch (e) {} }   // v2.87.0: 다른 탭으로 가면 집행부 버튼 묶음은 다시 접힘
+        if (tab !== 'admin' && jsyOpenSt) { jsyOpenSt = false; jerseyEdit = null; try { renderJerseyPanel(); jsyFoldSync(); } catch (e) {} }   // v2.88.0: 유니폼 색도
         if (tab === 'admin') updateAdminPanel();
         // v2.64.0: 탭을 누를 때마다 새로 받던 것 → 받은 지 2분이 지났을 때만 (그 전엔 있는 것 그대로 · 당겨서 새로고침은 늘 새로)
         if (tab === 'schedule') { renderSchedule(); if (!silent) loadSchedule(Date.now() - schedFetchedAt > TAB_STALE_MS); }
@@ -7135,6 +7142,22 @@
             if (pairEnd && jerseyEdit && pairKeys.indexOf(jerseyEdit.key) !== -1) html += sheet(jerseyEdit.key);
         });
         panel.innerHTML = html;
+        jsyFoldSync();
+    }
+    // 👕 v2.88.0: 접어 둠 — 접힌 줄은 지금 색 (작은 유니폼 8개)
+    var jsyOpenSt = false;
+    function jsyToggle() {
+        jsyOpenSt = !jsyOpenSt;
+        if (!jsyOpenSt && jerseyEdit) { jerseyEdit = null; renderJerseyPanel(); return; }   // 접으면 고르던 색은 저장 안 하고 닫음
+        jsyFoldSync();
+    }
+    function jsyFoldSync() {
+        const b = document.getElementById('jsyFoldBtn'), body = document.getElementById('jsyBody'), sum = document.getElementById('jsySum'), lbl = document.getElementById('jsyFoldLbl');
+        if (!b || !body) return;
+        b.setAttribute('aria-expanded', jsyOpenSt ? 'true' : 'false');
+        body.style.display = jsyOpenSt ? '' : 'none';
+        if (lbl) lbl.textContent = jsyOpenSt ? '접기' : '펼치기';
+        if (sum) { sum.style.display = jsyOpenSt ? 'none' : ''; if (!jsyOpenSt) sum.innerHTML = JERSEY_ROWS.map(([k, name, sample]) => jerseyBadgeRaw(sample, jerseyColors[k], 28, '', '', name + ' 유니폼 색')).join(''); }
     }
     function openJerseyEdit(key) {
         if (jerseyEdit && jerseyEdit.key === key) { jerseyEdit = null; renderJerseyPanel(); return; }
@@ -9362,6 +9385,11 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.88.0', d: '2026-10-18', t: '👕 유니폼 색 접기', items: [
+            '⚙️ 관리 탭 「👕 학년별·코치진·감독님 유니폼 색」도 접어 둠 · 펼치기를 누르면 색 바꾸기가 나옴',
+            '접혀 있을 때는 지금 색을 작은 유니폼 8개로 한 줄에 보여 줌 (누르면 펼쳐짐)',
+            '다른 탭으로 가거나 접으면 고르던 색은 저장 안 하고 닫힘'
+        ] },
         { v: 'v2.87.0', d: '2026-10-18', t: '📞 집행부 연락 버튼 접기', items: [
             '⚙️ 관리 탭 「📞 집행부 연락 버튼」을 접어 둠 · 펼칠 때만 서버에서 맡은 분을 불러옴 (관리 탭을 열 때마다 묻던 것 없앰)',
             '접혀 있을 때는 지금 헤더에 보이는 버튼만 한 줄로 (이미 받아 둔 것이라 서버에 안 물음)',
