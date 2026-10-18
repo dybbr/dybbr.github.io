@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.81.0 · b261018";
+        const APP_VERSION = "v2.82.0 · b261018";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -811,6 +811,36 @@
         .ofc-pick a { display: block; border-radius: 10px; padding: 12px; font-size: 15px; font-weight: 800; color: #fff; text-decoration: none; -webkit-tap-highlight-color: transparent; }
         .ofc-pick a.call { background: #16a34a; } .ofc-pick a.sms { background: #2563eb; }
         .ofc-pick a:active { filter: brightness(.92); }
+        /* 📞 v2.82.0: 관리 탭 「집행부 연락 버튼」 — 대표님 · 개발자가 맡는 분 바꾸기 */
+        #adminGroupOfc, #ofaModal { word-break: keep-all; }
+        .ofa-list { display: grid; gap: 6px; }
+        .ofa-row { display: flex; align-items: center; gap: 10px; padding: 9px 9px 9px 11px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc; }
+        .ofa-row .ic { font-size: 20px; width: 24px; text-align: center; flex: 0 0 auto; }
+        .ofa-row .who { flex: 1; min-width: 0; line-height: 1.35; }
+        .ofa-row .who b { display: block; font-size: 13.5px; font-weight: 900; color: #0f172a; }
+        .ofa-row .who span { display: block; font-size: 12.5px; color: #334155; font-weight: 700; }
+        .ofa-row .who small { display: block; font-size: 12px; color: #64748b; font-weight: 600; }
+        .ofa-row button { flex: 0 0 auto; border: 0; border-radius: 8px; padding: 8px 12px; font: inherit; font-size: 12.5px; font-weight: 800; background: #0b2240; color: #fff; cursor: pointer; }
+        .ofa-row.warn { border-color: #fca5a5; background: #fef2f2; } .ofa-row.warn .who span { color: #b91c1c; }
+        .ofa-row.empty { border-style: dashed; background: #fff; } .ofa-row.empty .who span { color: #94a3b8; }
+        .ofa-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; color: #64748b; margin-top: 8px; font-weight: 600; }
+        .ofa-foot button { flex: 0 0 auto; border: 1px solid #cbd5e1; background: #fff; border-radius: 8px; padding: 6px 10px; font: inherit; font-size: 12px; font-weight: 800; color: #0f2340; cursor: pointer; }
+        .ofa-msg { font-size: 12.5px; color: #64748b; font-weight: 700; padding: 6px 2px; }
+        #ofaModal .modal-content { max-width: 420px; }
+        .ofa-step { font-size: 12.5px; font-weight: 900; color: #0f2340; margin: 4px 0 6px; }
+        .ofa-search { width: 100%; box-sizing: border-box; padding: 9px 11px; border: 1px solid #cbd5e1; border-radius: 8px; font: inherit; font-size: 14px; }
+        .ofa-plist { display: grid; gap: 4px; margin: 8px 0 12px; max-height: 232px; overflow-y: auto; overscroll-behavior: contain; }
+        .ofa-p { display: flex; align-items: center; gap: 8px; padding: 9px 10px; border: 1px solid #e2e8f0; border-radius: 10px; background: #fff; font: inherit; font-size: 14px; font-weight: 800; color: #0f172a; text-align: left; cursor: pointer; }
+        .ofa-p .g { font-size: 11.5px; font-weight: 800; color: #475569; background: #f1f5f9; border-radius: 6px; padding: 2px 6px; }
+        .ofa-p .n { font-size: 12px; color: #64748b; font-weight: 700; }
+        .ofa-p.on { border-color: #0b2240; background: #eef2ff; box-shadow: inset 0 0 0 1px #0b2240; }
+        .ofa-rel { display: grid; gap: 6px; }
+        .ofa-r { display: flex; align-items: center; justify-content: space-between; padding: 11px 12px; border: 1px solid #e2e8f0; border-radius: 10px; font: inherit; font-size: 14px; font-weight: 800; color: #0f172a; background: #fff; cursor: pointer; }
+        .ofa-r small { font-size: 12.5px; color: #475569; font-weight: 700; }
+        .ofa-r.on { border-color: #16a34a; background: #f0fdf4; box-shadow: inset 0 0 0 1px #16a34a; }
+        .ofa-r:disabled { opacity: .45; cursor: default; }
+        .ofa-empty { margin-top: 10px; font-size: 12.5px; color: #64748b; font-weight: 700; }
+        .ofa-empty button { border: 0; background: none; padding: 0; font: inherit; font-weight: 800; color: #b91c1c; text-decoration: underline; cursor: pointer; }
 
         .container {
             max-width: 1040px;
@@ -2183,6 +2213,13 @@
     .app-pick { background: #151e2e; border-color: #2a374e; box-shadow: 0 12px 32px rgba(0,0,0,.55); } .app-pick-bg { background: rgba(0,0,0,.35); }
     .app-pick button { background: #1b2638; color: #bcc6d4; } .app-pick button.on { background: #2c4a7a; color: #fff; }
     .ofc-pick .ofc-t { color: #dde3ec; } .ofc-pick .ofc-t small { color: #97a3b7; }
+    .ofa-row { background: #1b2638; border-color: #2a374e; } .ofa-row .who b { color: #dde3ec; } .ofa-row .who span { color: #bcc6d4; } .ofa-row .who small { color: #97a3b7; }
+    .ofa-row button { background: #2c4a7a; } .ofa-row.warn { background: #3a1820; border-color: #7f1d1d; } .ofa-row.warn .who span { color: #fca5a5; }
+    .ofa-row.empty { background: #151e2e; } .ofa-foot button { background: #1b2638; border-color: #2a374e; color: #dde3ec; }
+    .ofa-step { color: #dde3ec; } .ofa-search { background: #1b2638; border-color: #2a374e; color: #dde3ec; }
+    .ofa-p, .ofa-r { background: #1b2638; border-color: #2a374e; color: #dde3ec; } .ofa-p .g { background: #223047; color: #bcc6d4; } .ofa-r small { color: #bcc6d4; }
+    .ofa-p.on { background: #223a66; border-color: #6d8fd1; box-shadow: inset 0 0 0 1px #6d8fd1; } .ofa-r.on { background: #12351f; border-color: #22c55e; box-shadow: inset 0 0 0 1px #22c55e; }
+    .ofa-empty button { color: #fca5a5; }
     .contact-header { border-bottom: 1px solid #2a374e; }
     .contact-player-name { color: #dde3ec; }
     .contact-row { background: #1b2638; border: 1px solid #2a374e; }
@@ -2936,6 +2973,14 @@
                 <div class="admin-empty" id="adminOpsEmpty">이 등급에서 쓸 수 있는 운영 기능이 없습니다.</div>
             </div>
 
+            <!-- 📞 집행부 연락 버튼 (v2.82.0) — 대표님 · 개발자만 (맡는 분 바꾸기) -->
+            <div class="admin-group" id="adminGroupOfc" style="display: none;">
+                <div class="admin-group-title">📞 집행부 연락 버튼</div>
+                <p class="admin-role-desc" style="margin-bottom: 8px;">맨 위 유니폼 버튼 양옆에 보이는 버튼이에요. 집행부가 바뀌면 <b>맡는 분만 골라</b> 주세요 — 번호는 비상연락망에서 자동으로 가져와요.</p>
+                <div class="ofa-list" id="ofaList"><div class="ofa-msg">불러오는 중…</div></div>
+                <div class="ofa-foot"><span id="ofaChanged"></span><button type="button" onclick="openPasswordManageModal()">🔑 비번 관리</button></div>
+            </div>
+
             <!-- 🎓 새 학년도 (v2.45.0) — 대표님 · 개발자만 -->
             <div class="admin-group" id="adminGroupSeason" style="display: none;">
                 <div class="admin-group-title">🎓 새 학년도</div>
@@ -3207,6 +3252,25 @@
         <div class="modal-btns" style="justify-content: space-between;">
             <button class="btn-cancel" onclick="closeModal('noticeEditModal')">취소</button>
             <button class="btn-save" id="btnNoticeSave" onclick="submitNoticeEditor()">저장</button>
+        </div>
+    </div>
+</div>
+
+<!-- 📞 집행부 바꾸기 (v2.82.0) — 선수 고르기 → 아버님 · 어머님 · 기타 → 확인 -->
+<div id="ofaModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header" id="ofaTitle">바꾸기</div>
+        <div class="modal-scroll-body">
+            <p class="ofa-step">① 선수 고르기</p>
+            <input type="text" id="ofaSearch" class="ofa-search" placeholder="이름 · 배번 검색" autocomplete="off" oninput="ofaRenderPlayers()">
+            <div class="ofa-plist" id="ofaPList"></div>
+            <p class="ofa-step">② 누구에게 연결할까요?</p>
+            <div class="ofa-rel" id="ofaRel"></div>
+            <p class="ofa-empty">🚫 맡을 분이 아직 없으면 <button type="button" onclick="ofaSetEmpty()">비워 두기</button> (헤더 버튼 숨김)</p>
+        </div>
+        <div class="modal-btns" style="justify-content: space-between;">
+            <button class="btn-cancel" onclick="closeModal('ofaModal')">취소</button>
+            <button class="btn-save" id="btnOfaNext" onclick="ofaNext()">다음</button>
         </div>
     </div>
 </div>
@@ -3726,7 +3790,7 @@
         try { sessionStorage.setItem('daeyeon_ofc', JSON.stringify(officerList)); } catch (e) {}
         try { renderOfficers(); } catch (e) {}
     }
-    function ofcClear() { officerList = []; ofcAsked = false; try { sessionStorage.removeItem('daeyeon_ofc'); } catch (e) {} }
+    function ofcClear() { officerList = []; ofcAsked = false; ofaData = null; ofaAt = 0; try { sessionStorage.removeItem('daeyeon_ofc'); } catch (e) {} }
     function renderOfficers() {
         const bar = document.getElementById('headerCtaBar'), L = document.getElementById('ofcLeft'), R = document.getElementById('ofcRight');
         if (!bar || !L || !R) return;
@@ -3764,6 +3828,133 @@
         let top = r.bottom + 6;
         if (top + mr.height > vh - 8) top = Math.max(8, r.top - mr.height - 6);   // 아래 자리가 모자라면 위로
         m.style.left = left + 'px'; m.style.top = top + 'px';
+    }
+
+    // ==========================================================
+    // 📞 v2.82.0: 관리 탭 「집행부 연락 버튼」 — 대표님 · 개발자가 맡는 분 바꾸기
+    //   · 번호는 치지 않고 고르기만 (선수 → 아버님 · 어머님 · 기타) — 번호는 늘 비상연락망 시트에서 (서버 v2.29.0)
+    //   · 바꾸기 전 → 후 확인 · 비워 두기 · 마지막 변경 기록 · 저장 뒤 「비밀번호도 바꿀까요?」
+    //   · 저장은 서버가 대표님 · 개발자인지 다시 확인 · 고를 목록(보호자 번호)은 기기에 저장하지 않음 (메모리에만)
+    // ==========================================================
+    var ofaData = null, ofaAt = 0, ofaReq = null, ofaCtx = null;
+    function ofaCan() { return isSuperOrDev(); }
+    async function ofaRefresh(force, noFetch) {
+        const grp = document.getElementById('adminGroupOfc');
+        if (!grp) return;
+        grp.style.display = ofaCan() ? '' : 'none';
+        if (!ofaCan()) return;
+        if (ofaData && !force && Date.now() - ofaAt < 60000) return ofaRender();
+        if (ofaData) ofaRender();
+        if (noFetch) return;   // 관리 탭이 안 보이면 묻지 않음 (탭을 열 때 물음)
+        if (ofaReq) return ofaReq;
+        ofaReq = (async () => {
+            try {
+                const r = await apiGetJson('action=getOfficerAdmin');
+                if (!r || r.result !== 'success') throw new Error((r && r.message) || '못 불러왔어요');
+                ofaData = r; ofaAt = Date.now();
+            } catch (e) { if (!ofaData) document.getElementById('ofaList').innerHTML = `<div class="ofa-msg">못 불러왔캉… (${escapeHtml(e.message)}) · 관리 탭을 다시 열어 주세요</div>`; }
+            finally { ofaReq = null; }
+            if (ofaData) ofaRender();
+        })();
+        return ofaReq;
+    }
+    function ofaWho(sl) { return sl.player ? `${sl.player} ${sl.rel}` : ''; }
+    function ofaRender() {
+        const box = document.getElementById('ofaList'), ch = document.getElementById('ofaChanged');
+        if (!box || !ofaData) return;
+        box.innerHTML = ofaData.slots.map(sl => {
+            const ic = (OFC_META[sl.key] || {}).i || '📞';
+            let cls = '', line = escapeHtml(ofaWho(sl)), sub = escapeHtml(sl.phone || '');
+            if (sl.status === 'empty') { cls = ' empty'; line = '비어 있음'; sub = '헤더에 버튼이 안 보여요'; }
+            else if (sl.status === 'missing') { cls = ' warn'; line = '⚠️ 연락망에서 못 찾음'; sub = escapeHtml(ofaWho(sl)) + ' — 졸업 · 이름 변경 · 번호 없음 등 · 다시 지정해 주세요'; }
+            return `<div class="ofa-row${cls}"><span class="ic">${ic}</span><div class="who"><b>${escapeHtml(sl.label)}</b><span>${line}</span><small>${sub}</small></div><button type="button" onclick="ofaOpen('${escapeHtml(sl.key)}')">바꾸기</button></div>`;
+        }).join('');
+        const c = ofaData.changed;
+        if (ch) ch.textContent = c && c.at ? `🕘 마지막 변경: ${String(c.at).slice(5).replace('-', '/')} · ${c.by || ''}${c.slot ? ' (' + c.slot + ')' : ''}` : '🕘 아직 바꾼 적 없음 (처음 설정 그대로)';
+    }
+    function ofaOpen(key) {
+        if (!ofaCan() || !ofaData) return;
+        const sl = ofaData.slots.find(x => x.key === key);
+        if (!sl) return;
+        ofaCtx = { key: key, sl: sl, pick: null, rel: '' };
+        if (sl.player) {   // 지금 맡은 분을 먼저 골라 둠
+            const cur = ofaData.candidates.find(c => c.name === sl.player && (!sl.no || c.no === sl.no)) || ofaData.candidates.find(c => c.name === sl.player);
+            if (cur) { ofaCtx.pick = cur; ofaCtx.rel = cur.phones[sl.rel] ? sl.rel : ''; }
+        }
+        document.getElementById('ofaTitle').textContent = `${(OFC_META[key] || {}).i || '📞'} ${sl.label} 바꾸기`;
+        document.getElementById('ofaSearch').value = '';
+        ofaRenderPlayers(); ofaRenderRel();
+        document.getElementById('ofaModal').style.display = 'flex';
+        const on = document.querySelector('#ofaPList .ofa-p.on'); if (on) on.scrollIntoView({ block: 'nearest' });
+    }
+    function ofaRenderPlayers() {
+        if (!ofaCtx || !ofaData) return;
+        const q = document.getElementById('ofaSearch').value.trim();
+        const list = ofaData.candidates.filter(c => !q || c.name.indexOf(q) !== -1 || String(c.no) === q.replace(/[^0-9]/g, ''))
+            .sort((a, b) => (Number(b.grade) || 0) - (Number(a.grade) || 0) || a.no - b.no);
+        const box = document.getElementById('ofaPList');
+        box.innerHTML = list.length ? list.map(c => {
+            const on = ofaCtx.pick && ofaCtx.pick.name === c.name && ofaCtx.pick.no === c.no;
+            return `<button type="button" class="ofa-p${on ? ' on' : ''}" data-no="${c.no}" data-name="${escapeHtml(c.name)}" onclick="ofaPick(this)">${c.grade ? `<span class="g">${escapeHtml(c.grade)}학년</span>` : ''}${escapeHtml(c.name)} <span class="n">· ${c.no ? c.no + '번' : '번호 없음'}</span></button>`;
+        }).join('') : '<div class="ofa-msg">찾는 선수가 없어요</div>';
+    }
+    function ofaPick(b) {
+        const c = ofaData.candidates.find(x => x.name === b.dataset.name && String(x.no) === b.dataset.no);
+        if (!c) return;
+        ofaCtx.pick = c;
+        const rels = ['아버님', '어머님', '기타'].filter(r => c.phones[r]);
+        ofaCtx.rel = rels.length === 1 ? rels[0] : (c.phones[ofaCtx.rel] ? ofaCtx.rel : '');
+        document.querySelectorAll('#ofaPList .ofa-p').forEach(x => x.classList.toggle('on', x === b));
+        ofaRenderRel();
+    }
+    function ofaRenderRel() {
+        const box = document.getElementById('ofaRel');
+        const c = ofaCtx && ofaCtx.pick;
+        if (!c) { box.innerHTML = '<div class="ofa-msg">먼저 위에서 선수를 골라 주세요</div>'; return; }
+        const ICON = { '아버님': '👨', '어머님': '👩', '기타': '📱' };
+        box.innerHTML = ['아버님', '어머님', '기타'].map(r => {
+            const ph = c.phones[r];
+            return `<button type="button" class="ofa-r${ofaCtx.rel === r ? ' on' : ''}" data-r="${r}" onclick="ofaRel(this)"${ph ? '' : ' disabled'}><span>${ICON[r]} ${r}</span><small>${ph ? escapeHtml(ph) : '번호 없음'}</small></button>`;
+        }).join('');
+    }
+    function ofaRel(b) { ofaCtx.rel = b.dataset.r; ofaRenderRel(); }
+    async function ofaNext() {
+        if (!ofaCtx) return;
+        const c = ofaCtx.pick, sl = ofaCtx.sl;
+        if (!c) { bkNotify('info', '선수를 먼저 골라줘캉!'); return; }
+        if (!ofaCtx.rel) { bkNotify('info', '아버님 · 어머님 · 기타 중에 골라줘캉!'); return; }
+        const after = `${c.name} ${ofaCtx.rel}`, before = sl.player ? ofaWho(sl) : '비어 있음';
+        if (sl.status !== 'missing' && sl.player === c.name && sl.no === c.no && sl.rel === ofaCtx.rel) { closeModal('ofaModal'); bkNotify('info', '지금과 같은 분이캉', '바뀐 게 없어요'); return; }
+        const ok = await bkConfirm(`${sl.label}을 바꿀까캉?`, { sub: `${before} → ${after}\n저장하면 모든 사람 화면에 바로 바뀌어요`, ok: '바꾸기' });
+        if (!ok) return;
+        await ofaSave({ slot: sl.key, player: c.name, no: c.no, rel: ofaCtx.rel }, sl, !!sl.player && sl.status !== 'missing');
+    }
+    async function ofaSetEmpty() {
+        if (!ofaCtx) return;
+        const sl = ofaCtx.sl;
+        const ok = await bkConfirm(`${sl.label}을 비워 둘까캉?`, { sub: `헤더에서 ${sl.label} 버튼이 안 보여요`, ok: '비워 두기', danger: true });
+        if (!ok) return;
+        await ofaSave({ slot: sl.key, empty: '1' }, sl, !!sl.player && sl.status !== 'missing');
+    }
+    async function ofaSave(q, sl, askPw) {
+        const btn = document.getElementById('btnOfaNext');
+        btn.disabled = true; btn.textContent = '저장 중...';
+        bkNotify('saving', '바꾸는 중이캉');
+        try {
+            const qs = Object.keys(q).map(k => k + '=' + encodeURIComponent(q[k])).join('&');
+            const r = await apiGetJson('action=saveOfficer&' + qs);
+            if (!r || r.result !== 'success') { bkNotify('fail', '앗, 안 바뀌었캉…', (r && r.message) || '저장에 실패했습니다.'); return; }
+            ofaData = r; ofaAt = Date.now(); ofaRender();
+            if (Array.isArray(r.officers)) setOfficers(r.officers);   // 헤더 버튼도 바로
+            closeModal('ofaModal');
+            bkNotify('done', `${sl.label} 바꿨캉! ✓`, '헤더 버튼에 바로 반영됐어요');
+            if (askPw) {
+                const go = await bkConfirm('비밀번호도 바꿀까캉?', { sub: `이전 ${sl.label}이 아직 ${sl.label} 비밀번호를 알고 있어요`, ok: '🔑 비번 관리로', cancel: '나중에' });
+                if (go) openPasswordManageModal();
+            }
+        } catch (e) {
+            bkNotify('fail', '앗, 안 바뀌었캉…', '서버 연결 오류: ' + e.message);
+        } finally { btn.disabled = false; btn.textContent = '다음'; }
     }
 
     // ==========================================================
@@ -3888,6 +4079,7 @@
             if (rest.length % 2) rest[rest.length - 1].classList.add('ops-wide');
         });
         refreshSeasonStatus(false, currentMainTab !== 'admin');   // 🎓 새 학년도 (대표님 · 개발자) — v2.64.0: 관리 탭을 열 때만 서버에 물음
+        try { ofaRefresh(false, currentMainTab !== 'admin'); } catch (e) {}   // 📞 v2.82.0: 집행부 연락 버튼 (대표님 · 개발자)
         document.getElementById('adminGroupContent').style.display = canEditSchedule() ? '' : 'none';
         const devGroup = document.getElementById('adminGroupDev');
         if (devGroup) devGroup.style.display = (currentRole === 'dev') ? '' : 'none';   // 개발 카테고리는 개발자만
@@ -8644,6 +8836,13 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.82.0', d: '2026-10-18', t: '📞 관리 탭에서 집행부 바꾸기', items: [
+            '관리 탭에 「📞 집행부 연락 버튼」 묶음 (대표님 · 개발자만) — 대표님 · 부대표님 · 총무님 · 부총무님 지금 맡은 분 · 번호 한눈에',
+            '[바꾸기] → 선수 고르기(이름 · 배번 검색) → 아버님 · 어머님 · 기타 고르기 → 「바뀌기 전 → 후」 확인 → 저장 · 번호는 치지 않고 비상연락망에서 자동',
+            '번호 없는 칸은 못 고름 · 맡을 분이 없으면 「비워 두기」(헤더 버튼 숨김) · 졸업 · 이름 변경으로 못 찾으면 ⚠️ 빨간 줄',
+            '마지막 변경(언제 · 누가) 기록 · 저장 뒤 「비밀번호도 바꿀까요?」 → 🔑 비번 관리로 바로',
+            '저장은 서버(v2.29.0)가 대표님 · 개발자인지 다시 확인 · 같은 이름이 둘이면 배번으로 가림'
+        ] },
         { v: 'v2.81.0', d: '2026-10-18', t: '📞 집행부 단축 버튼', items: [
             '맨 위 유니폼 버튼 양옆에 집행부 버튼 — 왼쪽 👑 대표님 · 🎖️ 부대표님 / 오른쪽 📋 총무님 · 📒 부총무님',
             '이름을 누르면 「📞 전화 걸기 · 💬 문자 보내기」 고르기 → 휴대폰의 전화 · 문자 화면이 열림 (바로 걸리지는 않음)',
