@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.82.0 · b261018";
+        const APP_VERSION = "v2.83.0 · b261018";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -6455,24 +6455,23 @@
             submitBtn.textContent = '비상연락망 시트 등록 중...';
             bkNotify('saving', '등록하는 중이캉');
             try {
-                // 서버가 공식 명단 대조 + 빈 칸만 등록(덮어쓰기 방지)까지 처리한다
-                await postApi({
-                    action: 'registerContact',
-                    clientId: getDeviceClientId(),
-                    playerName: nameInput,
-                    playerNo: chosenNo,
-                    birth: birthInput,
-                    role: roleSelect,
-                    phone: formatPhone(cleanPhone)
-                });
-                // 등록이 반영됐으면 방금 번호로 로그인되어 토큰을 받는다
-                // (이름/생년월일이 명단과 안 맞으면 서버가 등록을 거부 → 번호가 안 들어가 로그인도 실패 → 안내)
+                // 서버가 공식 명단 대조(이름 + 생년월일) + 빈 칸만 등록(덮어쓰기 방지)까지 처리한다
+                // ✍️ v2.83.0: 서버 답(성공 · 불일치 · 이미 다른 번호)을 읽고 그대로 안내 — 틀리면 로그인하지 않음
+                //   (예전엔 답을 못 읽고 그 번호로 로그인만 해 봐서, 이미 연락망에 있는 번호면 생년월일이 틀려도 「등록 완료」가 떴음)
+                const regQ = { action: 'registerContact', clientId: getDeviceClientId(), playerName: nameInput, playerNo: chosenNo, birth: birthInput, role: roleSelect, phone: formatPhone(cleanPhone) };
+                const reg = await apiGetJson(Object.keys(regQ).map(k => k + '=' + encodeURIComponent(regQ[k])).join('&'));
+                if (!reg || reg.result !== 'success') {
+                    if (reg && reg.result === 'exists') bkNotify('fail', '이미 다른 번호가 있캉…', `${nameInput} 선수 ${roleSelect} 칸에는 벌써 다른 번호가 등록돼 있어요. 바꾸려면 대표님 · 총무님께 말씀해 주세요`, { ms: 8000 });
+                    else bkNotify('fail', '앗, 등록이 안 됐캉…', (reg && reg.message) ? reg.message + (/일치하지/.test(reg.message) ? ' · 자녀 이름과 생년월일을 다시 확인해 주세요' : '') : '자녀 이름과 생년월일이 공식 명단과 똑같은지 확인해 주세요. 계속 안 되면 관리자에게 문의해 주세요', { ms: 8000 });
+                    return;
+                }
+                // 등록됐으면 방금 번호로 로그인되어 토큰을 받는다
                 const login = await serverLogin(cleanPhone);
                 if (applyLoginResult(login)) {
                     finishUnlock();
-                    bkNotify('done', '등록 완료캉! 🎉', `${login.name || nameInput} 보호자님으로 등록됐어요 (1시간 동안 유지)`, { ms: 5000, img: 'heart' });
+                    bkNotify('done', '등록 완료캉! 🎉', `${login.name || nameInput} 보호자님으로 등록됐어요`, { ms: 5000, img: 'heart' });
                 } else {
-                    bkNotify('fail', '앗, 등록이 안 됐캉…', '자녀 이름과 생년월일이 공식 명단과 똑같은지 확인해 주세요. 계속 안 되면 관리자에게 문의해 주세요', { ms: 8000 });
+                    bkNotify('fail', '등록은 됐는데 로그인이 안 됐캉…', '잠시 뒤 등록한 휴대폰 번호로 다시 로그인해 주세요', { ms: 8000 });
                 }
             } catch (err) {
                 bkNotify('fail', '앗, 등록 중 오류가 났캉…', (err && err.message ? err.message : String(err)));
@@ -8836,6 +8835,13 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.83.0', d: '2026-10-18', t: '✍️ 최초 등록 교차검증 보강', items: [
+            '등록 결과를 서버에서 읽어 그대로 안내 — 이름 · 생년월일이 명단과 다르면 「등록이 안 됐어요」와 이유를 보여 주고 로그인하지 않음',
+            '(고친 문제) 예전엔 서버 답을 못 읽고 그 번호로 로그인만 해 봐서, 이미 연락망에 있는 번호면 생년월일이 틀려도 「등록 완료」가 떴음',
+            '같은 이름 선수를 배번으로 골라도 이름까지 맞춰 봄 (서버 v2.30.0) · 이름 띄어쓰기는 무시',
+            '한 선수에 확인이 5번 틀리면 1시간 동안 그 선수 등록을 막음 (기기를 바꿔 가며 생년월일 맞히기 차단)',
+            '그 칸에 이미 다른 번호가 있으면 「이미 다른 번호가 있어요 · 대표님 · 총무님께」 안내 · 등록 완료 안내의 「1시간 동안 유지」 문구 뺌'
+        ] },
         { v: 'v2.82.0', d: '2026-10-18', t: '📞 관리 탭에서 집행부 바꾸기', items: [
             '관리 탭에 「📞 집행부 연락 버튼」 묶음 (대표님 · 개발자만) — 대표님 · 부대표님 · 총무님 · 부총무님 지금 맡은 분 · 번호 한눈에',
             '[바꾸기] → 선수 고르기(이름 · 배번 검색) → 아버님 · 어머님 · 기타 고르기 → 「바뀌기 전 → 후」 확인 → 저장 · 번호는 치지 않고 비상연락망에서 자동',
