@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.86.0 · b261018";
+        const APP_VERSION = "v2.87.0 · b261018";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -827,6 +827,15 @@
         .ofa-foot button { flex: 0 0 auto; border: 1px solid #cbd5e1; background: #fff; border-radius: 8px; padding: 6px 10px; font: inherit; font-size: 12px; font-weight: 800; color: #0f2340; cursor: pointer; }
         .ofa-msg { font-size: 12.5px; color: #64748b; font-weight: 700; padding: 6px 2px; }
         #ofaModal .modal-content { max-width: 420px; }
+        /* v2.87.0: 접는 묶음 */
+        .admin-fold { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; padding: 0; margin: 0; border: 0; background: none; font: inherit; text-align: left; cursor: pointer; }
+        .admin-fold .admin-group-title { margin-bottom: 0; }
+        .admin-fold .fold-r { flex: 0 0 auto; font-size: 12px; font-weight: 800; color: #0f2340; border: 1px solid #cbd5e1; border-radius: 8px; padding: 5px 10px; background: #ffffff; }
+        .admin-fold .fold-ar { display: inline-block; transition: transform .2s; }
+        .admin-fold[aria-expanded="true"] .fold-ar { transform: rotate(180deg); }
+        .ofa-sum { font-size: 12.5px; color: #475569; font-weight: 700; margin-top: 6px; line-height: 1.45; }
+        .ofa-sum .no { color: #94a3b8; }
+        #ofaBody { margin-top: 8px; }
         /* 🧹 v2.84.0: 부실 청소 당번 */
         .duty-banner { display: none; align-items: center; gap: 10px; background: #ffffff; border: 1px solid var(--card-border); border-left: 5px solid #0d9488; border-radius: 12px; padding: 10px 12px; margin-bottom: 12px; cursor: pointer; box-shadow: 0 2px 8px rgba(15,23,42,0.04); }
         .duty-banner .db-ic { flex: 0 0 auto; width: 38px; height: 38px; border-radius: 10px; background: #ccfbf1; display: flex; align-items: center; justify-content: center; font-size: 21px; }
@@ -2310,6 +2319,7 @@
     .ofa-p, .ofa-r { background: #1b2638; border-color: #2a374e; color: #dde3ec; } .ofa-p .g { background: #223047; color: #bcc6d4; } .ofa-r small { color: #bcc6d4; }
     .ofa-p.on { background: #223a66; border-color: #6d8fd1; box-shadow: inset 0 0 0 1px #6d8fd1; } .ofa-r.on { background: #12351f; border-color: #22c55e; box-shadow: inset 0 0 0 1px #22c55e; }
     .ofa-empty button { color: #fca5a5; }
+    .admin-fold .fold-r { background: #1b2638; border-color: #2a374e; color: #dde3ec; } .ofa-sum { color: #bcc6d4; } .ofa-sum .no { color: #6f7b91; }
     .contact-header { border-bottom: 1px solid #2a374e; }
     .contact-player-name { color: #dde3ec; }
     .contact-row { background: #1b2638; border: 1px solid #2a374e; }
@@ -3067,10 +3077,14 @@
 
             <!-- 📞 집행부 연락 버튼 (v2.82.0) — 대표님 · 개발자만 (맡는 분 바꾸기) -->
             <div class="admin-group" id="adminGroupOfc" style="display: none;">
-                <div class="admin-group-title">📞 집행부 연락 버튼</div>
-                <p class="admin-role-desc" style="margin-bottom: 8px;">맨 위 유니폼 버튼 양옆에 보이는 버튼이에요. 집행부가 바뀌면 <b>맡는 분만 골라</b> 주세요 — 번호는 비상연락망에서 자동으로 가져와요.</p>
-                <div class="ofa-list" id="ofaList"><div class="ofa-msg">불러오는 중…</div></div>
-                <div class="ofa-foot"><span id="ofaChanged"></span><button type="button" onclick="openPasswordManageModal()">🔑 비번 관리</button></div>
+                <!-- v2.87.0: 접어 두고 펼칠 때만 서버에 물음 -->
+                <button type="button" class="admin-fold" id="ofaFoldBtn" aria-expanded="false" aria-controls="ofaBody" onclick="ofaToggle()"><span class="admin-group-title">📞 집행부 연락 버튼</span><span class="fold-r"><span id="ofaFoldLbl">펼치기</span> <span class="fold-ar">▾</span></span></button>
+                <div class="ofa-sum" id="ofaSum"></div>
+                <div id="ofaBody" style="display: none;">
+                    <p class="admin-role-desc" style="margin-bottom: 8px;">맨 위 유니폼 버튼 양옆에 보이는 버튼이에요. 집행부가 바뀌면 <b>맡는 분만 골라</b> 주세요 — 번호는 비상연락망에서 자동으로 가져와요.</p>
+                    <div class="ofa-list" id="ofaList"><div class="ofa-msg">불러오는 중…</div></div>
+                    <div class="ofa-foot"><span id="ofaChanged"></span><button type="button" onclick="openPasswordManageModal()">🔑 비번 관리</button></div>
+                </div>
             </div>
 
             <!-- 🎓 새 학년도 (v2.45.0) — 대표님 · 개발자만 -->
@@ -3936,8 +3950,9 @@
         ofcAsked = true;   // 서버가 답했으면(비어 있어도) 다시 묻지 않음
         try { sessionStorage.setItem('daeyeon_ofc', JSON.stringify(officerList)); } catch (e) {}
         try { renderOfficers(); } catch (e) {}
+        try { ofaFoldSync(); } catch (e) {}   // v2.87.0: 접힌 줄 (헤더 버튼 요약)
     }
-    function ofcClear() { officerList = []; ofcAsked = false; ofaData = null; ofaAt = 0; try { sessionStorage.removeItem('daeyeon_ofc'); } catch (e) {} }
+    function ofcClear() { officerList = []; ofcAsked = false; ofaData = null; ofaAt = 0; ofaOpenSt = false; try { sessionStorage.removeItem('daeyeon_ofc'); } catch (e) {} try { ofaFoldSync(); } catch (e) {} }
     function renderOfficers() {
         const bar = document.getElementById('headerCtaBar'), L = document.getElementById('ofcLeft'), R = document.getElementById('ofcRight');
         if (!bar || !L || !R) return;
@@ -3984,22 +3999,48 @@
     //   · 저장은 서버가 대표님 · 개발자인지 다시 확인 · 고를 목록(보호자 번호)은 기기에 저장하지 않음 (메모리에만)
     // ==========================================================
     var ofaData = null, ofaAt = 0, ofaReq = null, ofaCtx = null;
+    var ofaOpenSt = false;   // v2.87.0: 접어 둠 — 펼칠 때만 서버에 물음 (관리 탭을 열 때마다 묻던 것 없앰)
     function ofaCan() { return isSuperOrDev(); }
+    function ofaToggle() {
+        ofaOpenSt = !ofaOpenSt;
+        ofaFoldSync();
+        if (ofaOpenSt) ofaRefresh(false);   // 1분 안에 다시 펼치면 받아 둔 것 그대로
+    }
+    function ofaFoldSync() {
+        const b = document.getElementById('ofaFoldBtn'), body = document.getElementById('ofaBody'), sum = document.getElementById('ofaSum'), lbl = document.getElementById('ofaFoldLbl');
+        if (!b || !body) return;
+        b.setAttribute('aria-expanded', ofaOpenSt ? 'true' : 'false');
+        body.style.display = ofaOpenSt ? '' : 'none';
+        if (lbl) lbl.textContent = ofaOpenSt ? '접기' : '펼치기';
+        if (sum) { sum.style.display = ofaOpenSt ? 'none' : ''; sum.innerHTML = ofaSumHtml(); }
+    }
+    function ofaSumHtml() {   // 접혀 있을 때 한 줄 — 이미 받아 둔 헤더 버튼 목록만 씀 (서버에 안 물음)
+        const LAB = { super: '대표님', general: '총무님', vsuper: '부대표님', vgeneral: '부총무님' };
+        const list = officerList || [], on = list.map(o => o.key), all = Object.keys(OFC_META);
+        if (!list.length && !ofcAsked) return '맡는 분을 바꿀 때 펼쳐 주세요';
+        const lab = k => { const o = list.find(x => x.key === k); return escapeHtml((o && o.label) || LAB[k] || k); };
+        const has = all.filter(k => on.indexOf(k) !== -1), no = all.filter(k => on.indexOf(k) === -1);
+        return (has.length ? '헤더 버튼: ' + has.map(k => OFC_META[k].i + ' ' + lab(k)).join(' · ') : '헤더에 보이는 버튼 없음')
+            + (no.length ? ` <span class="no">· 비어 있음: ${no.map(lab).join(', ')}</span>` : '');
+    }
     async function ofaRefresh(force, noFetch) {
         const grp = document.getElementById('adminGroupOfc');
         if (!grp) return;
         grp.style.display = ofaCan() ? '' : 'none';
         if (!ofaCan()) return;
+        ofaFoldSync();
+        if (!ofaOpenSt) return;   // v2.87.0: 접혀 있으면 묻지 않음
         if (ofaData && !force && Date.now() - ofaAt < 60000) return ofaRender();
         if (ofaData) ofaRender();
-        if (noFetch) return;   // 관리 탭이 안 보이면 묻지 않음 (탭을 열 때 물음)
+        if (noFetch) return;   // 펼치기 버튼을 눌렀을 때만 물음
         if (ofaReq) return ofaReq;
+        if (!ofaData) document.getElementById('ofaList').innerHTML = '<div class="ofa-msg">불러오는 중…</div>';
         ofaReq = (async () => {
             try {
                 const r = await apiGetJson('action=getOfficerAdmin');
                 if (!r || r.result !== 'success') throw new Error((r && r.message) || '못 불러왔어요');
                 ofaData = r; ofaAt = Date.now();
-            } catch (e) { if (!ofaData) document.getElementById('ofaList').innerHTML = `<div class="ofa-msg">못 불러왔캉… (${escapeHtml(e.message)}) · 관리 탭을 다시 열어 주세요</div>`; }
+            } catch (e) { if (!ofaData) document.getElementById('ofaList').innerHTML = `<div class="ofa-msg">못 불러왔캉… (${escapeHtml(e.message)}) · 접었다가 다시 펼쳐 주세요</div>`; }
             finally { ofaReq = null; }
             if (ofaData) ofaRender();
         })();
@@ -4226,7 +4267,7 @@
             if (rest.length % 2) rest[rest.length - 1].classList.add('ops-wide');
         });
         refreshSeasonStatus(false, currentMainTab !== 'admin');   // 🎓 새 학년도 (대표님 · 개발자) — v2.64.0: 관리 탭을 열 때만 서버에 물음
-        try { ofaRefresh(false, currentMainTab !== 'admin'); } catch (e) {}   // 📞 v2.82.0: 집행부 연락 버튼 (대표님 · 개발자)
+        try { ofaRefresh(false, true); } catch (e) {}   // 📞 v2.82.0: 집행부 연락 버튼 (대표님 · 개발자) — v2.87.0: 여기선 안 물음 (펼칠 때만)
         try { dutyAdmRefresh(false, currentMainTab !== 'admin'); } catch (e) {}   // 🧹 v2.84.0: 청소 당번 (대표님 · 총무님 · 개발자)
         document.getElementById('adminGroupContent').style.display = canEditSchedule() ? '' : 'none';
         const devGroup = document.getElementById('adminGroupDev');
@@ -4408,6 +4449,7 @@
         document.getElementById('noticeSection').classList.toggle('active', tab === 'notice');
         document.getElementById('venueSection').classList.toggle('active', tab === 'venue');
         document.getElementById('adminSection').classList.toggle('active', tab === 'admin');
+        if (tab !== 'admin' && ofaOpenSt) { ofaOpenSt = false; try { ofaFoldSync(); } catch (e) {} }   // v2.87.0: 다른 탭으로 가면 집행부 버튼 묶음은 다시 접힘
         if (tab === 'admin') updateAdminPanel();
         // v2.64.0: 탭을 누를 때마다 새로 받던 것 → 받은 지 2분이 지났을 때만 (그 전엔 있는 것 그대로 · 당겨서 새로고침은 늘 새로)
         if (tab === 'schedule') { renderSchedule(); if (!silent) loadSchedule(Date.now() - schedFetchedAt > TAB_STALE_MS); }
@@ -9320,6 +9362,11 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.87.0', d: '2026-10-18', t: '📞 집행부 연락 버튼 접기', items: [
+            '⚙️ 관리 탭 「📞 집행부 연락 버튼」을 접어 둠 · 펼칠 때만 서버에서 맡은 분을 불러옴 (관리 탭을 열 때마다 묻던 것 없앰)',
+            '접혀 있을 때는 지금 헤더에 보이는 버튼만 한 줄로 (이미 받아 둔 것이라 서버에 안 물음)',
+            '다른 탭으로 가면 다시 접힘 · 1분 안에 다시 펼치면 받아 둔 것 그대로'
+        ] },
         { v: 'v2.86.0', d: '2026-10-18', t: '👨‍👩‍👧 청소 당번 가족 단위 · 순서 편집', items: [
             '당번을 「○○ 가족」으로 표시 · 형제는 한 가족 (비상연락망 부모 번호가 같으면 서버가 알아서 묶음 · 서버 v2.32.0)',
             '형제 이름으로 로그인해도 「우리 집 차례」가 똑같이 보임',
