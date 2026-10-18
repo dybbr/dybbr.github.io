@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.85.0 · b261018";
+        const APP_VERSION = "v2.86.0 · b261018";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -883,6 +883,30 @@
         .dadm-warn { margin-top: 8px; display: grid; gap: 5px; font-size: 12.5px; font-weight: 700; color: #92400e; background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 8px 10px; line-height: 1.45; }
         .dadm-warn small { color: #a16207; font-weight: 600; }
         @media (max-width: 380px) { .ofa-row.dadm button { padding: 8px 9px; } .dm-row .dm-d { flex-basis: 58px; } }
+        /* 🔀 v2.86.0: 순서 · 가족 편집 */
+        .dadm-edit { width: 100%; margin: 0 0 8px; border: 0; border-radius: 10px; padding: 10px 12px; font: inherit; font-size: 13.5px; font-weight: 900; background: #0f766e; color: #ffffff; cursor: pointer; }
+        #dutyOrdModal .modal-content { max-width: 460px; }
+        #dutyOrdModal { word-break: keep-all; }
+        .dord-set { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+        .dord-set label { display: grid; gap: 3px; font-size: 12px; font-weight: 800; color: #0f2340; }
+        .dord-set input { width: 100%; box-sizing: border-box; padding: 8px 9px; border: 1px solid #cbd5e1; border-radius: 8px; font: inherit; font-size: 14px; background: #ffffff; color: #0f172a; }
+        .dord-help { font-size: 12px; color: #64748b; font-weight: 600; margin: 0 0 6px; line-height: 1.45; }
+        .dord-row { display: flex; align-items: center; gap: 8px; padding: 7px 4px; border-bottom: 1px solid #f1f5f9; }
+        .dord-pos { flex: 0 0 auto; width: 54px; padding: 6px 2px; border: 1px solid #cbd5e1; border-radius: 8px; font: inherit; font-size: 14px; font-weight: 900; text-align: center; background: #ffffff; color: #0f172a; }
+        .dord-who { flex: 1; min-width: 0; line-height: 1.3; }
+        .dord-who b { display: block; font-size: 13.5px; font-weight: 900; color: #0f172a; }
+        .dord-who small { display: block; font-size: 11.5px; color: #64748b; font-weight: 600; }
+        .dord-btns { display: flex; gap: 4px; flex: 0 0 auto; }
+        .dord-btns button { border: 1px solid #cbd5e1; background: #ffffff; border-radius: 8px; padding: 6px 8px; font: inherit; font-size: 12px; font-weight: 800; color: #0f2340; cursor: pointer; min-width: 32px; }
+        .dord-btns button:disabled { opacity: .3; cursor: default; }
+        .dord-row.out { opacity: .55; } .dord-row.out .dord-who b { text-decoration: line-through; }
+        .dord-row.warn .dord-who small { color: #b91c1c; }
+        .dord-row.new { background: #f0fdfa; border-radius: 8px; }
+        .dord-row.moved .dord-pos { border-color: #0d9488; color: #0f766e; background: #f0fdfa; }
+        .dord-add { width: 100%; margin-top: 10px; border: 1px dashed #94a3b8; background: #ffffff; border-radius: 10px; padding: 9px; font: inherit; font-size: 13px; font-weight: 800; color: #0f2340; cursor: pointer; }
+        .dord-addlist { margin-top: 6px; }
+        .dord-addlist .six { font-size: 11px; font-weight: 800; color: #b45309; background: #fef3c7; border-radius: 6px; padding: 1px 6px; }
+        @media (max-width: 380px) { .dord-set { grid-template-columns: 1fr; } .dord-btns button { padding: 6px 6px; min-width: 28px; } .dord-pos { width: 48px; } }
         .ofa-step { font-size: 12.5px; font-weight: 900; color: #0f2340; margin: 4px 0 6px; }
         .ofa-search { width: 100%; box-sizing: border-box; padding: 9px 11px; border: 1px solid #cbd5e1; border-radius: 8px; font: inherit; font-size: 14px; }
         .ofa-plist { display: grid; gap: 4px; margin: 8px 0 12px; max-height: 232px; overflow-y: auto; overscroll-behavior: contain; }
@@ -2277,6 +2301,9 @@
     .duty-card.done, .duty-card.skip { background: #1b2638; border-color: #2a374e; border-left-color: #58697e; } .duty-card.skip .dc-t { color: #97a3b7; }
     .dm-head { color: #bcc6d4; } .dm-sec, .dadm-stat { color: #5eead4; } .dm-row { border-bottom-color: #2a374e; } .dm-row .dm-d b, .dm-row .dm-w b { color: #dde3ec; } .dm-row .dm-d small, .dm-row .dm-w small { color: #97a3b7; } .dm-row.skip .dm-w b { color: #6f7b91; }
     .ofa-row.dadm button.ghost { background: #151e2e; color: #dde3ec; border-color: #2a374e; } .ofa-row.dadm.skip { background: #151e2e; }
+    .dord-set label { color: #bcc6d4; } .dord-set input, .dord-pos, .dord-btns button, .dord-add { background: #151e2e; color: #dde3ec; border-color: #2a374e; }
+    .dord-row { border-bottom-color: #2a374e; } .dord-who b { color: #dde3ec; } .dord-who small, .dord-help { color: #97a3b7; } .dord-row.warn .dord-who small { color: #f87171; }
+    .dord-row.new, .dord-row.moved .dord-pos { background: #10272a; } .dord-row.moved .dord-pos { color: #5eead4; border-color: #14b8a6; } .dord-addlist .six { background: #2a2113; color: #fcd34d; }
     .ofa-row button { background: #2c4a7a; } .ofa-row.warn { background: #3a1820; border-color: #7f1d1d; } .ofa-row.warn .who span { color: #fca5a5; }
     .ofa-row.empty { background: #151e2e; } .ofa-foot button { background: #1b2638; border-color: #2a374e; color: #dde3ec; }
     .ofa-step { color: #dde3ec; } .ofa-search { background: #1b2638; border-color: #2a374e; color: #dde3ec; }
@@ -3067,7 +3094,7 @@
             <!-- 🧹 부실 청소 당번 (v2.84.0) — 대표님 · 총무님 · 개발자 -->
             <div class="admin-group" id="adminGroupDuty" style="display: none;">
                 <div class="admin-group-title">🧹 청소 당번</div>
-                <p class="admin-role-desc" style="margin-bottom: 8px;">격주 주말 부실 청소 당번이에요. <b>순서는 구글 시트 「당번」 탭</b>에 입단 순서대로 넣고, <b>쉬는 날 · 두 가정 바꾸기</b>는 여기서 해요.</p>
+                <p class="admin-role-desc" style="margin-bottom: 8px;">격주 주말 부실 청소 당번이에요. <b>가족 단위</b>로 입단 순서대로 돌아요 (형제는 한 가족). 순서 · 가족 · 시작일은 <b>🔀 순서 · 가족 편집</b>에서, 쉬는 날 · 두 가족 바꾸기는 날짜 옆 버튼으로 해요.</p>
                 <div class="ofa-list" id="dutyAdm"><div class="ofa-msg">불러오는 중…</div></div>
                 <div class="ofa-foot"><button type="button" onclick="openDutyModal()">📋 전체 순서</button><button type="button" onclick="dutyOpenSheet()">📊 「당번」 탭 열기</button></div>
             </div>
@@ -3338,6 +3365,26 @@
         <div class="modal-btns" style="justify-content: space-between;">
             <button class="btn-cancel" id="btnDutyAdm" style="visibility: hidden;" onclick="dutyGoAdmin()">⚙️ 관리</button>
             <button class="btn-save" onclick="closeModal('dutyModal')">닫기</button>
+        </div>
+    </div>
+</div>
+<!-- 🔀 v2.86.0: 순서 · 가족 편집 (대표님 · 총무님 · 개발자) -->
+<div id="dutyOrdModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">🔀 순서 · 가족 편집</div>
+        <div class="modal-scroll-body">
+            <div class="dord-set">
+                <label>시작일 (첫 청소 날)<input type="date" id="dordStart"></label>
+                <label>안내 문구<input type="text" id="dordInfo" maxlength="60" placeholder="예: 오전 9시 · 야구부실"></label>
+            </div>
+            <p class="dord-help">위에 있을수록 먼저 청소해요. 왼쪽 <b>자리 번호</b>를 고르거나 ▲▼로 옮기고, 마지막에 <b>저장</b>을 눌러 주세요. 지난 청소 기록은 그대로 남아요.</p>
+            <div id="dordList"></div>
+            <button type="button" class="dord-add" onclick="dutyOrdAddToggle()">＋ 가족 추가</button>
+            <div class="ofa-plist dord-addlist" id="dordAdd" style="display: none;"></div>
+        </div>
+        <div class="modal-btns" style="justify-content: space-between;">
+            <button class="btn-cancel" onclick="closeModal('dutyOrdModal')">취소</button>
+            <button class="btn-save" id="btnDordSave" onclick="dutyOrdSave()">저장</button>
         </div>
     </div>
 </div>
@@ -4426,7 +4473,8 @@
         const me = getActiveUser();
         if (!me || !Array.isArray(me.children) || !me.children.length || !u || !Array.isArray(u.p)) return false;
         const ns = x => String(x || '').replace(/\s+/g, '');
-        return u.p.some(x => me.children.some(c => (c.no && x.no) ? Number(c.no) === Number(x.no) : ns(c.name) === ns(x.n)));
+        const hit = x => me.children.some(c => (c.no && x.no) ? Number(c.no) === Number(x.no) : ns(c.name) === ns(x.n));
+        return u.p.some(x => hit(x) || (x.sib || []).some(hit));   // v2.86.0: 형제 이름으로 로그인해도 우리 집
     }
     function dutyMineNext() { return dutyUp().find(u => !u.s && dutyIsMine(u)) || null; }
     function dutyOn(ds) {
@@ -4440,8 +4488,9 @@
         const t = ymdOf(new Date()), lim = ymdOf(new Date(Date.now() + 120 * 86400000));
         return dutyData.upcoming.filter(u => u.d >= t && u.d <= lim).concat(withPast ? (dutyData.recent || []).filter(r => r.d < t).map(r => ({ d: r.d, p: r.p, done: 1 })) : []);
     }
-    function dutyWhoText(p) { return (p && p.length) ? p.map(x => x.n).join(' · ') + ' 보호자' : '당번 없음'; }
-    function dutyWhoSub(p) { return (p || []).map(x => [x.g ? x.g + '학년' : '', x.no ? x.no + '번' : ''].filter(Boolean).join(' ')).filter(Boolean).join(' / '); }
+    function dutyWhoText(p) { return (p && p.length) ? p.map(x => x.n + ' 가족').join(' · ') : '당번 없음'; }   // v2.86.0: 보호자 → 가족
+    function dutySibText(x) { return (x && x.sib && x.sib.length) ? '형제 ' + x.sib.map(s => s.n + (s.g ? '(' + s.g + '학년)' : '')).join(', ') : ''; }
+    function dutyWhoSub(p) { return (p || []).map(x => [[x.g ? x.g + '학년' : '', x.no ? x.no + '번' : ''].filter(Boolean).join(' '), dutySibText(x)].filter(Boolean).join(' · ')).filter(Boolean).join(' / '); }
     function dutyFmt(ds) { const d = dateOf(ds); return (d.getFullYear() !== new Date().getFullYear() ? String(d.getFullYear()).slice(2) + '년 ' : '') + fmtMD(ds); }
     function dutyDd(ds) { const n = dayDiff(ds); return n === 0 ? '오늘' : n === 1 ? '내일' : 'D-' + n; }
     function dutyEveryOf(d) {
@@ -4561,15 +4610,17 @@
         if (names('missing').length) warn.push(`⚠️ 선수 명단에 없는 이름 ${names('missing').length}명: ${names('missing').join(', ')} <small>(오타면 고쳐 주세요 · 졸업생이면 그대로 둬도 저절로 빠져요)</small>`);
         if (names('ambig').length) warn.push(`⚠️ 같은 이름이 둘이에요: ${names('ambig').join(', ')} <small>(배번 칸을 채워 주세요)</small>`);
         if (names('dup').length) warn.push(`⚠️ 두 번 적힌 선수: ${names('dup').join(', ')} <small>(위에 적힌 줄만 차례에 들어가요)</small>`);
-        if ((d.notInList || []).length && rows.length) warn.push(`📝 순서표에 없는 선수 ${d.notInList.length}명: ${d.notInList.map(x => escapeHtml(x.n)).join(', ')} <small>(형제라서 뺀 게 아니면 맨 아래에 추가해 주세요)</small>`);
-        let h = '';
+        const fd = rows.filter(r => r.st === 'famdup');
+        if (fd.length) warn.push(`⚠️ 같은 가족이 두 줄: ${fd.map(r => escapeHtml(r.name) + (r.dupOf ? ' (' + escapeHtml(r.dupOf) + ' 가족)' : '')).join(', ')} <small>(위 줄만 차례에 들어가요 · 편집에서 빼기)</small>`);
+        if ((d.notInList || []).length && rows.length) warn.push(`📝 순서표에 없는 가족 ${d.notInList.length}: ${d.notInList.map(x => escapeHtml(x.n)).join(', ')} <small>(신입이면 「🔀 순서 · 가족 편집」 → 가족 추가 · 6학년만 있는 가족은 빼고 셈)</small>`);
+        let h = d.reason === 'nosheet' ? '' : `<button type="button" class="dadm-edit" onclick="dutyOrdOpen()">🔀 순서 · 가족 편집${d.ok ? '' : ' · 시작일 넣기'}</button>`;
         if (!d.ok) {
             const msg = d.reason === 'nosheet' ? '시트에 「당번」 탭이 없어요.'
-                : d.reason === 'nostart' ? `「당번」 탭 맨 위 <b>시작일</b>에 첫 청소 날짜를 넣으면 시작돼요.${rows.length ? ` (순서표 ${rows.length}줄 입력됨)` : ' 순서표(8줄부터)도 입단 순서대로 채워 주세요.'}`
-                : '「당번」 탭 8줄부터 입단 순서대로 선수 이름을 넣어 주세요.';
+                : d.reason === 'nostart' ? `위 「🔀 순서 · 가족 편집」에서 시작일(첫 청소 날)을 넣으면 시작돼요.${rows.length ? ` (순서표 ${rows.filter(r => r.st === 'ok').length}가족 입력됨)` : ' 가족도 입단 순서대로 넣어 주세요.'}`
+                : '위 「🔀 순서 · 가족 편집」에서 가족을 입단 순서대로 넣어 주세요.';
             h += `<div class="ofa-row warn"><span class="ic">🧹</span><div class="who"><b>아직 시작 전</b><span>${msg}</span></div></div>`;
         } else {
-            h += `<div class="dadm-stat">${escapeHtml(dutyEveryOf(d))} · 순서표 ${act.length}가정${d.info ? ' · ' + escapeHtml(d.info) : ''}</div>`;
+            h += `<div class="dadm-stat">${escapeHtml(dutyEveryOf(d))} · 순서표 ${act.length}가족${d.info ? ' · ' + escapeHtml(d.info) : ''}</div>`;
             h += (d.upcoming || []).filter(u => u.d >= t).slice(0, 6).map(u => {
                 const key = u.o || u.d, when = `${fmtMD(u.d)} · ${dutyDd(u.d)}`;
                 if (u.s) return `<div class="ofa-row dadm skip"><div class="who"><b>${when}</b><span>청소 쉼</span><small>${escapeHtml(u.m || '')}</small></div><div class="dadm-btns"><button type="button" class="ghost" onclick="dutySkip('${key}', 0)">쉼 취소</button></div></div>`;
@@ -4602,6 +4653,94 @@
         if (!ok) return;
         await dutyAdmSave({ action: 'dutySkip', date: date, on: on ? '1' : '0' }, on ? '쉬는 날로 바꿨캉! ✓' : '쉼을 취소했캉! ✓');
     }
+    // 🔀 v2.86.0: 순서 · 가족 편집 (대표님 · 총무님 · 개발자) — 시트를 안 열어도 순서 바꾸기 · 빼기 · 가족 추가 · 시작일 · 안내 문구
+    //   저장은 한 번에 (서버 v2.32.0 dutyOrder) · 그사이 누가 시트를 고쳤으면 서버가 거절 → 새로 불러옴
+    var dutyOrd = null;
+    function dutyOrdOpen() {
+        if (!dutyAdm) return;
+        const rows = (dutyAdm.rows || []).slice().sort((a, b) => ((a.order == null ? 1e9 : a.order) - (b.order == null ? 1e9 : b.order)) || a.r - b.r);
+        dutyOrd = { items: rows.map(r => ({ r: r.r, n: r.name, no: r.no, g: r.g, sib: r.sib || [], st: r.st, dupOf: r.dupOf || '', count: r.count || 0, out: r.st === 'out', orig: r.out })), base: rows.map(r => r.r), addOpen: false };
+        dutyOrd.items.forEach(it => { it.out0 = it.out; });
+        document.getElementById('dordStart').value = dutyAdm.start || '';
+        document.getElementById('dordInfo').value = dutyAdm.info || '';
+        document.getElementById('dordAdd').style.display = 'none';
+        dutyOrdRender();
+        document.getElementById('dutyOrdModal').style.display = 'flex';
+        document.querySelector('#dutyOrdModal .modal-scroll-body').scrollTop = 0;
+    }
+    function dutyOrdRender() {
+        const box = document.getElementById('dordList');
+        if (!box || !dutyOrd) return;
+        const its = dutyOrd.items, N = its.length;
+        const opts = i => Array.from({ length: N }, (_, k) => `<option value="${k}"${k === i ? ' selected' : ''}>${k + 1}</option>`).join('');
+        box.innerHTML = N ? its.map((it, i) => {
+            const st = it.isNew ? '새로 추가' : it.out ? '빠짐 · 차례에 안 들어가요' : it.st === 'missing' ? '⚠ 선수 명단에 없음 (졸업 · 오타)' : it.st === 'famdup' ? `⚠ ${escapeHtml(it.dupOf)} 가족과 같은 가족 (위 줄만 돌아요)` : it.st === 'dup' ? '⚠ 두 번 적힘' : it.st === 'ambig' ? '⚠ 같은 이름이 둘 (시트에서 배번을)' : '';
+            const info = [[it.g ? it.g + '학년' : '', it.no ? it.no + '번' : ''].filter(Boolean).join(' '), dutySibText(it), it.count ? '청소 ' + it.count + '번' : '', st].filter(Boolean).join(' · ');
+            const warn = !it.out && !it.isNew && it.st !== 'ok' && it.st !== 'out';
+            const moved = !it.isNew && dutyOrd.base.indexOf(it.r) !== i;
+            return `<div class="dord-row${it.out ? ' out' : ''}${warn ? ' warn' : ''}${it.isNew ? ' new' : ''}${moved ? ' moved' : ''}">
+                <select class="dord-pos" aria-label="자리" onchange="dutyOrdMove(${i}, +this.value)">${opts(i)}</select>
+                <div class="dord-who"><b>${escapeHtml(it.n)} 가족</b><small>${info}</small></div>
+                <div class="dord-btns"><button type="button" aria-label="위로" onclick="dutyOrdMove(${i}, ${i - 1})"${i === 0 ? ' disabled' : ''}>▲</button><button type="button" aria-label="아래로" onclick="dutyOrdMove(${i}, ${i + 1})"${i === N - 1 ? ' disabled' : ''}>▼</button><button type="button" onclick="dutyOrdOut(${i})">${it.isNew ? '✕' : it.out ? '넣기' : '빼기'}</button></div>
+            </div>`;
+        }).join('') : '<div class="ofa-msg">아직 가족이 없어요 · 아래 「＋ 가족 추가」로 넣어 주세요</div>';
+        if (dutyOrd.addOpen) dutyOrdAddRender();
+    }
+    function dutyOrdMove(i, j) {
+        const its = dutyOrd && dutyOrd.items;
+        if (!its || j < 0 || j >= its.length || i === j) return;
+        const it = its.splice(i, 1)[0];
+        its.splice(j, 0, it);
+        dutyOrdRender();
+    }
+    function dutyOrdOut(i) {
+        const it = dutyOrd && dutyOrd.items[i];
+        if (!it) return;
+        if (it.isNew) dutyOrd.items.splice(i, 1); else it.out = !it.out;
+        dutyOrdRender();
+    }
+    function dutyOrdAddToggle() {
+        if (!dutyOrd) return;
+        dutyOrd.addOpen = !dutyOrd.addOpen;
+        document.getElementById('dordAdd').style.display = dutyOrd.addOpen ? '' : 'none';
+        if (dutyOrd.addOpen) dutyOrdAddRender();
+    }
+    function dutyOrdAddRender() {
+        const box = document.getElementById('dordAdd');
+        const added = dutyOrd.items.filter(it => it.isNew).map(it => it.n + '|' + it.no);
+        const list = (dutyAdm.cands || []).filter(c => added.indexOf(c.n + '|' + c.no) === -1);
+        box.innerHTML = list.length ? list.map((c, k) => `<button type="button" class="ofa-p" onclick="dutyOrdAdd(${(dutyAdm.cands || []).indexOf(c)})">${c.g ? `<span class="g">${escapeHtml(c.g)}학년</span>` : ''}${escapeHtml(c.n)} 가족 <span class="n">· ${c.no ? c.no + '번' : ''}${dutySibText(c) ? ' · ' + escapeHtml(dutySibText(c)) : ''}</span>${c.six ? ' <span class="six">6학년</span>' : ''}</button>`).join('')
+            : '<div class="ofa-msg">더 넣을 가족이 없어요 (모든 가족이 순서표에 있어요)</div>';
+    }
+    function dutyOrdAdd(k) {
+        const c = (dutyAdm.cands || [])[k];
+        if (!c || !dutyOrd) return;
+        dutyOrd.items.push({ r: 0, n: c.n, no: c.no, g: c.g, sib: c.sib || [], st: 'ok', isNew: true, out: false, count: 0 });
+        dutyOrdRender();
+        const rows = document.querySelectorAll('#dordList .dord-row');
+        if (rows.length) rows[rows.length - 1].scrollIntoView({ block: 'nearest' });
+    }
+    async function dutyOrdSave() {
+        if (!dutyOrd || !dutyAdm) return;
+        const its = dutyOrd.items;
+        const start = document.getElementById('dordStart').value || '', info = document.getElementById('dordInfo').value.trim();
+        const moved = its.filter((it, i) => !it.isNew && dutyOrd.base.indexOf(it.r) !== i).length;
+        const outCh = its.filter(it => !it.isNew && it.out !== it.out0).length, adds = its.filter(it => it.isNew).length;
+        const stCh = start !== (dutyAdm.start || ''), infoCh = info !== (dutyAdm.info || '');
+        if (!moved && !outCh && !adds && !stCh && !infoCh) { closeModal('dutyOrdModal'); bkNotify('info', '바뀐 게 없캉', '그대로 뒀어요'); return; }
+        const sum = [moved ? `자리 바뀜 ${moved}가족` : '', outCh ? `빼기 · 넣기 ${outCh}가족` : '', adds ? `추가 ${adds}가족` : '', stCh ? (start ? `시작일 ${fmtMD(start)}` : '시작일 비움') : '', infoCh ? '안내 문구' : ''].filter(Boolean).join(' · ');
+        const ok = await bkConfirm('순서를 저장할까캉?', { sub: sum + (stCh && start ? '\n시작일을 넣으면 모든 보호자 화면에 바로 보여요' : '\n모든 사람 화면에 바로 반영돼요'), ok: '저장' });
+        if (!ok) return;
+        const q = { action: 'dutyOrder', order: JSON.stringify(its.map(it => it.isNew ? { n: it.n, no: it.no, out: it.out ? 1 : 0 } : { r: it.r })), out: its.filter(it => !it.isNew && it.out).map(it => it.r).join(',') };
+        if (stCh) q.start = start;
+        if (infoCh) q.info = info;
+        const btn = document.getElementById('btnDordSave');
+        btn.disabled = true; btn.textContent = '저장 중...';
+        const done = await dutyAdmSave(q, '순서를 저장했캉! ✓');
+        btn.disabled = false; btn.textContent = '저장';
+        if (done) { closeModal('dutyOrdModal'); dutyOrd = null; }
+    }
+
     function dutySwapOpen(date) {
         if (!dutyAdm) return;
         const t = ymdOf(new Date()), A = (dutyAdm.upcoming || []).find(u => u.d >= t && !u.s && (u.o || u.d) === date);
@@ -4616,7 +4755,7 @@
         if (!c) return;
         const one = c.A.p.length === 1;
         document.getElementById('dsFromWrap').style.display = one ? 'none' : '';
-        document.getElementById('dsToT').textContent = one ? `${c.A.p[0].n} 보호자와 누구를 바꿀까요?` : '② 누구와 바꿀까요?';
+        document.getElementById('dsToT').textContent = one ? `${c.A.p[0].n} 가족과 누구를 바꿀까요?` : '② 누구와 바꿀까요?';
         document.getElementById('dsFrom').innerHTML = c.A.p.map((x, i) => `<button type="button" class="ofa-p${c.ia === i ? ' on' : ''}" onclick="dutySwapFrom(${i})">${x.g ? `<span class="g">${escapeHtml(x.g)}학년</span>` : ''}${escapeHtml(x.n)} <span class="n">· ${x.no ? x.no + '번' : '번호 없음'}</span></button>`).join('');
         const all = dutyAdm.upcoming || [];
         const list = all.filter(u => u.d >= t && !u.s && u !== c.A).slice(0, 16);
@@ -4630,7 +4769,7 @@
         if (c.ia < 0) { bkNotify('info', '이 날 바꿀 가정을 먼저 골라줘캉!'); return; }
         if (!c.B || c.ib < 0) { bkNotify('info', '누구와 바꿀지 골라줘캉!'); return; }
         const a = c.A.p[c.ia], b = c.B.p[c.ib];
-        const ok = await bkConfirm('두 가정 차례를 바꿀까캉?', { sub: `${fmtMD(c.A.d)} ${a.n} ↔ ${fmtMD(c.B.d)} ${b.n}\n다른 가정 차례는 그대로예요`, ok: '바꾸기' });
+        const ok = await bkConfirm('두 가족 차례를 바꿀까캉?', { sub: `${fmtMD(c.A.d)} ${a.n} 가족 ↔ ${fmtMD(c.B.d)} ${b.n} 가족\n다른 가족 차례는 그대로예요`, ok: '바꾸기' });
         if (!ok) return;
         const btn = document.getElementById('btnDsNext');
         btn.disabled = true;
@@ -9181,6 +9320,12 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.86.0', d: '2026-10-18', t: '👨‍👩‍👧 청소 당번 가족 단위 · 순서 편집', items: [
+            '당번을 「○○ 가족」으로 표시 · 형제는 한 가족 (비상연락망 부모 번호가 같으면 서버가 알아서 묶음 · 서버 v2.32.0)',
+            '형제 이름으로 로그인해도 「우리 집 차례」가 똑같이 보임',
+            '⚙️ 관리 탭 「🔀 순서 · 가족 편집」: 자리 번호 고르기 · ▲▼ · 빼기/넣기 · 가족 추가 · 시작일 · 안내 문구를 한 번에 저장 (시트를 안 열어도 됨)',
+            '빠진 가족 알림은 6학년만 있는 가족은 빼고 셈 · 같은 가족이 두 줄이면 알려 줌'
+        ] },
         { v: 'v2.85.0', d: '2026-10-18', t: '📞 집행부 버튼 자리 바꿈', items: [
             '헤더 유니폼 버튼 양옆 — 왼쪽 대표님 · 총무님 / 오른쪽 부대표님 · 부총무님 (총무님 ↔ 부대표님 자리 바꿈)'
         ] },
