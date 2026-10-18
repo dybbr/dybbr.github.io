@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.88.0 · b261018";
+        const APP_VERSION = "v2.89.0 · b261018";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -876,7 +876,7 @@
         .dm-sec { font-size: 12px; font-weight: 900; color: #0f766e; margin: 12px 0 4px; }
         .dm-yr { font-size: 11px; font-weight: 800; color: #94a3b8; margin: 8px 0 2px 2px; }
         .dm-row { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-bottom: 1px solid #f1f5f9; border-radius: 8px; }
-        .dm-row .dm-d { flex: 0 0 66px; line-height: 1.25; }
+        .dm-row .dm-d { flex: 0 0 76px; line-height: 1.25; }
         .dm-row .dm-d b { display: block; font-size: 14px; font-weight: 900; color: #0f172a; }
         .dm-row .dm-d small { font-size: 11px; color: #64748b; font-weight: 700; }
         .dm-row .dm-w { flex: 1; min-width: 0; line-height: 1.3; }
@@ -893,7 +893,7 @@
         .ofa-row.dadm.skip { border-style: dashed; background: #ffffff; } .ofa-row.dadm.skip .who span { color: #94a3b8; }
         .dadm-warn { margin-top: 8px; display: grid; gap: 5px; font-size: 12.5px; font-weight: 700; color: #92400e; background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 8px 10px; line-height: 1.45; }
         .dadm-warn small { color: #a16207; font-weight: 600; }
-        @media (max-width: 380px) { .ofa-row.dadm button { padding: 8px 9px; } .dm-row .dm-d { flex-basis: 58px; } }
+        @media (max-width: 380px) { .ofa-row.dadm button { padding: 8px 9px; } .dm-row .dm-d { flex-basis: 70px; } }
         /* 🔀 v2.86.0: 순서 · 가족 편집 */
         .dadm-edit { width: 100%; margin: 0 0 8px; border: 0; border-radius: 10px; padding: 10px 12px; font: inherit; font-size: 13.5px; font-weight: 900; background: #0f766e; color: #ffffff; cursor: pointer; }
         #dutyOrdModal .modal-content { max-width: 460px; }
@@ -3114,7 +3114,7 @@
             <!-- 🧹 부실 청소 당번 (v2.84.0) — 대표님 · 총무님 · 개발자 -->
             <div class="admin-group" id="adminGroupDuty" style="display: none;">
                 <div class="admin-group-title">🧹 청소 당번</div>
-                <p class="admin-role-desc" style="margin-bottom: 8px;">격주 주말 부실 청소 당번이에요. <b>가족 단위</b>로 입단 순서대로 돌아요 (형제는 한 가족). 순서 · 가족 · 시작일은 <b>🔀 순서 · 가족 편집</b>에서, 쉬는 날 · 두 가족 바꾸기는 날짜 옆 버튼으로 해요.</p>
+                <p class="admin-role-desc" style="margin-bottom: 8px;">매달 2 · 4번째 주말(토 · 일 중 하루) 부실 청소 당번이에요. <b>가족 단위</b>로 입단 순서대로 돌아요 (형제는 한 가족). 순서 · 가족 · 시작일은 <b>🔀 순서 · 가족 편집</b>에서, 쉬는 날 · 두 가족 바꾸기는 날짜 옆 버튼으로 해요.</p>
                 <div class="ofa-list" id="dutyAdm"><div class="ofa-msg">불러오는 중…</div></div>
                 <div class="ofa-foot"><button type="button" onclick="openDutyModal()">📋 전체 순서</button><button type="button" onclick="dutyOpenSheet()">📊 「당번」 탭 열기</button></div>
             </div>
@@ -3394,7 +3394,7 @@
         <div class="modal-header">🔀 순서 · 가족 편집</div>
         <div class="modal-scroll-body">
             <div class="dord-set">
-                <label>시작일 (첫 청소 날)<input type="date" id="dordStart"></label>
+                <label>시작일 (이 날부터)<input type="date" id="dordStart"></label>
                 <label>안내 문구<input type="text" id="dordInfo" maxlength="60" placeholder="예: 오전 9시 · 야구부실"></label>
             </div>
             <p class="dord-help">위에 있을수록 먼저 청소해요. 왼쪽 <b>자리 번호</b>를 고르거나 ▲▼로 옮기고, 마지막에 <b>저장</b>을 눌러 주세요. 지난 청소 기록은 그대로 남아요.</p>
@@ -4517,7 +4517,7 @@
         dutyReq = apiGetJson('action=getDuty').then(r => { if (r && r.result === 'success' && r.duty) setDuty(r.duty); }).catch(() => {}).finally(() => { dutyReq = null; });
     }
     function dutyOk() { return !!(dutyData && dutyData.ok && canViewSchedule()); }
-    function dutyUp() { const t = ymdOf(new Date()); return dutyOk() ? dutyData.upcoming.filter(u => u.d >= t) : []; }
+    function dutyUp() { const t = ymdOf(new Date()); return dutyOk() ? dutyData.upcoming.filter(u => dutyEnd(u) >= t) : []; }
     function dutyIsMine(u) {
         const me = getActiveUser();
         if (!me || !Array.isArray(me.children) || !me.children.length || !u || !Array.isArray(u.p)) return false;
@@ -4528,22 +4528,40 @@
     function dutyMineNext() { return dutyUp().find(u => !u.s && dutyIsMine(u)) || null; }
     function dutyOn(ds) {
         if (!dutyOk()) return null;
-        if (ds >= ymdOf(new Date())) return dutyData.upcoming.find(u => u.d === ds) || null;
-        const r = (dutyData.recent || []).find(x => x.d === ds);
-        return r ? { d: r.d, p: r.p, done: 1 } : null;
+        const t = ymdOf(new Date());
+        const u = dutyData.upcoming.find(x => x.d === ds || x.e === ds);   // v2.89.0: 주말이면 토 · 일 두 칸 모두
+        if (u && dutyEnd(u) >= t) return u;
+        if (ds >= t) return null;
+        const r = (dutyData.recent || []).find(x => x.d === ds || x.e === ds);
+        return r ? { d: r.d, e: r.e, p: r.p, done: 1 } : null;
     }
     function dutyAgenda(withPast) {
         if (!dutyOk()) return [];
         const t = ymdOf(new Date()), lim = ymdOf(new Date(Date.now() + 120 * 86400000));
-        return dutyData.upcoming.filter(u => u.d >= t && u.d <= lim).concat(withPast ? (dutyData.recent || []).filter(r => r.d < t).map(r => ({ d: r.d, p: r.p, done: 1 })) : []);
+        return dutyData.upcoming.filter(u => dutyEnd(u) >= t && u.d <= lim).concat(withPast ? (dutyData.recent || []).filter(r => r.d < t).map(r => ({ d: r.d, e: r.e, p: r.p, done: 1 })) : []);
     }
     function dutyWhoText(p) { return (p && p.length) ? p.map(x => x.n + ' 가족').join(' · ') : '당번 없음'; }   // v2.86.0: 보호자 → 가족
     function dutySibText(x) { return (x && x.sib && x.sib.length) ? '형제 ' + x.sib.map(s => s.n + (s.g ? '(' + s.g + '학년)' : '')).join(', ') : ''; }
     function dutyWhoSub(p) { return (p || []).map(x => [[x.g ? x.g + '학년' : '', x.no ? x.no + '번' : ''].filter(Boolean).join(' '), dutySibText(x)].filter(Boolean).join(' · ')).filter(Boolean).join(' / '); }
     function dutyFmt(ds) { const d = dateOf(ds); return (d.getFullYear() !== new Date().getFullYear() ? String(d.getFullYear()).slice(2) + '년 ' : '') + fmtMD(ds); }
     function dutyDd(ds) { const n = dayDiff(ds); return n === 0 ? '오늘' : n === 1 ? '내일' : 'D-' + n; }
+    // 📅 v2.89.0: 청소 날 = 매달 2 · 4번째 주말 (서버 v2.33.0) — u.e(일요일)가 있으면 토 · 일 한 칸 · 일요일까지 「다가오는」
+    function dutyEnd(u) { return (u && (u.e || u.d)) || ''; }
+    function dutyWhen(u, short) {
+        if (!u) return '';
+        if (!u.e) return short ? fmtMD(u.d).replace(/\(.\)$/, '') : fmtMD(u.d);
+        const a = dateOf(u.d), b = dateOf(u.e), b2 = (b.getMonth() !== a.getMonth() ? (b.getMonth() + 1) + '/' : '') + b.getDate();
+        return short ? `${a.getMonth() + 1}/${a.getDate()}~${b2}` : `${a.getMonth() + 1}/${a.getDate()}(토)~${b2}(일)`;
+    }
+    function dutyDdU(u) {
+        if (!u || !u.e) return dutyDd(u ? u.d : '');
+        const n = dayDiff(u.d);
+        return n <= 0 ? '이번 주말' : n === 1 ? '내일부터' : 'D-' + n;
+    }
+    function dutyFmtU(u) { const d = dateOf(u.d); return (d.getFullYear() !== new Date().getFullYear() ? String(d.getFullYear()).slice(2) + '년 ' : '') + dutyWhen(u); }
     function dutyEveryOf(d) {
         if (!d) return '';
+        if (Array.isArray(d.wk) && d.wk.length) return ['매달 ' + d.wk.join('·') + '번째 주말 (토·일 중 하루)', (d.per || 1) > 1 ? '회당 ' + d.per + '가정' : ''].filter(Boolean).join(' · ');   // v2.89.0
         const day = d.start ? DOW_KO[dateOf(d.start).getDay()] + '요일' : '';
         const w = d.weeks === 1 ? '매주' : d.weeks === 2 ? '격주' : d.weeks + '주마다';
         return [w + (day ? ' ' + day : ''), (d.per || 1) > 1 ? '회당 ' + d.per + '가정' : ''].filter(Boolean).join(' · ');
@@ -4561,14 +4579,15 @@
         if (!next) { el.style.display = 'none'; el.innerHTML = ''; return; }
         const skip = up[0] && up[0].s && up[0].d < next.d ? up[0] : null, mineNext = dutyMineNext(), mine = !!mineNext && mineNext.d === next.d;
         const sub = [];
-        if (skip) sub.push(`${fmtMD(skip.d)}는 쉬어요${skip.m ? ' (' + escapeHtml(skip.m) + ')' : ''}`);
-        if (!mine && mineNext) sub.push(`<b>⭐ 우리 집 ${dutyFmt(mineNext.d)}</b>`);
+        if (next.e) sub.push('토·일 중 하루');   // v2.89.0: 경기 있으면 끝나고 · 다음 날도
+        if (skip) sub.push(`${dutyWhen(skip)}${skip.e ? ' 주말은' : '는'} 쉬어요${skip.m ? ' (' + escapeHtml(skip.m) + ')' : ''}`);
+        if (!mine && mineNext) sub.push(`<b>⭐ 우리 집 ${dutyFmtU(mineNext)}</b>`);
         if (dutyData.info) sub.push(escapeHtml(dutyData.info));
         if (!sub.length) sub.push(escapeHtml(dutyEveryOf(dutyData)) + ' · 전체 순서 보기');
         el.classList.toggle('mine', mine);
         el.innerHTML = `<span class="db-ic" aria-hidden="true">🧹</span><div class="db-body">
-                <div class="db-when">${mine ? '🙋 이번엔 우리 집 차례예요!' : '다음 부실 청소'} · ${dutyDd(next.d)}</div>
-                <div class="db-who">${fmtMD(next.d)} · ${escapeHtml(dutyWhoText(next.p))} <small>${escapeHtml(dutyWhoSub(next.p))}</small></div>
+                <div class="db-when">${mine ? '🙋 이번엔 우리 집 차례예요!' : '다음 부실 청소'} · ${dutyDdU(next)}</div>
+                <div class="db-who">${dutyWhen(next)} · ${escapeHtml(dutyWhoText(next.p))} <small>${escapeHtml(dutyWhoSub(next.p))}</small></div>
                 <div class="db-sub">${sub.join(' · ')}</div></div><span class="db-arrow">›</span>`;
         el.style.display = 'flex';
     }
@@ -4578,7 +4597,8 @@
         if (!el) return;
         const m = currentMainTab === 'roster' ? dutyMineNext() : null, n = m ? dayDiff(m.d) : 99;
         if (!m || n > 7) { el.style.display = 'none'; return; }
-        el.innerHTML = `<span class="ic" aria-hidden="true">🧹</span><span class="tx"><b>${n === 0 ? '오늘' : n === 1 ? '내일' : fmtMD(m.d)}</b> 우리 집이 부실 청소 당번이에요${dutyData.info ? ' · ' + escapeHtml(dutyData.info) : ''}</span><span class="ar">›</span>`;
+        const when = m.e ? (n <= 0 ? '이번 주말' : n === 1 ? '내일부터 주말' : dutyWhen(m)) : (n === 0 ? '오늘' : n === 1 ? '내일' : fmtMD(m.d));   // v2.89.0
+        el.innerHTML = `<span class="ic" aria-hidden="true">🧹</span><span class="tx"><b>${when}</b> 우리 집이 부실 청소 당번이에요${m.e ? ' (토·일 중 하루)' : ''}${dutyData.info ? ' · ' + escapeHtml(dutyData.info) : ''}</span><span class="ar">›</span>`;
         el.style.display = 'flex';
     }
     function dutyChipHtml(u) {
@@ -4590,7 +4610,7 @@
         if (!u) return '';
         if (u.s) return `<div class="duty-card skip" onclick="openDutyModal()"><span class="dc-ic">🧹</span><div class="dc-main"><div class="dc-t">부실 청소 쉬는 날</div><div class="dc-sub">${u.m ? escapeHtml(u.m) + ' · ' : ''}이번 회는 청소가 없고 차례는 다음 회로 넘어가요</div></div></div>`;
         const mine = !u.done && dutyIsMine(u);
-        const sub = u.done ? [] : [dutyData.info ? escapeHtml(dutyData.info) : '', u.o ? '원래 ' + fmtMD(u.o) + '에서 옮김' : '', u.f ? '바꾼 차례' : ''].filter(Boolean);
+        const sub = u.done ? [] : [u.e ? dutyWhen(u) + ' · 토·일 중 하루' : '', dutyData.info ? escapeHtml(dutyData.info) : '', u.o ? '원래 ' + fmtMD(u.o) + ' 주말에서 옮김' : '', u.f ? '바꾼 차례' : ''].filter(Boolean);
         return `<div class="duty-card${mine ? ' mine' : ''}${u.done ? ' done' : ''}" onclick="openDutyModal()"><span class="dc-ic">🧹</span><div class="dc-main">
             <div class="dc-t">부실 청소 당번${mine ? '<span class="dc-tag">우리 집</span>' : ''}${u.done ? '<span class="dc-tag ok">✓ 했어요</span>' : ''}</div>
             <div class="dc-who">${escapeHtml(dutyWhoText(u.p))} <small>${escapeHtml(dutyWhoSub(u.p))}</small></div>${sub.length ? `<div class="dc-sub">${sub.join(' · ')}</div>` : ''}</div></div>`;
@@ -4601,15 +4621,16 @@
         const up = dutyUp(), mine = dutyMineNext(), body = document.getElementById('dutyModalBody');
         let lastY = new Date().getFullYear();
         const row = (u, done) => {
-            const d = dateOf(u.d), me = !done && !u.s && dutyIsMine(u);
+            const d = dateOf(u.d), e = u.e ? dateOf(u.e) : null, me = !done && !u.s && dutyIsMine(u);
             let y = '';
             if (!done && d.getFullYear() !== lastY) { lastY = d.getFullYear(); y = `<div class="dm-yr">${lastY}년</div>`; }
             const who = u.s ? `<b>청소 쉼</b><small>${escapeHtml(u.m || '차례는 다음 회로')}</small>`
                 : `<b>${done ? '✓ ' : ''}${escapeHtml(dutyWhoText(u.p))}</b><small>${escapeHtml(dutyWhoSub(u.p))}${u.o ? ' · 원래 ' + fmtMD(u.o) : ''}${u.f ? ' · 바꾼 차례' : ''}</small>`;
-            return y + `<div class="dm-row${me ? ' mine' : ''}${u.s ? ' skip' : ''}${done ? ' done' : ''}"><div class="dm-d"><b>${d.getMonth() + 1}/${d.getDate()}</b><small>${DOW_KO[d.getDay()]}${done ? '' : ' · ' + dutyDd(u.d)}</small></div><div class="dm-w">${who}</div>${me ? '<span class="dm-tag">우리 집</span>' : ''}</div>`;
+            const dd = `${d.getMonth() + 1}/${d.getDate()}` + (e ? '~' + (e.getMonth() !== d.getMonth() ? (e.getMonth() + 1) + '/' : '') + e.getDate() : '');   // v2.89.0: 주말
+            return y + `<div class="dm-row${me ? ' mine' : ''}${u.s ? ' skip' : ''}${done ? ' done' : ''}"><div class="dm-d"><b>${dd}</b><small>${done ? (e ? '토·일' : DOW_KO[d.getDay()]) : dutyDdU(u) === '이번 주말' ? '이번 주말' : (e ? '토·일' : DOW_KO[d.getDay()]) + ' · ' + dutyDdU(u)}</small></div><div class="dm-w">${who}</div>${me ? '<span class="dm-tag">우리 집</span>' : ''}</div>`;
         };
         let h = `<div class="dm-head">${escapeHtml(dutyEveryOf(dutyData))}${dutyData.info ? ' · ' + escapeHtml(dutyData.info) : ''}</div>`;
-        if (mine) h += `<div class="dm-mine">⭐ 우리 집 차례: <b>${dutyFmt(mine.d)}</b> · ${dutyDd(mine.d)}</div>`;
+        if (mine) h += `<div class="dm-mine">⭐ 우리 집 차례: <b>${dutyFmtU(mine)}</b> · ${dutyDdU(mine)}${mine.e ? ' · 토·일 중 하루' : ''}</div>`;
         h += '<div class="dm-sec">다가오는 차례</div>' + (up.length ? up.map(u => row(u)).join('') : '<div class="ofa-msg">다가오는 차례가 없어요</div>');
         const rec = (dutyData.recent || []).filter(r => r.d < ymdOf(new Date()));
         if (rec.length) h += '<div class="dm-sec">지난 청소</div>' + rec.map(r => row(r, true)).join('');
@@ -4665,13 +4686,13 @@
         let h = d.reason === 'nosheet' ? '' : `<button type="button" class="dadm-edit" onclick="dutyOrdOpen()">🔀 순서 · 가족 편집${d.ok ? '' : ' · 시작일 넣기'}</button>`;
         if (!d.ok) {
             const msg = d.reason === 'nosheet' ? '시트에 「당번」 탭이 없어요.'
-                : d.reason === 'nostart' ? `위 「🔀 순서 · 가족 편집」에서 시작일(첫 청소 날)을 넣으면 시작돼요.${rows.length ? ` (순서표 ${rows.filter(r => r.st === 'ok').length}가족 입력됨)` : ' 가족도 입단 순서대로 넣어 주세요.'}`
+                : d.reason === 'nostart' ? `위 「🔀 순서 · 가족 편집」에서 시작일을 넣으면 그 뒤 첫 2 · 4번째 주말부터 시작돼요.${rows.length ? ` (순서표 ${rows.filter(r => r.st === 'ok').length}가족 입력됨)` : ' 가족도 입단 순서대로 넣어 주세요.'}`
                 : '위 「🔀 순서 · 가족 편집」에서 가족을 입단 순서대로 넣어 주세요.';
             h += `<div class="ofa-row warn"><span class="ic">🧹</span><div class="who"><b>아직 시작 전</b><span>${msg}</span></div></div>`;
         } else {
             h += `<div class="dadm-stat">${escapeHtml(dutyEveryOf(d))} · 순서표 ${act.length}가족${d.info ? ' · ' + escapeHtml(d.info) : ''}</div>`;
-            h += (d.upcoming || []).filter(u => u.d >= t).slice(0, 6).map(u => {
-                const key = u.o || u.d, when = `${fmtMD(u.d)} · ${dutyDd(u.d)}`;
+            h += (d.upcoming || []).filter(u => dutyEnd(u) >= t).slice(0, 6).map(u => {
+                const key = u.o || u.d, when = `${dutyWhen(u)} · ${dutyDdU(u)}`;
                 if (u.s) return `<div class="ofa-row dadm skip"><div class="who"><b>${when}</b><span>청소 쉼</span><small>${escapeHtml(u.m || '')}</small></div><div class="dadm-btns"><button type="button" class="ghost" onclick="dutySkip('${key}', 0)">쉼 취소</button></div></div>`;
                 return `<div class="ofa-row dadm"><div class="who"><b>${when}</b><span>${escapeHtml(dutyWhoText(u.p))}</span><small>${escapeHtml(dutyWhoSub(u.p))}${u.o ? ' · 원래 ' + fmtMD(u.o) : ''}${u.f ? ' · 바꾼 차례' : ''}</small></div><div class="dadm-btns"><button type="button" onclick="dutySwapOpen('${key}')">바꾸기</button><button type="button" class="ghost" onclick="dutySkip('${key}', 1)">쉬기</button></div></div>`;
             }).join('');
@@ -4698,7 +4719,7 @@
     async function dutySkip(date, on) {
         const u = dutyAdm && (dutyAdm.upcoming || []).find(x => (x.o || x.d) === date);
         if (!u) return;
-        const ok = await bkConfirm(on ? `${fmtMD(u.d)} 청소를 쉴까캉?` : `${fmtMD(u.d)} 쉼을 취소할까캉?`, { sub: on ? `${dutyWhoText(u.p)}부터 한 회씩 뒤로 밀려요` : '그날 다시 청소하고, 뒤 차례는 한 회씩 당겨져요', ok: on ? '쉬기' : '쉼 취소' });
+        const ok = await bkConfirm(on ? `${dutyWhen(u)} 청소를 쉴까캉?` : `${dutyWhen(u)} 쉼을 취소할까캉?`, { sub: on ? `${dutyWhoText(u.p)}부터 한 회씩 뒤로 밀려요` : '그날 다시 청소하고, 뒤 차례는 한 회씩 당겨져요', ok: on ? '쉬기' : '쉼 취소' });
         if (!ok) return;
         await dutyAdmSave({ action: 'dutySkip', date: date, on: on ? '1' : '0' }, on ? '쉬는 날로 바꿨캉! ✓' : '쉼을 취소했캉! ✓');
     }
@@ -4792,10 +4813,10 @@
 
     function dutySwapOpen(date) {
         if (!dutyAdm) return;
-        const t = ymdOf(new Date()), A = (dutyAdm.upcoming || []).find(u => u.d >= t && !u.s && (u.o || u.d) === date);
+        const t = ymdOf(new Date()), A = (dutyAdm.upcoming || []).find(u => dutyEnd(u) >= t && !u.s && (u.o || u.d) === date);
         if (!A || !A.p.length) return;
         dutySwapCtx = { A: A, ia: A.p.length === 1 ? 0 : -1, B: null, ib: -1 };
-        document.getElementById('dsTitle').textContent = `🔁 ${fmtMD(A.d)} 당번 바꾸기`;
+        document.getElementById('dsTitle').textContent = `🔁 ${dutyWhen(A)} 당번 바꾸기`;
         dutySwapRender();
         document.getElementById('dutySwapModal').style.display = 'flex';
     }
@@ -4807,8 +4828,8 @@
         document.getElementById('dsToT').textContent = one ? `${c.A.p[0].n} 가족과 누구를 바꿀까요?` : '② 누구와 바꿀까요?';
         document.getElementById('dsFrom').innerHTML = c.A.p.map((x, i) => `<button type="button" class="ofa-p${c.ia === i ? ' on' : ''}" onclick="dutySwapFrom(${i})">${x.g ? `<span class="g">${escapeHtml(x.g)}학년</span>` : ''}${escapeHtml(x.n)} <span class="n">· ${x.no ? x.no + '번' : '번호 없음'}</span></button>`).join('');
         const all = dutyAdm.upcoming || [];
-        const list = all.filter(u => u.d >= t && !u.s && u !== c.A).slice(0, 16);
-        document.getElementById('dsTo').innerHTML = list.length ? list.map(u => u.p.map((x, i) => `<button type="button" class="ofa-p${c.B === u && c.ib === i ? ' on' : ''}" onclick="dutySwapTo(${all.indexOf(u)}, ${i})"><span class="g">${fmtMD(u.d)}</span>${escapeHtml(x.n)} <span class="n">· ${[x.g ? x.g + '학년' : '', x.no ? x.no + '번' : ''].filter(Boolean).join(' ')}</span></button>`).join('')).join('') : '<div class="ofa-msg">바꿀 수 있는 다른 날이 없어요</div>';
+        const list = all.filter(u => dutyEnd(u) >= t && !u.s && u !== c.A).slice(0, 16);
+        document.getElementById('dsTo').innerHTML = list.length ? list.map(u => u.p.map((x, i) => `<button type="button" class="ofa-p${c.B === u && c.ib === i ? ' on' : ''}" onclick="dutySwapTo(${all.indexOf(u)}, ${i})"><span class="g">${dutyWhen(u, true)}</span>${escapeHtml(x.n)} <span class="n">· ${[x.g ? x.g + '학년' : '', x.no ? x.no + '번' : ''].filter(Boolean).join(' ')}</span></button>`).join('')).join('') : '<div class="ofa-msg">바꿀 수 있는 다른 날이 없어요</div>';
     }
     function dutySwapFrom(i) { if (dutySwapCtx) { dutySwapCtx.ia = i; dutySwapRender(); } }
     function dutySwapTo(ui, i) { if (dutySwapCtx) { dutySwapCtx.B = dutyAdm.upcoming[ui]; dutySwapCtx.ib = i; dutySwapRender(); } }
@@ -4818,7 +4839,7 @@
         if (c.ia < 0) { bkNotify('info', '이 날 바꿀 가정을 먼저 골라줘캉!'); return; }
         if (!c.B || c.ib < 0) { bkNotify('info', '누구와 바꿀지 골라줘캉!'); return; }
         const a = c.A.p[c.ia], b = c.B.p[c.ib];
-        const ok = await bkConfirm('두 가족 차례를 바꿀까캉?', { sub: `${fmtMD(c.A.d)} ${a.n} 가족 ↔ ${fmtMD(c.B.d)} ${b.n} 가족\n다른 가족 차례는 그대로예요`, ok: '바꾸기' });
+        const ok = await bkConfirm('두 가족 차례를 바꿀까캉?', { sub: `${dutyWhen(c.A)} ${a.n} 가족 ↔ ${dutyWhen(c.B)} ${b.n} 가족\n다른 가족 차례는 그대로예요`, ok: '바꾸기' });
         if (!ok) return;
         const btn = document.getElementById('btnDsNext');
         btn.disabled = true;
@@ -4976,7 +4997,8 @@
         const today = ymdOf(new Date());
         const items = calShowPast ? list : list.filter(ev => ev.date >= today);
         const dus = dutyAgenda(calShowPast);   // 🧹 v2.84.0: 청소 날 (앞으로 4달 · 지난 일정도 보기면 지난 청소도)
-        const dates = Array.from(new Set(items.map(ev => ev.date).concat(dus.map(u => u.d)))).sort();
+        const dk = u => (!u.done && u.d < today) ? today : u.d;   // v2.89.0: 진행 중인 주말(일요일)은 오늘 칸에
+        const dates = Array.from(new Set(items.map(ev => ev.date).concat(dus.map(dk)))).sort();
         let html = '<div class="agenda">';
         if (!calShowPast) html += `<button type="button" class="agenda-past-toggle" onclick="calShowPast=true;renderSchedule()">▲ 지난 일정도 보기</button>`;
         if (!items.length) html += bkState('empty bk-s-calendar', '예정된 일정이 없습니다', '푹 쉬는 중이캉~');
@@ -4984,7 +5006,7 @@
             const n = dayDiff(ds), dd = ddayLabel(ds);
             html += `<div class="agenda-date" id="ag-${ds}">${fmtKDate(ds)}${dd ? `<span class="dday ${n === 0 ? 'today' : n <= 3 ? 'soon' : ''}">${dd}</span>` : ''}</div>`;
             items.forEach(ev => { if (ev.date === ds) html += eventCardHtml(ev); });
-            const du = dus.find(u => u.d === ds); if (du) html += dutyCardHtml(du);
+            const du = dus.find(u => dk(u) === ds); if (du) html += dutyCardHtml(du);
         });
         if (calShowPast) html += `<button type="button" class="agenda-past-toggle" onclick="calShowPast=false;renderSchedule()">지난 일정 숨기기</button>`;
         return html + '</div>';
@@ -9385,6 +9407,12 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.89.0', d: '2026-10-18', t: '🧹 청소 날 = 매달 2 · 4번째 주말', items: [
+            '청소 날이 「시작일부터 2주마다」 → 매달 2번째 · 4번째 토요일과 그 다음 날 일요일을 한 주말로 묶음 (서버 v2.33.0)',
+            '경기 · 연습경기가 있으면 토 · 일 중 편한 날 하루 · 배너 · 달력 · 전체 순서에 「10/24(토)~25(일)」처럼 보임',
+            '달력은 토 · 일 두 칸 모두 청소 표시 · 일요일까지는 「이번 주말」 차례로 보이고, 주말이 지나야 청소함으로 적힘',
+            '시작일은 「이 날부터」 — 그 뒤 첫 2 · 4번째 주말부터 차례 시작'
+        ] },
         { v: 'v2.88.0', d: '2026-10-18', t: '👕 유니폼 색 접기', items: [
             '⚙️ 관리 탭 「👕 학년별·코치진·감독님 유니폼 색」도 접어 둠 · 펼치기를 누르면 색 바꾸기가 나옴',
             '접혀 있을 때는 지금 색을 작은 유니폼 8개로 한 줄에 보여 줌 (누르면 펼쳐짐)',
