@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.92.1 · b261025";
+        const APP_VERSION = "v2.93.0 · b261026";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -1253,6 +1253,24 @@
         .btn-cancel { background: #f1f5f9; border: 1px solid var(--card-border); padding: 7px 12px; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; }
         .btn-save { background: var(--kbo-blue); color: #ffffff; border: none; padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; }
 
+        /* 📢 v2.93.0: 공지 팝업 — 휴대폰에 맞는 작은 카드 · 위에 확성기 부캉이 · 아래 「확인」 한 개 (본문 모양은 공지 탭과 같음) */
+        #upnModal { z-index: 1002; }
+        .upn-card { max-width: 380px; padding: 16px 16px 14px; text-align: center; overflow: visible; margin-top: 34px; }
+        .upn-bk { width: 84px; height: 84px; object-fit: contain; margin: -56px auto 2px; display: block; flex-shrink: 0; filter: drop-shadow(0 4px 8px rgba(0,0,0,.18)); }
+        .upn-head { margin-bottom: 2px; color: var(--kbo-blue); }
+        .upn-sub { font-size: 12.5px; color: #64748b; margin-bottom: 10px; flex-shrink: 0; }
+        .upn-item { text-align: left; background: #ffffff; border: 1px solid var(--card-border); border-radius: 12px; padding: 11px 12px 10px; margin-bottom: 8px; }
+        .upn-item:last-child { margin-bottom: 0; }
+        .upn-item .nt-meta { margin-bottom: 4px; }
+        .upn-item-title { font-size: 16px; font-weight: 900; color: var(--text-title); line-height: 1.4; }
+        .upn-body { font-size: 14px; color: #1e293b; line-height: 1.65; word-break: keep-all; overflow-wrap: anywhere; }
+        .upn-body p { margin: 6px 0; }
+        .upn-body .nt-list li { padding: 8px 10px; margin-bottom: 6px; }
+        .upn-more { font-size: 12.5px; color: #64748b; font-weight: 700; margin-top: 8px; }
+        .nt-popup { font-size: 11px; font-weight: 800; color: #b45309; }
+        .upn-btns { justify-content: center; border-top: none; padding-top: 4px; }
+        .upn-btns .btn-save { width: 100%; padding: 12px 14px; font-size: 15px; border-radius: 10px; }
+
         /* v2.41.18: 유니폼 신청 창 윗부분 — 설명 한 줄, 「대상 선수 선택」 옆에 고르기 칸, 학년·키·몸무게 한 줄 */
         .uni-guide { font-size: 12px; margin: 0 0 10px; line-height: 1.4; }
         #uniformModal .uni-player-row { flex-direction: row; align-items: center; gap: 8px; }
@@ -2283,6 +2301,15 @@
     .modal-btns { border-top: 1px solid #2a374e; }
     .btn-cancel { background: #1b2638; border: 1px solid #2a374e; }
     .btn-save { background: #22354f; color: #f1f4f9; border: none; }
+    .upn-head { color: #dde3ec; }
+    .upn-sub, .upn-more { color: #8d9ab0; }
+    .upn-item { background: #1b2638; border: 1px solid #2a374e; }
+    .upn-item-title { color: #dde3ec; }
+    .upn-body { color: #cfd7e3; }
+    .nt-popup { color: #e7b46a; }
+    .upn-body .nt-list li { background: #222f45; }
+    .upn-btns .btn-save { background: #2e486b; }
+    .upn-btns { border-top: none; }
     .uniform-item-row { border-bottom: 1px solid #2a374e; }
     .uniform-item-name { color: #dde3ec; }
     .order-modal-tabs { border-bottom: 2px solid #2a374e; }
@@ -3376,6 +3403,8 @@
                 <span class="form-hint">번호만 한 줄에 쓰고(예: 1) 다음 줄부터 내용을 쓰면 번호 항목으로 보기 좋게 표시됩니다. 항목 사이는 빈 줄로 구분하세요.</span>
             </div>
             <label class="chk-open-row"><input type="checkbox" id="ntPinned"><span>📌 맨 위에 고정</span></label>
+            <label class="chk-open-row"><input type="checkbox" id="ntPopup"><span>📢 로그인 후 팝업으로 띄우기</span></label>
+            <span class="form-hint">체크하면 보호자 · 집행부 모두 다음 로그인 때 한 번 팝업으로 보여요 (「확인」을 누르면 그 기기에서는 다시 안 뜸 · 작성일부터 30일 동안). 새 기능 · 큰 변경 · 꼭 봐야 할 공지에만 써 주세요.</span>
         </div>
         <div class="modal-btns" style="justify-content: space-between;">
             <button class="btn-cancel" onclick="closeModal('noticeEditModal')">취소</button>
@@ -3763,6 +3792,19 @@
         <div class="modal-scroll-body" id="historyListContent"></div>
         <div class="modal-btns" style="justify-content: flex-end;">
             <button class="btn-save" onclick="closeModal('historyModal')">닫기</button>
+        </div>
+    </div>
+</div>
+
+<!-- 📢 공지 팝업 (v2.93.0) — 공지 작성 창에서 「로그인 후 팝업으로 띄우기」를 체크한 공지를 로그인 후 한 번 (확인 = 그 기기에서 다시 안 뜸) -->
+<div id="upnModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="upnTitle">
+    <div class="modal-content upn-card">
+        <img class="upn-bk" src="icons/bk/megaphone.webp" alt="" width="84" height="84">
+        <div class="modal-header upn-head" id="upnTitle">📢 공지사항</div>
+        <div class="upn-sub">꼭 봐 주세요 · 📢 공지 탭에서 다시 볼 수 있어요</div>
+        <div class="modal-scroll-body" id="upnList"></div>
+        <div class="modal-btns upn-btns">
+            <button type="button" class="btn-save" onclick="upnClose()">확인</button>
         </div>
     </div>
 </div>
@@ -4404,6 +4446,7 @@
             noticeList = r.notices; noticeLoaded = true; noticeFetchedAt = t.notice || Date.now();
             if (currentMainTab === 'notice') { renderNotices(); markNoticesSeen(); }
             updateNoticeDot();
+            upnCheck();   // 📢 v2.93.0: 팝업 공지
         }
     }
     function loadSchedule(force) {
@@ -4442,6 +4485,7 @@
             noticeLoading = null;
             if (currentMainTab === 'notice') { renderNotices(); markNoticesSeen(); }
             updateNoticeDot();
+            upnCheck();   // 📢 v2.93.0
         });
         return noticeLoading;
     }
@@ -6501,6 +6545,7 @@
                 <button type="button" class="nt-summary" onclick="toggleNotice('${escapeHtml(n.id)}')">
                     <div class="nt-meta">
                         ${n.pinned === 'Y' ? '<span class="nt-pin">📌 고정</span>' : ''}
+                        ${n.popup === 'Y' && canEditSchedule() ? (upnActive(n) ? '<span class="nt-popup">📢 팝업</span>' : '<span class="nt-popup" style="opacity:.6">📢 팝업 끝(30일)</span>') : ''}
                         <span class="nt-cat" style="--c:${cm.c};--bg:${cm.bg}">${escapeHtml(n.category || '일반')}</span>
                         ${isNewNotice(n) ? '<span class="nt-new">NEW</span>' : ''}
                         <span class="nt-date">${escapeHtml(String(n.created || '').slice(0, 10).replace(/-/g, '.'))}</span>
@@ -6540,6 +6585,61 @@
         if (latest) { try { localStorage.setItem('daeyeon_notice_seen', latest); } catch (e) {} }
         updateNoticeDot();
     }
+
+    // ==========================================================
+    // 📢 v2.93.0: 공지 팝업 — 공지 작성 창에서 「로그인 후 팝업으로 띄우기」를 체크한 공지(시트 공지사항 「팝업」 칸 = Y, 서버 v2.37.0)
+    //   · 공지를 받아 오면(로그인 직후 · 앱을 다시 열 때) 이 기기에서 아직 「확인」을 안 누른 팝업 공지를 카드 하나로 보여 줌
+    //   · 공지는 원래 받아 오던 것을 그대로 씀 → 서버 · 시트 호출이 안 늘어남 · 1922 일반 열람자는 공지를 못 받으니 팝업도 없음
+    //   · 작성일부터 30일 지난 공지는 안 띄움 (체크를 깜빡 안 풀어도 새로 오신 분께 옛 공지가 뜨지 않게) · 한 번에 최신 3개까지
+    //   · 「확인」 = 공지 ID 를 이 기기에 기록 (daeyeon_popup_seen) → 같은 공지는 다시 안 뜸 · 내용을 고쳐도 다시 안 뜸
+    // ==========================================================
+    const UPN_DAYS = 30, UPN_MAX = 3, UPN_KEY = 'daeyeon_popup_seen';
+    let upnShowing = [], upnTimer = null;
+    function upnSeen() { try { const a = JSON.parse(localStorage.getItem(UPN_KEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+    function upnMarkSeen(ids) {
+        const a = upnSeen().filter(x => ids.indexOf(x) === -1).concat(ids).slice(-60);
+        try { localStorage.setItem(UPN_KEY, JSON.stringify(a)); } catch (e) {}
+    }
+    function upnActive(n) {   // 팝업 체크 + 작성일부터 30일 안
+        const d = String((n && n.created) || '').slice(0, 10);
+        return !!n && n.popup === 'Y' && !!n.id && /^\d{4}-\d{2}-\d{2}$/.test(d) && dayDiff(d) >= -UPN_DAYS;
+    }
+    function upnPending() {
+        if (!canViewNotice() || !noticeLoaded) return [];
+        const seen = upnSeen();
+        return noticeList.filter(n => upnActive(n) && seen.indexOf(n.id) === -1).sort((a, b) => String(b.created || '') < String(a.created || '') ? -1 : 1).slice(0, UPN_MAX);
+    }
+    function upnCheck() {
+        clearTimeout(upnTimer);
+        upnTimer = setTimeout(function () {   // 화면이 먼저 그려지고 잠금창 · 첫 화면이 걷힌 뒤에
+            const lock = document.getElementById('lockOverlay'), modal = document.getElementById('upnModal');
+            if (!modal || modal.style.display === 'flex') return;
+            if (!document.documentElement.classList.contains('is-authenticated') || (lock && lock.style.display === 'flex')) return;
+            if (document.documentElement.classList.contains('dy-intro')) { upnCheck(); return; }
+            const list = upnPending();
+            if (!list.length) return;
+            upnShowing = list.map(n => n.id);
+            document.getElementById('upnList').innerHTML = list.map(n => {
+                const cm = noticeCatMeta(n.category);
+                return `<div class="upn-item">
+                    <div class="nt-meta">
+                        <span class="nt-cat" style="--c:${cm.c};--bg:${cm.bg}">${escapeHtml(n.category || '일반')}</span>
+                        <span class="nt-date">${escapeHtml(String(n.created || '').slice(0, 10).replace(/-/g, '.'))}</span>
+                    </div>
+                    <div class="upn-item-title">${escapeHtml(n.title)}</div>
+                    <div class="upn-body">${formatNoticeBody(n.body)}</div>
+                    ${n.author ? `<div class="nt-author">작성: ${escapeHtml(n.author)}</div>` : ''}
+                </div>`;
+            }).join('');
+            modal.style.display = 'flex';
+            const sb = modal.querySelector('.modal-scroll-body'); if (sb) sb.scrollTop = 0;
+        }, 900);
+    }
+    function upnClose() {
+        if (upnShowing.length) upnMarkSeen(upnShowing);
+        upnShowing = [];
+        closeModal('upnModal');
+    }
     function openNoticeEditor(id) {
         if (!canEditSchedule()) return;
         const n = id ? noticeList.find(x => x.id === id) : null;
@@ -6550,10 +6650,12 @@
         document.getElementById('ntTitle').value = n ? n.title : '';
         document.getElementById('ntBody').value = n ? (n.body || '') : '';
         document.getElementById('ntPinned').checked = !!(n && n.pinned === 'Y');
+        document.getElementById('ntPopup').checked = !!(n && n.popup === 'Y');
         document.getElementById('noticeEditModal').style.display = 'flex';
     }
     async function saveNoticeToServer(n) {
         await postApi({ action: 'saveNotice', notice: n });
+        if (n.popup === 'Y') upnMarkSeen([n.id]);   // 📢 쓴 사람 기기에는 팝업을 다시 안 띄움
         const i = noticeList.findIndex(x => x.id === n.id);
         if (i >= 0) noticeList[i] = n; else noticeList.push(n);
         noticeLoaded = true;
@@ -6569,6 +6671,7 @@
         const n = {
             id: noticeEditId || newId('N'),
             pinned: document.getElementById('ntPinned').checked ? 'Y' : 'N',
+            popup: document.getElementById('ntPopup').checked ? 'Y' : 'N',   // 📢 v2.93.0 (서버 v2.37.0)
             category: document.getElementById('ntCategory').value,
             title: title,
             body: document.getElementById('ntBody').value,
@@ -9447,6 +9550,13 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.93.0', d: '2026-10-26', t: '📢 공지 팝업 (로그인 후 한 번)', items: [
+            '공지 작성 창에 「📢 로그인 후 팝업으로 띄우기」 체크칸 — 체크한 공지는 보호자 · 집행부 모두 다음 로그인 때 카드 팝업으로 한 번 보여 줌',
+            '「확인」(또는 뒤로가기)을 누르면 그 기기에서는 같은 공지가 다시 안 뜸 · 한 번에 최신 3개까지 · 작성일부터 30일 지난 공지는 안 띄움',
+            '팝업 공지도 📢 공지 탭에 그대로 남음 · 관리자에게는 공지 카드에 「📢 팝업」 표시 · 쓴 사람 기기에는 팝업이 다시 안 뜸',
+            '공지는 원래 받아 오던 것을 그대로 써서 서버 · 시트 호출이 안 늘어남 · 1922 일반 열람자는 공지를 못 받으니 팝업도 없음',
+            '서버 v2.37.0: 시트 공지사항 탭에 「팝업」(I열, Y/N) 칸 추가 · 예전 앱이 저장해도 팝업 값은 그대로 유지'
+        ] },
         { v: 'v2.92.1', d: '2026-10-25', t: '📞 집행부 연락 버튼에서 번호 숨김', items: [
             '헤더의 대표님 · 총무님 · 부대표님 · 부총무님 버튼을 누르면 뜨는 창에서 휴대폰 번호 글자를 뺌',
             '「📞 전화 걸기 · 💬 문자 보내기」는 그대로 — 누르면 휴대폰의 전화 · 문자 화면에서 번호가 보임'
@@ -10609,7 +10719,7 @@
         if (open.length) {   // 맨 위 창 하나만 닫음 (예: 큰 지도 → 일정 상세는 그대로)
             const z = m => parseInt(getComputedStyle(m).zIndex, 10) || 0;
             const top = open.reduce((a, b) => (z(b) >= z(a) ? b : a));
-            closeModal(top.id);
+            if (top.id === 'upnModal') upnClose(); else closeModal(top.id);   // 📢 v2.93.0: 공지 팝업은 뒤로가기도 「확인」과 같음
             return true;
         }
         const dd = document.querySelector('.gsel-wrap.open, .cgsel-wrap.open'); if (dd) { dd.classList.remove('open'); return true; }

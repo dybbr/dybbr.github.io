@@ -1,5 +1,5 @@
 // ==========================================================
-// ⚾ 대연초 야구부 관리 시스템 통합 백엔드 API (v2.36.0)
+// ⚾ 대연초 야구부 관리 시스템 통합 백엔드 API (v2.37.0)
 // ==========================================================
 // ★ API_KEY 는 코드에 적지 않고 「프로젝트 설정 → 스크립트 속성」의 API_KEY 에 넣어 둡니다 (v2.36.0~).
 //   값은 index.html / player.html 의 API_KEY 와 "같은 값"이어야 합니다. 속성이 비어 있으면 모든 요청을 거절합니다.
@@ -1396,8 +1396,8 @@ var SCHEDULE_HEADERS = ["ID", "날짜", "시작", "종료", "구분", "제목", 
 var SCHEDULE_KEYS    = ["id", "date", "start", "end", "type", "title", "place", "opponent", "grades", "target", "meet", "dress", "memo", "updated", "result"];
 
 var NOTICE_SHEET_NAME = "공지사항";
-var NOTICE_HEADERS = ["ID", "고정", "분류", "제목", "내용", "작성자", "작성일시", "수정일시"];
-var NOTICE_KEYS    = ["id", "pinned", "category", "title", "body", "author", "created", "updated"];
+var NOTICE_HEADERS = ["ID", "고정", "분류", "제목", "내용", "작성자", "작성일시", "수정일시", "팝업"];   // v2.37.0: 팝업(Y/N) — Y 면 앱이 로그인 후 한 번 팝업으로 보여 줌
+var NOTICE_KEYS    = ["id", "pinned", "category", "title", "body", "author", "created", "updated", "popup"];
 
 function nowKst() { return Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm"); }
 
@@ -2181,7 +2181,22 @@ function getNoticeSheet(ss) {
   var sh = ensureSheet(ss, NOTICE_SHEET_NAME, NOTICE_HEADERS, noticeSeedRows);
   if (existed) applySeedUpgrade(sh, "NOTICE_SEED_VER", noticeSeedRows, null);
   else PropertiesService.getScriptProperties().setProperty("NOTICE_SEED_VER", String(SEED_VERSION));
+  ensureNoticePopupCol(sh);
   return sh;
+}
+
+// 📢 v2.37.0: 예전에 만든 공지사항 탭에 「팝업」 머리글(I열)이 없으면 한 번만 붙임 (기존 공지는 빈칸 = 팝업 안 함)
+function ensureNoticePopupCol(sh) {
+  var props = PropertiesService.getScriptProperties();
+  if (props.getProperty("NOTICE_POPUP_COL") === "1") return;
+  var col = NOTICE_HEADERS.length;
+  if (sh.getMaxColumns() < col) sh.insertColumnsAfter(sh.getMaxColumns(), col - sh.getMaxColumns());
+  var h = sh.getRange(1, col);
+  if (!String(h.getValue() || "").trim()) {
+    h.setValue(NOTICE_HEADERS[col - 1]).setBackground("#0b2240").setFontColor("#ffffff").setFontWeight("bold");
+    sh.getRange(2, col, Math.max(sh.getMaxRows() - 1, 1), 1).setNumberFormat("@");
+  }
+  props.setProperty("NOTICE_POPUP_COL", "1");
 }
 
 function readNotices(ss) {
@@ -2197,6 +2212,9 @@ function handleSaveNotice(ss, data) {
   var r = findRowById(sh, id);
   var created = nowKst();
   if (r !== -1) created = cellToText(sh.getRange(r, 7).getValue()) || created;
+  // 📢 v2.37.0: 팝업 — 예전 앱처럼 popup 을 안 보내면 시트에 있던 값 그대로 (고정만 바꿔도 팝업이 꺼지지 않게)
+  var popup = (n.popup === true || n.popup === "Y") ? "Y" : (n.popup === false || n.popup === "N") ? "N"
+            : (r !== -1 && String(sh.getRange(r, 9).getValue()).trim() === "Y") ? "Y" : "N";
   var row = [
     id,
     (n.pinned === true || n.pinned === "Y") ? "Y" : "N",
@@ -2205,7 +2223,8 @@ function handleSaveNotice(ss, data) {
     cleanMultiline(n.body, 5000),
     cleanText(n.author, 30),
     created,
-    nowKst()
+    nowKst(),
+    popup
   ];
   writeRow(sh, r === -1 ? sh.getLastRow() + 1 : r, row);
   return json({ result: "success", id: id });
@@ -2466,7 +2485,7 @@ function noticeSeedRows() {
   var n4 = "연습시합에 처음 참관하시는 부모님들께서는 공지사항 숙지 부탁드리며,\n아이들이 있는 덕아웃 옆 관람석과 중앙상단의 관람석은 비워주시기 바랍니다.\n\n" +
     "대회 및 시합 참가시 학교에 모두 모여 인원점검 및 필요한 장비와 물품을 챙겨 함께 이동하는 것이 원칙입니다.\n\n많은 협조 감사드립니다.";
   var n5 = "1\n도핑방지교육 이수증 제출\n\n2\n성폭력 등 폭력 예방교육 이수증 제출\n\n각 사이트에 들어가셔서 교육 이수 및 이수증 제출 부탁드립니다.\n(안내 사진은 공식 공지방 9월 23일 게시물 참고)";
-  return [
+  return [   // v2.37.0: 끝에 팝업(N)을 붙여 머리글 9칸과 맞춤 (새로 만들 때만 씀)
     ["N001", "Y", "필독", "대연초 야구부 공지사항", n1, "야구부", "2026-08-24 00:00", s],
     ["N002", "Y", "에티켓", "대회(연습) 경기 에티켓 (감독님 지시사항)", n2, "감독님", "2026-08-24 00:00", s],
     ["N003", "N", "안내", "공식 공지방 이용 안내", n3, "야구부", "2026-08-25 19:58", s],
@@ -2481,7 +2500,7 @@ function noticeSeedRows() {
     ["N012", "N", "안내", "막내코치님 부임 안내", "막내코치 하실 분을 구하셔서 8월 18일부터 출근하십니다.\n첫날은 학교에서 연습시합 출발 시간에 모여 선수들을 인솔하여 가십니다.", "야구부", "2026-08-17 17:48", s],
     ["N013", "Y", "필독", "2026 차기 집행부 안내", "기존에는 학부모님들의 투표를 통해 집행부를 선출하였으나, 올해부터는 집행부 운영의 효율성과 원활한 소통을 위해 감독님께서 미리 고려해 두신 학부모님들과 협의하여 집행부를 결정하는 방식으로 진행하게 되었습니다.\n\n그 결과 대표에는 류태영 아버님, 총무에는 김승원 어머님께서 수고해 주시기로 하였습니다.\n\n차기 집행부는 한 달간의 인수인계를 거쳐 10월 1일부터 시작합니다.", "야구부", "2026-09-03 20:01", s],
     ["N014", "N", "안내", "추석 연휴 휴식 및 훈련 불참 연락", "추석 연휴인 9월 24일~27일은 전체 휴식입니다.\n\n개인적으로 훈련에 늦거나 불참하게 되면 꼭 총무님에게 말씀 부탁드립니다.", "야구부", "2026-09-08 19:24", s]
-  ];
+  ].map(function (r) { return r.concat(["N"]); });
 }
 
 // ==========================================================
