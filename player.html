@@ -27,6 +27,8 @@
             window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
         }
     </script>
+    <!-- 🎵 선수별 응원가 (v2.92.0) — 곡 목록은 cheer-songs.json (그 파일만 고치면 됨) · cheer-songs.js 를 고칠 때만 아래 ?v= 숫자 올리기 -->
+    <script src="cheer-songs.js?v=2.92.0"></script>
 
     <!-- 브라우저 캐시 원천 방지 메타태그 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -435,6 +437,48 @@
         .nav-btn.disabled {
             opacity: 0.4;
             pointer-events: none;
+        }
+
+        /* 🎵 응원가 듣기 (v2.92.0) — 곡이 있는 선수만 · 자동 재생 없음 · 처음 누르면 가사가 같이 펼쳐짐 */
+        .cheer-box { background: linear-gradient(135deg, #fff7ed, #fef2f2); border: 1px solid #fed7aa; border-radius: 12px; padding: 12px 12px 10px; display: flex; flex-direction: column; gap: 8px; }
+        .cheer-head { display: flex; align-items: center; gap: 10px; }
+        .cheer-play { flex: 0 0 auto; width: 48px; height: 48px; border-radius: 50%; border: none; background: var(--kbo-red); color: #ffffff; font-size: 18px; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 3px 8px rgba(200,16,46,0.35); transition: transform .1s; }
+        .cheer-play:active { transform: scale(0.94); }
+        .cheer-play:focus-visible { outline: 3px solid #29a8e0; outline-offset: 2px; }
+        .cheer-play .ico-pause { display: none; }
+        .cheer-box.playing .cheer-play .ico-play { display: none; }
+        .cheer-box.playing .cheer-play .ico-pause { display: inline; }
+        .cheer-box.loading .cheer-play { opacity: .7; }
+        .cheer-meta { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+        .cheer-title { font-size: 15px; font-weight: 900; color: var(--text-title); }
+        .cheer-sub { font-size: 11.5px; font-weight: 700; color: #9a3412; line-height: 1.35; word-break: keep-all; }
+        .cheer-time { flex: 0 0 auto; font-size: 11.5px; font-weight: 800; color: var(--text-sub); font-variant-numeric: tabular-nums; }
+        .cheer-seek { width: 100%; height: 22px; margin: 0; accent-color: var(--kbo-red); cursor: pointer; }
+        .cheer-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .cheer-lyr-btn, .cheer-dl { font-size: 12px; font-weight: 800; padding: 6px 10px; border-radius: 8px; border: 1px solid #fdba74; background: #ffffff; color: #9a3412; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; font-family: inherit; }
+        .cheer-msg { font-size: 12px; font-weight: 700; color: #b91c1c; }
+        .cheer-lyrics { background: #ffffff; border: 1px solid #fde2c4; border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 10px; max-height: 46vh; overflow-y: auto; overscroll-behavior: contain; }
+        .cheer-lyrics[hidden] { display: none; }
+        .cl-block { display: flex; flex-direction: column; gap: 3px; }
+        .cl-label { align-self: flex-start; font-size: 10.5px; font-weight: 900; color: #ffffff; background: #fb923c; padding: 1px 7px; border-radius: 999px; }
+        .cl-block.chorus .cl-label { background: var(--kbo-red); }
+        .cl-line { font-size: 14px; font-weight: 700; color: #1e293b; line-height: 1.55; word-break: keep-all; }
+        .cl-block.chorus .cl-line { font-weight: 900; color: #9f1239; }
+        .cl-line.chant { color: #64748b; font-weight: 800; }
+        @media (max-width: 600px) { .cheer-box { padding: 10px 10px 8px; } .cheer-play { width: 44px; height: 44px; } }
+        @media (prefers-color-scheme: dark) {
+            .cheer-box { background: linear-gradient(135deg, #2a1f1a, #2a1a22); border-color: #5a3a2a; }
+            .cheer-title { color: #dde3ec; }
+            .cheer-sub { color: #f0b48a; }
+            .cheer-time { color: #97a3b7; }
+            .cheer-lyr-btn, .cheer-dl { background: #151e2e; border-color: #5a3a2a; color: #f0b48a; }
+            .cheer-msg { color: #e78d8d; }
+            .cheer-lyrics { background: #151e2e; border-color: #3a2d28; }
+            .cl-line { color: #dde3ec; }
+            .cl-block.chorus .cl-line { color: #f5a3b5; }
+            .cl-line.chant { color: #97a3b7; }
+            .cl-label { background: #b4612c; }
+            .cl-block.chorus .cl-label { background: #9b273a; }
         }
 
         .status-box {
@@ -1306,6 +1350,8 @@
             }
         }
 
+        const keepCheer = document.getElementById('cheerBox');   // 🎵 다시 그릴 때(유니폼 색 새로 받음 등) 듣던 응원가가 끊기지 않게 떼어 뒀다가 다시 붙임
+        if (keepCheer) keepCheer.remove();
         card.innerHTML = `
             <div style="position: relative;">
                 ${photoHtml}
@@ -1341,6 +1387,8 @@
                 </div>
             </div>
         `;
+        if (keepCheer && keepCheer.dataset.who === cheerWho(p)) card.querySelector('.profile-body').appendChild(keepCheer);
+        else mountCheerSong(p);
 
         const openBtn = document.getElementById('btnOpenPhotoModal');
         if (openBtn) openBtn.addEventListener('click', function () { openPhotoUploadModal(p.no || 0, p.name); });
@@ -1351,6 +1399,95 @@
         notice.style.display = 'none';
         card.style.display = 'flex';
         document.title = `${noBadgeText} ${p.name} | 대연초 야구부`;
+    }
+
+    // ==========================================================
+    // 🎵 응원가 듣기 (v2.92.0) — 곡 목록은 cheer-songs.js (배번 + 이름이 둘 다 같은 선수만)
+    //   ▶ 를 눌러야만 소리가 남 (자동 재생 없음) · 처음 누를 때 가사가 같이 펼쳐짐 · 곡이 없는 선수는 아무것도 안 보임
+    // ==========================================================
+    function fmtCheerTime(sec) {
+        if (!isFinite(sec) || sec < 0) return '0:00';
+        const s = Math.floor(sec);
+        return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+    }
+    function cheerWho(p) { return (p.no || '') + '/' + p.name; }
+    // 곡 목록(cheer-songs.json)을 받은 뒤 상세 카드 아래에 붙임 — 받는 동안 다른 선수로 바뀌었으면 안 붙임
+    function mountCheerSong(p) {
+        if (typeof window.loadCheerSongs !== 'function') return;
+        window.loadCheerSongs().then(function () {
+            if (currentPlayer !== p || document.getElementById('cheerBox')) return;
+            const body = document.querySelector('#profileCard .profile-body');
+            const html = cheerSongHtml(p);
+            if (!body || !html) return;
+            body.insertAdjacentHTML('beforeend', html);
+            setupCheerPlayer();
+        });
+    }
+    function cheerSongHtml(p) {
+        const song = (typeof window.cheerSongFor === 'function') ? window.cheerSongFor(p) : null;
+        if (!song || !song.src) return '';
+        const blocks = (typeof window.cheerLyricBlocks === 'function') ? window.cheerLyricBlocks(song) : [];
+        const lyricsHtml = blocks.map(b => `
+            <div class="cl-block${b.label === '후렴' ? ' chorus' : ''}">
+                ${b.label ? `<span class="cl-label">${escapeHtml(b.label)}</span>` : ''}
+                ${b.lines.map(l => `<div class="cl-line${/^\(.*\)$/.test(l) ? ' chant' : ''}">${escapeHtml(l)}</div>`).join('')}
+            </div>`).join('');
+        const sub = [song.beat, song.vocal].filter(Boolean).join(' · ');
+        return `
+            <div class="cheer-box" id="cheerBox" data-who="${escapeHtml(cheerWho(p))}">
+                <div class="cheer-head">
+                    <button type="button" class="cheer-play" id="cheerPlayBtn" aria-label="응원가 듣기"><span class="ico-play">▶</span><span class="ico-pause">❚❚</span></button>
+                    <div class="cheer-meta">
+                        <span class="cheer-title">🎵 ${escapeHtml(p.name)} 응원가</span>
+                        <span class="cheer-sub">${escapeHtml(sub)}</span>
+                    </div>
+                    <span class="cheer-time" id="cheerTime">0:00</span>
+                </div>
+                <input type="range" class="cheer-seek" id="cheerSeek" min="0" max="1000" value="0" step="1" aria-label="재생 위치">
+                <div class="cheer-actions">
+                    <button type="button" class="cheer-lyr-btn" id="cheerLyrBtn" aria-expanded="false" aria-controls="cheerLyrics">📜 가사 보기 ▾</button>
+                    <a class="cheer-dl" href="${escapeHtml(song.src)}" target="_blank" rel="noopener" download>⬇️ MP3 저장</a>
+                </div>
+                <div class="cheer-msg" id="cheerMsg" hidden></div>
+                <div class="cheer-lyrics" id="cheerLyrics" hidden>${lyricsHtml}</div>
+                <audio id="cheerAudio" preload="none" src="${escapeHtml(song.src)}"></audio>
+            </div>`;
+    }
+    function setupCheerPlayer() {
+        const box = document.getElementById('cheerBox');
+        if (!box) return;
+        const audio = document.getElementById('cheerAudio'), btn = document.getElementById('cheerPlayBtn');
+        const seek = document.getElementById('cheerSeek'), time = document.getElementById('cheerTime');
+        const lyrBtn = document.getElementById('cheerLyrBtn'), lyr = document.getElementById('cheerLyrics'), msg = document.getElementById('cheerMsg');
+        let seeking = false, openedOnce = false;
+        function setLyrics(open) {
+            lyr.hidden = !open;
+            lyrBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            lyrBtn.textContent = open ? '📜 가사 접기 ▴' : '📜 가사 보기 ▾';
+        }
+        function showTime() {
+            const d = audio.duration, c = audio.currentTime;
+            time.textContent = isFinite(d) && d > 0 ? fmtCheerTime(c) + ' / ' + fmtCheerTime(d) : fmtCheerTime(c);
+            if (!seeking) seek.value = isFinite(d) && d > 0 ? Math.round(c / d * 1000) : 0;
+        }
+        btn.addEventListener('click', function () {
+            msg.hidden = true;
+            if (audio.paused) {
+                if (!openedOnce) { openedOnce = true; setLyrics(true); }
+                box.classList.add('loading');
+                const pr = audio.play();
+                if (pr && pr.catch) pr.catch(function (e) { box.classList.remove('loading'); if (e && e.name !== 'AbortError') { msg.textContent = '응원가를 재생하지 못했어요. 잠시 뒤 다시 눌러 주세요.'; msg.hidden = false; } });
+            } else audio.pause();
+        });
+        audio.addEventListener('playing', function () { box.classList.remove('loading'); box.classList.add('playing'); btn.setAttribute('aria-label', '응원가 멈춤'); });
+        audio.addEventListener('pause', function () { box.classList.remove('playing', 'loading'); btn.setAttribute('aria-label', '응원가 듣기'); });
+        audio.addEventListener('ended', function () { audio.currentTime = 0; showTime(); });
+        audio.addEventListener('timeupdate', showTime);
+        audio.addEventListener('loadedmetadata', showTime);
+        audio.addEventListener('error', function () { box.classList.remove('playing', 'loading'); msg.textContent = '응원가 파일을 불러오지 못했어요. 인터넷 연결을 확인해 주세요.'; msg.hidden = false; });
+        seek.addEventListener('input', function () { seeking = true; const d = audio.duration; if (isFinite(d) && d > 0) time.textContent = fmtCheerTime(seek.value / 1000 * d) + ' / ' + fmtCheerTime(d); });
+        seek.addEventListener('change', function () { seeking = false; const d = audio.duration; if (isFinite(d) && d > 0) audio.currentTime = seek.value / 1000 * d; else seek.value = 0; });
+        lyrBtn.addEventListener('click', function () { openedOnce = true; setLyrics(lyr.hidden); });
     }
 
     // 이전 / 다음 선수 바로가기 버튼 생성
