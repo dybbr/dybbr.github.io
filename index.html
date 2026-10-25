@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.94.0 · b261026";
+        const APP_VERSION = "v2.94.1 · b261026";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -105,8 +105,8 @@
         // 🆕 새 버전 알림에서 [새로고침]으로 들어온 경우 주소창의 ?r=… 표시를 지움 (v2.38.0)
         try { if (/[?&]r=\d/.test(location.search)) history.replaceState(null, '', location.pathname + location.hash); } catch (e) {}
     </script>
-    <!-- 🎵 선수별 응원가 (v2.92.0) — 곡 목록은 cheer-songs.json (그 파일만 고치면 됨) · cheer-songs.js 를 고칠 때만 아래 ?v= 숫자 올리기 -->
-    <script src="cheer-songs.js?v=2.94.0"></script>
+    <!-- 🎵 선수별 주제곡 (v2.92.0) — 곡 목록은 cheer-songs.json (그 파일만 고치면 됨) · cheer-songs.js 를 고칠 때만 아래 ?v= 숫자 올리기 -->
+    <script src="cheer-songs.js?v=2.94.1"></script>
 
     <style>
         :root {
@@ -538,7 +538,7 @@
         .stk.new { background: #ffe14d; color: #5a3d00; }
         .stk.bd { background: #ff7aa2; color: #fff; }
         .stk.new + .stk.bd { top: 32px; }
-        /* 🎵 응원가 있는 선수 표시 (v2.92.0) — 이미지형 카드 사진 왼쪽 아래 · 누르면 카드처럼 상세 화면으로 (재생 버튼은 상세에만) */
+        /* 🎵 주제곡 있는 선수 표시 (v2.92.0) — 이미지형 카드 사진 왼쪽 아래 · 누르면 카드처럼 상세 화면으로 (재생 버튼은 상세에만) */
         .cheer-mark { position: absolute; left: 7px; bottom: 7px; z-index: 3; width: 28px; height: 28px; border-radius: 50%; background: rgba(200, 16, 46, 0.92); color: #ffffff; font-size: 14px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; border: 2px solid #ffffff; box-shadow: 0 2px 5px rgba(0,0,0,.3); pointer-events: none; }
         .cheer-mark.up { bottom: 34px; }
         .stk-inline { display: inline-block; font-size: 9px; font-weight: 900; padding: 1px 5px; border-radius: 999px; margin-left: 4px; vertical-align: 2px; }
@@ -8237,7 +8237,7 @@
             const noBadgeText = p.no ? `No.${p.no}` : '배번미정';
             const noNameText = p.no ? `<span class="card-name-no">No.${p.no}</span>` : '';
             const stickers = cardStickers(p);                                           // 🦈 NEW · 🎂 생일 모자/스티커
-            const hasCheer = (typeof window.cheerSongFor === 'function') && !!window.cheerSongFor(p);   // 🎵 응원가 있는 선수 (v2.92.0) — 누르면 평소처럼 상세 화면, 재생은 상세에서
+            const hasCheer = (typeof window.cheerSongFor === 'function') && !!window.cheerSongFor(p);   // 🎵 주제곡 있는 선수 (v2.92.0) — 누르면 평소처럼 상세 화면, 재생은 상세에서
             const jbHex = normJerseyColor(jerseyColorFor(p.grade, p.pos)) || '#ffffff', jbL = jerseyLum(jbHex);   // 👕 유니폼 색 테두리 (v2.34.0) — 설정값 따라감
             const gradeBorder = ' jb' + (jbL > .8 ? ' jb-lt' : '') + (jbL < .03 ? ' jb-dk' : '');
 
@@ -8251,7 +8251,7 @@
                         ${jerseyBadge(p, 46, false, 'card-jsy') || `<span class="card-no-badge">${noBadgeText}</span>`}${stickers}
                         <div style="font-size:32px; opacity:0.35;">👤</div>
                         <span style="margin-top:6px; font-size:11px; font-weight:800; color:#64748b; background:rgba(255,255,255,0.9); padding:3px 8px; border-radius:12px; border:1px solid #cbd5e1;">🔒 사진 비공개</span>
-                        ${hasCheer ? '<span class="cheer-mark" role="img" aria-label="응원가 있음" title="응원가 있음">🎵</span>' : ''}
+                        ${hasCheer ? '<span class="cheer-mark" role="img" aria-label="주제곡 있음" title="주제곡 있음">🎵</span>' : ''}
                         ${uploadBtnHtml}
                         ${editInfoBtnHtml}
                     </div>
@@ -8263,7 +8263,7 @@
                         ${jerseyBadge(p, 46, false, 'card-jsy') || `<span class="card-no-badge">${noBadgeText}</span>`}${stickers}
                         <img class="card-img" src="${photoUrl}" alt="" loading="lazy" onerror="handleImgError(this)">
                         ${adminPhotoBadge}
-                        ${hasCheer ? `<span class="cheer-mark${adminPhotoBadge ? ' up' : ''}" role="img" aria-label="응원가 있음" title="응원가 있음">🎵</span>` : ''}
+                        ${hasCheer ? `<span class="cheer-mark${adminPhotoBadge ? ' up' : ''}" role="img" aria-label="주제곡 있음" title="주제곡 있음">🎵</span>` : ''}
                         ${uploadBtnHtml}
                         ${editInfoBtnHtml}
                     </div>
@@ -8288,7 +8288,7 @@
         }).join('');
         fitCardNames();
     }
-    // 🎵 응원가 목록(cheer-songs.json, GitHub 에서 받음 · 구글 서버 안 거침)이 명단보다 늦게 오면 🎵 표시를 위해 한 번 더 그림 (v2.92.0)
+    // 🎵 주제곡 목록(cheer-songs.json, GitHub 에서 받음 · 구글 서버 안 거침)이 명단보다 늦게 오면 🎵 표시를 위해 한 번 더 그림 (v2.92.0)
     if (typeof window.loadCheerSongs === 'function') window.loadCheerSongs().then(n => { if (n && players.length) render(); });
 
     // ==========================================================
@@ -9550,8 +9550,12 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
-        { v: 'v2.94.0', d: '2026-10-26', t: '🎤 응원가 노래방 가사', items: [
-            '선수 상세 화면에서 응원가를 틀면 지금 부르는 가사 줄이 강조되고, 빨간색이 노래에 맞춰 왼쪽부터 차오름 (지난 줄은 흐리게)',
+        { v: 'v2.94.1', d: '2026-10-26', t: '🎵 「응원가」 표기를 「주제곡」으로', items: [
+            '선수 상세 화면 제목 「🎵 ○○○ 주제곡」 · 재생 버튼 · 안내 문구, 명단 이미지형 🎵 표시 설명을 모두 「주제곡」으로 바꿈',
+            '곡 · 가사 · 재생 방식은 그대로 (파일 이름 cheer-songs.json 도 그대로)'
+        ] },
+        { v: 'v2.94.0', d: '2026-10-26', t: '🎤 주제곡 노래방 가사', items: [
+            '선수 상세 화면에서 주제곡을 틀면 지금 부르는 가사 줄이 강조되고, 빨간색이 노래에 맞춰 왼쪽부터 차오름 (지난 줄은 흐리게)',
             '가사 칸이 부르는 줄을 따라 살짝 스크롤 · 손으로 넘기면 4초 동안 자동 스크롤 멈춤',
             '가사 줄을 누르면 그 줄부터 다시 들음',
             '줄별 시간표는 cheer-songs.json 의 times — 아보카도 자막(음성 인식)으로 만든 값 · 시간표가 없는 곡은 예전처럼 가사만 보임'
@@ -9567,10 +9571,10 @@
             '헤더의 대표님 · 총무님 · 부대표님 · 부총무님 버튼을 누르면 뜨는 창에서 휴대폰 번호 글자를 뺌',
             '「📞 전화 걸기 · 💬 문자 보내기」는 그대로 — 누르면 휴대폰의 전화 · 문자 화면에서 번호가 보임'
         ] },
-        { v: 'v2.92.0', d: '2026-10-25', t: '🎵 선수별 응원가 듣기', items: [
-            '선수 상세 화면에 「🎵 ○○○ 응원가」 — ▶ 를 눌러야 재생 (자동 재생 없음) · ❚❚ 멈춤 · 재생 위치 막대 · 처음 누르면 가사가 같이 펼쳐짐',
+        { v: 'v2.92.0', d: '2026-10-25', t: '🎵 선수별 주제곡 듣기', items: [
+            '선수 상세 화면에 「🎵 ○○○ 주제곡」 — ▶ 를 눌러야 재생 (자동 재생 없음) · ❚❚ 멈춤 · 재생 위치 막대 · 처음 누르면 가사가 같이 펼쳐짐',
             '가사는 1절 · 2절 · 후렴 이름표로 나눠 보기 · 「📜 가사 보기 / 접기」 · 「⬇️ MP3 저장」',
-            '명단 이미지형 카드: 응원가가 있는 선수 사진 왼쪽 아래에 🎵 표시 (누르면 평소처럼 상세 화면)',
+            '명단 이미지형 카드: 주제곡이 있는 선수 사진 왼쪽 아래에 🎵 표시 (누르면 평소처럼 상세 화면)',
             '지금은 5학년 13곡 · 6학년 12곡 (곡이 없는 선수는 바뀐 것 없음 · 배번 + 이름이 둘 다 맞는 선수만)',
             '곡 목록은 저장소의 cheer-songs.json 하나 — 곡 추가 · 가사 수정은 그 파일만 고쳐 올리면 1~2분 뒤 상세 화면에 반영 (앱 버전 · 코드 그대로) · 구글 서버 · 시트에는 안 물어서 서버 호출이 안 늘어남'
         ] },
