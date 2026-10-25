@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.93.0 · b261026";
+        const APP_VERSION = "v2.94.0 · b261026";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -106,7 +106,7 @@
         try { if (/[?&]r=\d/.test(location.search)) history.replaceState(null, '', location.pathname + location.hash); } catch (e) {}
     </script>
     <!-- 🎵 선수별 응원가 (v2.92.0) — 곡 목록은 cheer-songs.json (그 파일만 고치면 됨) · cheer-songs.js 를 고칠 때만 아래 ?v= 숫자 올리기 -->
-    <script src="cheer-songs.js?v=2.92.0"></script>
+    <script src="cheer-songs.js?v=2.94.0"></script>
 
     <style>
         :root {
@@ -9550,6 +9550,12 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.94.0', d: '2026-10-26', t: '🎤 응원가 노래방 가사', items: [
+            '선수 상세 화면에서 응원가를 틀면 지금 부르는 가사 줄이 강조되고, 빨간색이 노래에 맞춰 왼쪽부터 차오름 (지난 줄은 흐리게)',
+            '가사 칸이 부르는 줄을 따라 살짝 스크롤 · 손으로 넘기면 4초 동안 자동 스크롤 멈춤',
+            '가사 줄을 누르면 그 줄부터 다시 들음',
+            '줄별 시간표는 cheer-songs.json 의 times — 아보카도 자막(음성 인식)으로 만든 값 · 시간표가 없는 곡은 예전처럼 가사만 보임'
+        ] },
         { v: 'v2.93.0', d: '2026-10-26', t: '📢 공지 팝업 (로그인 후 한 번)', items: [
             '공지 작성 창에 「📢 로그인 후 팝업으로 띄우기」 체크칸 — 체크한 공지는 보호자 · 집행부 모두 다음 로그인 때 카드 팝업으로 한 번 보여 줌',
             '「확인」(또는 뒤로가기)을 누르면 그 기기에서는 같은 공지가 다시 안 뜸 · 한 번에 최신 3개까지 · 작성일부터 30일 지난 공지는 안 띄움',

@@ -1,5 +1,5 @@
 // ==========================================================
-// 🎵 선수별 응원가 도우미 (v2.92.0) — 명단 이미지형 카드의 🎵 표시 · 선수 상세의 「응원가 듣기」 · 가사
+// 🎵 선수별 응원가 도우미 (v2.92.0) — 명단 이미지형 카드의 🎵 표시 · 선수 상세의 「응원가 듣기」 · 가사 · 🎤 노래방 줄 강조(v2.94.0)
 // ==========================================================
 // 곡 목록(배번 · 이름 · MP3 주소 · 가사)은 cheer-songs.json 에 있음 → 곡 추가 · 수정은 그 파일만 고치면 됨 (이 파일 · 앱 버전은 그대로)
 //   · 구글 서버 · 시트에는 묻지 않음 (GitHub 에서 바로 받음 → 학부모님이 동시에 많이 써도 서버 호출이 안 늘어남)
@@ -50,7 +50,23 @@
         return blocks.filter(b => b.lines.length);
     }
 
+    // 🎤 노래방 시간표 (v2.94.0) — song.times = 가사 줄마다 [시작초, 끝초] (이름표 [Chorus] 같은 줄 · 빈 줄은 빼고 셈)
+    //   → 가사 줄 순서대로 { s, e } 목록 (모르는 줄은 null) · 시간표가 없거나 줄 수가 안 맞으면 null (그 곡은 강조 없이 예전처럼 가사만)
+    function cheerLineTimes(song) {
+        const t = song && song.times;
+        if (!Array.isArray(t) || !t.length) return null;
+        const n = cheerLyricBlocks(song).reduce((a, b) => a + b.lines.length, 0);
+        if (t.length !== n) { console.warn('응원가 시간표 줄 수가 가사와 달라 강조를 끔:', song.name, t.length, '≠', n); return null; }
+        const out = t.map(v => {
+            const a = Array.isArray(v) ? v : [v];
+            const s = Number(a[0]), e = Number(a[1]);
+            return isFinite(s) && a[0] !== null ? { s: s, e: isFinite(e) && a[1] !== null && e > s ? e : null } : null;
+        });
+        return out.some(Boolean) ? out : null;
+    }
+
     window.loadCheerSongs = loadCheerSongs;
     window.cheerSongFor = cheerSongFor;
     window.cheerLyricBlocks = cheerLyricBlocks;
+    window.cheerLineTimes = cheerLineTimes;
 })();
