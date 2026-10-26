@@ -1,5 +1,5 @@
 // ==========================================================
-// ⚾ 대연초 야구부 관리 시스템 통합 백엔드 API (v2.37.0)
+// ⚾ 대연초 야구부 관리 시스템 통합 백엔드 API (v2.38.0)
 // ==========================================================
 // ★ API_KEY 는 코드에 적지 않고 「프로젝트 설정 → 스크립트 속성」의 API_KEY 에 넣어 둡니다 (v2.36.0~).
 //   값은 index.html / player.html 의 API_KEY 와 "같은 값"이어야 합니다. 속성이 비어 있으면 모든 요청을 거절합니다.
@@ -148,29 +148,23 @@ function setJerseyColors(colors) {
 }
 
 // 관리자(최고/보조/일반) 비밀번호. Script Properties(서버)에 저장되어 모든 기기에 동일하게 적용된다.
-// 값이 없으면 최초 기본값(0000/1111/2222)을 쓴다 — "비밀번호 관리"에서 바꾸면 그 즉시 여기 값이 바뀐다.
+// 🔒 v2.38.0: 코드에 적힌 기본값을 없앰 (저장소가 공개라 누구나 볼 수 있었음) — 속성이 비어 있으면 그 역할로는 로그인 안 됨.
+//   "비밀번호 관리"에서 바꾸면 그 즉시 여기 값이 바뀐다.
 function getAdminPasswords() {
   var props = PropertiesService.getScriptProperties();
   return {
-    super: props.getProperty("ADMIN_PW_SUPER") || "11111111",
-    sub: props.getProperty("ADMIN_PW_SUB") || "22222222",
-    general: props.getProperty("ADMIN_PW_GENERAL") || "33333333",
+    super: props.getProperty("ADMIN_PW_SUPER") || "",
+    sub: props.getProperty("ADMIN_PW_SUB") || "",
+    general: props.getProperty("ADMIN_PW_GENERAL") || "",
     // v2.27.0: 부대표님 · 부총무님 — 기본값 없음. 대표님(또는 개발자)이 「비밀번호 관리」에서 넣어야 로그인할 수 있다.
     vsuper: props.getProperty("ADMIN_PW_VSUPER") || "",
     vgeneral: props.getProperty("ADMIN_PW_VGENERAL") || ""
   };
 }
 
-// 개발자 로그인용 날짜 코드 (한국시간 기준). "일+월+년" 순서만, 자리수만 다른 2가지만 허용.
-//   예) 2026-10-02 → "02102026"(8자리: ddmmyyyy), "021026"(6자리: ddmmyy)
-function devDateCodes() {
-  var now = new Date();
-  var yyyy = Utilities.formatDate(now, "Asia/Seoul", "yyyy");
-  var yy = yyyy.slice(-2);
-  var mm = Utilities.formatDate(now, "Asia/Seoul", "MM");   // 두 자리(월)
-  var dd = Utilities.formatDate(now, "Asia/Seoul", "dd");   // 두 자리(일)
-  return [dd + mm + yyyy, dd + mm + yy];
-}
+// 🔒 v2.38.0: 날짜로 만드는 개발자 코드는 없앰 (규칙이 공개 저장소에 있어 누구나 알 수 있었음)
+//   개발자 로그인은 스크립트 속성 ADMIN_PW_DEV 하나만 — 저장소에는 값이 없음. 비어 있으면 개발자 로그인 안 됨.
+function devPassword() { return PropertiesService.getScriptProperties().getProperty("ADMIN_PW_DEV") || ""; }
 
 // ==========================================================
 // 🔐 세션 토큰 (로그인 후 서버가 발급 → CacheService 에 저장)
@@ -502,6 +496,21 @@ function rateOk(bucket, max, windowSec) {
 //   - 성공한 로그인은 횟수에 안 들어가고, 성공하면 바로 초기화된다.
 //   - 잠금은 첫 실패 시점부터 정확히 10분 뒤 자동 해제 (계속 눌러도 시간이 늘어나지 않음).
 var LOGIN_FAIL_MAX = 10, LOGIN_FAIL_WINDOW = 600;
+// 🔒 v2.38.0: 기기 번호(clientId)는 앱이 보내는 값이라 바꿔 가며 시도할 수 있음 → 기기와 상관없이 「전체」 실패도 셈.
+//   10분 동안 전체 실패가 60번을 넘으면 남은 시간 동안 비밀번호(관리자 · 일반 열람) 확인을 건너뜀 — 휴대폰 번호 로그인은 그대로
+var LOGIN_GFAIL_MAX = 60;
+function loginGlobalState() {
+  try { var o = JSON.parse(sessionCache().get("LFG") || "null"); if (o && Date.now() < o.until) return o; } catch (e) {}
+  return null;
+}
+function loginGlobalAdd() {
+  try {
+    var o = loginGlobalState() || { n: 0, until: Date.now() + LOGIN_FAIL_WINDOW * 1000 };
+    o.n++;
+    sessionCache().put("LFG", JSON.stringify(o), Math.max(1, Math.ceil((o.until - Date.now()) / 1000)));
+  } catch (e) {}
+}
+
 function loginFailState(clientId) {
   try { var o = JSON.parse(sessionCache().get("LF2_" + clientId) || "null"); if (o && Date.now() < o.until) return o; } catch (e) {}
   return null;
@@ -521,36 +530,43 @@ function handleLogin(ss, data) {
     var mins = Math.max(1, Math.ceil((fs.until - Date.now()) / 60000));
     return json({ result: "error", locked: true, message: "로그인을 " + LOGIN_FAIL_MAX + "번 틀려 잠시 잠겼습니다. 약 " + mins + "분 뒤 다시 시도해 주세요." });
   }
-  var res = handleLoginInner(ss, data);
+  var gs = loginGlobalState(), pwPaused = !!(gs && gs.n >= LOGIN_GFAIL_MAX);
+  var res = handleLoginInner(ss, data, pwPaused);
   try {
     var body = JSON.parse(res.getContent ? res.getContent() : JSON.stringify(res));
     if (body && body.result === "success") loginFailClear(clientId);
-    else {
+    else if (!body.grad) {
       loginFailAdd(clientId);
+      loginGlobalAdd();
+      if (pwPaused) {
+        var gm = Math.max(1, Math.ceil((gs.until - Date.now()) / 60000));
+        return json({ result: "error", locked: true, message: "잘못된 로그인 시도가 많아 비밀번호 로그인을 약 " + gm + "분 동안 멈췄습니다. 휴대폰 번호 로그인은 됩니다." });
+      }
     }
   } catch (e) {}
   return res;
 }
 
-function handleLoginInner(ss, data) {
+function handleLoginInner(ss, data, pwPaused) {
   var code = String(data.code || "").trim();
   if (!code) return json({ result: "error", message: "입력값이 없습니다." });
 
   var props = PropertiesService.getScriptProperties();
   var pws = getAdminPasswords();
-  var devPw = props.getProperty("ADMIN_PW_DEV");   // 선택: 고정 개발자 비번도 쓰고 싶을 때
+  var devPw = devPassword();   // 🔒 v2.38.0: 개발자는 스크립트 속성 ADMIN_PW_DEV 만 (날짜 코드 없음)
 
   var role = null;
-  if ((devPw && code === devPw) || devDateCodes().indexOf(code) !== -1) role = "dev";   // 개발자: 고정 비번 또는 오늘 날짜(일/월/년) 코드
-  else if (code === pws.super) role = "super";
-  else if (code === pws.sub) role = "sub";
-  else if (code === pws.general) role = "general";
+  if (pwPaused) { /* 🔒 v2.38.0: 전체 실패가 많을 때는 비밀번호 확인을 건너뛰고 휴대폰 번호만 */ }
+  else if (devPw && code === devPw) role = "dev";
+  else if (pws.super && code === pws.super) role = "super";
+  else if (pws.sub && code === pws.sub) role = "sub";
+  else if (pws.general && code === pws.general) role = "general";
   else if (pws.vsuper && code === pws.vsuper) role = "vsuper";       // v2.27.0: 부대표님
   else if (pws.vgeneral && code === pws.vgeneral) role = "vgeneral"; // v2.27.0: 부총무님
   if (role) return issueSession(role, roleName(role), []);
 
   var guestCode = props.getProperty("GUEST_CODE") || "1922";
-  if (code === guestCode) return issueSession("guest", "일반 열람자", []);
+  if (!pwPaused && code === guestCode) return issueSession("guest", "일반 열람자", []);
 
   var digits = code.replace(/[^0-9]/g, "");
   if (digits.length >= 8) {
@@ -1089,8 +1105,8 @@ function handleChangeAdminPw(ss, data) {
   // 대표님 비밀번호: 모든 등급 변경 가능 / 총무님 · 부대표님 · 부총무님 비밀번호: 본인 비밀번호만 변경 가능
   var roleKeys = { super: "ADMIN_PW_SUPER", sub: "ADMIN_PW_SUB", general: "ADMIN_PW_GENERAL", vsuper: "ADMIN_PW_VSUPER", vgeneral: "ADMIN_PW_VGENERAL" };
   if (!curPw) return json({ result: "error", message: "현재 비밀번호가 일치하지 않습니다." });
-  if (curPw !== pws.super) {
-    var owner = curPw === pws.general ? "general" : (pws.vsuper && curPw === pws.vsuper) ? "vsuper" : (pws.vgeneral && curPw === pws.vgeneral) ? "vgeneral" : null;
+  if (!pws.super || curPw !== pws.super) {
+    var owner = (pws.general && curPw === pws.general) ? "general" : (pws.vsuper && curPw === pws.vsuper) ? "vsuper" : (pws.vgeneral && curPw === pws.vgeneral) ? "vgeneral" : null;
     if (!owner) return json({ result: "error", message: "현재 비밀번호가 일치하지 않습니다." });
     for (var uk in roleKeys) {
       if (uk !== owner && (uk in updates) && updates[uk]) {
@@ -1110,8 +1126,8 @@ function handleChangeAdminPw(ss, data) {
     if (!(role in updates)) continue;
     var v = String(updates[role] || "").trim();
     if (!v) continue;
-    if (v.length < 4 || v.length > 20) {
-      return json({ result: "error", message: roleName(role) + " 비밀번호는 4~20자로 입력해 주세요." });
+    if (v.length < 6 || v.length > 20) {   // 🔒 v2.38.0: 최소 4자 → 6자 (이미 쓰는 비밀번호는 그대로 로그인됨)
+      return json({ result: "error", message: roleName(role) + " 비밀번호는 6~20자로 입력해 주세요." });
     }
     finalPws[role] = v;
     changed.push(role);
@@ -1120,7 +1136,7 @@ function handleChangeAdminPw(ss, data) {
 
   var others = [];   // [표시 이름, 값]
   var guestCode = props.getProperty("GUEST_CODE") || "1922";   // 로그인과 같은 기본값
-  var devPw = props.getProperty("ADMIN_PW_DEV");
+  var devPw = devPassword();
   for (var i = 0; i < changed.length; i++) {
     var r = changed[i], val = finalPws[r];
     for (var r2 in finalPws) {
@@ -1131,7 +1147,7 @@ function handleChangeAdminPw(ss, data) {
     if (guestCode && val === guestCode) {
       return json({ result: "error", message: roleName(r) + " 비밀번호가 일반 열람용 비밀번호와 같습니다. 이대로면 열람용으로 로그인이 안 되니 다른 번호로 정해 주세요." });
     }
-    if ((devPw && val === devPw) || devDateCodes().indexOf(val) !== -1) {
+    if (devPw && val === devPw) {
       return json({ result: "error", message: roleName(r) + " 비밀번호로 쓸 수 없는 번호입니다. 다른 번호로 정해 주세요." });
     }
   }

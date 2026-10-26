@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.95.0 · b261027";
+        const APP_VERSION = "v2.95.1 · b261027";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -9794,6 +9794,10 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.95.1', d: '2026-10-27', t: '🔒 비밀번호 6자 이상', items: [
+            '비밀번호 관리에서 새 비밀번호는 6~20자로 (예전 4자) — 지금 쓰는 비밀번호는 그대로 로그인됨',
+            '서버 v2.38.0과 함께: 날짜로 만드는 개발자 코드 없앰 · 코드에 적힌 기본 비밀번호 없앰 · 기기와 상관없이 잘못된 로그인이 많으면 비밀번호 로그인을 10분 멈춤 (휴대폰 번호 로그인은 그대로)'
+        ] },
         { v: 'v2.95.0', d: '2026-10-27', t: '🧭 화면 다듬기 · 🏆 시즌 기록 · 📅 캘린더에 담기', items: [
             '휴대폰: 헤더를 조금 낮추고 일정 · 공지 · 명단 · 구장 탭을 화면 아래(엄지 자리)로 옮김 — 처음 열면 달력 · 명단이 더 많이 보임 · 글자를 칠 때는 탭 막대가 숨음',
             '태블릿 세로(폭 601~860px): 명단 표 오른쪽 칸(신장/체중)이 잘리던 것 → 카드 두 줄로',
@@ -10786,27 +10790,27 @@
                 <input type="password" id="pwCurrentSuper" placeholder="현재 대표님 비밀번호" autocomplete="off">
             </div>
             <div class="form-group">
-                <label>👑 대표님 새 비밀번호 (4~20자, 선택)</label>
+                <label>👑 대표님 새 비밀번호 (6~20자, 선택)</label>
                 ${isDev ? '<div id="pwCurValSuper" class="pw-cur-val">현재 값 불러오는 중...</div>' : ''}
                 <input type="password" id="pwNewSuper" placeholder="변경하지 않으려면 비워두세요" autocomplete="off">
             </div>
             <div class="form-group">
-                <label>🧢 코치진 새 비밀번호 (4~20자, 선택)</label>
+                <label>🧢 코치진 새 비밀번호 (6~20자, 선택)</label>
                 <div id="pwCurValSub" class="pw-cur-val">현재 값 불러오는 중...</div>
                 <input type="password" id="pwNewSub" placeholder="변경하지 않으려면 비워두세요" autocomplete="off">
             </div>
             <div class="form-group">
-                <label>📋 총무님 새 비밀번호 (4~20자, 선택)</label>
+                <label>📋 총무님 새 비밀번호 (6~20자, 선택)</label>
                 <div id="pwCurValGeneral" class="pw-cur-val">현재 값 불러오는 중...</div>
                 <input type="password" id="pwNewGeneral" placeholder="변경하지 않으려면 비워두세요" autocomplete="off">
             </div>
             <div class="form-group">
-                <label>🎖️ 부대표님 새 비밀번호 (4~20자, 선택)</label>
+                <label>🎖️ 부대표님 새 비밀번호 (6~20자, 선택)</label>
                 <div id="pwCurValVsuper" class="pw-cur-val">현재 값 불러오는 중...</div>
                 <input type="password" id="pwNewVsuper" placeholder="변경하지 않으려면 비워두세요" autocomplete="off">
             </div>
             <div class="form-group">
-                <label>📒 부총무님 새 비밀번호 (4~20자, 선택)</label>
+                <label>📒 부총무님 새 비밀번호 (6~20자, 선택)</label>
                 <div id="pwCurValVgeneral" class="pw-cur-val">현재 값 불러오는 중...</div>
                 <input type="password" id="pwNewVgeneral" placeholder="변경하지 않으려면 비워두세요" autocomplete="off">
             </div>
@@ -10848,7 +10852,7 @@
                 <input type="password" id="pwGenCurrent" placeholder="현재 비밀번호" inputmode="numeric" autocomplete="off">
             </div>
             <div class="form-group">
-                <label>${({ vsuper: '🎖️', vgeneral: '📒' })[currentRole] || '📋'} 새 비밀번호 (4~20자) *</label>
+                <label>${({ vsuper: '🎖️', vgeneral: '📒' })[currentRole] || '📋'} 새 비밀번호 (6~20자) *</label>
                 <input type="password" id="pwGenNew" placeholder="새 비밀번호" inputmode="numeric" autocomplete="off">
             </div>
             <div class="form-group">
@@ -10872,7 +10876,7 @@
         const n1 = document.getElementById('pwGenNew').value.trim();
         const n2 = document.getElementById('pwGenNew2').value.trim();
         if (!cur) { bkNotify('info', '현재 비밀번호를 넣어줘캉!'); return; }
-        if (n1.length < 4 || n1.length > 20) { bkNotify('info', '새 비밀번호는 4~20자로 해줘캉!'); return; }
+        if (n1.length < 6 || n1.length > 20) { bkNotify('info', '새 비밀번호는 6~20자로 해줘캉!'); return; }
         if (n1 !== n2) { bkNotify('info', '새 비밀번호랑 확인이 달라캉!'); return; }
         if (n1 === cur) { bkNotify('info', '지금 비밀번호랑 다른 걸로 해줘캉!'); return; }
         const btn = document.getElementById('btnSavePw');
@@ -10914,7 +10918,7 @@
         if (labels.length === 0) { bkNotify('info', '바꿀 비밀번호를 하나 이상 넣어줘캉!'); return; }
 
         for (const v of [newSuper, newSub, newGeneral, newVsuper, newVgeneral]) {
-            if (v && (v.length < 4 || v.length > 20)) { bkNotify('info', '새 비밀번호는 4~20자로 해줘캉!'); return; }
+            if (v && (v.length < 6 || v.length > 20)) { bkNotify('info', '새 비밀번호는 6~20자로 해줘캉!'); return; }
         }
 
         const btn = document.getElementById('btnSavePw');
