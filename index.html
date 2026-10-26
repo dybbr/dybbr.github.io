@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.94.1 · b261026";
+        const APP_VERSION = "v2.95.0 · b261027";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -2774,6 +2774,121 @@
     .ptr-mound { background: radial-gradient(ellipse at 50% 40%, #8a6a45 0, #8a6a45 60%, #6e5236 100%); }
 
     }
+
+    /* ==========================================================
+       🧭 v2.95.0 화면 다듬기 (2026-10-26 전체 점검 시안)
+       ① 휴대폰: 헤더를 낮추고 탭을 화면 아래(엄지 자리)로
+       ② 태블릿 세로(601~860px): 명단 표가 잘리던 것 → 카드 두 줄
+       ③ PC · 가로 태블릿(1024px~): 달력 옆에 「선택한 날 · 다가오는 일정」
+       ④ 🏆 시즌 경기 기록 · 📅 내 캘린더에 담기
+       ========================================================== */
+    .cal-split { display: block; }
+    .cal-side-up { display: none; }
+    @media (min-width: 1024px) {
+        .cal-split { display: grid; grid-template-columns: minmax(0, 1fr) 340px; align-items: start; }
+        .cal-split .cal-main { min-width: 0; border-right: 1px solid #e2e8f0; }
+        .cal-split .cal-side { position: sticky; top: 60px; max-height: calc(100vh - 80px); overflow-y: auto; }
+        .cal-split .day-panel { border-top: none; }
+        .cal-side-up { display: block; padding: 4px 12px 14px; }
+        .cal-side-up h4 { font-size: 13px; font-weight: 900; color: var(--text-title); margin: 6px 0 8px; }
+        .csu-row { display: flex; align-items: center; gap: 8px; width: 100%; border: 1px solid var(--card-border); background: #ffffff; border-left: 4px solid var(--c, var(--kbo-blue)); border-radius: 10px; padding: 7px 10px; margin-bottom: 6px; text-align: left; cursor: pointer; font: inherit; color: inherit; }
+        .csu-row:hover { border-color: #94a3b8; }
+        .csu-row .csu-d { font-size: 12px; font-weight: 800; color: #475569; white-space: nowrap; min-width: 66px; }
+        .csu-row .csu-t { flex: 1; min-width: 0; font-size: 13px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .csu-row .csu-dd { font-size: 11px; font-weight: 800; color: #b91c1c; white-space: nowrap; }
+    }
+
+    /* 🏆 시즌 경기 기록 (일정 탭 맨 위) */
+    .season-rec { display: none; background: #ffffff; border: 1px solid var(--card-border); border-radius: 14px; padding: 10px 12px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(15,23,42,0.04); }
+    .season-rec.on { display: block; }
+    .sr-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; cursor: pointer; }
+    .sr-title { font-size: 14px; font-weight: 900; color: var(--text-title); white-space: nowrap; }
+    .sr-title small { font-size: 11px; font-weight: 700; color: #64748b; margin-left: 4px; }
+    .sr-nums { display: flex; gap: 6px; }
+    .sr-nums span { min-width: 44px; text-align: center; border-radius: 8px; padding: 3px 6px; font-weight: 900; font-size: 15px; line-height: 1.15; font-variant-numeric: tabular-nums; }
+    .sr-nums span small { display: block; font-size: 10px; font-weight: 700; }
+    .sr-w { background: #e3f6ee; color: #047857; } .sr-l { background: #fde7e9; color: #b91c1c; } .sr-d { background: #eef1f5; color: #475569; }
+    .sr-form { display: flex; gap: 3px; align-items: center; margin-left: auto; }
+    .sr-form i { width: 18px; height: 18px; border-radius: 50%; font-style: normal; font-size: 10px; font-weight: 900; display: grid; place-items: center; color: #fff; }
+    .sr-form i.win { background: #059669; } .sr-form i.lose { background: #dc2626; } .sr-form i.draw { background: #94a3b8; }
+    .sr-more { display: none; margin-top: 8px; border-top: 1px dashed var(--card-border); padding-top: 6px; }
+    .season-rec.open .sr-more { display: block; }
+    .sr-game { display: flex; gap: 8px; align-items: center; width: 100%; border: 0; background: none; padding: 5px 2px; font: inherit; color: inherit; text-align: left; cursor: pointer; font-size: 12.5px; }
+    .sr-game .d { color: #64748b; white-space: nowrap; min-width: 58px; font-variant-numeric: tabular-nums; }
+    .sr-game .t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; }
+    .sr-sub { font-size: 11.5px; color: #64748b; margin-top: 4px; }
+
+    /* 📅 캘린더에 담기 (목록 보기 맨 위) */
+    .ics-all { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin: 2px 0 10px; padding: 8px 10px; border: 1px dashed #cbd5e1; border-radius: 10px; font-size: 12.5px; color: #475569; }
+    .ics-all button { border: 0; background: var(--kbo-blue); color: #fff; border-radius: 8px; padding: 7px 12px; font-size: 12.5px; font-weight: 800; cursor: pointer; font-family: inherit; }
+
+    /* ② 태블릿 세로: 명단 리스트형을 카드 두 줄로 (휴대폰 카드와 같은 3줄 배치) */
+    @media (min-width: 601px) and (max-width: 860px) {
+        #listContainer { overflow-x: visible; }
+        #listContainer table { min-width: 0; display: block; }
+        #listContainer thead { display: none; }
+        #listContainer tbody { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 8px; }
+        #listContainer tr.clickable-row {
+            display: grid; grid-template-columns: 44px minmax(0, 1fr) auto;
+            grid-template-areas: "photo name grade" "photo bt birth" "no pos phys";
+            column-gap: 10px; row-gap: 4px; align-items: center;
+            padding: 8px 10px 8px 8px; border: 1px solid var(--card-border); border-radius: 12px;
+        }
+        #listContainer tr.ob-year-row { display: block; grid-column: 1 / -1; }
+        #listContainer tr.ob-year-row > td { display: block; }
+        #listContainer tr.clickable-row > td { padding: 0; border: none; text-align: left; min-width: 0; }
+        #listContainer tr.clickable-row > td:nth-child(1) { grid-area: no; text-align: center; font-size: 13px; line-height: 1; white-space: nowrap; }
+        #listContainer tr.clickable-row > td.td-no .jsy { --s: 32px; }
+        #listContainer tr.clickable-row > td.td-no.no-empty { visibility: hidden; }
+        #listContainer tr.clickable-row > td:nth-child(2) { grid-area: photo; text-align: center; }
+        #listContainer tr.clickable-row > td:nth-child(3) { grid-area: name; font-size: 15px; line-height: 1.25; overflow-wrap: anywhere; }
+        #listContainer tr.clickable-row > td:nth-child(4) { grid-area: grade; text-align: right; }
+        #listContainer tr.clickable-row > td:nth-child(5) { grid-area: pos; }
+        #listContainer tr.clickable-row > td:nth-child(6) { grid-area: bt; text-align: left; }
+        #listContainer tr.clickable-row > td:nth-child(7) { grid-area: birth; text-align: right; font-size: 11.5px !important; white-space: nowrap; }
+        #listContainer tr.clickable-row > td:nth-child(8) { grid-area: phys; text-align: right; font-size: 11.5px !important; white-space: nowrap; }
+        #listContainer .table-thumb-wrap { width: 40px; height: 40px; }
+        #listContainer .grade-tag { font-size: 11px; padding: 2px 7px; }
+        #listContainer .pos-tag { white-space: normal; line-height: 1.35; }
+    }
+
+    /* ① 휴대폰: 헤더 낮추기 + 아래 탭 막대 */
+    @media (max-width: 600px) {
+        header { padding: 8px 10px 10px; gap: 5px; }
+        .header-title { font-size: 19px; margin-bottom: 1px; }
+        .bk-head { width: 30px; height: 32px; vertical-align: -8px; }
+        .header-subtitle { font-size: 11px; }
+        .btn-uniform-cta { height: 30px; font-size: 12.5px; }
+        html.is-authenticated .main-tabs {
+            position: fixed; left: 0; right: 0; bottom: 0; z-index: 950; margin: 0;
+            border-radius: 16px 16px 0 0; border-bottom: 0; gap: 2px;
+            padding: 5px 6px calc(5px + env(safe-area-inset-bottom, 0px));
+            box-shadow: 0 -4px 16px rgba(15,23,42,0.10);
+        }
+        html.is-authenticated .main-tab { padding: 6px 2px; }
+        html.is-authenticated .container { padding-bottom: calc(150px + env(safe-area-inset-bottom, 0px)) !important; }
+        html.is-authenticated .ui-zoom-ctrl { bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
+        html.is-authenticated .bk-upd { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+        body:has(input:focus, textarea:focus, select:focus) .main-tabs { display: none !important; }   /* 글자 칠 때(자판이 올라오면)는 탭 막대 숨김 */
+        body:has(.modal[style*="flex"]) .main-tabs, html:has(.bk-ask.on) .main-tabs { visibility: hidden; }
+    }
+    /* 화면을 내리는 동안에는 떠 있는 🔊 · % 버튼을 흐리게 (명단 글자를 가리지 않게) */
+    .ui-zoom-ctrl { transition: opacity .2s ease; }
+    .ui-zoom-ctrl.scrolling:not(.open) { opacity: 0.18 !important; pointer-events: none; }
+
+    @media (prefers-color-scheme: dark) {
+        .cal-split .cal-main { border-right-color: #2a374e; }
+        .csu-row { background: #151e2e; border-color: #2a374e; border-left-color: var(--c, #3a5a86); }
+        .csu-row .csu-d { color: #97a3b7; }
+        .csu-row .csu-dd { color: #f0a0a8; }
+        .season-rec { background: #151e2e; border-color: #2a374e; box-shadow: none; }
+        .sr-title small, .sr-sub, .sr-game .d { color: #97a3b7; }
+        .sr-w { background: #17311f; color: #8ee6c6; } .sr-l { background: #3a1a1f; color: #f0a0a8; } .sr-d { background: #1b2638; color: #b8c2d1; }
+        .sr-more { border-top-color: #2a374e; }
+        .ics-all { border-color: #2a374e; color: #97a3b7; }
+        .ics-all button { background: #22354f; color: #f1f4f9; }
+        @media (max-width: 600px) { html.is-authenticated .main-tabs { box-shadow: 0 -4px 16px rgba(0,0,0,0.4); } }
+    }
     </style>
 </head>
 <body>
@@ -3017,7 +3132,7 @@
 
             <div class="control-right">
                 <div class="search-box">
-                    <input type="text" id="searchInput" placeholder="이름·등번호 검색" oninput="handleSearchInput(this.value)">
+                    <input type="text" id="searchInput" placeholder="이름·번호 검색" oninput="handleSearchInput(this.value)">
                 </div>
                 <div class="view-switch">
                     <button class="view-btn" id="btnListView" onclick="switchView('list')" aria-label="리스트형"><svg class="vb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.2" cy="6" r="1.5" fill="currentColor" stroke="none"/><circle cx="4.2" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="4.2" cy="18" r="1.5" fill="currentColor" stroke="none"/></svg><span class="vb-label">리스트형</span></button>
@@ -3055,6 +3170,7 @@
     <!-- 📅 일정 탭 -->
     <section id="scheduleSection" class="app-section">
         <div class="duty-banner" id="dutyBanner" role="button" tabindex="0" onclick="openDutyModal()"></div>   <!-- 🧹 v2.84.0: 다음 부실 청소 · 우리 집 차례 -->
+        <div class="season-rec" id="seasonRec"></div>   <!-- 🏆 v2.95.0: 시즌 경기 기록 (일정의 「결과」 칸을 모아서) -->
         <div class="sched-card">
             <!-- v2.41.20: 윗부분 2줄 — ① ‹ 오늘 › 2026년 10월 …… [학년 ▾]  ② [＋ 일정 추가][📋 텍스트 분석 추가] …… [월|주|목록] -->
             <div class="cal-head">
@@ -4983,6 +5099,7 @@
         const body = document.getElementById('calBody');
         if (!body) return;
         try { renderDutyBanner(); } catch (e) {}   // 🧹 v2.84.0: 일정 탭 맨 위 — 다음 부실 청소
+        try { renderSeasonRecord(); } catch (e) {}   // 🏆 v2.95.0: 시즌 경기 기록
         if (!canViewSchedule()) { body.innerHTML = '<div class="sched-empty">학부모 인증(휴대폰 번호 로그인) 후 볼 수 있습니다.</div>'; return; }
 
         document.querySelectorAll('.cal-view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === calView));
@@ -5013,7 +5130,7 @@
         const start = new Date(y, m, 1 - first.getDay());
         const cells = Math.ceil((first.getDay() + days) / 7) * 7;
         const today = ymdOf(new Date());
-        let html = '<div class="cal-dow">' + DOW_KO.map((d, i) => `<div class="${i === 0 ? 'sun' : i === 6 ? 'sat' : ''}">${d}</div>`).join('') + '</div><div class="cal-grid" id="calGrid">';
+        let html = '<div class="cal-split"><div class="cal-main"><div class="cal-dow">' + DOW_KO.map((d, i) => `<div class="${i === 0 ? 'sun' : i === 6 ? 'sat' : ''}">${d}</div>`).join('') + '</div><div class="cal-grid" id="calGrid">';
         for (let i = 0; i < cells; i++) {
             const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
             const ds = ymdOf(d);
@@ -5028,9 +5145,10 @@
             const more = evs.length > lim ? `<div class="cal-more">+${evs.length - lim}</div>` : '';
             html += `<button type="button" class="${cls}" onclick="selectCalDate('${ds}')"><span class="cal-num">${d.getDate()}</span>${chips}${more}</button>`;
         }
-        html += '</div>';
+        html += '</div></div><div class="cal-side">';   // 🖥️ v2.95.0: 넓은 화면(1024px~)은 달력 오른쪽에 「선택한 날 · 다가오는 일정」
         html += renderDayPanel(calSelected, list);
-        return html;
+        html += calSideUpcoming(list);
+        return html + '</div></div>';
     }
     function selectCalDate(ds) {
         calSelected = ds;
@@ -5080,6 +5198,8 @@
         const dates = Array.from(new Set(items.map(ev => ev.date).concat(dus.map(dk)))).sort();
         let html = '<div class="agenda">';
         if (!calShowPast) html += `<button type="button" class="agenda-past-toggle" onclick="calShowPast=true;renderSchedule()">▲ 지난 일정도 보기</button>`;
+        const upc = list.filter(ev => ev.date >= today);
+        if (upc.length) html += `<div class="ics-all"><span>📅 다가오는 일정 <b>${upc.length}건</b> 한 번에</span><button type="button" onclick="icsSaveUpcoming()">휴대폰 캘린더에 담기</button></div>`;   // v2.95.0
         if (!items.length) html += bkState('empty bk-s-calendar', '예정된 일정이 없습니다', '푹 쉬는 중이캉~');
         dates.forEach(ds => {
             const n = dayDiff(ds), dd = ddayLabel(ds);
@@ -5148,18 +5268,131 @@
             ${row('구분', ev.type)}${row('결과', (function () { const r = parseResult(ev); return r ? ((r.label === '승' ? '승리' : r.label === '패' ? '패배' : '무승부') + (r.score ? ' ' + r.score : '')) : ''; })())}${placeRowHtml(ev)}${row('대상', targetText(ev))}${row('집합/출발', ev.meet)}${row('복장', ev.dress)}${row('메모', ev.memo)}
             ${canEditSchedule() && ev.updated ? `<div class="form-hint" style="margin-top:8px;">최종 수정: ${escapeHtml(ev.updated)}</div>` : ''}`;
         const btns = [`<button class="btn-cancel" onclick="closeModal('eventDetailModal')">닫기</button>`];
-        const right = [`<button class="btn-cancel" onclick="copyEventText('${escapeHtml(ev.id)}')">📋 복사</button>`];
+        const right = [`<button class="btn-cancel" onclick="icsSaveEvent('${escapeHtml(ev.id)}')">📅 캘린더</button>`, `<button class="btn-cancel" onclick="copyEventText('${escapeHtml(ev.id)}')">📋 복사</button>`];   // v2.95.0: 📅 내 캘린더에 담기
         if (canEditSchedule()) {
             right.push(`<button class="btn-cancel" style="color:#b91c1c;border-color:#fecaca;background:#fff5f5;" onclick="deleteEvent('${escapeHtml(ev.id)}')">삭제</button>`);
             right.push(`<button class="btn-save" onclick="closeModal('eventDetailModal');openEventEditor('${escapeHtml(ev.id)}')">수정</button>`);
         }
-        document.getElementById('eventDetailBtns').innerHTML = btns.join('') + `<div style="display:flex;gap:6px;">${right.join('')}</div>`;
+        document.getElementById('eventDetailBtns').innerHTML = btns.join('') + `<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">${right.join('')}</div>`;
         document.getElementById('eventDetailModal').style.display = 'flex';
         drawDetailMap();   // v2.42.0: 창이 보인 뒤에 지도
     }
     function copyEventText(id) {
         const ev = schedEvents.find(x => x.id === id);
         if (ev) copyText(eventShareText(ev), '일정 복사했캉! 📋', '단톡방에 붙여넣기 하세요');
+    }
+
+    // ==========================================================
+    // 📅 v2.95.0: 내 캘린더에 담기 — 일정을 캘린더 파일(.ics)로 만들어 휴대폰 캘린더(삼성 · 아이폰 · 구글)에 추가
+    //   - 파일은 이 기기에서 바로 만듦 → 서버 · 시트 호출 없음
+    //   - 같은 일정을 다시 담으면 캘린더 앱이 같은 일정(UID)으로 알아봄 (앱에 따라 새로 추가될 수도 있음)
+    //   - 집합 시간(「12:00 현장 집합」처럼 시각이 적혀 있으면)보다 1시간 전 알림, 없으면 시작 1시간 전 알림
+    // ==========================================================
+    function icsEsc(v) { return String(v == null ? '' : v).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n'); }
+    function icsFold(line) {   // 한 줄 75바이트 넘으면 접기 (한글 3바이트 → 24자쯤에서)
+        const out = []; let cur = '', bytes = 0;
+        for (const ch of line) {
+            const b = new TextEncoder().encode(ch).length;
+            if (bytes + b > 73) { out.push(cur); cur = ' '; bytes = 1; }
+            cur += ch; bytes += b;
+        }
+        out.push(cur);
+        return out.join('\r\n');
+    }
+    function icsUtc(ds, hm) {   // 한국시간(UTC+9) 날짜 · 시각 → UTC 표기 20261029T040000Z
+        const a = String(ds).split('-').map(Number), t = String(hm).split(':').map(Number);
+        const d = new Date(Date.UTC(a[0], a[1] - 1, a[2], (t[0] || 0) - 9, t[1] || 0));
+        return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    }
+    function icsHm(v) { const m = String(v || '').match(/(\d{1,2})\s*[:시]\s*(\d{2})?/); if (!m) return ''; const h = +m[1], mi = +(m[2] || 0); return (h < 24 && mi < 60) ? String(h).padStart(2, '0') + ':' + String(mi).padStart(2, '0') : ''; }
+    function icsEvent(ev) {
+        const m = typeMeta(ev.type), h = eventHeadline(ev);
+        const title = `${m.i} ${h.title || ev.type}${h.vs ? ' ' + h.vs : ''}`.trim();
+        const L = ['BEGIN:VEVENT', 'UID:' + String(ev.id || ev.date + '-' + title).replace(/[^\w.-]/g, '') + '@dybbr.github.io',
+                   'DTSTAMP:' + new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')];
+        const st = icsHm(ev.start);
+        if (st) {
+            let en = icsHm(ev.end);
+            if (!en || en <= st) { const t = st.split(':').map(Number); en = String(Math.min(23, t[0] + 2)).padStart(2, '0') + ':' + String(t[0] + 2 > 23 ? 59 : t[1]).padStart(2, '0'); }
+            L.push('DTSTART:' + icsUtc(ev.date, st), 'DTEND:' + icsUtc(ev.date, en));
+        } else {
+            const d = dateOf(ev.date), n = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
+            L.push('DTSTART;VALUE=DATE:' + ev.date.replace(/-/g, ''), 'DTEND;VALUE=DATE:' + ymdOf(n).replace(/-/g, ''));
+        }
+        L.push('SUMMARY:' + icsEsc(title));
+        if (ev.place) { const v = findVenue(ev.place); L.push('LOCATION:' + icsEsc(ev.place + (v && v.addr ? ' (' + v.addr + ')' : ''))); }
+        const desc = [`대상: ${targetText(ev)}`, ev.meet ? `집합: ${ev.meet}` : '', ev.dress ? `복장: ${ev.dress}` : '', ev.memo ? `메모: ${ev.memo}` : '', '대연초 야구부 https://dybbr.github.io/'].filter(Boolean).join('\n');
+        L.push('DESCRIPTION:' + icsEsc(desc));
+        const meet = icsHm(ev.meet), alarmAt = (meet && (!st || meet <= st)) ? meet : st;
+        if (alarmAt) {
+            const t = alarmAt.split(':').map(Number), mins = t[0] * 60 + t[1] - 60;
+            if (mins >= 0) L.push('BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + icsEsc((meet && alarmAt === meet ? '1시간 뒤 집합 · ' : '1시간 뒤 시작 · ') + title),
+                                  'TRIGGER;VALUE=DATE-TIME:' + icsUtc(ev.date, String(Math.floor(mins / 60)).padStart(2, '0') + ':' + String(mins % 60).padStart(2, '0')), 'END:VALARM');
+        }
+        L.push('END:VEVENT');
+        return L;
+    }
+    function icsDownload(evs, fileName) {
+        if (!evs.length) return;
+        const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//dybbr//daeyeon baseball//KO', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'X-WR-CALNAME:대연초 야구부'];
+        evs.forEach(ev => { try { icsEvent(ev).forEach(l => lines.push(l)); } catch (e) {} });
+        lines.push('END:VCALENDAR');
+        const text = lines.map(icsFold).join('\r\n') + '\r\n';
+        const ios = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        try {
+            if (ios) { location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(text); }   // 아이폰: 바로 「캘린더에 추가」 화면
+            else {
+                const url = URL.createObjectURL(new Blob([text], { type: 'text/calendar;charset=utf-8' }));
+                const a = document.createElement('a'); a.href = url; a.download = fileName; document.body.appendChild(a); a.click(); a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 30000);
+            }
+            bkNotify('done', `캘린더 파일 만들었캉! 📅`, ios ? '「추가」를 누르면 캘린더에 들어가요' : '받은 파일을 열고 캘린더 앱을 고르면 추가돼요 · 일정이 바뀌면 다시 담아 주세요', { ms: 6000, img: 'calendar' });
+        } catch (e) { bkNotify('fail', '캘린더 파일을 못 만들었캉', '잠시 후 다시 해 주세요'); }
+    }
+    function icsSaveEvent(id) {
+        const ev = schedEvents.find(x => x.id === id);
+        if (ev) icsDownload([ev], `daeyeon-baseball-${ev.date}.ics`);
+    }
+    function icsSaveUpcoming() {
+        const today = ymdOf(new Date());
+        const evs = visibleEvents().filter(ev => ev.date >= today);
+        if (evs.length) icsDownload(evs, `daeyeon-baseball-${today}.ics`);
+    }
+
+    // 🖥️ v2.95.0: 넓은 화면 달력 옆 「다가오는 일정」 (지금 보이는 학년 기준 · 최대 6개)
+    function calSideUpcoming(list) {
+        const today = ymdOf(new Date());
+        const up = list.filter(ev => ev.date >= today).slice(0, 6);
+        if (!up.length) return '';
+        return '<div class="cal-side-up"><h4>다가오는 일정</h4>' + up.map(ev => {
+            const m = typeMeta(ev.type), h = eventHeadline(ev), dd = ddayLabel(ev.date);
+            return `<button type="button" class="csu-row" style="--c:${m.c}" onclick="openEventDetail('${escapeHtml(ev.id)}')"><span class="csu-d">${escapeHtml(fmtMD(ev.date))}${ev.start ? ' ' + escapeHtml(ev.start) : ''}</span><span class="csu-t">${m.i} ${escapeHtml(h.title || ev.type)}${h.vs ? ' ' + escapeHtml(h.vs) : ''}</span>${dd ? `<span class="csu-dd">${escapeHtml(dd)}</span>` : ''}</button>`;
+        }).join('') + '</div>';
+    }
+
+    // 🏆 v2.95.0: 시즌 경기 기록 — 올해 경기 중 「결과」(승/패/무 + 점수)가 적힌 것만 모아 계산 (지금 보이는 학년 기준)
+    let seasonRecOpen = false;
+    function renderSeasonRecord() {
+        const el = document.getElementById('seasonRec');
+        if (!el) return;
+        const yr = String(new Date().getFullYear());
+        const games = (canViewSchedule() && schedLoaded) ? visibleEvents().filter(ev => String(ev.date).slice(0, 4) === yr && isGameEvent(ev) && parseResult(ev)) : [];
+        if (!games.length) { el.classList.remove('on'); el.innerHTML = ''; return; }
+        let w = 0, l = 0, d = 0, rf = 0, ra = 0, scored = 0;
+        games.forEach(ev => { const r = parseResult(ev); if (r.k === 'win') w++; else if (r.k === 'lose') l++; else d++;
+            const sm = String(r.score || '').match(/^(\d+):(\d+)$/); if (sm) { rf += +sm[1]; ra += +sm[2]; scored++; } });
+        const pct = (w + l) ? (w / (w + l)).toFixed(3).replace(/^0/, '') : '-';
+        const recent = games.slice().reverse();
+        const lab = (document.getElementById('calGradeLabel') || {}).textContent || '';
+        el.innerHTML = `<div class="sr-top" role="button" tabindex="0" onclick="seasonRecOpen=!seasonRecOpen;document.getElementById('seasonRec').classList.toggle('open',seasonRecOpen)">
+                <span class="sr-title">🏆 ${yr} 시즌${lab && !/^전체/.test(lab) ? `<small>${escapeHtml(lab)}</small>` : ''}</span>
+                <span class="sr-nums"><span class="sr-w">${w}<small>승</small></span><span class="sr-l">${l}<small>패</small></span>${d ? `<span class="sr-d">${d}<small>무</small></span>` : ''}<span class="sr-d">${pct}<small>승률</small></span></span>
+                <span class="sr-form" aria-label="최근 경기">${recent.slice(0, 5).reverse().map(ev => { const r = parseResult(ev); return `<i class="${r.k}">${r.label}</i>`; }).join('')}</span>
+            </div>
+            <div class="sr-more">${recent.slice(0, 8).map(ev => { const h = eventHeadline(ev); return `<button type="button" class="sr-game" onclick="openEventDetail('${escapeHtml(ev.id)}')"><span class="d">${escapeHtml(fmtMD(ev.date))}</span><span class="t">${escapeHtml(h.title || ev.type)}${h.vs ? ' ' + escapeHtml(h.vs) : ''}</span>${resultBadge(ev)}</button>`; }).join('')}
+                <div class="sr-sub">결과가 적힌 경기 ${games.length}개 기준${scored ? ` · 득점 ${rf} · 실점 ${ra}` : ''} · 결과는 대표님 · 총무님이 일정에 적어 주세요</div></div>`;
+        el.classList.toggle('open', seasonRecOpen);
+        el.classList.add('on');
     }
 
     // ==========================================================
@@ -7803,7 +8036,8 @@
         const headW = hb.width / z, bubbleW = Math.min(el.getBoundingClientRect().width / z || 340, headW - 32);
         const cx = (hr.left - hb.left + hr.width / 2) / z;
         let left = Math.max(16, Math.min(cx - 22, headW - 16 - bubbleW));
-        el.style.top = ((hr.bottom - hb.top) / z + 8) + 'px';
+        // v2.95.0: 헤더 아래 끝에 걸쳐 띄움 (부캉이 바로 아래에 띄우면 부제목 · 「유니폼 주문 접수」 버튼을 가렸음)
+        el.style.top = ((hb.bottom - hb.top) / z - 6) + 'px';
         el.style.left = left + 'px';
         el.style.setProperty('--tail', Math.max(10, Math.min(bubbleW - 24, cx - left - 6)) + 'px');
         el.classList.add('on');
@@ -7811,6 +8045,16 @@
         bkSayTimer = setTimeout(hideBkSay, ms || 6500);
     }
     function hideBkSay() { const el = document.getElementById('bkSay'); if (el) el.classList.remove('on'); }
+
+    // v2.95.0: 화면을 내리는 동안 떠 있는 🔊 · % 버튼을 흐리게 → 멈추면 0.9초 뒤 다시 (명단 · 일정 글자를 가리지 않게)
+    (function () {
+        let t = 0;
+        window.addEventListener('scroll', function () {
+            const z = document.getElementById('uiZoomCtrl'); if (!z) return;
+            z.classList.add('scrolling'); clearTimeout(t);
+            t = setTimeout(() => z.classList.remove('scrolling'), 900);
+        }, { passive: true });
+    })();
 
     // ==========================================================
     // 🔊 부캉이 효과음 (v2.33.0) — 파일 없이 브라우저에서 바로 합성 (Web Audio)
@@ -9550,6 +9794,15 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.95.0', d: '2026-10-27', t: '🧭 화면 다듬기 · 🏆 시즌 기록 · 📅 캘린더에 담기', items: [
+            '휴대폰: 헤더를 조금 낮추고 일정 · 공지 · 명단 · 구장 탭을 화면 아래(엄지 자리)로 옮김 — 처음 열면 달력 · 명단이 더 많이 보임 · 글자를 칠 때는 탭 막대가 숨음',
+            '태블릿 세로(폭 601~860px): 명단 표 오른쪽 칸(신장/체중)이 잘리던 것 → 카드 두 줄로',
+            'PC · 가로 태블릿(1024px~): 달력 오른쪽에 선택한 날 일정과 「다가오는 일정」이 같이 보임 (누를 때마다 아래로 내려가지 않아도 됨)',
+            '🏆 일정 탭 맨 위에 올해 시즌 기록(승 · 패 · 무 · 승률 · 최근 5경기) — 일정의 「결과」 칸을 모아 계산 · 누르면 최근 경기 목록',
+            '📅 일정 상세의 「캘린더」 버튼 · 목록 보기의 「캘린더에 담기」 → 휴대폰 캘린더에 일정 추가 (집합 1시간 전 알림 포함)',
+            '화면을 내리는 동안 오른쪽 아래 🔊 · % 버튼을 흐리게 · 휴대폰에서 부캉이 말풍선이 제목 · 유니폼 버튼을 가리지 않게',
+            '서버 · 시트 호출은 늘지 않음 (모두 이미 받아 둔 일정으로 계산)'
+        ] },
         { v: 'v2.94.1', d: '2026-10-26', t: '🎵 「응원가」 표기를 「주제곡」으로', items: [
             '선수 상세 화면 제목 「🎵 ○○○ 주제곡」 · 재생 버튼 · 안내 문구, 명단 이미지형 🎵 표시 설명을 모두 「주제곡」으로 바꿈',
             '곡 · 가사 · 재생 방식은 그대로 (파일 이름 cheer-songs.json 도 그대로)'
