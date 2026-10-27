@@ -1,5 +1,5 @@
 // ==========================================================
-// ⚾ 대연초 야구부 관리 시스템 통합 백엔드 API (v2.38.0)
+// ⚾ 대연초 야구부 관리 시스템 통합 백엔드 API (v2.39.0)
 // ==========================================================
 // ★ API_KEY 는 코드에 적지 않고 「프로젝트 설정 → 스크립트 속성」의 API_KEY 에 넣어 둡니다 (v2.36.0~).
 //   값은 index.html / player.html 의 API_KEY 와 "같은 값"이어야 합니다. 속성이 비어 있으면 모든 요청을 거절합니다.
@@ -1408,8 +1408,9 @@ function doGet(e) {
 // - 보안 모델은 다른 기능과 동일: API_KEY 만 확인하고, 누가 수정할 수 있는지는 화면(index.html)에서 막는다.
 //   (수정: 대표님·총무님·개발자 / 조회: 학부모 인증자·관리자)
 var SCHEDULE_SHEET_NAME = "일정";
-var SCHEDULE_HEADERS = ["ID", "날짜", "시작", "종료", "구분", "제목", "장소", "상대", "대상학년", "대상메모", "집합/출발", "복장", "메모", "수정일시", "결과"];   // v2.4.2: 결과(승/패/무 + 점수) — 사이트의 부캉이 표정·승리 축하에 씀
-var SCHEDULE_KEYS    = ["id", "date", "start", "end", "type", "title", "place", "opponent", "grades", "target", "meet", "dress", "memo", "updated", "result"];
+var SCHEDULE_HEADERS = ["ID", "날짜", "시작", "종료", "구분", "제목", "장소", "상대", "대상학년", "대상메모", "집합/출발", "복장", "메모", "수정일시", "결과", "수훈", "수훈메모"];   // v2.4.2: 결과(승/패/무 + 점수) — 사이트의 부캉이 표정·승리 축하에 씀 · v2.39.0: 수훈(「7 김대연」처럼 배번 + 이름) · 수훈메모(한 줄 활약) — 사이트 경기 결과 카드에 씀
+var SCHEDULE_KEYS    = ["id", "date", "start", "end", "type", "title", "place", "opponent", "grades", "target", "meet", "dress", "memo", "updated", "result", "mvp", "mvpNote"];
+var SCHEDULE_KEEP_IF_MISSING = ["mvp", "mvpNote"];   // v2.39.0: 예전 앱처럼 이 칸을 안 보내면 시트에 있던 값 그대로 (결과만 고쳐도 수훈이 지워지지 않게)
 
 var NOTICE_SHEET_NAME = "공지사항";
 var NOTICE_HEADERS = ["ID", "고정", "분류", "제목", "내용", "작성자", "작성일시", "수정일시", "팝업"];   // v2.37.0: 팝업(Y/N) — Y 면 앱이 로그인 후 한 번 팝업으로 보여 줌
@@ -1987,9 +1988,12 @@ function getScheduleSheet(ss) {
   var sh = ensureSheet(ss, SCHEDULE_SHEET_NAME, SCHEDULE_HEADERS, scheduleSeedRows);
   if (existed) applySeedUpgrade(sh, "SCHEDULE_SEED_VER", scheduleSeedRows, "S");
   else PropertiesService.getScriptProperties().setProperty("SCHEDULE_SEED_VER", String(SEED_VERSION));
-  // v2.4.2: 예전에 만들어진 시트에는 "결과" 머리글이 없으므로 마지막 열에 한 번 추가
-  var hc = SCHEDULE_HEADERS.length;
-  if (String(sh.getRange(1, hc).getValue() || "") !== SCHEDULE_HEADERS[hc - 1]) {
+  // v2.4.2: 예전에 만들어진 시트에는 "결과" 머리글이 없으므로 한 번 추가 · v2.39.0: 「수훈」 「수훈메모」도 같은 방식 (15열부터 빈 머리글만 채움)
+  var hn = SCHEDULE_HEADERS.length;
+  var head = sh.getRange(1, 1, 1, Math.min(sh.getMaxColumns(), hn)).getValues()[0];
+  for (var hc = 15; hc <= hn; hc++) {
+    if (String(head[hc - 1] || "") === SCHEDULE_HEADERS[hc - 1]) continue;
+    if (sh.getMaxColumns() < hc) sh.insertColumnsAfter(sh.getMaxColumns(), hc - sh.getMaxColumns());
     sh.getRange(1, hc, sh.getMaxRows(), 1).setNumberFormat("@");
     sh.getRange(1, hc).setValue(SCHEDULE_HEADERS[hc - 1]).setBackground("#0b2240").setFontColor("#ffffff").setFontWeight("bold");
   }
@@ -2000,7 +2004,7 @@ function readEvents(ss) {   // ⚡ v2.13.0: 캐시 (v2.16.0: 10분)
   return cachedData("C_EVENTS", function () { return readTable(getScheduleSheet(ss), SCHEDULE_KEYS, { date: "date", start: "time", end: "time" }); });
 }
 
-function eventToRow(ev) {
+function eventToRow(ev, prev) {
   var date = String(ev.date || "").trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
   var t = function (v) { v = String(v || "").trim(); return /^\d{1,2}:\d{2}$/.test(v) ? ("0" + v).slice(-5) : ""; };
@@ -2019,8 +2023,17 @@ function eventToRow(ev) {
     cleanText(ev.dress, 100),
     cleanMultiline(ev.memo, 1000),
     nowKst(),
-    cleanText(ev.result, 20)   // "승 5:3" / "패 2:7" / "무" / ""
+    cleanText(ev.result, 20),   // "승 5:3" / "패 2:7" / "무" / ""
+    keepOr(ev, prev, "mvp", function (v) { return cleanText(v, 30); }),        // v2.39.0: 「7 김대연」
+    keepOr(ev, prev, "mvpNote", function (v) { return cleanText(v, 60); })     // v2.39.0: 「3회 역전 2루타 · 3타점」
   ];
+}
+// v2.39.0: 앱이 그 칸을 보냈으면 정리한 값, 안 보냈으면(예전 앱) 시트에 있던 값
+function keepOr(ev, prev, key, clean) {
+  if (Object.prototype.hasOwnProperty.call(ev, key) && ev[key] != null) return clean(ev[key]);
+  if (SCHEDULE_KEEP_IF_MISSING.indexOf(key) === -1 || !prev) return "";
+  var v = prev[SCHEDULE_KEYS.indexOf(key)];
+  return v == null ? "" : String(v);
 }
 
 // 한 건 또는 여러 건 저장 (ID가 같으면 수정, 없으면 추가)
@@ -2030,9 +2043,12 @@ function handleSaveEvents(ss, data) {
   if (list.length > 100) list = list.slice(0, 100);
   var saved = 0;
   for (var i = 0; i < list.length; i++) {
-    var row = eventToRow(list[i] || {});
+    var ev = list[i] || {};
+    var r0 = ev.id ? findRowById(sh, cleanId(ev.id, 30)) : -1;
+    var prev = r0 === -1 ? null : sh.getRange(r0, 1, 1, SCHEDULE_KEYS.length).getValues()[0];   // v2.39.0: 예전 앱이 안 보내는 칸(수훈)은 그대로 두려고
+    var row = eventToRow(ev, prev);
     if (!row) continue;
-    var r = findRowById(sh, row[0]);
+    var r = r0 !== -1 && String(row[0]) === String(cleanId(ev.id, 30)) ? r0 : findRowById(sh, row[0]);
     writeRow(sh, r === -1 ? sh.getLastRow() + 1 : r, row);
     saved++;
   }

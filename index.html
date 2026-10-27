@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.96.0 · b261027";
+        const APP_VERSION = "v2.97.0 · b261027";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -2870,6 +2870,18 @@
     .gp-btns .gc-btn { flex: 0 0 auto; padding: 10px 12px; }
     .gp-btns .gc-btn.ok { flex: 1; }
     .gp-btns .gc-btn.img { background: #f1f5f9; border-color: #e2e8f0; color: #0f172a; }
+    /* ⭐ v2.97.0: 수훈 선수 */
+    .gc-mvp { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; background: #fff8e6; border: 1px solid #f6dc99; border-radius: 14px; padding: 9px 10px; margin-bottom: 8px; text-align: left; }
+    .gc-mvp .jer { width: 40px; height: 44px; border-radius: 9px 9px 13px 13px; background: #0b2240; color: #fff; display: grid; place-items: center; font-weight: 900; font-size: 17px; border-top: 4px solid #c8102e; font-variant-numeric: tabular-nums; }
+    .gc-mvp .who { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+    .gc-mvp .who small { color: #9a6b00; font-weight: 900; font-size: 11px; margin: 0; display: block; }
+    .gc-mvp .who b { font-size: 15px; font-weight: 900; color: #0f172a; display: block; margin: 0; }
+    .gc-mvp .who b span { font-size: 12px; color: #64748b; font-weight: 700; margin-left: 3px; }
+    .gc-mvp .who em { font-style: normal; font-size: 12px; color: #475569; overflow-wrap: anywhere; }
+    .gc-mvp .play { background: #c8102e; color: #fff; border: 0; border-radius: 999px; padding: 8px 11px; font: inherit; font-weight: 900; font-size: 12px; cursor: pointer; white-space: nowrap; }
+    .gc-strip .gs-bot .mvp { font-weight: 800; opacity: .95; }
+    .ev-mvp-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 6px; }
+    @media (max-width: 400px) { .ev-mvp-row { grid-template-columns: 1fr; } }
 
     /* 📅 캘린더에 담기 (목록 보기 맨 위) */
     .ics-all { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin: 2px 0 10px; padding: 8px 10px; border: 1px dashed #cbd5e1; border-radius: 10px; font-size: 12.5px; color: #475569; }
@@ -2945,6 +2957,8 @@
         .gc-strip { box-shadow: none; }
         .gs-more { border-color: #2a374e; color: #97a3b7; }
         .gp-btns .gc-btn.img { background: #1b2638; border-color: #2a374e; color: #f1f4f9; }
+        .gc-mvp { background: #2a2310; border-color: #5a4a1c; }
+        .gc-mvp .who small { color: #f2c14e; } .gc-mvp .who b { color: #f1f4f9; } .gc-mvp .who b span, .gc-mvp .who em { color: #b8c2d1; }
         .gc-btn { border-color: #3a5a86; background: #22354f; }
         .ics-all { border-color: #2a374e; color: #97a3b7; }
         .ics-all button { background: #22354f; color: #f1f4f9; }
@@ -3488,6 +3502,13 @@
                             <input type="text" id="evScoreThem" inputmode="numeric" pattern="[0-9]*" maxlength="2" placeholder="-" oninput="onEvScoreInput(this)" aria-label="상대 점수">
                             <button type="button" class="ev-sc-btn" onclick="evScoreStep('evScoreThem', 1)" aria-label="상대 점수 더하기">+</button></div></div>
                         <button type="button" class="ev-sc-clear" onclick="clearEvScore()" title="점수 지우기" aria-label="점수 지우기">✕</button>
+                    </div>
+                </div>
+                <div class="form-group ev-mvp-grp" id="evMvpGrp" hidden>   <!-- ⭐ v2.97.0: 수훈 선수 (서버 v2.39.0 「수훈」 「수훈메모」 칸) -->
+                    <label>⭐ 수훈 선수 <span class="ev-l2">선택 · 결과 카드에 나와요</span></label>
+                    <div class="ev-mvp-row">
+                        <select id="evMvp" aria-label="수훈 선수"><option value="">없음</option></select>
+                        <input type="text" id="evMvpNote" maxlength="60" placeholder="한 줄 활약 (예: 3회 역전 2루타 · 3타점)" aria-label="한 줄 활약">
                     </div>
                 </div>
             </div>
@@ -5345,7 +5366,7 @@
                 <div class="ev-detail-date">${fmtKDate(ev.date)} · ${escapeHtml(timeText(ev))}${ddayLabel(ev.date) ? ' · ' + ddayLabel(ev.date) : ''}</div>
                 <div class="ev-detail-title">${m.i} ${escapeHtml(h.title || ev.type)} ${h.vs ? `<span class="ev-vs">${escapeHtml(h.vs)}</span>` : ''}</div>
             </div>
-            ${gc ? gcScoreHtml(ev) + gcActsHtml(ev) : ''}
+            ${gc ? gcScoreHtml(ev) + gcMvpHtml(ev) + gcActsHtml(ev) : ''}
             ${row('구분', ev.type)}${gc ? '' : row('결과', (function () { const r = parseResult(ev); return r ? ((r.label === '승' ? '승리' : r.label === '패' ? '패배' : '무승부') + (r.score ? ' ' + r.score : '')) : ''; })())}${placeRowHtml(ev)}${row('대상', targetText(ev))}${row('집합/출발', ev.meet)}${row('복장', ev.dress)}${row('메모', ev.memo)}
             ${canEditSchedule() && ev.updated ? `<div class="form-hint" style="margin-top:8px;">최종 수정: ${escapeHtml(ev.updated)}</div>` : ''}`;
         const btns = [`<button class="btn-cancel" onclick="closeModal('eventDetailModal')">닫기</button>`];
@@ -5547,12 +5568,49 @@
         return `<div class="gc-acts"><button type="button" class="gc-btn" onclick="gcImageOpen('${id}')">🖼️ 결과 이미지</button><button type="button" class="gc-btn kakao" onclick="gcShare('${id}')">📤 공유하기</button></div>`;
     }
 
+    // ⭐ v2.97.0: 수훈 선수 — 일정 「수훈」 칸에 「7 김대연」(배번 + 이름) · 「수훈메모」에 한 줄 활약 (서버 v2.39.0)
+    //   서버가 이 칸을 아직 모르면(예전 서버) 수정 창에 칸을 안 보여 줌 → 적었는데 저장이 안 되는 일이 없게
+    function gcMvpReady() { return schedEvents.some(e => e && Object.prototype.hasOwnProperty.call(e, 'mvp')); }
+    function gcMvp(ev) {
+        const raw = String((ev && ev.mvp) || '').trim();
+        if (!raw) return null;
+        const m = raw.match(/^(\d{1,3})\s*번?\s+(.+)$/);
+        const no = m ? m[1] : '', name = (m ? m[2] : raw).trim();
+        const p = players.find(x => !isStaff(x.grade) && String(x.name).trim() === name && (!no || String(x.no) === no)) || null;
+        const song = p && typeof window.cheerSongFor === 'function' ? window.cheerSongFor(p) : null;
+        return { no: no || (p ? String(p.no || '') : ''), name: name, note: String(ev.mvpNote || '').trim(), p: p, song: song };
+    }
+    function gcMvpHtml(ev) {
+        const v = gcMvp(ev); if (!v) return '';
+        const path = v.p ? `${v.p.grade}/${v.p.no || v.p.name}` : '';
+        return `<div class="gc-mvp"><div class="jer">${escapeHtml(v.no || '⭐')}</div>
+                <div class="who"><small>⭐ 오늘의 수훈 선수</small><b>${escapeHtml(v.name)}${v.p && /^\d+$/.test(String(v.p.grade)) ? `<span>${escapeHtml(v.p.grade)}학년</span>` : ''}</b>${v.note ? `<em>${escapeHtml(v.note)}</em>` : ''}</div>
+                ${v.song && path ? `<button type="button" class="play" onclick="goToPlayer('${escapeHtml(path)}')">🎵 주제곡</button>` : ''}</div>`;
+    }
+    function fillEvMvp(ev) {
+        const grp = document.getElementById('evMvpGrp'), sel = document.getElementById('evMvp');
+        if (!grp || !sel) return;
+        grp.hidden = !gcMvpReady();
+        const list = players.filter(p => !isStaff(p.grade) && p.name).slice().sort((a, b) => (parseInt(b.grade, 10) || 0) - (parseInt(a.grade, 10) || 0) || (parseInt(a.no, 10) || 999) - (parseInt(b.no, 10) || 999));
+        const cur = String(ev.mvp || '').trim();
+        const opts = list.map(p => { const v = (p.no ? p.no + ' ' : '') + p.name; return { v: v, t: `${p.grade ? p.grade + '학년 · ' : ''}${p.no ? p.no + '번 ' : ''}${p.name}` }; });
+        if (cur && !opts.some(o => o.v === cur)) opts.unshift({ v: cur, t: cur });
+        sel.innerHTML = '<option value="">없음</option>' + opts.map(o => `<option value="${escapeHtml(o.v)}">${escapeHtml(o.t)}</option>`).join('');
+        sel.value = cur;
+        document.getElementById('evMvpNote').value = ev.mvpNote || '';
+    }
+    function readEvMvp() {
+        if (!gcMvpReady()) return {};
+        const game = BK_GAME_TYPES.indexOf(document.getElementById('evType').value) !== -1;
+        return { mvp: game ? document.getElementById('evMvp').value : '', mvpNote: game ? document.getElementById('evMvpNote').value.trim() : '' };
+    }
+
     // B 결과 띠 한 줄 (누르면 일정 상세 = 점수판)
     function gcStripHtml(ev) {
         const r = parseResult(ev), o = gcOpp(ev), c = gcCup(ev), sc = gcScore(ev);
         return `<button type="button" class="gc-strip ${r.k}" style="--oc:${o.color}" onclick="openEventDetail('${escapeHtml(ev.id)}')">
                 <span class="gs-top"><span class="gs-t us">${GC_HOME.name}</span><span class="gs-s">${sc ? `<b class="${r.k === 'lose' ? 'lo' : ''}">${sc[0]}</b><i>:</i><b class="${r.k === 'win' ? 'lo' : ''}">${sc[1]}</b>` : `<b>${r.label}</b>`}</span><span class="gs-t op">${o.region ? `<small>${escapeHtml(o.region)}</small>` : ''}${escapeHtml(o.name)}</span></span>
-                <span class="gs-bot">${escapeHtml(gcBandText(r, c.grp))}<small>${escapeHtml(fmtMD(ev.date))}</small></span>
+                <span class="gs-bot">${escapeHtml(gcBandText(r, c.grp))}<small>${escapeHtml(fmtMD(ev.date))}</small>${(function () { const v = gcMvp(ev); return v ? `<small class="mvp">⭐ ${escapeHtml(v.name)}</small>` : ''; })()}</span>
             </button>`;
     }
     let srCup = '', srAll = false, srGroupKeys = [];
@@ -5578,7 +5636,7 @@
 
     // D 공유용 이미지 (1080×1350) — 캔버스로 그림 · 같은 경기는 한 번 만든 걸 다시 씀 (공유 창이 바로 뜨게)
     const gcImgCache = {};
-    function gcImgKey(ev) { return [ev.id, ev.result, ev.title, ev.opponent, ev.place, ev.start, ev.date].join('|'); }
+    function gcImgKey(ev) { return [ev.id, ev.result, ev.title, ev.opponent, ev.place, ev.start, ev.date, ev.mvp, ev.mvpNote].join('|'); }
     function gcBkImage(r) {
         return new Promise(res => {
             try {
@@ -5661,7 +5719,12 @@
             const meta = [ev.start || '', ev.place ? venueLabel(ev.place) : ''].filter(Boolean).join(' · ');
             if (meta) { fit(meta, 700, 34, 900); text(meta, W / 2, 1035, '#d5deec'); }
             const sub = [tour, targetText(ev) && targetText(ev) !== '전체' ? targetText(ev) : ''].filter(Boolean).join(' · ');
-            if (sub) { fit(sub, 900, 34, 900); text(sub, W / 2, 1095, '#ffffff'); }
+            const mv = gcMvp(ev);
+            if (mv) {   // ⭐ v2.97.0: 수훈 선수
+                const mt = `⭐ 수훈 선수  ${mv.no ? mv.no + '번 ' : ''}${mv.name}${mv.note ? ' · ' + mv.note : ''}`;
+                fit(mt, 900, 36, 900); text(mt, W / 2, 1092, '#f5c542');
+                if (sub) { fit(sub, 700, 28, 900); text(sub, W / 2, 1136, '#d5deec'); }
+            } else if (sub) { fit(sub, 900, 34, 900); text(sub, W / 2, 1095, '#ffffff'); }
             // 아래: 부캉이 + 팀 이름
             font(900, 48); const n1 = '대연초등학교 야구부', w1 = x.measureText(n1).width, bkW = bk ? 130 : 0, gx = W / 2 - (bkW + 22 + w1) / 2;
             if (bk) x.drawImage(bk, gx, 1150, 130, 130 * (bk.naturalHeight / bk.naturalWidth || 1));
@@ -5676,8 +5739,10 @@
     function gcFileName(ev) { return `daeyeon-result-${ev.date}${ev.opponent ? '-' + gcOpp(ev).name : ''}.png`; }
     function gcShareText(ev) {
         const r = parseResult(ev), o = gcOpp(ev), c = gcCup(ev), sc = gcScore(ev);
+        const mv = gcMvp(ev);
         return [`🏆 ${c.cup}${c.grp ? ' ' + c.grp : ''}`, `${GC_HOME.name} ${sc ? sc[0] + ' : ' + sc[1] : ''} ${o.name} — ${r.k === 'win' ? '승리!' : r.k === 'lose' ? '아쉬운 패배' : '무승부'}`.replace(/\s{2,}/g, ' '),
-                `📅 ${fmtMD(ev.date)}${ev.start ? ' ' + ev.start : ''}${ev.place ? ' · ' + ev.place : ''}`, '대연초 야구부 https://dybbr.github.io/'].join('\n');
+                mv ? `⭐ 수훈 선수 ${mv.name}${mv.note ? ' (' + mv.note + ')' : ''}` : '',
+                `📅 ${fmtMD(ev.date)}${ev.start ? ' ' + ev.start : ''}${ev.place ? ' · ' + ev.place : ''}`, '대연초 야구부 https://dybbr.github.io/'].filter(Boolean).join('\n');
     }
     let gcImgEv = null, gcImgUrl = '';
     function gcImageOpen(id) {
@@ -6394,6 +6459,7 @@
         evScoreRaw = (rr && rr.score && !sm) ? rr.score : '';   // "콜드승"처럼 숫자가 아닌 점수 메모는 그대로 보관
         syncEvScoreLabel();
         syncEvResultRow();
+        fillEvMvp(ev);   // ⭐ v2.97.0
         const gs = String(ev.grades || '전체').split(',');
         const all = gs.indexOf('전체') !== -1;
         document.querySelectorAll('#evGrades input').forEach(i => {
@@ -6422,7 +6488,8 @@
                 const r = document.getElementById('evResult').value, a = evScoreVal('evScoreUs'), b = evScoreVal('evScoreThem');
                 const sc = (a != null && b != null) ? a + ':' + b : evScoreRaw;
                 return r ? (r + (sc ? ' ' + sc : '')) : '';
-            })()
+            })(),
+            ...readEvMvp()   // ⭐ v2.97.0: 서버가 수훈 칸을 알 때만 보냄 (예전 서버에는 안 보냄)
         };
     }
     // 경기(대회·연습시합)일 때만 결과 칸을 보여줌
@@ -8693,6 +8760,7 @@
                 <small class="gp-eye">${today ? '오늘' : '어제'} 경기 결과</small>
                 <b class="gp-title">${GC_HOME.name} 승리했캉! 🎉</b>
                 ${gcScoreHtml(g, true)}
+                ${gcMvpHtml(g)}
                 <small class="gp-msg">${escapeHtml(fmtKDate(g.date))}${g.start ? ' ' + escapeHtml(g.start) : ''}${g.place ? ' · ' + escapeHtml(venueLabel(g.place)) : ''}<br>선수들 · 부모님 모두 수고 많으셨어요!</small>
                 <div class="gp-btns">
                     <button type="button" class="gc-btn ok" data-act="ok">확인</button>
@@ -10135,6 +10203,11 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.97.0', d: '2026-10-27', t: '⭐ 경기 수훈 선수 · 🎵 주제곡', items: [
+            '대표님 · 총무님이 일정 수정 창(경기 결과 아래)에서 수훈 선수를 고르고 한 줄 활약을 적으면 결과 카드 · 축하 카드 · 결과 이미지에 같이 나옴',
+            '수훈 선수에게 주제곡이 있으면 결과 카드에 「🎵 주제곡」 버튼 (누르면 그 선수 화면에서 바로 들음)',
+            '서버 v2.39.0: 시트 일정 탭에 「수훈」 「수훈메모」 칸 추가 · 예전 앱이 저장해도 수훈 값은 그대로 유지'
+        ] },
         { v: 'v2.96.0', d: '2026-10-27', t: '🏟️ 경기 결과 카드 · 결과 이미지 공유', items: [
             '결과가 적힌 경기를 누르면 맨 위에 점수판(대회명 · 조 · 시간 · 장소 · 승리 띠 · 이번 대회 성적)',
             '🏆 시즌 기록을 펼치면 대회별로 결과 띠가 쌓임 — 위쪽 이름표로 대회만 골라 보기 · 띠를 누르면 그 경기 점수판',
