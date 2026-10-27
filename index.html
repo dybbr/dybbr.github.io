@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.97.0 · b261027";
+        const APP_VERSION = "v2.97.1 · b261027";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -319,7 +319,7 @@
         .ptr { height: 0; overflow: hidden; position: relative; margin: -20px -16px 0; transition: height .32s cubic-bezier(.2,.9,.3,1.1), margin-bottom .32s;
             background: linear-gradient(180deg, #9ccf8f 0, #9ccf8f 58%, #7fbb73 58%, #7fbb73 100%); }
         .ptr.live { transition: none; }
-        .ptr.on { margin-bottom: 14px; }
+        .ptr, .ptr.on { margin-bottom: 14px; }   /* v2.97.1: 헤더 빨간 선과 아래 탭 · 섹션 제목(＋ 구장 추가 · ✏️ 새 공지 버튼) 사이 띄우기 */
         .ptr-in { position: absolute; left: 0; right: 0; bottom: 0; height: 112px; }
         .ptr-mound { position: absolute; left: 14px; bottom: 10px; width: 120px; height: 26px; border-radius: 50%;
             background: radial-gradient(ellipse at 50% 40%, #d9b58a 0, #d9b58a 60%, #c49a6c 100%); box-shadow: inset 0 -3px 0 rgba(0,0,0,.08); }
@@ -10203,6 +10203,9 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.97.1', d: '2026-10-27', t: '📐 헤더 아래 간격', items: [
+            '헤더 빨간 선 바로 아래에 붙어 있던 「＋ 구장 추가」 · 「✏️ 새 공지」 버튼과 섹션 제목을 조금 띄움 (일정 · 명단 · 관리 탭, 태블릿 · PC 위쪽 탭 막대도 같이)'
+        ] },
         { v: 'v2.97.0', d: '2026-10-27', t: '⭐ 경기 수훈 선수 · 🎵 주제곡', items: [
             '대표님 · 총무님이 일정 수정 창(경기 결과 아래)에서 수훈 선수를 고르고 한 줄 활약을 적으면 결과 카드 · 축하 카드 · 결과 이미지에 같이 나옴',
             '수훈 선수에게 주제곡이 있으면 결과 카드에 「🎵 주제곡」 버튼 (누르면 그 선수 화면에서 바로 들음)',
