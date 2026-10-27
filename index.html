@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.95.1 · b261027";
+        const APP_VERSION = "v2.96.0 · b261027";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -2817,6 +2817,59 @@
     .sr-game .d { color: #64748b; white-space: nowrap; min-width: 58px; font-variant-numeric: tabular-nums; }
     .sr-game .t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; }
     .sr-sub { font-size: 11.5px; color: #64748b; margin-top: 4px; }
+    /* 🏟️ v2.96.0: 경기 결과 카드 — 점수판(일정 상세 · 축하 카드) · 대회별 결과 띠(시즌 기록) · 결과 이미지 창 */
+    .gc-sb { background: radial-gradient(120% 90% at 50% 0%, #1d3a6b 0%, #0b2240 62%); color: #fff; border-radius: 16px; padding: 14px 12px 0; overflow: hidden; margin-bottom: 8px; display: flex; flex-direction: column; gap: 8px; font-variant-numeric: tabular-nums; }
+    .gc-cup { font-size: 13px; font-weight: 900; color: #f5c542; text-align: center; line-height: 1.35; word-break: keep-all; }
+    .gc-meta { font-size: 11.5px; color: #b9c6dc; text-align: center; margin-top: -5px; }
+    .gc-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 4px; }
+    .gc-team { display: flex; flex-direction: column; align-items: center; gap: 1px; min-width: 0; }
+    .gc-team .nm { font-size: 16px; font-weight: 900; display: flex; align-items: center; gap: 5px; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .gc-team .nm i { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+    .gc-team .sub { font-size: 11px; color: #b9c6dc; min-height: 15px; }
+    .gc-team .sub em { font-style: normal; color: #f5c542; font-weight: 900; }
+    .gc-team.dim .nm { color: #c3cde0; }
+    .gc-score { display: flex; align-items: center; gap: 7px; font-weight: 900; font-size: 46px; line-height: 1; letter-spacing: -.02em; }
+    .gc-score .lo, .gc-score .c { color: #6f83a6; }
+    .gc-score .c { font-size: 24px; transform: translateY(-3px); }
+    .gc-score.word { font-size: 26px; }
+    .gc-band { margin: 2px -12px 0; padding: 8px 10px; text-align: center; font-weight: 900; font-size: 14px; background: #c8102e; }
+    .gc-sb.lose .gc-band { background: #475569; } .gc-sb.draw .gc-band { background: #64748b; }
+    .gc-band small { font-weight: 600; opacity: .88; font-size: 11.5px; margin-left: 6px; white-space: nowrap; }
+    .gc-acts { display: flex; gap: 6px; margin-bottom: 12px; }
+    .gc-btn { flex: 1; border: 1px solid #0b2240; background: #0b2240; color: #fff; border-radius: 10px; padding: 9px 8px; font: inherit; font-weight: 800; font-size: 13px; cursor: pointer; white-space: nowrap; }
+    .gc-btn.kakao { background: #fee500; border-color: #f2d900; color: #191919; }
+    .gs-chips { display: flex; gap: 6px; overflow-x: auto; padding: 6px 1px 2px; scrollbar-width: none; }
+    .gs-chips::-webkit-scrollbar { display: none; }
+    .gs-chips button { flex: none; border: 1px solid var(--card-border); background: #fff; color: #64748b; border-radius: 999px; padding: 3px 11px; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+    .gs-chips button.on { background: #0b2240; border-color: #0b2240; color: #fff; }
+    .gs-grp { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 12.5px; font-weight: 900; color: var(--text-title); margin: 10px 1px 6px; }
+    .gs-grp small { color: #64748b; font-weight: 700; font-size: 11.5px; white-space: nowrap; }
+    .gc-strip { display: block; width: 100%; border: 0; padding: 0; margin: 0 0 7px; border-radius: 10px; overflow: hidden; font: inherit; color: #fff; font-weight: 900; text-align: center; cursor: pointer; box-shadow: 0 2px 0 rgba(15,23,42,.06); }
+    .gc-strip .gs-top { display: grid; grid-template-columns: 1fr auto 1fr; align-items: stretch; }
+    .gc-strip .gs-t { display: flex; align-items: center; gap: 5px; padding: 8px 10px; font-size: 15px; background: #13284d; min-width: 0; white-space: nowrap; overflow: hidden; }
+    .gc-strip .gs-t.us { justify-content: flex-end; }
+    .gc-strip .gs-t.op { background: var(--oc); }
+    .gc-strip .gs-t small { font-size: 10px; font-weight: 700; opacity: .85; }
+    .gc-strip .gs-s { background: #fff; color: #0f172a; display: flex; align-items: center; gap: 3px; padding: 0 9px; font-size: 18px; font-variant-numeric: tabular-nums; }
+    .gc-strip .gs-s .lo, .gc-strip .gs-s i { color: #94a3b8; font-style: normal; }
+    .gc-strip .gs-bot { display: flex; justify-content: center; gap: 6px; background: #c8102e; font-size: 11.5px; padding: 4px 6px; }
+    .gc-strip .gs-bot small { font-weight: 600; opacity: .85; font-size: 11.5px; }
+    .gc-strip.lose { filter: saturate(.6); } .gc-strip.lose .gs-bot { background: #5a6b86; } .gc-strip.draw .gs-bot { background: #64748b; }
+    .gs-more { width: 100%; border: 1px dashed var(--card-border); background: none; border-radius: 10px; padding: 7px; font: inherit; font-size: 12.5px; font-weight: 800; color: #475569; cursor: pointer; }
+    #gcImgModal { z-index: 1250; }
+    .gc-img-card { max-width: 420px; }
+    .gc-img-card img { display: block; width: 100%; height: auto; border-radius: 10px; background: #0b1a33; aspect-ratio: 4 / 5; }
+    .gc-img-card .form-hint { text-align: center; margin-top: 8px; }
+    .cf-box.gc-pop { max-width: 360px; width: calc(100% - 28px); padding: 0 14px 14px; cursor: default; text-align: center; }
+    .cf-box.gc-pop .bk-img { width: 104px; height: 104px; margin: -48px auto -2px; filter: drop-shadow(0 6px 10px rgba(0,0,0,.25)); }
+    .cf-box.gc-pop .gp-eye { display: block; color: #c8102e; font-weight: 900; font-size: 12px; margin: 0; }
+    .cf-box.gc-pop .gp-title { display: block; font-size: 19px; margin: 1px 0 10px; }
+    .cf-box.gc-pop .gp-msg { margin: 2px 0 10px; font-size: 12.5px; line-height: 1.5; }
+    .cf-box.gc-pop .gc-band small { display: inline; color: inherit; margin-top: 0; }
+    .gp-btns { display: flex; gap: 6px; }
+    .gp-btns .gc-btn { flex: 0 0 auto; padding: 10px 12px; }
+    .gp-btns .gc-btn.ok { flex: 1; }
+    .gp-btns .gc-btn.img { background: #f1f5f9; border-color: #e2e8f0; color: #0f172a; }
 
     /* 📅 캘린더에 담기 (목록 보기 맨 위) */
     .ics-all { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin: 2px 0 10px; padding: 8px 10px; border: 1px dashed #cbd5e1; border-radius: 10px; font-size: 12.5px; color: #475569; }
@@ -2885,6 +2938,14 @@
         .sr-title small, .sr-sub, .sr-game .d { color: #97a3b7; }
         .sr-w { background: #17311f; color: #8ee6c6; } .sr-l { background: #3a1a1f; color: #f0a0a8; } .sr-d { background: #1b2638; color: #b8c2d1; }
         .sr-more { border-top-color: #2a374e; }
+        .gs-chips button { background: #151e2e; border-color: #2a374e; color: #97a3b7; }
+        .gs-chips button.on { background: #3a5a86; border-color: #3a5a86; color: #fff; }
+        .gs-grp small { color: #97a3b7; }
+        .gc-strip .gs-s { background: #0f1726; color: #f1f4f9; } .gc-strip .gs-s .lo, .gc-strip .gs-s i { color: #6b7890; }
+        .gc-strip { box-shadow: none; }
+        .gs-more { border-color: #2a374e; color: #97a3b7; }
+        .gp-btns .gc-btn.img { background: #1b2638; border-color: #2a374e; color: #f1f4f9; }
+        .gc-btn { border-color: #3a5a86; background: #22354f; }
         .ics-all { border-color: #2a374e; color: #97a3b7; }
         .ics-all button { background: #22354f; color: #f1f4f9; }
         @media (max-width: 600px) { html.is-authenticated .main-tabs { box-shadow: 0 -4px 16px rgba(0,0,0,0.4); } }
@@ -3908,6 +3969,24 @@
         <div class="modal-scroll-body" id="historyListContent"></div>
         <div class="modal-btns" style="justify-content: flex-end;">
             <button class="btn-save" onclick="closeModal('historyModal')">닫기</button>
+        </div>
+    </div>
+</div>
+
+<!-- 🖼️ 경기 결과 이미지 (v2.96.0) — 이 기기에서 만든 1080×1350 이미지 · 저장 / 공유 -->
+<div id="gcImgModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="gcImgTitle">
+    <div class="modal-content gc-img-card">
+        <div class="modal-header" id="gcImgTitle">🖼️ 경기 결과 이미지</div>
+        <div class="modal-scroll-body">
+            <img id="gcImg" alt="경기 결과 이미지" width="1080" height="1350">
+            <div class="form-hint">이미지를 길게 누르면 사진으로 저장할 수도 있어요</div>
+        </div>
+        <div class="modal-btns" style="justify-content: space-between;">
+            <button type="button" class="btn-cancel" onclick="closeModal('gcImgModal')">닫기</button>
+            <div style="display:flex;gap:6px;">
+                <button type="button" class="btn-cancel" onclick="gcSaveImage()">⬇️ 저장</button>
+                <button type="button" class="btn-save" id="gcImgShare" onclick="gcShare()">📤 공유</button>
+            </div>
         </div>
     </div>
 </div>
@@ -5259,13 +5338,15 @@
         const ev = schedEvents.find(x => x.id === id);
         if (!ev) return;
         const m = typeMeta(ev.type), h = eventHeadline(ev);
+        const gc = isResultCard(ev);   // 🏟️ v2.96.0: 결과가 적힌 경기는 맨 위에 점수판
         const row = (k, v) => v ? `<div class="ev-detail-row"><div class="k">${k}</div><div class="v">${escapeHtml(v)}</div></div>` : '';
         document.getElementById('eventDetailBody').innerHTML = `
             <div class="ev-detail-head" style="--ev:${m.c}">
                 <div class="ev-detail-date">${fmtKDate(ev.date)} · ${escapeHtml(timeText(ev))}${ddayLabel(ev.date) ? ' · ' + ddayLabel(ev.date) : ''}</div>
                 <div class="ev-detail-title">${m.i} ${escapeHtml(h.title || ev.type)} ${h.vs ? `<span class="ev-vs">${escapeHtml(h.vs)}</span>` : ''}</div>
             </div>
-            ${row('구분', ev.type)}${row('결과', (function () { const r = parseResult(ev); return r ? ((r.label === '승' ? '승리' : r.label === '패' ? '패배' : '무승부') + (r.score ? ' ' + r.score : '')) : ''; })())}${placeRowHtml(ev)}${row('대상', targetText(ev))}${row('집합/출발', ev.meet)}${row('복장', ev.dress)}${row('메모', ev.memo)}
+            ${gc ? gcScoreHtml(ev) + gcActsHtml(ev) : ''}
+            ${row('구분', ev.type)}${gc ? '' : row('결과', (function () { const r = parseResult(ev); return r ? ((r.label === '승' ? '승리' : r.label === '패' ? '패배' : '무승부') + (r.score ? ' ' + r.score : '')) : ''; })())}${placeRowHtml(ev)}${row('대상', targetText(ev))}${row('집합/출발', ev.meet)}${row('복장', ev.dress)}${row('메모', ev.memo)}
             ${canEditSchedule() && ev.updated ? `<div class="form-hint" style="margin-top:8px;">최종 수정: ${escapeHtml(ev.updated)}</div>` : ''}`;
         const btns = [`<button class="btn-cancel" onclick="closeModal('eventDetailModal')">닫기</button>`];
         const right = [`<button class="btn-cancel" onclick="icsSaveEvent('${escapeHtml(ev.id)}')">📅 캘린더</button>`, `<button class="btn-cancel" onclick="copyEventText('${escapeHtml(ev.id)}')">📋 복사</button>`];   // v2.95.0: 📅 내 캘린더에 담기
@@ -5276,6 +5357,7 @@
         document.getElementById('eventDetailBtns').innerHTML = btns.join('') + `<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">${right.join('')}</div>`;
         document.getElementById('eventDetailModal').style.display = 'flex';
         drawDetailMap();   // v2.42.0: 창이 보인 뒤에 지도
+        if (gc) setTimeout(() => { gcPosterBlob(ev).catch(() => {}); }, 300);   // 📤 공유를 누르면 바로 공유 창이 뜨게 이미지를 미리 만들어 둠
     }
     function copyEventText(id) {
         const ev = schedEvents.find(x => x.id === id);
@@ -5389,10 +5471,252 @@
                 <span class="sr-nums"><span class="sr-w">${w}<small>승</small></span><span class="sr-l">${l}<small>패</small></span>${d ? `<span class="sr-d">${d}<small>무</small></span>` : ''}<span class="sr-d">${pct}<small>승률</small></span></span>
                 <span class="sr-form" aria-label="최근 경기">${recent.slice(0, 5).reverse().map(ev => { const r = parseResult(ev); return `<i class="${r.k}">${r.label}</i>`; }).join('')}</span>
             </div>
-            <div class="sr-more">${recent.slice(0, 8).map(ev => { const h = eventHeadline(ev); return `<button type="button" class="sr-game" onclick="openEventDetail('${escapeHtml(ev.id)}')"><span class="d">${escapeHtml(fmtMD(ev.date))}</span><span class="t">${escapeHtml(h.title || ev.type)}${h.vs ? ' ' + escapeHtml(h.vs) : ''}</span>${resultBadge(ev)}</button>`; }).join('')}
+            <div class="sr-more">${gcSeasonListHtml(recent)}
                 <div class="sr-sub">결과가 적힌 경기 ${games.length}개 기준${scored ? ` · 득점 ${rf} · 실점 ${ra}` : ''} · 결과는 대표님 · 총무님이 일정에 적어 주세요</div></div>`;
         el.classList.toggle('open', seasonRecOpen);
         el.classList.add('on');
+    }
+
+    // ==========================================================
+    // 🏟️ v2.96.0: 경기 결과 카드 — 일정의 대회명 · 상대팀 · 장소 · 「결과」(예: 승 12:4)만으로 그림 → 서버 · 시트 호출 없음
+    //   A 일정 상세 맨 위 점수판 · B 시즌 기록을 펼치면 대회별 결과 띠 · C 이긴 날(당일 · 다음 날) 축하 카드 · D 공유용 이미지 1080×1350
+    //   - 대회명에 「박찬호기 E조」처럼 조를 적으면 조 표시 · 상대팀에 「합덕초(충남)」처럼 괄호로 지역을 적으면 지역 표시
+    //   - 이미지는 이 기기에서 바로 만듦(캔버스) → 휴대폰 공유 창(카톡 포함)으로 넘기거나 저장
+    // ==========================================================
+    const GC_HOME = { name: '대연초', region: '부산', color: '#13284d', dot: '#4f8cff' };
+    const GC_OPP_COLORS = ['#6d3fc0', '#0f7a6a', '#a12d4a', '#2c6e2f', '#b45309', '#1d6fa5', '#7a3e9d', '#0e7490'];
+    function gcOpp(ev) {
+        const raw = String((ev && ev.opponent) || '').trim();
+        const m = raw.match(/^(.*?)\s*[\(（]\s*([^\)）]+?)\s*[\)）]\s*$/);
+        const name = (m ? m[1] : raw).trim() || '상대팀';
+        let h = 0; for (const ch of name) h = (h * 31 + ch.codePointAt(0)) >>> 0;
+        return { name: name, region: m ? m[2] : '', color: GC_OPP_COLORS[h % GC_OPP_COLORS.length] };
+    }
+    // 대회명 → { cup: 조를 뺀 대회명, grp: 'E조' }
+    function gcCup(ev) {
+        let grp = '';
+        let t = String((ev.title && ev.title !== ev.type) ? ev.title : '').trim()
+            .replace(/(^|[\s·,\/\-])([A-Za-z]|\d{1,2})\s*조(?=$|[\s·,\/\-\)])/, (a, p, g) => { grp = g.toUpperCase() + '조'; return p; })
+            .replace(/[\s·,\/\-]+$/, '').replace(/\s{2,}/g, ' ').trim();
+        return { cup: t || ev.type, grp: grp };
+    }
+    // 같은 대회끼리 묶는 이름 — 끝에 붙은 단계(리그전 · 예선 · 8강 · 결승 …)는 빼고 · 연습시합은 하나로
+    function gcGroup(ev) {
+        if (ev.type === '연습시합') return { k: '연습시합', label: '연습시합' };
+        let label = gcCup(ev).cup;
+        for (let i = 0; i < 3; i++) label = label.replace(/\s+(리그전|리그|예선전?|본선|준준결승|준결승|결승전?|\d+강전?|\d+차전|\d+경기)$/, '');
+        return { k: label.replace(/\s+/g, ''), label: label };
+    }
+    function gcTally(list) {
+        let w = 0, l = 0, d = 0;
+        list.forEach(x => { const r = parseResult(x); if (!r) return; if (r.k === 'win') w++; else if (r.k === 'lose') l++; else d++; });
+        return { n: w + l + d, text: [w ? w + '승' : '', l ? l + '패' : '', d ? d + '무' : ''].filter(Boolean).join(' ') || '0승' };
+    }
+    // 같은 해 같은 대회에서 이 경기까지의 성적
+    function gcTour(ev) {
+        const k = gcGroup(ev).k, yr = String(ev.date).slice(0, 4);
+        const t = gcTally(schedEvents.filter(x => String(x.date).slice(0, 4) === yr && isGameEvent(x) && gcGroup(x).k === k &&
+            (x.date < ev.date || (x.date === ev.date && String(x.start || '') <= String(ev.start || '')))));
+        return t.n >= 2 ? (ev.type === '대회' ? '이번 대회 ' : '올해 연습시합 ') + t.text : '';
+    }
+    function gcScore(ev) { const r = parseResult(ev), sm = r && String(r.score || '').match(/^(\d+):(\d+)$/); return sm ? [sm[1], sm[2]] : null; }
+    function gcBandText(r, grp) { return (grp ? `[${grp}] ` : '') + (r.k === 'win' ? GC_HOME.name + ' 승리!' : r.k === 'lose' ? '아쉬운 패배' : '무승부'); }
+    function isResultCard(ev) { return !!ev && isGameEvent(ev) && !!parseResult(ev); }
+
+    // A · C 점수판 (short = 축하 카드처럼 작은 자리)
+    function gcScoreHtml(ev, short) {
+        const r = parseResult(ev); if (!r) return '';
+        const o = gcOpp(ev), c = gcCup(ev), sc = gcScore(ev), tour = gcTour(ev);
+        const meta = [c.grp, ev.start || '', ev.place ? venueLabel(ev.place) : ''].filter(Boolean).join(' · ');
+        const team = (nm, dot, sub, dim) => `<div class="gc-team${dim ? ' dim' : ''}"><span class="nm"><i style="background:${dot}"></i>${escapeHtml(nm)}</span><span class="sub">${sub}</span></div>`;
+        const win = '<em>승</em>';
+        return `<div class="gc-sb ${r.k}">
+                <div class="gc-cup">${escapeHtml(c.cup)}${short && c.grp ? ' · ' + c.grp : ''}</div>
+                ${!short && meta ? `<div class="gc-meta">${escapeHtml(meta)}</div>` : ''}
+                <div class="gc-row">
+                    ${team(GC_HOME.name, GC_HOME.dot, r.k === 'win' ? win + ' · ' + GC_HOME.region : GC_HOME.region, r.k === 'lose')}
+                    ${sc ? `<div class="gc-score"><span class="${r.k === 'lose' ? 'lo' : ''}">${sc[0]}</span><span class="c">:</span><span class="${r.k === 'win' ? 'lo' : ''}">${sc[1]}</span></div>`
+                         : `<div class="gc-score word">${r.label === '승' ? '승리' : r.label === '패' ? '패배' : '무승부'}</div>`}
+                    ${team(o.name, o.color, (r.k === 'lose' ? win + (o.region ? ' · ' : '') : '') + escapeHtml(o.region), r.k === 'win')}
+                </div>
+                <div class="gc-band">${escapeHtml(gcBandText(r, ''))}${tour ? `<small>${escapeHtml(tour)}</small>` : ''}</div>
+            </div>`;
+    }
+    function gcActsHtml(ev) {
+        const id = escapeHtml(ev.id);
+        return `<div class="gc-acts"><button type="button" class="gc-btn" onclick="gcImageOpen('${id}')">🖼️ 결과 이미지</button><button type="button" class="gc-btn kakao" onclick="gcShare('${id}')">📤 공유하기</button></div>`;
+    }
+
+    // B 결과 띠 한 줄 (누르면 일정 상세 = 점수판)
+    function gcStripHtml(ev) {
+        const r = parseResult(ev), o = gcOpp(ev), c = gcCup(ev), sc = gcScore(ev);
+        return `<button type="button" class="gc-strip ${r.k}" style="--oc:${o.color}" onclick="openEventDetail('${escapeHtml(ev.id)}')">
+                <span class="gs-top"><span class="gs-t us">${GC_HOME.name}</span><span class="gs-s">${sc ? `<b class="${r.k === 'lose' ? 'lo' : ''}">${sc[0]}</b><i>:</i><b class="${r.k === 'win' ? 'lo' : ''}">${sc[1]}</b>` : `<b>${r.label}</b>`}</span><span class="gs-t op">${o.region ? `<small>${escapeHtml(o.region)}</small>` : ''}${escapeHtml(o.name)}</span></span>
+                <span class="gs-bot">${escapeHtml(gcBandText(r, c.grp))}<small>${escapeHtml(fmtMD(ev.date))}</small></span>
+            </button>`;
+    }
+    let srCup = '', srAll = false, srGroupKeys = [];
+    function srPick(i) { srCup = i < 0 ? '' : (srGroupKeys[i] || ''); srAll = false; renderSeasonRecord(); }
+    function gcSeasonListHtml(recent) {
+        const groups = [], gi = {};
+        recent.forEach(ev => { const g = gcGroup(ev); if (!(g.k in gi)) { gi[g.k] = groups.length; groups.push({ k: g.k, label: g.label, list: [] }); } groups[gi[g.k]].list.push(ev); });
+        if (srCup && !(srCup in gi)) srCup = '';
+        srGroupKeys = groups.map(g => g.k);
+        const chips = groups.length > 1 ? `<div class="gs-chips"><button type="button" class="${srCup ? '' : 'on'}" onclick="srPick(-1)">전체</button>${groups.map((g, i) => `<button type="button" class="${srCup === g.k ? 'on' : ''}" onclick="srPick(${i})">${escapeHtml(g.label)}</button>`).join('')}</div>` : '';
+        const shown = srCup ? groups.filter(g => g.k === srCup) : groups;
+        let left = (srAll || srCup) ? Infinity : 10, total = 0;
+        const body = shown.map(g => {
+            total += g.list.length;
+            if (left <= 0) return '';
+            const L = g.list.slice(0, left); left -= L.length;
+            const grps = Array.from(new Set(g.list.map(x => gcCup(x).grp).filter(Boolean)));
+            return `<div class="gs-grp"><span>${escapeHtml(g.label)}</span><small>${gcTally(g.list).text}${grps.length ? ' · ' + escapeHtml(grps.join(' · ')) : ''}</small></div>` + L.map(gcStripHtml).join('');
+        }).join('');
+        const more = left <= 0 && total > 10 && !srAll && !srCup ? `<button type="button" class="gs-more" onclick="srAll=true;renderSeasonRecord()">＋ 결과 ${total}경기 모두 보기</button>` : '';
+        return chips + body + more;
+    }
+
+    // D 공유용 이미지 (1080×1350) — 캔버스로 그림 · 같은 경기는 한 번 만든 걸 다시 씀 (공유 창이 바로 뜨게)
+    const gcImgCache = {};
+    function gcImgKey(ev) { return [ev.id, ev.result, ev.title, ev.opponent, ev.place, ev.start, ev.date].join('|'); }
+    function gcBkImage(r) {
+        return new Promise(res => {
+            try {
+                const v = getComputedStyle(document.documentElement).getPropertyValue(r.k === 'win' ? '--bk-win' : '--bk-cheer');
+                const m = v.match(/url\(\s*["']?(data:[^"')]+)["']?\s*\)/);
+                if (!m) return res(null);
+                const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = m[1];
+            } catch (e) { res(null); }
+        });
+    }
+    function gcPosterBlob(ev) {
+        const key = gcImgKey(ev);
+        if (gcImgCache[key]) return gcImgCache[key].p;
+        const p = gcBkImage(parseResult(ev)).then(bk => new Promise((res, rej) => {
+            const W = 1080, H = 1350, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+            const x = cv.getContext('2d'), F = '"Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif';
+            const r = parseResult(ev), o = gcOpp(ev), c = gcCup(ev), sc = gcScore(ev), tour = gcTour(ev);
+            const font = (w, s) => { x.font = `${w} ${s}px ${F}`; };
+            const text = (t, X, Y, col, align) => { x.fillStyle = col; x.textAlign = align || 'center'; x.fillText(t, X, Y); };
+            const fit = (t, w, s, maxW) => { font(w, s); while (s > 20 && x.measureText(t).width > maxW) { s -= 2; font(w, s); } return s; };
+            // 배경: 밤 경기장 남색 + 위쪽 조명 + 빗살
+            let g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#13284d'); g.addColorStop(.55, '#0b1a33'); g.addColorStop(1, '#070f1f');
+            x.fillStyle = g; x.fillRect(0, 0, W, H);
+            [[190, 0], [890, 0]].forEach(([cx, cy]) => { const rg = x.createRadialGradient(cx, cy, 0, cx, cy, 620); rg.addColorStop(0, 'rgba(120,160,255,.42)'); rg.addColorStop(1, 'rgba(120,160,255,0)'); x.fillStyle = rg; x.fillRect(0, 0, W, H); });
+            x.save(); x.strokeStyle = 'rgba(255,255,255,.035)'; x.lineWidth = 22;
+            for (let i = -H; i < W + H; i += 54) { x.beginPath(); x.moveTo(i, 0); x.lineTo(i - H * 0.47, H); x.stroke(); }
+            x.restore();
+            x.strokeStyle = 'rgba(245,197,66,.55)'; x.lineWidth = 3; x.strokeRect(35, 35, W - 70, H - 70);
+            // 대회명 (두 줄까지)
+            x.textBaseline = 'alphabetic';
+            let cup = c.cup, lines = [cup];
+            font(900, 66);
+            if (x.measureText(cup).width > 900) {
+                const sp = cup.split(' '); let best = null;
+                for (let i = 1; i < sp.length; i++) { const a = sp.slice(0, i).join(' '), b = sp.slice(i).join(' '), m = Math.max(x.measureText(a).width, x.measureText(b).width); if (!best || m < best.m) best = { a, b, m }; }
+                lines = best ? [best.a, best.b] : [cup];
+            }
+            let y = 150;
+            lines.forEach(l => { fit(l, 900, 66, 900); text(l, W / 2, y, '#f5c542'); y += 80; });
+            const d = dateOf(ev.date);
+            font(900, 38); text(`${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${DOW_KO[d.getDay()]}) 경기 결과`, W / 2, y + 12, '#ffffff');
+            if (c.grp) { font(700, 30); text(c.grp, W / 2, y + 62, '#b9c6dc'); }
+            // 두 팀 + 점수
+            const ty = 560, lose = r.k === 'lose', win = r.k === 'win';
+            const teamDraw = (cx, nm, rg, col, dim) => {
+                x.save(); x.globalAlpha = dim ? .72 : 1;
+                x.shadowColor = 'rgba(0,0,0,.35)'; x.shadowBlur = 30; x.shadowOffsetY = 14;
+                x.beginPath(); x.arc(cx, ty - 40, 82, 0, Math.PI * 2); x.fillStyle = col; x.fill();
+                x.shadowColor = 'transparent'; x.lineWidth = 8; x.strokeStyle = 'rgba(255,255,255,.85)'; x.stroke();
+                const badge = nm.replace(/초(등학교)?$/, '').slice(0, 2) || nm.slice(0, 2);
+                fit(badge, 900, 56, 120); x.textBaseline = 'middle'; text(badge, cx, ty - 38, '#ffffff'); x.textBaseline = 'alphabetic';
+                fit(nm, 900, 70, 300); text(nm, cx, ty + 125, dim ? '#d5deec' : '#ffffff');
+                if (rg) { font(700, 30); text(rg, cx, ty + 175, '#b9c6dc'); }
+                x.restore();
+            };
+            teamDraw(200, GC_HOME.name, GC_HOME.region, GC_HOME.color, lose);
+            teamDraw(880, o.name, o.region, o.color, win);
+            x.textBaseline = 'middle';
+            if (sc) {
+                let s = 190; const parts = () => { font(900, s); const a = x.measureText(sc[0]).width, b = x.measureText(sc[1]).width; font(900, s * .52); const cw = x.measureText(':').width; return { a, b, cw, t: a + b + cw + s * .24 }; };
+                let m = parts(); while (m.t > 440 && s > 80) { s -= 6; m = parts(); }
+                let sx = W / 2 - m.t / 2; const sy = ty + 10;
+                font(900, s); x.textAlign = 'left'; x.fillStyle = lose ? '#7d90b3' : '#ffffff'; x.fillText(sc[0], sx, sy); sx += m.a + s * .12;
+                font(900, s * .52); x.fillStyle = '#7d90b3'; x.fillText(':', sx, sy - s * .05); sx += m.cw + s * .12;
+                font(900, s); x.fillStyle = win ? '#7d90b3' : '#ffffff'; x.fillText(sc[1], sx, sy);
+            } else {
+                fit(r.label === '승' ? '승리' : r.label === '패' ? '패배' : '무승부', 900, 120, 420);
+                text(r.label === '승' ? '승리' : r.label === '패' ? '패배' : '무승부', W / 2, ty + 10, '#ffffff');
+            }
+            x.textBaseline = 'alphabetic';
+            // 결과 띠 (비스듬한 빨간 띠)
+            const band = (c.grp ? `[${c.grp}] ` : '') + (win ? `${GC_HOME.region} ${GC_HOME.name} 승리!` : lose ? `${GC_HOME.name} 아쉬운 패배` : `${GC_HOME.name} 무승부`);
+            const bs = fit(band, 900, 62, 820), bw = Math.max(620, x.measureText(band).width + 130), bh = 140, by = 880;
+            x.save(); x.translate(W / 2, by); x.transform(1, 0, -0.14, 1, 0, 0);
+            x.fillStyle = 'rgba(0,0,0,.35)'; x.fillRect(-bw / 2 + 14, -bh / 2 + 14, bw, bh);
+            x.fillStyle = win ? '#c8102e' : lose ? '#475569' : '#64748b'; x.fillRect(-bw / 2, -bh / 2, bw, bh);
+            x.restore();
+            font(900, bs); x.textBaseline = 'middle'; text(band, W / 2, by + 2, '#ffffff'); x.textBaseline = 'alphabetic';
+            // 시간 · 장소 · 대회 성적
+            const meta = [ev.start || '', ev.place ? venueLabel(ev.place) : ''].filter(Boolean).join(' · ');
+            if (meta) { fit(meta, 700, 34, 900); text(meta, W / 2, 1035, '#d5deec'); }
+            const sub = [tour, targetText(ev) && targetText(ev) !== '전체' ? targetText(ev) : ''].filter(Boolean).join(' · ');
+            if (sub) { fit(sub, 900, 34, 900); text(sub, W / 2, 1095, '#ffffff'); }
+            // 아래: 부캉이 + 팀 이름
+            font(900, 48); const n1 = '대연초등학교 야구부', w1 = x.measureText(n1).width, bkW = bk ? 130 : 0, gx = W / 2 - (bkW + 22 + w1) / 2;
+            if (bk) x.drawImage(bk, gx, 1150, 130, 130 * (bk.naturalHeight / bk.naturalWidth || 1));
+            text(n1, gx + bkW + 22, 1222, '#ffffff', 'left');
+            font(700, 28); text('dybbr.github.io', gx + bkW + 24, 1264, '#9fb0cc', 'left');
+            cv.toBlob(b => b ? res(b) : rej(new Error('toBlob')), 'image/png');
+        }));
+        gcImgCache[key] = { p: p };
+        p.then(b => { gcImgCache[key].blob = b; }).catch(() => { delete gcImgCache[key]; });
+        return p;
+    }
+    function gcFileName(ev) { return `daeyeon-result-${ev.date}${ev.opponent ? '-' + gcOpp(ev).name : ''}.png`; }
+    function gcShareText(ev) {
+        const r = parseResult(ev), o = gcOpp(ev), c = gcCup(ev), sc = gcScore(ev);
+        return [`🏆 ${c.cup}${c.grp ? ' ' + c.grp : ''}`, `${GC_HOME.name} ${sc ? sc[0] + ' : ' + sc[1] : ''} ${o.name} — ${r.k === 'win' ? '승리!' : r.k === 'lose' ? '아쉬운 패배' : '무승부'}`.replace(/\s{2,}/g, ' '),
+                `📅 ${fmtMD(ev.date)}${ev.start ? ' ' + ev.start : ''}${ev.place ? ' · ' + ev.place : ''}`, '대연초 야구부 https://dybbr.github.io/'].join('\n');
+    }
+    let gcImgEv = null, gcImgUrl = '';
+    function gcImageOpen(id) {
+        const ev = schedEvents.find(x => x.id === id);
+        if (!isResultCard(ev)) return;
+        gcImgEv = ev;
+        const img = document.getElementById('gcImg');
+        img.removeAttribute('src');
+        document.getElementById('gcImgShare').style.display = (navigator.canShare && navigator.share) ? '' : 'none';
+        document.getElementById('gcImgModal').style.display = 'flex';
+        gcPosterBlob(ev).then(b => {
+            if (gcImgEv !== ev) return;
+            if (gcImgUrl) URL.revokeObjectURL(gcImgUrl);
+            gcImgUrl = URL.createObjectURL(b); img.src = gcImgUrl;
+        }).catch(() => bkNotify('fail', '이미지를 못 만들었캉', '잠시 후 다시 해 주세요'));
+    }
+    function gcSaveImage() {
+        const ev = gcImgEv; if (!ev) return;
+        gcPosterBlob(ev).then(b => {
+            const url = URL.createObjectURL(b), a = document.createElement('a');
+            a.href = url; a.download = gcFileName(ev); document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 30000);
+            bkNotify('done', '결과 이미지 저장했캉! 🖼️', '안 보이면 이미지를 길게 눌러 저장해 주세요', { ms: 5000 });
+        }).catch(() => bkNotify('fail', '이미지를 못 만들었캉', '잠시 후 다시 해 주세요'));
+    }
+    // 📤 공유: 휴대폰 공유 창으로 이미지 + 글 (카톡 · 문자 …) · 안 되는 기기는 이미지 창을 열어 저장하게
+    async function gcShare(id) {
+        const ev = id ? schedEvents.find(x => x.id === id) : gcImgEv;
+        if (!isResultCard(ev)) return;
+        const c = gcImgCache[gcImgKey(ev)];
+        let blob = c && c.blob;
+        try { if (!blob) blob = await gcPosterBlob(ev); } catch (e) { bkNotify('fail', '이미지를 못 만들었캉', '잠시 후 다시 해 주세요'); return; }
+        const file = new File([blob], gcFileName(ev), { type: 'image/png' });
+        if (navigator.canShare && navigator.share && navigator.canShare({ files: [file] })) {
+            try { await navigator.share({ files: [file], text: gcShareText(ev) }); return; }
+            catch (e) { if (e && e.name === 'AbortError') return; }
+        }
+        copyText(gcShareText(ev), '결과 글 복사했캉! 📋', '이미지를 저장해서 단톡방에 같이 올려 주세요');
+        if (document.getElementById('gcImgModal').style.display !== 'flex') gcImageOpen(ev.id);
     }
 
     // ==========================================================
@@ -8345,29 +8669,46 @@
         window.addEventListener('resize', upd);
     })();
 
-    // ---- 1️⃣1️⃣ 승리 축하 (하루 한 번)
+    // ---- 1️⃣1️⃣ 승리 축하 — v2.96.0: 이긴 경기 당일 · 다음 날 처음 들어올 때 결과 카드로 한 번 (경기마다 기기별 한 번)
     function maybeCelebrate() {
         if (!schedLoaded) return;
-        const t = ymdOf(bkNow()), g = gameWithResult(t);
-        if (!g || parseResult(g).k !== 'win') return;
-        const key = 'daeyeon_cf_' + g.id + '_' + t;
-        try { if (localStorage.getItem(key)) return; localStorage.setItem(key, '1'); } catch (e) {}
+        const t = ymdOf(bkNow()), y = ymdOf(new Date(bkNow().getTime() - 86400000));
+        const wins = gamesOn(t).concat(gamesOn(y).reverse()).filter(ev => { const r = parseResult(ev); return r && r.k === 'win'; });
+        let g = null;
+        try { g = wins.find(ev => !localStorage.getItem('daeyeon_gc_' + ev.id) && !localStorage.getItem('daeyeon_cf_' + ev.id + '_' + t)) || null; } catch (e) { g = wins[0] || null; }
+        if (!g) return;
+        try { localStorage.setItem('daeyeon_gc_' + g.id, '1'); } catch (e) {}
         showCelebrate(g);
     }
     function showCelebrate(g) {
-        const r = parseResult(g) || {};
         const layer = document.createElement('div');
         layer.className = 'cf-layer';
         const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         const colors = ['#c8102e', '#0b2240', '#3e9bea', '#ffd23f', '#ff7aa2', '#8ee6c6'];
         let cf = '';
         if (!reduce) for (let i = 0; i < 44; i++) cf += `<span class="cf" style="left:${(Math.random() * 100).toFixed(1)}%;background:${colors[i % colors.length]};--delay:${(Math.random() * 1.2).toFixed(2)}s;--dur:${(2.4 + Math.random() * 1.6).toFixed(2)}s"></span>`;
-        layer.innerHTML = cf + `<div class="cf-box"><span class="bk-img bk-v-win" aria-hidden="true"></span><b>${fmtMD(g.date)} ${g.opponent ? 'vs ' + escapeHtml(g.opponent) + ' ' : ''}승리! 🎉</b>${r.score ? `<small>${escapeHtml(r.score)}</small>` : ''}<small>화면을 누르면 닫혀요</small></div>`;
+        const id = escapeHtml(g.id), today = g.date === ymdOf(bkNow());
+        layer.innerHTML = cf + `<div class="cf-box gc-pop" role="dialog" aria-modal="true" aria-label="경기 결과">
+                <span class="bk-img bk-v-win" aria-hidden="true"></span>
+                <small class="gp-eye">${today ? '오늘' : '어제'} 경기 결과</small>
+                <b class="gp-title">${GC_HOME.name} 승리했캉! 🎉</b>
+                ${gcScoreHtml(g, true)}
+                <small class="gp-msg">${escapeHtml(fmtKDate(g.date))}${g.start ? ' ' + escapeHtml(g.start) : ''}${g.place ? ' · ' + escapeHtml(venueLabel(g.place)) : ''}<br>선수들 · 부모님 모두 수고 많으셨어요!</small>
+                <div class="gp-btns">
+                    <button type="button" class="gc-btn ok" data-act="ok">확인</button>
+                    <button type="button" class="gc-btn img" data-act="img">🖼️ 이미지</button>
+                    <button type="button" class="gc-btn kakao" data-act="share">📤 공유</button>
+                </div>
+            </div>`;
         const close = () => { layer.classList.add('out'); setTimeout(() => layer.remove(), 450); };
-        layer.onclick = close;
+        layer.onclick = function (e) {
+            const b = e.target.closest && e.target.closest('[data-act]');
+            if (b) { const a = b.dataset.act; if (a === 'img') gcImageOpen(g.id); else if (a === 'share') gcShare(g.id); close(); return; }
+            if (e.target === layer || (e.target.classList && e.target.classList.contains('cf'))) close();
+        };
         document.body.appendChild(layer);
         bkSfx('fanfare');   // 🎺 (휴대폰은 화면을 한 번이라도 누른 뒤여야 소리가 남)
-        setTimeout(() => { if (layer.parentNode) close(); }, 6500);
+        setTimeout(() => { gcPosterBlob(g).catch(() => {}); }, 400);   // 📤 공유가 바로 되게 이미지 미리 만들기
     }
 
     // ---- 로그인 뒤 한 번: 날씨·일정을 기다렸다가 표정을 정하고 말을 건넴
@@ -9794,6 +10135,13 @@
     //   ⚠️ 이 내용은 페이지 소스에 그대로 들어가므로 비밀번호·로그인 코드 같은 민감한 내용은 적지 않는다.
     // ==========================================================
     const UPDATE_HISTORY = [
+        { v: 'v2.96.0', d: '2026-10-27', t: '🏟️ 경기 결과 카드 · 결과 이미지 공유', items: [
+            '결과가 적힌 경기를 누르면 맨 위에 점수판(대회명 · 조 · 시간 · 장소 · 승리 띠 · 이번 대회 성적)',
+            '🏆 시즌 기록을 펼치면 대회별로 결과 띠가 쌓임 — 위쪽 이름표로 대회만 골라 보기 · 띠를 누르면 그 경기 점수판',
+            '🎉 이긴 날 축하 카드: 경기 당일 · 다음 날 처음 들어올 때 점수판과 함께 한 번 (경기마다 기기별 한 번)',
+            '🖼️ 결과 이미지(1080×1350)를 휴대폰에서 바로 만들어 저장하거나 📤 공유(카톡 등) — 서버 · 시트 호출 없음',
+            '대회명에 「박찬호기 E조」처럼 조를 적으면 조가, 상대팀에 「합덕초(충남)」처럼 괄호로 지역을 적으면 지역이 같이 나옴'
+        ] },
         { v: 'v2.95.1', d: '2026-10-27', t: '🔒 비밀번호 6자 이상', items: [
             '비밀번호 관리에서 새 비밀번호는 6~20자로 (예전 4자) — 지금 쓰는 비밀번호는 그대로 로그인됨',
             '서버 v2.38.0과 함께: 날짜로 만드는 개발자 코드 없앰 · 코드에 적힌 기본 비밀번호 없앰 · 기기와 상관없이 잘못된 로그인이 많으면 비밀번호 로그인을 10분 멈춤 (휴대폰 번호 로그인은 그대로)'
