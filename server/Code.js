@@ -1,5 +1,5 @@
 // ==========================================================
-// ⚾ 대연초 야구부 관리 시스템 통합 백엔드 API (v2.39.0)
+// ⚾ 대연초 야구부 관리 시스템 통합 백엔드 API (v2.40.0)
 // ==========================================================
 // ★ API_KEY 는 코드에 적지 않고 「프로젝트 설정 → 스크립트 속성」의 API_KEY 에 넣어 둡니다 (v2.36.0~).
 //   값은 index.html / player.html 의 API_KEY 와 "같은 값"이어야 합니다. 속성이 비어 있으면 모든 요청을 거절합니다.
@@ -187,6 +187,7 @@ function issueSession(role, name, scope, extra) {
   var ttl = roleTtl(role);
   var obj = { role: role, name: name || roleName(role), scope: scope || [], exp: Date.now() + ttl * 1000 };
   if (extra && extra.rel) obj.rel = extra.rel;   // v2.11.0: 접속 알림에 「김승원 아버님」
+  if (extra && extra.phone) obj.phone = String(extra.phone);   // v2.40.0: 수정할 때 등록 확인(노란 칸) 여부를 다시 보려고
   sessionCache().put("S_" + token, JSON.stringify(obj), ttl);
   var out = { result: "success", token: token, role: role, name: obj.name, scope: obj.scope, exp: obj.exp };
   if (extra) for (var k in extra) out[k] = extra[k];
@@ -490,15 +491,19 @@ function rateOk(bucket, max, windowSec) {
 // 🔐 로그인 (관리자 비번 / 개발자 비번 / 익명코드 / 학부모 휴대폰)
 //   - 비번은 서버(Script Properties)에만 있고, 성공해야만 토큰을 돌려준다.
 //   - 휴대폰 로그인: 최소 8자리 + 뒷자리 일치. (끝 4자리 추측 로그인 차단)
-//   - clientId 기준 레이트리밋으로 비번/번호 대입을 막는다.
+//   - 기기(clientId · 기기 확인표) 기준 + 전체 실패 기준(v2.40.0 보호 모드)으로 비번/번호 대입을 막는다.
 // ==========================================================
 // 로그인 "실패" 횟수 제한: 같은 기기에서 첫 실패 후 10분 안에 10번 틀리면 남은 시간 동안 잠금.
 //   - 성공한 로그인은 횟수에 안 들어가고, 성공하면 바로 초기화된다.
 //   - 잠금은 첫 실패 시점부터 정확히 10분 뒤 자동 해제 (계속 눌러도 시간이 늘어나지 않음).
 var LOGIN_FAIL_MAX = 10, LOGIN_FAIL_WINDOW = 600;
-// 🔒 v2.38.0: 기기 번호(clientId)는 앱이 보내는 값이라 바꿔 가며 시도할 수 있음 → 기기와 상관없이 「전체」 실패도 셈.
-//   10분 동안 전체 실패가 60번을 넘으면 남은 시간 동안 비밀번호(관리자 · 일반 열람) 확인을 건너뜀 — 휴대폰 번호 로그인은 그대로
-var LOGIN_GFAIL_MAX = 60;
+// 🔒 v2.40.0: 기기 번호(clientId)는 앱이 보내는 값이라 바꿔 가며 시도하면 위 제한을 피할 수 있음 → 기기와 상관없이 「전체」 실패로 막음
+//   - 10분 동안 전체 실패가 40번이 되면 「보호 모드」 3시간: 처음 보는 기기는 비밀번호 · 휴대폰 번호를 아예 확인하지 않음 (시트도 안 읽음)
+//   - 전에 로그인에 성공한 기기는 「기기 확인표」(서버 서명, 180일)를 갖고 있어 보호 모드에서도 그대로 로그인 — 학부모 · 집행부는 평소처럼
+//     (확인표마다 10분 10번 실패 제한 · 기기 번호를 바꿔도 확인표는 하나라 소용없음)
+//   - 일반 열람 코드(1922)는 비밀이 아니라 보호 모드에서도 그대로 (확인표는 안 줌)
+//   - 예전(v2.38.0)의 「전체 60번이면 비밀번호만 멈추고 휴대폰 번호는 계속 확인」은 휴대폰 번호를 끝없이 대입할 수 있어 바꿈
+var LOGIN_GFAIL_MAX = 40, LOGIN_GUARD_SEC = 10800, LOGIN_TICKET_DAYS = 180;
 function loginGlobalState() {
   try { var o = JSON.parse(sessionCache().get("LFG") || "null"); if (o && Date.now() < o.until) return o; } catch (e) {}
   return null;
@@ -508,7 +513,32 @@ function loginGlobalAdd() {
     var o = loginGlobalState() || { n: 0, until: Date.now() + LOGIN_FAIL_WINDOW * 1000 };
     o.n++;
     sessionCache().put("LFG", JSON.stringify(o), Math.max(1, Math.ceil((o.until - Date.now()) / 1000)));
+    if (o.n >= LOGIN_GFAIL_MAX && !loginGuardUntil()) sessionCache().put("LGUARD", String(Date.now() + LOGIN_GUARD_SEC * 1000), LOGIN_GUARD_SEC);
   } catch (e) {}
+}
+function loginGuardUntil() {
+  try { var t = Number(sessionCache().get("LGUARD") || 0); return (t && Date.now() < t) ? t : 0; } catch (e) { return 0; }
+}
+
+// 🎫 기기 확인표: "아이디.만료.서명" — 서명 열쇠는 스크립트 속성 LOGIN_TICKET_KEY (없으면 처음 한 번 자동으로 만듦 · 공개 코드에 없음)
+//   아이디는 보호자면 휴대폰 번호를 섞은 값(번호 자체는 안 들어감), 관리자면 역할 이름
+function ticketKey() {
+  var props = PropertiesService.getScriptProperties();
+  var k = props.getProperty("LOGIN_TICKET_KEY");
+  if (!k) { k = Utilities.getUuid() + Utilities.getUuid(); props.setProperty("LOGIN_TICKET_KEY", k); }
+  return k;
+}
+function b64url(bytes) { return Utilities.base64EncodeWebSafe(bytes).replace(/=+$/, ""); }
+function ticketSign(body) { return b64url(Utilities.computeHmacSha256Signature(body, ticketKey())).slice(0, 32); }
+function makeTicket(role, phone) {
+  var id = role === "parent" ? "p" + b64url(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, "dy-ph-" + String(phone || ""))).slice(0, 12) : "r" + role;
+  var body = id + "." + (Date.now() + LOGIN_TICKET_DAYS * 86400000).toString(36);
+  return body + "." + ticketSign(body);
+}
+function ticketId(t) {   // 맞는 확인표면 아이디, 아니면 ""
+  var m = String(t || "").match(/^([A-Za-z0-9_-]{2,20})\.([0-9a-z]{6,12})\.([A-Za-z0-9_-]{32})$/);
+  if (!m || parseInt(m[2], 36) < Date.now()) return "";
+  return ticketSign(m[1] + "." + m[2]) === m[3] ? m[1] : "";
 }
 
 function loginFailState(clientId) {
@@ -525,29 +555,39 @@ function loginFailClear(clientId) { sessionCache().remove("LF2_" + clientId); }
 
 function handleLogin(ss, data) {
   var clientId = cleanText(data.clientId, 40) || "-";
-  var fs = loginFailState(clientId);
+  var tid = "";
+  try { tid = ticketId(data.ticket); } catch (eT) {}
+  var failKey = tid ? "T_" + tid : clientId;   // 확인표가 있으면 확인표 단위로, 없으면 기기 번호 단위로 셈
+  var fs = loginFailState(failKey);
   if (fs && fs.n >= LOGIN_FAIL_MAX) {
     var mins = Math.max(1, Math.ceil((fs.until - Date.now()) / 60000));
     return json({ result: "error", locked: true, message: "로그인을 " + LOGIN_FAIL_MAX + "번 틀려 잠시 잠겼습니다. 약 " + mins + "분 뒤 다시 시도해 주세요." });
   }
-  var gs = loginGlobalState(), pwPaused = !!(gs && gs.n >= LOGIN_GFAIL_MAX);
-  var res = handleLoginInner(ss, data, pwPaused);
+  var guard = loginGuardUntil();
+  if (guard && !tid) {
+    var props0 = PropertiesService.getScriptProperties();
+    if (String(data.code || "").trim() === (props0.getProperty("GUEST_CODE") || "1922")) return issueSession("guest", "일반 열람자", []);
+    var gm = Math.max(1, Math.ceil((guard - Date.now()) / 60000));
+    return json({ result: "error", locked: true, message: "잘못된 로그인 시도가 많아 처음 로그인하는 기기는 약 " + (gm >= 60 ? Math.ceil(gm / 60) + "시간" : gm + "분") + " 동안 막아 두었어요. 전에 이 기기로 로그인했다면 그대로 됩니다. 급하면 대표님 · 총무님께 문의해 주세요." });
+  }
+  var res = handleLoginInner(ss, data);
   try {
     var body = JSON.parse(res.getContent ? res.getContent() : JSON.stringify(res));
-    if (body && body.result === "success") loginFailClear(clientId);
-    else if (!body.grad) {
-      loginFailAdd(clientId);
-      loginGlobalAdd();
-      if (pwPaused) {
-        var gm = Math.max(1, Math.ceil((gs.until - Date.now()) / 60000));
-        return json({ result: "error", locked: true, message: "잘못된 로그인 시도가 많아 비밀번호 로그인을 약 " + gm + "분 동안 멈췄습니다. 휴대폰 번호 로그인은 됩니다." });
+    if (body && body.result === "success") {
+      loginFailClear(failKey);
+      if (body.role !== "guest") {   // 🎫 성공한 기기에 확인표 (일반 열람자 제외)
+        body.ticket = makeTicket(body.role, body.phone);
+        return json(body);
       }
+    } else if (!body.grad) {
+      loginFailAdd(failKey);
+      loginGlobalAdd();
     }
   } catch (e) {}
   return res;
 }
 
-function handleLoginInner(ss, data, pwPaused) {
+function handleLoginInner(ss, data) {
   var code = String(data.code || "").trim();
   if (!code) return json({ result: "error", message: "입력값이 없습니다." });
 
@@ -556,8 +596,7 @@ function handleLoginInner(ss, data, pwPaused) {
   var devPw = devPassword();   // 🔒 v2.38.0: 개발자는 스크립트 속성 ADMIN_PW_DEV 만 (날짜 코드 없음)
 
   var role = null;
-  if (pwPaused) { /* 🔒 v2.38.0: 전체 실패가 많을 때는 비밀번호 확인을 건너뛰고 휴대폰 번호만 */ }
-  else if (devPw && code === devPw) role = "dev";
+  if (devPw && code === devPw) role = "dev";
   else if (pws.super && code === pws.super) role = "super";
   else if (pws.sub && code === pws.sub) role = "sub";
   else if (pws.general && code === pws.general) role = "general";
@@ -566,7 +605,7 @@ function handleLoginInner(ss, data, pwPaused) {
   if (role) return issueSession(role, roleName(role), []);
 
   var guestCode = props.getProperty("GUEST_CODE") || "1922";
-  if (!pwPaused && code === guestCode) return issueSession("guest", "일반 열람자", []);
+  if (code === guestCode) return issueSession("guest", "일반 열람자", []);
 
   var digits = code.replace(/[^0-9]/g, "");
   if (digits.length >= 8) {
@@ -593,7 +632,7 @@ function matchParents(ss, digits) {
       var col = cols[j][0]; if (col === -1) continue;
       var d = String(v[i][col] || "").replace(/[^0-9]/g, "");
       if (d && d.length >= 8 && d.slice(-digits.length) === digits) {
-        matches.push({ no: noCol !== -1 ? (parseInt(v[i][noCol], 10) || 0) : 0, name: nameCol !== -1 ? String(v[i][nameCol] || "").trim() : "", role: cols[j][1], phone: d });
+        matches.push({ no: noCol !== -1 ? (parseInt(v[i][noCol], 10) || 0) : 0, name: nameCol !== -1 ? String(v[i][nameCol] || "").trim() : "", role: cols[j][1], phone: d, r: i, c: col });
         break;
       }
     }
@@ -601,8 +640,40 @@ function matchParents(ss, digits) {
   if (!matches.length) return null;
   var primary = matches[0];
   var sibs = matches.filter(function (m) { return m.phone === primary.phone; });
+  // 🔒 v2.40.0: 웹으로 처음 등록해 아직 노란 칸(관리자 확인 전)인 자녀는 pending — 보기는 되지만 사진 · 정보 수정은 막음
+  var bg = null;
+  try { bg = cSheet.getDataRange().getBackgrounds(); } catch (eBg) {}
   return { name: sibs.map(function (s) { return s.name; }).join("·"), role: primary.role, phone: primary.phone,
-           scope: sibs.map(function (s) { return { no: s.no, name: s.name }; }) };
+           scope: sibs.map(function (s) { var o = { no: s.no, name: s.name }; if (bg && isPendingBg(bg[s.r] && bg[s.r][s.c])) o.pending = true; return o; }) };
+}
+
+// 🟨 v2.40.0: 최초 등록 미확인 표시 = 노란 배경(#fef9c3, handleRegisterContact 가 칠함) — 관리자가 배경색을 지우면 확인된 것
+var PENDING_BG = "#fef9c3";
+function isPendingBg(c) { return String(c || "").toLowerCase() === PENDING_BG; }
+// 지금 시트 기준으로 그 보호자 번호가 그 선수 줄에서 아직 노란 칸인지 (수정할 때만 읽음 · 번호를 못 찾으면 막음)
+//   phone 이 없으면(v2.40.0 전에 받은 로그인) 그 선수 줄에 노란 칸이 하나라도 있으면 막음
+function contactPending(ss, phone, no, name) {
+  phone = String(phone || "").replace(/[^0-9]/g, "");
+  var cSheet = getContactSheet(ss);
+  if (!cSheet) return true;
+  var rg = cSheet.getDataRange(), v = rg.getValues(), bg = rg.getBackgrounds();
+  var H = v[0].map(function (h) { return String(h).trim(); });
+  var noCol = findColIdx(H, ["배번", "등번호", "번호"]);
+  var nameCol = findColIdx(H, ["선수이름", "이름", "선수명"]);
+  var cols = [findColIdx(H, ["아버님", "아버지"]), findColIdx(H, ["어머님", "어머니"]), findColIdx(H, ["기타연락처", "기타", "추가연락처"]), findColIdx(H, ["학생연락처", "선수연락처"])];
+  for (var i = 1; i < v.length; i++) {
+    var rNo = noCol !== -1 ? (parseInt(v[i][noCol], 10) || 0) : 0;
+    var rName = nameCol !== -1 ? String(v[i][nameCol] || "").trim() : "";
+    if (!((no > 0 && rNo > 0) ? rNo === no : rName === name)) continue;
+    for (var j = 0; j < cols.length; j++) {
+      if (cols[j] === -1) continue;
+      var d = String(v[i][cols[j]] || "").replace(/[^0-9]/g, "");
+      if (!phone) { if (d && isPendingBg(bg[i][cols[j]])) return true; continue; }
+      if (d && d === phone) return isPendingBg(bg[i][cols[j]]);
+    }
+    if (!phone) return false;
+  }
+  return true;
 }
 
 // 역할에 맞게 걸러낸 선수 명단 (비공개 항목/숨김 선수/비공개 사진 서버에서 차단)
@@ -713,6 +784,10 @@ function doPost(e) {
     } else if (a === "uploadPhoto" || a === "deletePhoto" || a === "updatePlayerInfo") {
       var _no = parseInt(data.playerNo, 10) || 0, _nm = cleanText(data.playerName, 30);
       if (!scopeHasPlayer(session, _no, _nm)) return json({ result: "error", message: "본인 자녀 정보만 수정할 수 있습니다." });
+      // 🔒 v2.40.0: 웹으로 처음 등록하고 아직 대표님 · 총무님 확인 전(비상연락망 노란 칸)이면 수정 막음 — 관리자는 그대로
+      if (role === "parent") {
+        if (contactPending(ss, session.phone, _no, _nm)) return json({ result: "error", pending: true, message: "대표님 · 총무님이 등록을 확인한 뒤에 사진 · 정보를 고칠 수 있어요." });
+      }
     } else if (a === "submitOrder") {
       if (!session) return json({ result: "error", message: "인증이 필요합니다." });
       if (!(role === "super" || role === "dev")) data.asAdmin = false;   // 관리자만 마감 후/대리 접수 가능
@@ -1171,7 +1246,7 @@ function doGet(e) {
     if (p.action === "warm") return json(p.part === "check" ? warmCheck() : warmData(ss, String(p.part || "")));   // 🔥 v2.16.0: 로그인 화면에서 미리 데워 두기 (v2.17.0: 세 묶음으로 나눠 동시에)
 
     // 🔐 로그인/로그아웃: GET으로 호출된다(앱스 스크립트는 읽을 수 있는 응답이 GET에서 안정적이라서).
-    if (p.action === "login")  return handleLogin(ss, { code: p.code, clientId: p.clientId });
+    if (p.action === "login")  return handleLogin(ss, { code: p.code, clientId: p.clientId, ticket: p.ticket });   // v2.40.0: 🎫 기기 확인표
     if (p.action === "logout") { dropSession(p.token); return json({ result: "success" }); }
 
     // ✍️ v2.30.0: 최초 등록을 GET 으로도 받음 → 앱이 결과(성공 · 이름/생년월일 불일치 · 이미 다른 번호)를 읽고 그대로 안내

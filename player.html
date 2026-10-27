@@ -269,6 +269,7 @@
             transition: 0.15s;
         }
         .btn-edit-info:hover { background: #0369a1; }
+        .btn-edit-info.pending { bottom: 12px; background: rgba(161, 98, 7, 0.92); }   /* v2.98.0: 등록 확인 전 */
 
         /* 🎨 학년: 고학년일수록 진한 남색 (순서가 있는 값이라 한 가지 색의 진하기로 표현) */
         .grade-tag { display: inline-block; padding: 3px 9px; border-radius: 12px; font-size: 12px; font-weight: 800; white-space: nowrap !important; border: 1px solid transparent; }
@@ -672,6 +673,7 @@
     .btn-upload-photo:hover { background: #236a8e; }
     .btn-edit-info { background: rgba(2,132,199,0.9); color: #f1f4f9; border: 1px solid rgba(255,255,255,0.4); }
     .btn-edit-info:hover { background: #1d5573; }
+    .btn-edit-info.pending, .btn-edit-info.pending:hover { background: rgba(161,98,7,0.92); }
     .grade-staff { background: #383838; color: #f1f4f9; }
     .grade-6 { background: #302331; color: #e78d8d; }
     .grade-5 { background: #444333; color: #e6b699; }
@@ -1048,6 +1050,11 @@
         if (!activeUser || !activeUser.children || !activeUser.children.length) return false;
         return activeUser.children.some(c => (p.no && c.no) ? (c.no === p.no) : (c.name === p.name));
     }
+    // 🟨 v2.98.0: 웹으로 처음 등록하고 아직 대표님 · 총무님 확인 전(비상연락망 노란 칸)인 내 자녀 → 사진 · 정보 수정은 확인 뒤에 (서버 v2.40.0도 막음)
+    function isPendingChild(p) {
+        if (!activeUser || !activeUser.children) return false;
+        return activeUser.children.some(c => c.pending && ((p.no && c.no) ? (c.no === p.no) : (c.name === p.name)));
+    }
 
     let allRosterPlayers = [];
     let currentPlayer = null;
@@ -1295,10 +1302,13 @@
         const card = document.getElementById('profileCard');
         const photoUrl = escapeHtml(getPlayerPhotoUrl(p));
 
-        const uploadBtnHtml = (isSuperOrDev || isParentOfPlayer(p)) ? `
+        const pendingChild = !isSuperOrDev && isPendingChild(p);   // 🟨 v2.98.0: 등록 확인 전이면 수정 버튼 대신 「확인 중」
+        const uploadBtnHtml = (isSuperOrDev || (isParentOfPlayer(p) && !pendingChild)) ? `
             <button type="button" class="btn-upload-photo" id="btnOpenPhotoModal">📷 사진 변경</button>
         ` : '';
-        const editInfoBtnHtml = isParentOfPlayer(p) ? `
+        const editInfoBtnHtml = pendingChild ? `
+            <button type="button" class="btn-edit-info pending" id="btnPendingInfo">⏳ 등록 확인 중</button>
+        ` : isParentOfPlayer(p) ? `
             <button type="button" class="btn-edit-info" id="btnOpenInfoEditModal">✏️ 정보 수정</button>
         ` : '';
 
@@ -1409,6 +1419,8 @@
 
         const openInfoBtn = document.getElementById('btnOpenInfoEditModal');
         if (openInfoBtn) openInfoBtn.addEventListener('click', function () { openPlayerInfoEditModal(p); });
+        const pendBtn = document.getElementById('btnPendingInfo');
+        if (pendBtn) pendBtn.addEventListener('click', function () { bkNotify('info', '등록 확인을 기다리고 있캉!', '대표님 · 총무님이 비상연락망 등록을 확인하면 사진 · 정보를 고칠 수 있어요. 확인 뒤 다시 로그인해 주세요.', { ms: 7000 }); });
 
         notice.style.display = 'none';
         card.style.display = 'flex';
