@@ -2951,6 +2951,20 @@
         body:has(input:focus, textarea:focus, select:focus) .main-tabs { display: none !important; }   /* 글자 칠 때(자판이 올라오면)는 탭 막대 숨김 */
         body:has(.modal[style*="flex"]) .main-tabs, html:has(.bk-ask.on) .main-tabs { visibility: hidden; }
     }
+    /* 📱 v2.99.1: 가로 태블릿은 위아래가 좁아 헤더를 한 줄로 (⏱️ · 제목 · 집행부 · 유니폼 · 로그아웃) — 세로 태블릿 · 휴대폰 · PC 는 그대로 */
+    @media (min-width: 1000px) and (orientation: landscape) and (pointer: coarse) and (hover: none) {
+        html.is-authenticated header { flex-direction: row; flex-wrap: wrap; align-items: center; column-gap: 18px; row-gap: 8px; padding: 10px 16px 12px; }
+        html.is-authenticated .header-top-bar { display: contents; }
+        html.is-authenticated .header-top-left { order: 1; }
+        html.is-authenticated .header-center-title { order: 2; flex: 1 1 280px; min-width: 0; text-align: left; }
+        html.is-authenticated .header-title { font-size: 22px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        html.is-authenticated .header-bottom-cta { order: 3; margin-top: 0; }
+        html.is-authenticated .header-top-right { order: 4; margin-left: auto; }
+        html.is-authenticated .header-top-bar .header-top-center { order: 3; flex-basis: auto; }   /* 보호자 이름표는 제목 바로 옆 */
+        html.is-authenticated .header-top-bar .header-top-center:has(> .user-identity-badge:empty), html.is-authenticated .header-top-bar .header-top-center:has(> .user-identity-badge[style*="none"]) { display: none; }
+        html.is-authenticated .header-bottom-cta { order: 4; }
+        html.is-authenticated .header-top-right { order: 5; }   /* 화면이 좁으면(배율을 키우면) 집행부 · 유니폼 · 로그아웃만 아래 줄로 내려감 */
+    }
     @media (min-width: 1024px) and (pointer: coarse) and (hover: none) {   /* 가로 태블릿: 달력 옆 「선택한 날」 칸 아래가 탭 막대에 가리지 않게 */
         html.is-authenticated .cal-split .cal-side { max-height: calc(100dvh / var(--ui-zoom, 1) - 150px); }
     }
