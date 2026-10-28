@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.99.0 · b261028";
+        const APP_VERSION = "v2.99.1 · b261028";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -2951,7 +2951,7 @@
         body:has(input:focus, textarea:focus, select:focus) .main-tabs { display: none !important; }   /* 글자 칠 때(자판이 올라오면)는 탭 막대 숨김 */
         body:has(.modal[style*="flex"]) .main-tabs, html:has(.bk-ask.on) .main-tabs { visibility: hidden; }
     }
-    /* 📱 v2.99.1: 가로 태블릿은 위아래가 좁아 헤더를 한 줄로 (⏱️ · 제목 · 집행부 · 유니폼 · 로그아웃) — 세로 태블릿 · 휴대폰 · PC 는 그대로 */
+    /* 📐 v2.99.1: 가로 태블릿은 위아래가 좁아 헤더를 한 줄로 (⏱️ · 제목 · 집행부 · 유니폼 · 로그아웃) — 세로 태블릿 · 휴대폰 · PC 는 그대로 */
     @media (min-width: 1000px) and (orientation: landscape) and (pointer: coarse) and (hover: none) {
         html.is-authenticated header { flex-direction: row; flex-wrap: wrap; align-items: center; column-gap: 18px; row-gap: 8px; padding: 10px 16px 12px; }
         html.is-authenticated .header-top-bar { display: contents; }
