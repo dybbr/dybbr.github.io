@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.98.0 · b261027";
+        const APP_VERSION = "v2.98.1 · b261028";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -830,9 +830,13 @@
         .admin-fold[aria-expanded="true"] .fold-ar { transform: rotate(180deg); }
         .ofa-sum { font-size: 12.5px; color: #475569; font-weight: 700; margin-top: 6px; line-height: 1.45; }
         .ofa-sum .no { color: #94a3b8; }
+        .ofa-sum .warn { color: #b45309; }
         #ofaBody { margin-top: 8px; }
         .jsy-sum { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; cursor: pointer; }   /* v2.88.0: 접힌 유니폼 색 */
         #jsyBody { margin-top: 8px; }
+        .season-stat.fold-sum { margin: 6px 0 0; }   /* v2.98.1: 새 학년도 · 청소 당번도 접어 둠 */
+        #ssnBody, #dtyBody { margin-top: 8px; }
+        #seasonDue:not(:empty) { margin-top: 8px; }
         /* 🧹 v2.84.0: 부실 청소 당번 */
         .duty-banner { display: none; align-items: center; gap: 10px; background: #ffffff; border: 1px solid var(--card-border); border-left: 5px solid #0d9488; border-radius: 12px; padding: 10px 12px; margin-bottom: 12px; cursor: pointer; box-shadow: 0 2px 8px rgba(15,23,42,0.04); }
         .duty-banner .db-ic { flex: 0 0 auto; width: 38px; height: 38px; border-radius: 10px; background: #ccfbf1; display: flex; align-items: center; justify-content: center; font-size: 21px; }
@@ -2348,7 +2352,7 @@
     .ofa-p, .ofa-r { background: #1b2638; border-color: #2a374e; color: #dde3ec; } .ofa-p .g { background: #223047; color: #bcc6d4; } .ofa-r small { color: #bcc6d4; }
     .ofa-p.on { background: #223a66; border-color: #6d8fd1; box-shadow: inset 0 0 0 1px #6d8fd1; } .ofa-r.on { background: #12351f; border-color: #22c55e; box-shadow: inset 0 0 0 1px #22c55e; }
     .ofa-empty button { color: #fca5a5; }
-    .admin-fold .fold-r { background: #1b2638; border-color: #2a374e; color: #dde3ec; } .ofa-sum { color: #bcc6d4; } .ofa-sum .no { color: #6f7b91; }
+    .admin-fold .fold-r { background: #1b2638; border-color: #2a374e; color: #dde3ec; } .ofa-sum { color: #bcc6d4; } .ofa-sum .no { color: #6f7b91; } .ofa-sum .warn { color: #fbbf24; }
     .contact-header { border-bottom: 1px solid #2a374e; }
     .contact-player-name { color: #dde3ec; }
     .contact-row { background: #1b2638; border: 1px solid #2a374e; }
@@ -3309,12 +3313,15 @@
 
             <!-- 🎓 새 학년도 (v2.45.0) — 대표님 · 개발자만 -->
             <div class="admin-group" id="adminGroupSeason" style="display: none;">
-                <div class="admin-group-title">🎓 새 학년도</div>
-                <p class="admin-role-desc" style="margin-bottom: 8px;">1년에 한 번, <b>6학년 졸업</b>과 <b>나머지 한 학년씩 올리기</b>를 한꺼번에 해요. 누르면 먼저 미리보기가 나오고, 바꾸기 전에 시트 전체를 드라이브에 백업해요.</p>
-                <div class="season-stat" id="seasonStat"></div>
+                <!-- v2.98.1: 접어 둠 — 접힌 줄은 지금 명단 학년도 -->
+                <button type="button" class="admin-fold" id="ssnFoldBtn" aria-expanded="false" aria-controls="ssnBody" onclick="ssnToggle()"><span class="admin-group-title">🎓 새 학년도</span><span class="fold-r"><span id="ssnFoldLbl">펼치기</span> <span class="fold-ar">▾</span></span></button>
+                <div class="season-stat fold-sum" id="seasonStat"></div>
                 <div id="seasonDue"></div>
+                <div id="ssnBody" style="display: none;">
+                <p class="admin-role-desc" style="margin-bottom: 8px;">1년에 한 번, <b>6학년 졸업</b>과 <b>나머지 한 학년씩 올리기</b>를 한꺼번에 해요. 누르면 먼저 미리보기가 나오고, 바꾸기 전에 시트 전체를 드라이브에 백업해요.</p>
                 <div class="admin-bar-btns">
                     <button type="button" class="btn-season" onclick="openSeasonModal()">🎓 새 학년도 넘기기</button>
+                </div>
                 </div>
             </div>
 
@@ -3331,10 +3338,14 @@
 
             <!-- 🧹 부실 청소 당번 (v2.84.0) — 대표님 · 총무님 · 개발자 -->
             <div class="admin-group" id="adminGroupDuty" style="display: none;">
-                <div class="admin-group-title">🧹 청소 당번</div>
+                <!-- v2.98.1: 접어 둠 — 접힌 줄은 다음 차례 (또는 아직 시작 전) -->
+                <button type="button" class="admin-fold" id="dtyFoldBtn" aria-expanded="false" aria-controls="dtyBody" onclick="dtyToggle()"><span class="admin-group-title">🧹 청소 당번</span><span class="fold-r"><span id="dtyFoldLbl">펼치기</span> <span class="fold-ar">▾</span></span></button>
+                <div class="ofa-sum" id="dtySum">불러오는 중…</div>
+                <div id="dtyBody" style="display: none;">
                 <p class="admin-role-desc" style="margin-bottom: 8px;">주말(토 · 일 중 하루) 부실 청소 당번이에요. <b>가족 단위</b>로 입단 순서대로 돌아요 (형제는 한 가족). 순서 · 가족 · 시작일 · 청소 주기는 <b>🔀 순서 · 가족 편집</b>에서, 쉬는 날 · 두 가족 바꾸기는 날짜 옆 버튼으로 해요.</p>
                 <div class="ofa-list" id="dutyAdm"><div class="ofa-msg">불러오는 중…</div></div>
                 <div class="ofa-foot"><button type="button" onclick="openDutyModal()">📋 전체 순서</button><button type="button" onclick="dutyOpenSheet()">📊 「당번」 탭 열기</button></div>
+                </div>
             </div>
 
             <div class="admin-group" id="adminGroupContent">
@@ -4731,6 +4742,8 @@
         document.getElementById('adminSection').classList.toggle('active', tab === 'admin');
         if (tab !== 'admin' && ofaOpenSt) { ofaOpenSt = false; try { ofaFoldSync(); } catch (e) {} }   // v2.87.0: 다른 탭으로 가면 집행부 버튼 묶음은 다시 접힘
         if (tab !== 'admin' && jsyOpenSt) { jsyOpenSt = false; jerseyEdit = null; try { renderJerseyPanel(); jsyFoldSync(); } catch (e) {} }   // v2.88.0: 유니폼 색도
+        if (tab !== 'admin' && ssnOpenSt) { ssnOpenSt = false; try { ssnFoldSync(); } catch (e) {} }   // v2.98.1: 새 학년도
+        if (tab !== 'admin' && dtyOpenSt) { dtyOpenSt = false; try { dtyFoldSync(); } catch (e) {} }   // v2.98.1: 청소 당번
         if (tab === 'admin') updateAdminPanel();
         // v2.64.0: 탭을 누를 때마다 새로 받던 것 → 받은 지 2분이 지났을 때만 (그 전엔 있는 것 그대로 · 당겨서 새로고침은 늘 새로)
         if (tab === 'schedule') { renderSchedule(); if (!silent) loadSchedule(Date.now() - schedFetchedAt > TAB_STALE_MS); }
@@ -4921,9 +4934,33 @@
     function dutyGoAdmin() {
         closeModal('dutyModal');
         showMainTab('admin');
+        dtyOpenSt = true; dtyFoldSync();   // v2.98.1: 당번 창의 「⚙️ 관리」로 왔으면 펼쳐서 보여 줌
         setTimeout(() => { const g = document.getElementById('adminGroupDuty'); if (g) g.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 250);
     }
     function dutyOpenSheet() { window.open(`https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/edit#gid=${(dutyAdm && dutyAdm.gid) || 2026102}`, '_blank'); }
+
+    // 🧹 v2.98.1: 관리 탭 청소 당번도 접어 둠 — 접힌 줄은 다음 차례 한 줄 (받아 둔 것만 씀)
+    var dtyOpenSt = false;
+    function dtyToggle() { dtyOpenSt = !dtyOpenSt; dtyFoldSync(); }
+    function dtyFoldSync() {
+        const b = document.getElementById('dtyFoldBtn'), body = document.getElementById('dtyBody'), sum = document.getElementById('dtySum'), lbl = document.getElementById('dtyFoldLbl');
+        if (!b || !body) return;
+        b.setAttribute('aria-expanded', dtyOpenSt ? 'true' : 'false');
+        body.style.display = dtyOpenSt ? '' : 'none';
+        if (lbl) lbl.textContent = dtyOpenSt ? '접기' : '펼치기';
+        if (sum) { sum.style.display = dtyOpenSt ? 'none' : ''; if (!dtyOpenSt) sum.innerHTML = dtySumHtml(); }
+    }
+    function dtySumHtml() {
+        const d = dutyAdm;
+        if (!d) return '불러오는 중…';
+        if (d.reason === 'nosheet') return '시트에 「당번」 탭이 없어요';
+        const rows = d.rows || [], n = rows.filter(r => r.st === 'ok').length;
+        const bad = rows.filter(r => r.st !== 'ok').length + ((d.notInList || []).length && rows.length ? 1 : 0);
+        const warn = bad ? ' · <span class="warn">⚠️ 확인할 것 있음</span>' : '';
+        if (!d.ok) return `아직 시작 전${n ? ' · 순서표 ' + n + '가족' : ''}${warn}`;
+        const t = ymdOf(new Date()), u = (d.upcoming || []).filter(x => dutyEnd(x) >= t && !x.s)[0];
+        return (u ? `다음: <b>${escapeHtml(dutyWhen(u))}</b> ${escapeHtml(dutyWhoText(u.p))}` : `${escapeHtml(dutyEveryOf(d))} · 순서표 ${n}가족`) + warn;
+    }
 
     // ⚙️ 관리 탭 — 다가오는 차례 · 쉬기 · 바꾸기 · 순서표 점검 (대표님 · 총무님 · 개발자 · 서버도 다시 확인)
     var dutyAdm = null, dutyAdmAt = 0, dutyAdmReq = null, dutySwapCtx = null;
@@ -4977,6 +5014,7 @@
         }
         if (warn.length) h += `<div class="dadm-warn">${warn.map(w => `<div>${w}</div>`).join('')}</div>`;
         box.innerHTML = h;
+        dtyFoldSync();
     }
     async function dutyAdmSave(q, okMsg) {
         bkNotify('saving', '바꾸는 중이캉');
@@ -9031,6 +9069,15 @@
     //   졸업생 연락망은 졸업한 해 3월 31일이 지나면 「지우기」 알림 (seasonPurge)
     // ==========================================================
     let seasonPv = null, seasonBusy = false, seasonStatusCache = null, seasonStatusReq = null;
+    var ssnOpenSt = false;   // v2.98.1: 접어 둠 — 지금 명단 학년도 줄 · 졸업생 연락처 알림은 접어도 보임
+    function ssnToggle() { ssnOpenSt = !ssnOpenSt; ssnFoldSync(); }
+    function ssnFoldSync() {
+        const b = document.getElementById('ssnFoldBtn'), body = document.getElementById('ssnBody'), lbl = document.getElementById('ssnFoldLbl');
+        if (!b || !body) return;
+        b.setAttribute('aria-expanded', ssnOpenSt ? 'true' : 'false');
+        body.style.display = ssnOpenSt ? '' : 'none';
+        if (lbl) lbl.textContent = ssnOpenSt ? '접기' : '펼치기';
+    }
     function seasonCan() { return currentRole === 'super' || currentRole === 'dev'; }
     async function refreshSeasonStatus(force, noFetch) {
         const grp = document.getElementById('adminGroupSeason');
