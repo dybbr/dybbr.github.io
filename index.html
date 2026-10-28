@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.98.1 · b261028";
+        const APP_VERSION = "v2.99.0 · b261028";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -2933,6 +2933,27 @@
         body:has(input:focus, textarea:focus, select:focus) .main-tabs { display: none !important; }   /* 글자 칠 때(자판이 올라오면)는 탭 막대 숨김 */
         body:has(.modal[style*="flex"]) .main-tabs, html:has(.bk-ask.on) .main-tabs { visibility: hidden; }
     }
+    /* 📱 v2.99.0: 태블릿(손가락으로 쓰는 601px 넘는 화면 · 세로 · 가로 모두)도 휴대폰처럼 탭을 화면 아래로
+       · 마우스를 쓰는 PC 는 지금처럼 위쪽 탭 막대 · 탭 단추는 가운데 720px 안에 모음 (넓은 화면에서 너무 벌어지지 않게) */
+    @media (min-width: 601px) and (pointer: coarse) and (hover: none) {
+        html.is-authenticated .main-tabs {
+            position: fixed; left: 0; right: 0; bottom: 0; z-index: 950; margin: 0;
+            border-radius: 18px 18px 0 0; border-bottom: 0; gap: 4px;
+            padding: 6px max(12px, calc(50% - 360px)) calc(6px + env(safe-area-inset-bottom, 0px));
+            box-shadow: 0 -4px 16px rgba(15,23,42,0.10);
+        }
+        html.is-authenticated .main-tab { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 7px 4px; font-size: 13.5px; }
+        html.is-authenticated .main-tab .tab-ico { margin-right: 0; font-size: 20px; line-height: 1.2; }
+        html.is-authenticated .tab-dot { right: 34%; top: 6px; }
+        html.is-authenticated .container { padding-bottom: calc(130px + env(safe-area-inset-bottom, 0px)) !important; }
+        html.is-authenticated .ui-zoom-ctrl { bottom: calc(84px * var(--ui-zoom, 1) + env(safe-area-inset-bottom, 0px)); }
+        html.is-authenticated .bk-upd { bottom: calc(80px * var(--ui-zoom, 1) + env(safe-area-inset-bottom, 0px)); }
+        body:has(input:focus, textarea:focus, select:focus) .main-tabs { display: none !important; }   /* 글자 칠 때(자판이 올라오면)는 탭 막대 숨김 */
+        body:has(.modal[style*="flex"]) .main-tabs, html:has(.bk-ask.on) .main-tabs { visibility: hidden; }
+    }
+    @media (min-width: 1024px) and (pointer: coarse) and (hover: none) {   /* 가로 태블릿: 달력 옆 「선택한 날」 칸 아래가 탭 막대에 가리지 않게 */
+        html.is-authenticated .cal-split .cal-side { max-height: calc(100dvh / var(--ui-zoom, 1) - 150px); }
+    }
     /* 화면을 내리는 동안에는 떠 있는 🔊 · % 버튼을 흐리게 (명단 글자를 가리지 않게) */
     .ui-zoom-ctrl { transition: opacity .2s ease; }
     .ui-zoom-ctrl.scrolling:not(.open) { opacity: 0.18 !important; pointer-events: none; }
@@ -2959,6 +2980,7 @@
         .ics-all { border-color: #2a374e; color: #97a3b7; }
         .ics-all button { background: #22354f; color: #f1f4f9; }
         @media (max-width: 600px) { html.is-authenticated .main-tabs { box-shadow: 0 -4px 16px rgba(0,0,0,0.4); } }
+        @media (min-width: 601px) and (pointer: coarse) and (hover: none) { html.is-authenticated .main-tabs { box-shadow: 0 -4px 16px rgba(0,0,0,0.4); } }
     }
     </style>
 </head>
