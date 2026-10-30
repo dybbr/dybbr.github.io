@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.99.2 · b261028";
+        const APP_VERSION = "v2.99.3 · b261030";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -2935,8 +2935,9 @@
     }
     /* 📱 v2.99.0: 태블릿(손가락으로 쓰는 601px 넘는 화면 · 세로 · 가로 모두)도 휴대폰처럼 탭을 화면 아래로
        · 마우스를 쓰는 PC 는 지금처럼 위쪽 탭 막대 · 탭 단추는 가운데 720px 안에 모음 (넓은 화면에서 너무 벌어지지 않게)
-       · v2.99.2: (hover: none) 조건 뺌 — S펜 되는 갤럭시 탭은 「hover 가능」으로 잡혀 PC 화면이 나왔음 (🔊 · % 버튼과 같은 (pointer: coarse) 기준만) */
-    @media (min-width: 601px) and (pointer: coarse) {
+       · v2.99.2: (hover: none) 조건 뺌 — S펜 되는 갤럭시 탭은 「hover 가능」으로 잡혀 PC 화면이 나왔음 (🔊 · % 버튼과 같은 (pointer: coarse) 기준만)
+       · v2.99.3: PC(마우스)도 하단 탭 — 이제 모든 화면에서 탭은 아래 고정 (자판이 올라올 때 숨기는 것만 손가락 화면) */
+    @media (min-width: 601px) {
         html.is-authenticated .main-tabs {
             position: fixed; left: 0; right: 0; bottom: 0; z-index: 950; margin: 0;
             border-radius: 18px 18px 0 0; border-bottom: 0; gap: 4px;
@@ -2949,8 +2950,11 @@
         html.is-authenticated .container { padding-bottom: calc(130px + env(safe-area-inset-bottom, 0px)) !important; }
         html.is-authenticated .ui-zoom-ctrl { bottom: calc(84px * var(--ui-zoom, 1) + env(safe-area-inset-bottom, 0px)); }
         html.is-authenticated .bk-upd { bottom: calc(80px * var(--ui-zoom, 1) + env(safe-area-inset-bottom, 0px)); }
-        body:has(input:focus, textarea:focus, select:focus) .main-tabs { display: none !important; }   /* 글자 칠 때(자판이 올라오면)는 탭 막대 숨김 */
         body:has(.modal[style*="flex"]) .main-tabs, html:has(.bk-ask.on) .main-tabs { visibility: hidden; }
+        html.is-authenticated .main-tab:not(.active):hover { background: rgba(100,116,139,0.10); }
+    }
+    @media (min-width: 601px) and (pointer: coarse) {
+        body:has(input:focus, textarea:focus, select:focus) .main-tabs { display: none !important; }   /* 글자 칠 때(자판이 올라오면)는 탭 막대 숨김 (PC 는 자판이 없어 그대로 둠) */
     }
     /* 📐 v2.99.1: 가로 태블릿은 위아래가 좁아 헤더를 한 줄로 (⏱️ · 제목 · 집행부 · 유니폼 · 로그아웃) — 세로 태블릿 · 휴대폰 · PC 는 그대로 */
     @media (min-width: 1000px) and (orientation: landscape) and (pointer: coarse) {
@@ -2966,7 +2970,7 @@
         html.is-authenticated .header-bottom-cta { order: 4; }
         html.is-authenticated .header-top-right { order: 5; }   /* 화면이 좁으면(배율을 키우면) 집행부 · 유니폼 · 로그아웃만 아래 줄로 내려감 */
     }
-    @media (min-width: 1024px) and (pointer: coarse) {   /* 가로 태블릿: 달력 옆 「선택한 날」 칸 아래가 탭 막대에 가리지 않게 */
+    @media (min-width: 1024px) {   /* 가로 태블릿 · PC: 달력 옆 「선택한 날」 칸 아래가 탭 막대에 가리지 않게 */
         html.is-authenticated .cal-split .cal-side { max-height: calc(100dvh / var(--ui-zoom, 1) - 150px); }
     }
     /* 화면을 내리는 동안에는 떠 있는 🔊 · % 버튼을 흐리게 (명단 글자를 가리지 않게) */
@@ -2995,7 +2999,7 @@
         .ics-all { border-color: #2a374e; color: #97a3b7; }
         .ics-all button { background: #22354f; color: #f1f4f9; }
         @media (max-width: 600px) { html.is-authenticated .main-tabs { box-shadow: 0 -4px 16px rgba(0,0,0,0.4); } }
-        @media (min-width: 601px) and (pointer: coarse) { html.is-authenticated .main-tabs { box-shadow: 0 -4px 16px rgba(0,0,0,0.4); } }
+        @media (min-width: 601px) { html.is-authenticated .main-tabs { box-shadow: 0 -4px 16px rgba(0,0,0,0.4); } }
     }
     </style>
 </head>
