@@ -27,6 +27,7 @@ self.addEventListener('fetch', function (event) {
     const url = new URL(req.url);
     if (url.origin !== self.location.origin) return;                   // 외부(구글) 요청은 그대로 통과
     if (url.searchParams.has('vcheck')) return;                        // 🆕 새 버전 확인(맨 앞 몇 KB만 읽음)은 그대로 통과 — 저장 안 함
+    if (/\.(mp4|m4v|webm|mov)$/i.test(url.pathname)) return;         // 🎬 v2.100.0: 영상 파일은 그대로 통과 (나눠 받기 · 휴대폰 저장 공간 아끼기)
 
     event.respondWith(
         fetch(req, { cache: 'no-cache' }).then(function (res) {   // v2.60.0: no-store → no-cache (바뀌었는지 확인 후 같으면 받아 둔 것 사용 · 늘 최신은 그대로)

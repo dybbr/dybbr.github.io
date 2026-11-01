@@ -496,6 +496,45 @@
             .cl-block.chorus .cl-label { background: #9b273a; }
         }
 
+        /* 🎬 하이라이트 영상 (v2.100.0) — 영상이 있는 선수만 · 주제곡 아래 2칸 · 누르면 큰 화면 (목록은 player-videos.json) */
+        .hv-box { border: 1px solid #c7d2fe; background: linear-gradient(135deg, #eef2ff, #f0f9ff); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+        .hv-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .hv-head b { font-size: 15px; font-weight: 800; color: #1e293b; }
+        .hv-head small { font-size: 11.5px; color: #64748b; font-weight: 700; }
+        .hv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .hv-grid.one { grid-template-columns: 1fr; }
+        .hv-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; cursor: pointer; display: flex; flex-direction: column; padding: 0; text-align: left; font: inherit; color: inherit; min-width: 0; -webkit-tap-highlight-color: transparent; }
+        .hv-card:active { transform: scale(.98); }
+        .hv-th { position: relative; aspect-ratio: 16 / 9; background: linear-gradient(135deg, #1e3a8a, #0b2240); overflow: hidden; }
+        .hv-th img, .hv-th video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+        .hv-th .pl { position: absolute; inset: 0; margin: auto; width: 42px; height: 42px; border-radius: 50%; background: rgba(220,38,38,.92); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 2px 8px rgba(0,0,0,.35); padding-left: 3px; box-sizing: border-box; z-index: 1; }
+        .hv-th .len { position: absolute; right: 6px; bottom: 6px; background: rgba(0,0,0,.75); color: #fff; font-size: 11px; font-weight: 800; padding: 1px 6px; border-radius: 4px; z-index: 1; }
+        .hv-cap { padding: 7px 9px 9px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+        .hv-cap b { font-size: 13px; font-weight: 800; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .hv-cap span { font-size: 11px; color: #64748b; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .hv-cap span:empty { display: none; }
+        /* 큰 화면 — 확대(%)와 상관없이 화면 전체를 덮음 */
+        .hv-ov { position: fixed; inset: 0; zoom: calc(1 / var(--ui-zoom, 1)); background: rgba(2,6,23,.97); z-index: 9000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; gap: 12px; box-sizing: border-box; }
+        .hv-ov[hidden] { display: none; }
+        .hv-ov .hv-ttl { color: #fff; width: 100%; max-width: 960px; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+        .hv-ov .hv-ttl b { font-size: 16px; font-weight: 800; display: block; }
+        .hv-ov .hv-ttl span { font-size: 12px; color: #cbd5e1; font-weight: 700; }
+        .hv-ov .hv-x { flex: 0 0 auto; background: rgba(255,255,255,.15); color: #fff; border: 0; border-radius: 20px; padding: 8px 14px; font-weight: 800; font-size: 13px; cursor: pointer; }
+        .hv-frame { width: 100%; max-width: 960px; aspect-ratio: 16 / 9; max-height: calc(100vh - 170px); background: #000; border-radius: 10px; overflow: hidden; position: relative; }
+        .hv-frame.tall { width: auto; height: min(calc(100vh - 170px), 720px); aspect-ratio: 9 / 16; max-width: 100%; }
+        .hv-frame iframe, .hv-frame video { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #000; }
+        .hv-ov .hv-nx { display: flex; gap: 8px; width: 100%; max-width: 960px; }
+        .hv-ov .hv-nx button { flex: 1; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); color: #fff; border-radius: 10px; padding: 10px; font-weight: 800; font-size: 13px; cursor: pointer; }
+        .hv-ov .hv-nx button.on { background: #dc2626; border-color: #dc2626; }
+        html.hv-lock, html.hv-lock body { overflow: hidden; }
+        html.hv-lock .ui-zoom-ctrl, html.hv-lock .bk-note { display: none !important; }
+        @media (prefers-color-scheme: dark) {
+            .hv-box { background: linear-gradient(135deg, #1a2040, #14243a); border-color: #334a7a; }
+            .hv-head b, .hv-cap b { color: #e2e8f0; }
+            .hv-card { background: #1b2638; border-color: #2a374e; }
+            .hv-cap span, .hv-head small { color: #94a3b8; }
+        }
+
         .status-box {
             background: #ffffff;
             border-radius: 12px;
@@ -1376,6 +1415,8 @@
 
         const keepCheer = document.getElementById('cheerBox');   // 🎵 다시 그릴 때(유니폼 색 새로 받음 등) 듣던 주제곡이 끊기지 않게 떼어 뒀다가 다시 붙임
         if (keepCheer) keepCheer.remove();
+        const keepVid = document.getElementById('hvBox');   // 🎬 하이라이트 영상 칸도 같은 방식
+        if (keepVid) keepVid.remove();
         card.innerHTML = `
             <div style="position: relative;">
                 ${photoHtml}
@@ -1413,6 +1454,8 @@
         `;
         if (keepCheer && keepCheer.dataset.who === cheerWho(p)) card.querySelector('.profile-body').appendChild(keepCheer);
         else mountCheerSong(p);
+        if (keepVid && keepVid.dataset.who === cheerWho(p)) card.querySelector('.profile-body').appendChild(keepVid);
+        else mountHighlightVideos(p);
 
         const openBtn = document.getElementById('btnOpenPhotoModal');
         if (openBtn) openBtn.addEventListener('click', function () { openPhotoUploadModal(p.no || 0, p.name); });
@@ -1445,7 +1488,9 @@
             const body = document.querySelector('#profileCard .profile-body');
             const html = cheerSongHtml(p);
             if (!body || !html) return;
-            body.insertAdjacentHTML('beforeend', html);
+            const hv = document.getElementById('hvBox');   // 🎬 영상 칸이 먼저 붙었으면 주제곡은 그 위에
+            if (hv && hv.parentNode === body) hv.insertAdjacentHTML('beforebegin', html);
+            else body.insertAdjacentHTML('beforeend', html);
             setupCheerPlayer();
         });
     }
@@ -1582,6 +1627,114 @@
     }
 
     // 이전 / 다음 선수 바로가기 버튼 생성
+    // ==========================================================
+    // 🎬 하이라이트 영상 (v2.100.0) — 목록은 player-videos.json (그 파일만 고치면 됨 · 앱 버전 올릴 필요 없음)
+    //   배번 + 이름이 둘 다 같은 선수만 · 영상이 없는 선수는 칸이 아예 안 보임 · 구글 서버 · 시트에는 묻지 않음
+    //   영상 하나 = { title, memo, len, youtube: "유튜브 주소" } 또는 { title, memo, len, src: "video/파일.mp4", poster: "video/파일.jpg" }
+    //   처음엔 미리보기 그림만 · 누를 때 큰 화면에서 플레이어를 불러옴 (화면이 느려지지 않게)
+    // ==========================================================
+    let hvLoading = null, hvList = [];
+    function loadHighlightVideos() {
+        if (!hvLoading) {
+            hvLoading = fetch('player-videos.json', { cache: 'no-cache' })
+                .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+                .then(j => { hvList = (j && Array.isArray(j.players)) ? j.players : []; })
+                .catch(e => { console.warn('하이라이트 영상 목록을 못 받음:', e); hvList = []; });
+        }
+        return hvLoading;
+    }
+    // 유튜브 주소 → 영상 ID (youtu.be/ID · watch?v=ID · shorts/ID · embed/ID · ID 만 적어도 됨)
+    function hvYoutubeId(u) {
+        u = String(u || '').trim();
+        if (/^[\w-]{11}$/.test(u)) return u;
+        const m = u.match(/(?:youtu\.be\/|[?&]v=|\/shorts\/|\/embed\/|\/live\/)([\w-]{11})/);
+        return m ? m[1] : '';
+    }
+    function hvSafeSrc(s) {   // 저장소 안 파일(video/…) 또는 https 주소만
+        s = String(s || '').trim();
+        return (/^https:\/\//i.test(s) || /^[\w\-./가-힣]+$/.test(s)) && !/^\/\//.test(s) && !/\.\./.test(s) ? s : '';
+    }
+    function hvVideosFor(p) {
+        if (!p || !p.no || !p.name) return [];
+        const no = String(p.no), name = String(p.name).trim();
+        const hit = hvList.find(x => x && String(x.no) === no && String(x.name || '').trim() === name);
+        if (!hit || !Array.isArray(hit.videos)) return [];
+        return hit.videos.map(v => {
+            if (!v) return null;
+            const yt = hvYoutubeId(v.youtube), src = hvSafeSrc(v.src);
+            if (!yt && !src) return null;
+            return {
+                title: String(v.title || '하이라이트'), memo: String(v.memo || ''), len: String(v.len || ''),
+                yt: yt, src: yt ? '' : src, poster: hvSafeSrc(v.poster),
+                tall: v.vertical === true || /\/shorts\//.test(String(v.youtube || ''))
+            };
+        }).filter(Boolean).slice(0, 4);
+    }
+    function mountHighlightVideos(p) {
+        loadHighlightVideos().then(function () {
+            if (currentPlayer !== p || document.getElementById('hvBox')) return;
+            const body = document.querySelector('#profileCard .profile-body');
+            const vids = hvVideosFor(p);
+            if (!body || !vids.length) return;
+            const cards = vids.map((v, i) => {
+                const th = v.yt ? `<img src="https://i.ytimg.com/vi/${v.yt}/hqdefault.jpg" alt="" loading="lazy">`
+                    : v.poster ? `<img src="${escapeHtml(v.poster)}" alt="" loading="lazy">`
+                    : `<video src="${escapeHtml(v.src)}#t=0.5" preload="metadata" muted playsinline tabindex="-1" aria-hidden="true"></video>`;
+                return `<button type="button" class="hv-card" data-i="${i}" aria-label="${escapeHtml(v.title)} 영상 보기">
+                    <div class="hv-th">${th}<span class="pl" aria-hidden="true">▶</span>${v.len ? `<span class="len">${escapeHtml(v.len)}</span>` : ''}</div>
+                    <div class="hv-cap"><b>${escapeHtml(v.title)}</b><span>${escapeHtml(v.memo)}</span></div>
+                </button>`;
+            }).join('');
+            body.insertAdjacentHTML('beforeend', `<div class="hv-box" id="hvBox" data-who="${escapeHtml(cheerWho(p))}">
+                <div class="hv-head"><b>🎬 하이라이트 영상</b><small>누르면 크게 재생</small></div>
+                <div class="hv-grid${vids.length === 1 ? ' one' : ''}">${cards}</div></div>`);
+            const box = document.getElementById('hvBox');
+            box._vids = vids;
+            box.querySelectorAll('.hv-card').forEach(b => b.addEventListener('click', () => hvOpen(vids, +b.dataset.i)));
+        });
+    }
+    // 큰 화면 — ✕ · 바깥 누르기 · Esc · 휴대폰 「뒤로」 버튼으로 닫힘 (뒤로 눌러도 명단으로 나가지 않게)
+    let hvOv = null, hvPushed = false;
+    function hvOpen(vids, i) {
+        const a = document.getElementById('cheerAudio');
+        if (a && !a.paused) a.pause();   // 🎵 주제곡이 나오고 있으면 멈춤
+        if (!hvOv) {
+            hvOv = document.createElement('div');
+            hvOv.className = 'hv-ov'; hvOv.id = 'hvOv';
+            hvOv.setAttribute('role', 'dialog'); hvOv.setAttribute('aria-modal', 'true'); hvOv.setAttribute('aria-label', '하이라이트 영상');
+            hvOv.addEventListener('click', e => { if (e.target === hvOv) hvClose(); });
+            document.body.appendChild(hvOv);
+            document.addEventListener('keydown', e => { if (e.key === 'Escape' && hvOv && !hvOv.hidden) hvClose(); });
+            window.addEventListener('popstate', () => { if (hvOv && !hvOv.hidden) { hvPushed = false; hvClose(); } });
+        }
+        const v = vids[i];
+        const player = v.yt
+            ? `<iframe src="https://www.youtube-nocookie.com/embed/${v.yt}?autoplay=1&rel=0&playsinline=1&modestbranding=1" title="${escapeHtml(v.title)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`
+            : `<video src="${escapeHtml(v.src)}" ${v.poster ? `poster="${escapeHtml(v.poster)}"` : ''} controls autoplay playsinline preload="auto"></video>`;
+        hvOv.innerHTML = `
+            <div class="hv-ttl"><div><b>${escapeHtml(v.title)}</b><span>${escapeHtml(v.memo)}</span></div><button type="button" class="hv-x">✕ 닫기</button></div>
+            <div class="hv-frame${v.tall ? ' tall' : ''}">${player}</div>
+            ${vids.length > 1 ? `<div class="hv-nx">${vids.map((w, k) => `<button type="button" data-k="${k}" class="${k === i ? 'on' : ''}">${k === i ? '▶ ' : ''}영상 ${k + 1}</button>`).join('')}</div>` : ''}`;
+        hvOv.querySelector('.hv-x').addEventListener('click', hvClose);
+        hvOv.querySelectorAll('.hv-nx button').forEach(b => b.addEventListener('click', () => hvOpen(vids, +b.dataset.k)));
+        const vid = hvOv.querySelector('video');
+        if (vid) {
+            vid.addEventListener('loadedmetadata', () => { if (vid.videoHeight > vid.videoWidth) vid.parentNode.classList.add('tall'); });
+            const pr = vid.play(); if (pr && pr.catch) pr.catch(() => {});
+        }
+        hvOv.hidden = false;
+        document.documentElement.classList.add('hv-lock');
+        if (!hvPushed) { try { history.pushState({ hv: 1 }, ''); hvPushed = true; } catch (e) {} }
+        hvOv.querySelector('.hv-x').focus({ preventScroll: true });
+    }
+    function hvClose() {
+        if (!hvOv || hvOv.hidden) return;
+        hvOv.innerHTML = '';   // 플레이어를 없애 소리까지 확실히 멈춤
+        hvOv.hidden = true;
+        document.documentElement.classList.remove('hv-lock');
+        if (hvPushed) { hvPushed = false; try { history.back(); } catch (e) {} }
+    }
+
     function renderNavBar(p) {
         const navBar = document.getElementById('navBar');
         const currentIdx = allRosterPlayers.findIndex(item => item.name === p.name && item.no === p.no);
