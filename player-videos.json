@@ -7,5 +7,26 @@
     "  2) 유튜브: youtube 에 「일부 공개」 영상 주소 (youtu.be/… · shorts/… 모두 됨). 세로 영상은 \"vertical\": true (shorts 주소는 자동).",
     "⚠️ 이 파일과 video 폴더는 공개 주소라 로그인 없이도 주소를 알면 볼 수 있음."
   ],
-  "players": []
+  "players": [
+    {
+      "no": 30,
+      "name": "김승원",
+      "videos": [
+        {
+          "title": "🧤 유격수 호수비",
+          "memo": "박찬호기 · 경기소래초전 (리플레이)",
+          "len": "0:15",
+          "src": "video/30-1.mp4",
+          "poster": "video/30-1.jpg"
+        },
+        {
+          "title": "⚾ 동일중앙초전",
+          "memo": "10.31 연습경기 · 8회",
+          "len": "0:28",
+          "src": "video/30-2.mp4",
+          "poster": "video/30-2.jpg"
+        }
+      ]
+    }
+  ]
 }
