@@ -156,7 +156,7 @@ jobs:
               defaultConfig {
                   applicationId "io.github.dybbr.roster"
                   minSdk 21
-                  targetSdk 36   # 2026-08-31부터 플레이 스토어 새 앱·업데이트는 안드로이드 16(API 36) 이상 필수
+                  targetSdk 36   // 2026-08-31부터 플레이 스토어 새 앱·업데이트는 안드로이드 16(API 36) 이상 필수
                   versionCode Integer.parseInt(System.getenv("VERSION_CODE") ?: "1")
                   versionName "1.0." + (System.getenv("VERSION_CODE") ?: "1")
               }
