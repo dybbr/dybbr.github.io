@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.100.0 · b261101";
+        const APP_VERSION = "v2.100.1 · b261104";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -570,6 +570,9 @@
         .ev-result.draw { background: #f1f5f9; color: #475569; }
         @media (prefers-reduced-motion: reduce) { .szn-pt, .cf { animation: none; display: none; } .bk-say { transition: none; } }
 
+        .lock-privacy-note { margin-top: 8px; font-size: 12px; line-height: 1.5; color: #64748b; }
+        .lock-privacy-note a, .lock-privacy-link a { color: inherit; text-decoration: underline; }
+        .lock-privacy-link { margin-top: 12px; text-align: center; font-size: 12px; color: #94a3b8; }
         .lock-toggle-box {
             margin-top: 16px;
             padding-top: 14px;
@@ -3119,6 +3122,8 @@
                     <option value="기타">📞 기타</option>
                 </select>
             </div>
+            <!-- v2.100.1: 플레이 스토어 등록 — 최초 등록 때 개인정보처리방침 안내 -->
+            <div class="lock-privacy-note">등록하신 자녀 정보와 보호자 휴대폰 번호는 야구부 운영(명단 · 연락 · 일정)에만 쓰여요. <a href="privacy.html">개인정보처리방침</a></div>
         </div>
 
         <div style="margin-bottom: 16px;">
@@ -3146,6 +3151,8 @@
             <div class="inst-how" id="installHowTo"></div>
             <div class="inst-note" id="installNote"></div>
         </div>
+        <!-- v2.100.1: 플레이 스토어 등록에 필요한 개인정보처리방침 링크 (로그인 전에도 보임) -->
+        <div class="lock-privacy-link"><a href="privacy.html">개인정보처리방침</a></div>
     </div>
 </div>
 
