@@ -4,7 +4,7 @@
 # - 실행 방법: 저장소 → Actions → "안드로이드 앱(APK) 빌드" → Run workflow
 #   (이 파일을 수정해서 올려도 자동 실행됨)
 # - 결과물: Releases 의 "android-app" 에 daeyeon-baseball.apk 가 올라감.
-#           (플레이 스토어용 AAB 는 따로: .github/workflows/play-store-aab.yml — 앱 ID · 서명이 다른 별개 앱)
+#           (플레이 스토어용 AAB 는 따로: .github/workflows/play-store-aab.yml — 앱 ID 는 같고 서명은 회사 PC 업로드 키)
 #   다운로드 주소(항상 최신): https://github.com/<저장소>/releases/latest/download/daeyeon-baseball.apk
 # - 앱은 https://dybbr.github.io 를 그대로 보여주는 방식(TWA)이라,
 #   사이트를 수정하면 앱에도 자동 반영됨 → 사이트만 고칠 때는 다시 빌드할 필요 없음.

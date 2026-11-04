@@ -2,9 +2,9 @@
 # 🏪 대연초 야구부 - 플레이 스토어용 AAB 빌드 (서명 전 파일)
 # ==========================================================
 # - 실행: 저장소 → Actions → "플레이 스토어용 AAB 빌드" → Run workflow (이 파일을 고쳐 올려도 자동 실행)
-# - 결과물: Releases 의 "play-store" 에 daeyeon-roster_unsigned.aab (서명 전)
+# - 결과물: Releases 의 "play-store" 에 daeyeon-baseball_unsigned.aab (서명 전)
 #   → 업로드 키가 있는 PC 에서 서명한 뒤 플레이 콘솔에 올림 (키 · 비밀번호는 저장소에 절대 넣지 않음)
-# - 휴대폰에 직접 까는 APK(android-apk.yml, io.github.dybbr.roster)와는 앱 ID · 서명이 다른 별개 앱
+# - 휴대폰에 직접 까는 APK(android-apk.yml)와 앱 ID 는 같고 서명만 다름 → APK 를 깐 휴대폰은 APK 를 지운 뒤 플레이에서 설치
 # - 앱은 https://dybbr.github.io 를 주소줄 없이 띄우는 방식(TWA) → 사이트를 고치면 앱도 바로 바뀜, 다시 낼 필요 없음
 # - 다시 올릴 때: 아래 PLAY_VERSION_CODE 를 +1 (플레이는 같은 번호를 두 번 받지 않음), 이름(PLAY_VERSION_NAME)도 1.0.1 처럼
 # - ⚠️ PLAY_APP_ID(패키지 이름)는 플레이에 한 번 올리면 못 바꿈. assetlinks.json 에도 같은 이름 + 지문 2개(업로드 키 · 플레이 앱 서명)
@@ -25,7 +25,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  PLAY_APP_ID: com.daeyeon.roster
+  PLAY_APP_ID: io.github.dybbr.roster   # 하코 결정(2026-11-04): 휴대폰용 APK 와 같은 이름 · 서명은 회사 PC 공용 업로드 키
   PLAY_VERSION_CODE: '1'
   PLAY_VERSION_NAME: '1.0'
   APP_NAME: 대연초 야구부
@@ -211,8 +211,8 @@ jobs:
         working-directory: play-build
         run: |
           gradle bundleRelease --no-daemon --stacktrace
-          cp app/build/outputs/bundle/release/app-release.aab ../daeyeon-roster_unsigned.aab
-          ls -la ../daeyeon-roster_unsigned.aab
+          cp app/build/outputs/bundle/release/app-release.aab ../daeyeon-baseball_unsigned.aab
+          ls -la ../daeyeon-baseball_unsigned.aab
 
       - name: 릴리즈에 AAB 올리기
         env:
@@ -220,10 +220,10 @@ jobs:
         run: |
           # 휴대폰용 APK 릴리즈(android-app)가 「최신」 표시를 유지해야 APK 다운로드 주소가 안 바뀜 → --latest=false
           gh release delete play-store --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag || true
-          gh release create play-store daeyeon-roster_unsigned.aab \
+          gh release create play-store daeyeon-baseball_unsigned.aab \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
             --latest=false \
             --title "플레이 스토어용 AAB (서명 전) · ${PLAY_APP_ID} · 버전 ${PLAY_VERSION_NAME} (코드 ${PLAY_VERSION_CODE})" \
             --notes "서명 전 파일입니다. 업로드 키가 있는 PC에서 서명한 뒤 플레이 콘솔에 올리세요. 휴대폰 설치용 아님."
-          echo "다운로드: https://github.com/$GITHUB_REPOSITORY/releases/download/play-store/daeyeon-roster_unsigned.aab"
+          echo "다운로드: https://github.com/$GITHUB_REPOSITORY/releases/download/play-store/daeyeon-baseball_unsigned.aab"
