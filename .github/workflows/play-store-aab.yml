@@ -1,0 +1,229 @@
+# ==========================================================
+# 🏪 대연초 야구부 - 플레이 스토어용 AAB 빌드 (서명 전 파일)
+# ==========================================================
+# - 실행: 저장소 → Actions → "플레이 스토어용 AAB 빌드" → Run workflow (이 파일을 고쳐 올려도 자동 실행)
+# - 결과물: Releases 의 "play-store" 에 daeyeon-roster_unsigned.aab (서명 전)
+#   → 업로드 키가 있는 PC 에서 서명한 뒤 플레이 콘솔에 올림 (키 · 비밀번호는 저장소에 절대 넣지 않음)
+# - 휴대폰에 직접 까는 APK(android-apk.yml, io.github.dybbr.roster)와는 앱 ID · 서명이 다른 별개 앱
+# - 앱은 https://dybbr.github.io 를 주소줄 없이 띄우는 방식(TWA) → 사이트를 고치면 앱도 바로 바뀜, 다시 낼 필요 없음
+# - 다시 올릴 때: 아래 PLAY_VERSION_CODE 를 +1 (플레이는 같은 번호를 두 번 받지 않음), 이름(PLAY_VERSION_NAME)도 1.0.1 처럼
+# - ⚠️ PLAY_APP_ID(패키지 이름)는 플레이에 한 번 올리면 못 바꿈. assetlinks.json 에도 같은 이름 + 지문 2개(업로드 키 · 플레이 앱 서명)
+name: 플레이 스토어용 AAB 빌드
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/play-store-aab.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: play-store-aab
+  cancel-in-progress: true
+
+env:
+  PLAY_APP_ID: com.daeyeon.roster
+  PLAY_VERSION_CODE: '1'
+  PLAY_VERSION_NAME: '1.0'
+  APP_NAME: 대연초 야구부
+  SITE_HOST: dybbr.github.io
+  LC_ALL: C.UTF-8
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 저장소 가져오기
+        uses: actions/checkout@v4
+
+      - name: Java 17 설치
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Gradle 설치
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+
+      - name: 안드로이드 프로젝트 생성
+        run: |
+          set -e
+          P=play-build
+          R=$P/app/src/main/res
+          mkdir -p $P/app/src/main $R/values $R/xml $R/drawable-nodpi $R/drawable-xxhdpi $R/mipmap-anydpi-v26 $R/mipmap-xxxhdpi
+
+          cat > $P/settings.gradle <<'EOF'
+          pluginManagement {
+              repositories { google(); mavenCentral(); gradlePluginPortal() }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories { google(); mavenCentral() }
+          }
+          rootProject.name = "DaeyeonRoster"
+          include ':app'
+          EOF
+
+          cat > $P/build.gradle <<'EOF'
+          plugins {
+              id 'com.android.application' version '8.11.1' apply false
+          }
+          EOF
+
+          cat > $P/gradle.properties <<'EOF'
+          android.useAndroidX=true
+          org.gradle.jvmargs=-Xmx2g -Dfile.encoding=UTF-8
+          EOF
+
+          cat > $P/app/build.gradle <<EOF
+          plugins {
+              id 'com.android.application'
+          }
+          android {
+              namespace "${PLAY_APP_ID}"
+              compileSdk 36
+              defaultConfig {
+                  applicationId "${PLAY_APP_ID}"
+                  minSdk 24
+                  targetSdk 36
+                  versionCode ${PLAY_VERSION_CODE}
+                  versionName "${PLAY_VERSION_NAME}"
+              }
+              buildTypes {
+                  release {
+                      minifyEnabled false
+                  }
+              }
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+              lint {
+                  checkReleaseBuilds false
+                  abortOnError false
+              }
+          }
+          dependencies {
+              implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'
+          }
+          EOF
+
+          cat > $P/app/src/main/AndroidManifest.xml <<EOF
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <queries>
+                  <intent>
+                      <action android:name="android.support.customtabs.action.CustomTabsService" />
+                  </intent>
+              </queries>
+              <application
+                  android:allowBackup="true"
+                  android:icon="@mipmap/ic_launcher"
+                  android:label="@string/app_name"
+                  android:supportsRtl="true"
+                  android:manageSpaceActivity="com.google.androidbrowserhelper.trusted.ManageDataLauncherActivity"
+                  android:theme="@android:style/Theme.Translucent.NoTitleBar">
+                  <meta-data android:name="asset_statements" android:resource="@string/asset_statements" />
+                  <activity
+                      android:name="com.google.androidbrowserhelper.trusted.LauncherActivity"
+                      android:label="@string/app_name"
+                      android:exported="true"
+                      android:alwaysRetainTaskState="true">
+                      <meta-data android:name="android.support.customtabs.trusted.DEFAULT_URL" android:value="https://${SITE_HOST}/index.html" />
+                      <meta-data android:name="android.support.customtabs.trusted.STATUS_BAR_COLOR" android:resource="@color/brand_navy" />
+                      <meta-data android:name="android.support.customtabs.trusted.NAVIGATION_BAR_COLOR" android:resource="@color/brand_navy" />
+                      <meta-data android:name="android.support.customtabs.trusted.SPLASH_IMAGE_DRAWABLE" android:resource="@drawable/splash" />
+                      <meta-data android:name="android.support.customtabs.trusted.SPLASH_SCREEN_BACKGROUND_COLOR" android:resource="@color/brand_navy" />
+                      <meta-data android:name="android.support.customtabs.trusted.SPLASH_SCREEN_FADE_OUT_DURATION" android:value="300" />
+                      <meta-data android:name="android.support.customtabs.trusted.FILE_PROVIDER_AUTHORITY" android:value="\${applicationId}.fileprovider" />
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                      <intent-filter android:autoVerify="true">
+                          <action android:name="android.intent.action.VIEW" />
+                          <category android:name="android.intent.category.DEFAULT" />
+                          <category android:name="android.intent.category.BROWSABLE" />
+                          <data android:scheme="https" android:host="${SITE_HOST}" />
+                      </intent-filter>
+                  </activity>
+                  <!-- 앱 정보 → 저장공간 → 「데이터 관리」 화면 (빠지면 앱이 켜자마자 꺼질 수 있음 — MS 파크 1.0에서 겪은 문제) -->
+                  <activity
+                      android:name="com.google.androidbrowserhelper.trusted.ManageDataLauncherActivity"
+                      android:exported="false">
+                      <meta-data android:name="android.support.customtabs.trusted.MANAGE_SPACE_URL" android:value="https://${SITE_HOST}/" />
+                  </activity>
+                  <provider
+                      android:name="androidx.core.content.FileProvider"
+                      android:authorities="\${applicationId}.fileprovider"
+                      android:grantUriPermissions="true"
+                      android:exported="false">
+                      <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/filepaths" />
+                  </provider>
+              </application>
+          </manifest>
+          EOF
+
+          cat > $R/values/strings.xml <<EOF
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <string name="app_name">${APP_NAME}</string>
+              <string name="asset_statements" translatable="false">[{\"relation\": [\"delegate_permission/common.handle_all_urls\"], \"target\": {\"namespace\": \"web\", \"site\": \"https://${SITE_HOST}\"}}]</string>
+          </resources>
+          EOF
+
+          cat > $R/values/colors.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <color name="brand_navy">#0B2240</color>
+          </resources>
+          EOF
+
+          cat > $R/xml/filepaths.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <paths>
+              <files-path path="twa_splash/" name="twa_splash" />
+          </paths>
+          EOF
+
+          cat > $R/mipmap-anydpi-v26/ic_launcher.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+              <background android:drawable="@color/brand_navy" />
+              <foreground android:drawable="@drawable/ic_foreground" />
+          </adaptive-icon>
+          EOF
+
+          # 아이콘 · 첫 화면은 휴대폰용 APK 와 같은 그림 (사이트 icons 폴더)
+          cp icons/icon-maskable-512.png $R/drawable-nodpi/ic_foreground.png
+          cp icons/splash.webp $R/drawable-xxhdpi/splash.webp
+          cp icons/icon-192.png $R/mipmap-xxxhdpi/ic_launcher.png
+
+          echo "생성된 파일:"; find $P -type f | sort
+          echo "--- 매니페스트 확인 ---"; cat $P/app/src/main/AndroidManifest.xml
+
+      - name: AAB 빌드 (서명 전)
+        working-directory: play-build
+        run: |
+          gradle bundleRelease --no-daemon --stacktrace
+          cp app/build/outputs/bundle/release/app-release.aab ../daeyeon-roster_unsigned.aab
+          ls -la ../daeyeon-roster_unsigned.aab
+
+      - name: 릴리즈에 AAB 올리기
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # 휴대폰용 APK 릴리즈(android-app)가 「최신」 표시를 유지해야 APK 다운로드 주소가 안 바뀜 → --latest=false
+          gh release delete play-store --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag || true
+          gh release create play-store daeyeon-roster_unsigned.aab \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --latest=false \
+            --title "플레이 스토어용 AAB (서명 전) · ${PLAY_APP_ID} · 버전 ${PLAY_VERSION_NAME} (코드 ${PLAY_VERSION_CODE})" \
+            --notes "서명 전 파일입니다. 업로드 키가 있는 PC에서 서명한 뒤 플레이 콘솔에 올리세요. 휴대폰 설치용 아님."
+          echo "다운로드: https://github.com/$GITHUB_REPOSITORY/releases/download/play-store/daeyeon-roster_unsigned.aab"

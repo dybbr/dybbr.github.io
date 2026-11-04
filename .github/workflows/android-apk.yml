@@ -4,8 +4,7 @@
 # - 실행 방법: 저장소 → Actions → "안드로이드 앱(APK) 빌드" → Run workflow
 #   (이 파일을 수정해서 올려도 자동 실행됨)
 # - 결과물: Releases 의 "android-app" 에 daeyeon-baseball.apk 가 올라감.
-#           (2026-11-04) 플레이 스토어용 AAB 도 같이 만들어 Releases 의 "play-store" 에 daeyeon-baseball.aab 로 올라감.
-#           AAB 는 플레이 콘솔 → 테스트/프로덕션 → 새 버전 만들기 에 올리는 파일 (휴대폰에 직접 설치하는 파일 아님).
+#           (플레이 스토어용 AAB 는 따로: .github/workflows/play-store-aab.yml — 앱 ID · 서명이 다른 별개 앱)
 #   다운로드 주소(항상 최신): https://github.com/<저장소>/releases/latest/download/daeyeon-baseball.apk
 # - 앱은 https://dybbr.github.io 를 그대로 보여주는 방식(TWA)이라,
 #   사이트를 수정하면 앱에도 자동 반영됨 → 사이트만 고칠 때는 다시 빌드할 필요 없음.
@@ -52,7 +51,7 @@ jobs:
       - name: Gradle 설치
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.13'
+          gradle-version: '8.9'
 
       - name: 시크릿 확인
         env:
@@ -137,7 +136,7 @@ jobs:
 
           cat > $P/build.gradle <<'EOF'
           plugins {
-              id 'com.android.application' version '8.11.1' apply false
+              id 'com.android.application' version '8.5.2' apply false
           }
           EOF
 
@@ -152,11 +151,11 @@ jobs:
           }
           android {
               namespace "io.github.dybbr.roster"
-              compileSdk 36
+              compileSdk 34
               defaultConfig {
                   applicationId "io.github.dybbr.roster"
                   minSdk 21
-                  targetSdk 36   // 2026-08-31부터 플레이 스토어 새 앱·업데이트는 안드로이드 16(API 36) 이상 필수
+                  targetSdk 34
                   versionCode Integer.parseInt(System.getenv("VERSION_CODE") ?: "1")
                   versionName "1.0." + (System.getenv("VERSION_CODE") ?: "1")
               }
@@ -279,30 +278,21 @@ jobs:
 
           echo "생성된 파일:"; find $P -type f | sort
 
-      - name: APK + AAB 빌드 (서명 포함)
+      - name: APK 빌드 (서명 포함)
         working-directory: android-build
         env:
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           VERSION_CODE: ${{ github.run_number }}
         run: |
           export KEYSTORE_FILE="$RUNNER_TEMP/release.keystore"
-          gradle assembleRelease bundleRelease --no-daemon --stacktrace
+          gradle assembleRelease --no-daemon --stacktrace
           cp app/build/outputs/apk/release/app-release.apk ../daeyeon-baseball.apk
-          cp app/build/outputs/bundle/release/app-release.aab ../daeyeon-baseball.aab
-          ls -la ../daeyeon-baseball.apk ../daeyeon-baseball.aab
+          ls -la ../daeyeon-baseball.apk
 
-      - name: 릴리즈에 APK · AAB 올리기
+      - name: 릴리즈에 APK 올리기
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # 플레이 스토어용 AAB (최신 릴리즈 표시는 APK 쪽에 두어야 APK 다운로드 주소가 안 바뀜 → --latest=false)
-          gh release delete play-store --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag || true
-          gh release create play-store daeyeon-baseball.aab \
-            --repo "$GITHUB_REPOSITORY" \
-            --target "$GITHUB_SHA" \
-            --latest=false \
-            --title "플레이 스토어 업로드용 AAB · 빌드 ${{ github.run_number }} (버전 코드 ${{ github.run_number }})" \
-            --notes "플레이 콘솔에 올리는 파일입니다. 휴대폰 설치용은 android-app 릴리즈의 APK 를 쓰세요."
           gh release delete android-app --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag || true
           gh release create android-app daeyeon-baseball.apk \
             --repo "$GITHUB_REPOSITORY" \
