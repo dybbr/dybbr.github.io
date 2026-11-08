@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.105.1 · b261108";
+        const APP_VERSION = "v2.105.2 · b261108";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -1269,17 +1269,29 @@
         .upn-btns { justify-content: center; border-top: none; padding-top: 4px; }
         .upn-btns .btn-save { width: 100%; padding: 12px 14px; font-size: 15px; border-radius: 10px; }
 
-        /* 💿 v2.105.0: 새 기능 알림 「74곡 대형 포스터」(C안) — 새 주제곡이 나왔을 때 로그인 후 기기마다 한 번 · 휴대폰은 화면 전체, 태블릿 · PC는 가운데 큰 포스터 */
-        #wnModal { padding: 0; background: rgba(5,12,25,.6); }
-        .wn-poster { position: relative; width: 100%; height: 100%; max-width: 480px; background: var(--kbo-red); color: #fff; overflow: hidden; display: flex; flex-direction: column;
-            padding: calc(env(safe-area-inset-top, 0px) + 44px) max(20px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 18px) max(20px, env(safe-area-inset-left, 0px)); }
-        @media (min-width: 600px) and (min-height: 640px) { .wn-poster { height: min(780px, 92vh); border-radius: 22px; box-shadow: 0 18px 50px rgba(0,0,0,.4); } }
-        .wn-x { position: absolute; right: max(14px, env(safe-area-inset-right, 0px)); top: calc(env(safe-area-inset-top, 0px) + 14px); z-index: 3; width: 36px; height: 36px; border-radius: 50%; border: none; background: rgba(255,255,255,.22); color: #fff; font-size: 16px; font-weight: 900; cursor: pointer; }
-        .wn-kick { font-size: 12px; font-weight: 900; letter-spacing: .14em; opacity: .9; }
-        .wn-num { font-family: Impact, "Arial Narrow", "Arial Black", sans-serif; font-weight: 900; font-size: clamp(110px, 34vw, 168px); line-height: .9; letter-spacing: -.01em; margin-top: 6px; }
+        /* 💿 v2.105.0: 새 기능 알림 「74곡 대형 포스터」(C안) — 새 주제곡이 나왔을 때 로그인 후 기기마다 한 번 · 휴대폰은 화면 전체, 태블릿 · PC는 가운데 큰 포스터
+           v2.105.2: 태블릿에서 위(제목 · ✕)와 아래(다음에 들을게요)가 잘리던 것 고침 — 화면 크기(110~130%)를 키운 기기에서 포스터까지 같이 커져 화면을 넘었음
+             → 포스터는 화면 크기 배율과 상관없이 실제 화면에 맞춤(zoom 되돌림) · 칸 배치를 격자(grid)로: 제목 / 이름표 / [곡 제목 | 부캉이] / 버튼 — 부캉이는 남은 칸 안에서만 커져 이름표와 안 겹침
+             · 높이가 낮은 가로 화면(휴대폰 가로 · 작은 노트북)은 왼쪽 글 · 오른쪽 이름표+부캉이 두 칸 · 그래도 모자라면 포스터 안에서 스크롤(✕는 늘 보임) */
+        #wnModal { padding: 0; background: rgba(5,12,25,.6); zoom: calc(1 / var(--ui-zoom, 1)); }
+        .wn-poster { position: relative; width: 100%; height: 100%; max-width: 480px; background: var(--kbo-red); color: #fff; overflow: hidden; container: wn / size; }   /* container: 포스터 실제 크기에 맞춰 글씨 · 여백을 고름 (@container) */
+        /* 태블릿 · PC: 가운데 카드 — 여기서는 사용자가 고른 화면 크기(110~130%)를 다시 적용해 글씨도 같이 커지게, 대신 높이 · 너비를 배율로 나눠 실제 화면 안에 들어오게 */
+        @media (min-width: 600px) and (min-height: 640px) {
+            .wn-poster { zoom: var(--ui-zoom, 1); max-width: min(480px, calc((100vw - 24px) / var(--ui-zoom, 1)));
+                height: min(780px, calc((100vh - 40px) / var(--ui-zoom, 1))); height: min(780px, calc((100dvh - 40px) / var(--ui-zoom, 1))); border-radius: 22px; box-shadow: 0 18px 50px rgba(0,0,0,.4); }
+            .wn-num { font-size: clamp(64px, calc(17vh / var(--ui-zoom, 1)), 168px); }
+        }
+        .wn-in { position: relative; height: 100%; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; display: grid; column-gap: 8px;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 42%); grid-template-rows: auto minmax(auto, 1fr) minmax(auto, 1.5fr) auto; grid-template-areas: "head head" "marq marq" "mine bk" "bottom bottom";
+            padding: calc(env(safe-area-inset-top, 0px) + 44px) max(20px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 16px) max(20px, env(safe-area-inset-left, 0px)); }
+        .wn-x { position: absolute; right: max(14px, env(safe-area-inset-right, 0px)); top: calc(env(safe-area-inset-top, 0px) + 14px); z-index: 3; width: 38px; height: 38px; border-radius: 50%; border: none; background: rgba(0,0,0,.28); color: #fff; font-size: 16px; font-weight: 900; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        .wn-head { grid-area: head; min-width: 0; }
+        .wn-kick { display: block; font-size: 12px; font-weight: 900; letter-spacing: .14em; opacity: .9; padding-right: 44px; }
+        .wn-num { font-family: Impact, "Arial Narrow", "Arial Black", sans-serif; font-weight: 900; font-size: clamp(64px, min(34vw, 17vh), 168px); font-size: clamp(64px, min(34vw, 17dvh), 168px); line-height: .9; letter-spacing: -.01em; margin-top: 6px; }
         .wn-num small { display: block; font-size: .24em; letter-spacing: .05em; line-height: 1.15; }
-        .wn-line { font-size: 15px; font-weight: 800; line-height: 1.45; margin-top: 8px; max-width: 15em; word-break: keep-all; }
-        .wn-marq { position: relative; margin: auto calc(-1 * max(20px, env(safe-area-inset-left, 0px))); padding-block: 18px; display: flex; flex-direction: column; gap: 7px; transform: rotate(-4deg); }
+        .wn-line { font-size: 15px; font-weight: 800; line-height: 1.45; margin-top: 8px; max-width: 16em; word-break: keep-all; }
+        .wn-marq { grid-area: marq; position: relative; margin: clamp(4px, 2vh, 16px) calc(-1 * max(20px, env(safe-area-inset-right, 0px))) clamp(6px, 2vh, 14px) calc(-1 * max(20px, env(safe-area-inset-left, 0px)));
+            align-self: center; padding-block: 12px; display: flex; flex-direction: column; gap: 7px; transform: rotate(-4deg); }
         .wn-row { display: flex; gap: 7px; width: max-content; }
         .wn-go-anim .wn-row { animation: wnMq 26s linear infinite; }
         .wn-go-anim .wn-row.r2 { animation-direction: reverse; animation-duration: 31s; }
@@ -1287,20 +1299,49 @@
         @keyframes wnMq { from { transform: translateX(0); } to { transform: translateX(-50%); } }
         .wn-chip { font-size: 13px; font-weight: 900; background: #fff; color: var(--kbo-red); border-radius: 999px; padding: 5px 12px; white-space: nowrap; }
         .wn-chip.n { background: var(--kbo-blue); color: #fff; }
-        .wn-bk { position: absolute; right: -6px; bottom: calc(env(safe-area-inset-bottom, 0px) + 150px); width: min(170px, 42vw); height: auto; z-index: 1; pointer-events: none; filter: drop-shadow(0 6px 12px rgba(0,0,0,.25)); }
-        .wn-go-anim .wn-bk { animation: wnShout 1.4s ease-in-out infinite; transform-origin: 70% 90%; }
-        @keyframes wnShout { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(6deg); } }
+        /* 부캉이: [곡 제목 | 부캉이] 칸의 오른쪽 칸 안에서만 — 칸이 작으면 같이 작아짐(contain), 칸 크기 계산에는 안 끼어듦(absolute) */
+        .wn-bk { grid-area: bk; position: absolute; right: -8px; bottom: 0; width: calc(100% + 8px); height: 100%; max-height: 210px; object-fit: contain; object-position: right bottom; z-index: 1; pointer-events: none; filter: drop-shadow(0 6px 12px rgba(0,0,0,.25)); }
+        .wn-go-anim .wn-bk { animation: wnShout 1.4s ease-in-out infinite; transform-origin: 75% 95%; }
+        @keyframes wnShout { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(5deg); } }
         .wn-go-anim .wn-num { animation: wnPop .6s cubic-bezier(.2,1.5,.4,1) both; }
         @keyframes wnPop { from { transform: scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
         @media (prefers-reduced-motion: reduce) { .wn-go-anim .wn-row, .wn-go-anim .wn-bk, .wn-go-anim .wn-num { animation: none; } }
-        .wn-bottom { margin-top: auto; position: relative; z-index: 2; display: flex; flex-direction: column; gap: 8px; }
-        .wn-mine { background: rgba(0,0,0,.18); border-radius: 12px; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; max-width: 62%; }
+        .wn-mine { grid-area: mine; align-self: end; min-width: 0; position: relative; z-index: 2; background: rgba(0,0,0,.2); border-radius: 12px; padding: 8px 10px; display: flex; flex-direction: column; gap: 1px; }
         .wn-mine[hidden] { display: none; }
         .wn-mine small { font-size: 11px; font-weight: 800; opacity: .85; }
-        .wn-mine button { background: none; border: none; color: #fff; text-align: left; font: inherit; font-size: 14px; font-weight: 900; padding: 2px 0; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .wn-mine button { background: none; border: none; color: #fff; text-align: left; font: inherit; font-size: 14px; font-weight: 900; padding: 3px 0; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; -webkit-tap-highlight-color: transparent; }
         .wn-mine button::before { content: "▶ "; font-size: 11px; }
+        .wn-bottom { grid-area: bottom; position: relative; z-index: 2; display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
         .wn-go { border: none; background: #fff; color: var(--kbo-red); font-weight: 900; font-size: 16px; border-radius: 12px; padding: 14px; cursor: pointer; }
-        .wn-later { border: none; background: transparent; color: rgba(255,255,255,.85); font-size: 13px; font-weight: 700; padding: 4px; cursor: pointer; }
+        .wn-later { border: none; background: transparent; color: rgba(255,255,255,.9); font-size: 13px; font-weight: 700; padding: 6px; cursor: pointer; }
+        /* 숫자 크기는 포스터 자체 크기(cqw · cqh) 기준 — 휴대폰 · 카드 · 화면 배율과 상관없이 같은 비율 (지원 안 하는 옛 브라우저는 위의 vh 값) */
+        @supports (font-size: 1cqh) {
+            .wn-num { font-size: clamp(56px, min(34cqw, 16.5cqh), 168px); }
+        }
+        /* 키가 작은 세로 포스터(작은 휴대폰 · 화면을 130%로 키운 가로 태블릿 카드): 여백 · 이름표 · 버튼을 조금씩 줄여 스크롤 없이 */
+        @container wn (orientation: portrait) and (max-height: 680px) {
+            .wn-in { padding-top: calc(env(safe-area-inset-top, 0px) + 36px); }
+            .wn-kick { letter-spacing: .08em; font-size: 11px; }
+            .wn-line { margin-top: 4px; }
+            .wn-marq { padding-block: 6px; gap: 5px; }
+            .wn-chip { font-size: 12px; padding: 4px 10px; }
+            .wn-mine button { padding: 2px 0; }
+            .wn-bottom { margin-top: 8px; gap: 2px; }
+            .wn-go { padding: 12px; }
+        }
+        /* 높이가 낮은 가로 화면: 왼쪽 [제목 · 곡 제목 · 버튼] | 오른쪽 [이름표 · 부캉이] */
+        @media (orientation: landscape) and (max-height: 600px) {
+            .wn-poster { max-width: min(880px, 100%); height: 100%; border-radius: 0; box-shadow: none; }
+            .wn-in { column-gap: 22px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto 1fr auto; grid-template-areas: "head marq" "mine bk" "bottom bk";
+                padding-top: calc(env(safe-area-inset-top, 0px) + 16px); padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); }
+            .wn-num { font-size: clamp(52px, 20vh, 120px); font-size: clamp(52px, 20cqh, 120px); }
+            .wn-marq { overflow: hidden; margin: 46px calc(-1 * max(20px, env(safe-area-inset-right, 0px))) 6px 0; padding-block: 8px; transform: rotate(-3deg); }
+            .wn-mine { margin-top: 10px; }
+            .wn-bottom { flex-direction: row; align-items: center; margin-top: 10px; }
+            .wn-go { flex: 1 1 auto; padding: 12px; font-size: 15px; }
+            .wn-later { flex: 0 0 auto; }
+            .wn-bk { max-height: 240px; }
+        }
 
         /* v2.41.18: 유니폼 신청 창 윗부분 — 설명 한 줄, 「대상 선수 선택」 옆에 고르기 칸, 학년·키·몸무게 한 줄 */
         .uni-guide { font-size: 12px; margin: 0 0 10px; line-height: 1.4; }
@@ -4113,15 +4154,19 @@
 <div id="wnModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="wnNum">
     <div class="wn-poster">
         <button type="button" class="wn-x" aria-label="닫기" onclick="wnClose()">✕</button>
-        <span class="wn-kick">DAEYEON BASEBALL · NEW SONGS</span>
-        <div class="wn-num" id="wnNum">74<small>NEW SONGS</small></div>
-        <div class="wn-line" id="wnLine">선수마다 새 주제곡 2곡이 도착했어요</div>
-        <div class="wn-marq" aria-hidden="true"><div class="wn-row" id="wnRow1"></div><div class="wn-row r2" id="wnRow2"></div><div class="wn-row r3" id="wnRow3"></div></div>
-        <img class="wn-bk" src="icons/bk/megaphone.webp" alt="" width="240" height="240">
-        <div class="wn-bottom">
+        <div class="wn-in">
+            <div class="wn-head">
+                <span class="wn-kick">DAEYEON BASEBALL · NEW SONGS</span>
+                <div class="wn-num" id="wnNum">74<small>NEW SONGS</small></div>
+                <div class="wn-line" id="wnLine">선수마다 새 주제곡 2곡이 도착했어요</div>
+            </div>
+            <div class="wn-marq" aria-hidden="true"><div class="wn-row" id="wnRow1"></div><div class="wn-row r2" id="wnRow2"></div><div class="wn-row r3" id="wnRow3"></div></div>
             <div class="wn-mine" id="wnMine" hidden></div>
-            <button type="button" class="wn-go" id="wnGo">들으러 가기</button>
-            <button type="button" class="wn-later" onclick="wnClose()">다음에 들을게요</button>
+            <img class="wn-bk" src="icons/bk/megaphone.webp" alt="" width="240" height="240">
+            <div class="wn-bottom">
+                <button type="button" class="wn-go" id="wnGo">들으러 가기</button>
+                <button type="button" class="wn-later" onclick="wnClose()">다음에 들을게요</button>
+            </div>
         </div>
     </div>
 </div>
@@ -7406,9 +7451,10 @@
     //   · 운영진 등 자녀가 없는 로그인: 「명단에서 선수 골라 듣기」(닫기) · 1922 손님은 안 띄움 (공지 팝업과 같게)
     //   · 기기마다 한 번 (닫기 · 곡 누르기 = daeyeon_whatsnew_seen 에 WN_ID 기록) · WN_UNTIL 이 지나면 안 띄움 (새로 오신 분께 옛 소식이 안 뜨게)
     //   · 다음에 새 곡을 또 내면 WN_ID 만 바꾸면 다시 한 번 뜸 (새 곡 판별: more[] 의 key 가 WN_KEY_RE 에 맞는 곡)
+    //   · v2.105.2: 태블릿에서 잘리던 포스터를 고치고 다시 알림 → WN_ID 'songs-2026-11' → 'songs-2026-11b' (이미 본 기기도 한 번 더 뜸)
     //   · 서버 · 시트 호출 없음 (명단 · cheer-songs.json 은 원래 받던 것)
     // ==========================================================
-    const WN_ID = 'songs-2026-11', WN_UNTIL = '2026-12-31', WN_SEEN_KEY = 'daeyeon_whatsnew_seen', WN_KEY_RE = /^(\d+-\d+-\d+|P\d+)$/;
+    const WN_ID = 'songs-2026-11b', WN_UNTIL = '2026-12-31', WN_SEEN_KEY = 'daeyeon_whatsnew_seen', WN_KEY_RE = /^(\d+-\d+-\d+|P\d+)$/;
     let wnTimer = null;
     function wnSeen() { try { return localStorage.getItem(WN_SEEN_KEY) === WN_ID; } catch (e) { return true; } }
     function wnMark() { try { localStorage.setItem(WN_SEEN_KEY, WN_ID); } catch (e) {} }
@@ -7457,8 +7503,14 @@
                     goBtn.textContent = names.length === 1 ? `${names[0]} 선수 곡부터 듣기` : '우리 아이 곡부터 듣기';
                     goBtn.onclick = function () { wnOpenTrack(wnPath(mine[0].p), mine[0].i); };
                 } else {
+                    // v2.105.2: 자녀가 없는 로그인(운영진 등)도 곡 제목을 볼 수 있게 — 새 곡 중 3곡을 골라 바로 가기 (선수가 겹치지 않게)
                     document.getElementById('wnLine').textContent = '선수마다 새 주제곡 2곡이 도착했어요';
-                    mineBox.hidden = true; mineBox.innerHTML = '';
+                    const pick = [], usedP = new Set(), pool = fresh.slice();
+                    while (pool.length && pick.length < 3) { const r = pool.splice(Math.floor(Math.random() * pool.length), 1)[0]; if (!usedP.has(r.p)) { usedP.add(r.p); pick.push(r); } }
+                    mineBox.innerHTML = '<small>이런 곡들이 나왔어요</small>' + pick.map(r =>
+                        `<button type="button" data-path="${escapeHtml(wnPath(r.p))}" data-i="${r.i}">${escapeHtml(r.p.name + ' · ' + (r.m.title || r.m.label || '새 주제곡'))}</button>`).join('');
+                    mineBox.querySelectorAll('button').forEach(b => b.addEventListener('click', function () { wnOpenTrack(this.dataset.path, this.dataset.i); }));
+                    mineBox.hidden = !pick.length;
                     goBtn.textContent = '명단에서 선수 골라 듣기';
                     goBtn.onclick = function () { wnClose(); };
                 }
