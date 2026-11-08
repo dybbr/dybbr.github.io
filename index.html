@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.104.0 · b261108";
+        const APP_VERSION = "v2.105.0 · b261108";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -1268,6 +1268,39 @@
         .nt-popup { font-size: 11px; font-weight: 800; color: #b45309; }
         .upn-btns { justify-content: center; border-top: none; padding-top: 4px; }
         .upn-btns .btn-save { width: 100%; padding: 12px 14px; font-size: 15px; border-radius: 10px; }
+
+        /* 💿 v2.105.0: 새 기능 알림 「74곡 대형 포스터」(C안) — 새 주제곡이 나왔을 때 로그인 후 기기마다 한 번 · 휴대폰은 화면 전체, 태블릿 · PC는 가운데 큰 포스터 */
+        #wnModal { padding: 0; background: rgba(5,12,25,.6); }
+        .wn-poster { position: relative; width: 100%; height: 100%; max-width: 480px; background: var(--kbo-red); color: #fff; overflow: hidden; display: flex; flex-direction: column;
+            padding: calc(env(safe-area-inset-top, 0px) + 44px) max(20px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 18px) max(20px, env(safe-area-inset-left, 0px)); }
+        @media (min-width: 600px) and (min-height: 640px) { .wn-poster { height: min(780px, 92vh); border-radius: 22px; box-shadow: 0 18px 50px rgba(0,0,0,.4); } }
+        .wn-x { position: absolute; right: max(14px, env(safe-area-inset-right, 0px)); top: calc(env(safe-area-inset-top, 0px) + 14px); z-index: 3; width: 36px; height: 36px; border-radius: 50%; border: none; background: rgba(255,255,255,.22); color: #fff; font-size: 16px; font-weight: 900; cursor: pointer; }
+        .wn-kick { font-size: 12px; font-weight: 900; letter-spacing: .14em; opacity: .9; }
+        .wn-num { font-family: Impact, "Arial Narrow", "Arial Black", sans-serif; font-weight: 900; font-size: clamp(110px, 34vw, 168px); line-height: .9; letter-spacing: -.01em; margin-top: 6px; }
+        .wn-num small { display: block; font-size: .24em; letter-spacing: .05em; line-height: 1.15; }
+        .wn-line { font-size: 15px; font-weight: 800; line-height: 1.45; margin-top: 8px; max-width: 15em; word-break: keep-all; }
+        .wn-marq { position: relative; margin: auto calc(-1 * max(20px, env(safe-area-inset-left, 0px))); padding-block: 18px; display: flex; flex-direction: column; gap: 7px; transform: rotate(-4deg); }
+        .wn-row { display: flex; gap: 7px; width: max-content; }
+        .wn-go-anim .wn-row { animation: wnMq 26s linear infinite; }
+        .wn-go-anim .wn-row.r2 { animation-direction: reverse; animation-duration: 31s; }
+        .wn-go-anim .wn-row.r3 { animation-duration: 36s; }
+        @keyframes wnMq { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+        .wn-chip { font-size: 13px; font-weight: 900; background: #fff; color: var(--kbo-red); border-radius: 999px; padding: 5px 12px; white-space: nowrap; }
+        .wn-chip.n { background: var(--kbo-blue); color: #fff; }
+        .wn-bk { position: absolute; right: -6px; bottom: calc(env(safe-area-inset-bottom, 0px) + 150px); width: min(170px, 42vw); height: auto; z-index: 1; pointer-events: none; filter: drop-shadow(0 6px 12px rgba(0,0,0,.25)); }
+        .wn-go-anim .wn-bk { animation: wnShout 1.4s ease-in-out infinite; transform-origin: 70% 90%; }
+        @keyframes wnShout { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(6deg); } }
+        .wn-go-anim .wn-num { animation: wnPop .6s cubic-bezier(.2,1.5,.4,1) both; }
+        @keyframes wnPop { from { transform: scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
+        @media (prefers-reduced-motion: reduce) { .wn-go-anim .wn-row, .wn-go-anim .wn-bk, .wn-go-anim .wn-num { animation: none; } }
+        .wn-bottom { margin-top: auto; position: relative; z-index: 2; display: flex; flex-direction: column; gap: 8px; }
+        .wn-mine { background: rgba(0,0,0,.18); border-radius: 12px; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; max-width: 62%; }
+        .wn-mine[hidden] { display: none; }
+        .wn-mine small { font-size: 11px; font-weight: 800; opacity: .85; }
+        .wn-mine button { background: none; border: none; color: #fff; text-align: left; font: inherit; font-size: 14px; font-weight: 900; padding: 2px 0; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .wn-mine button::before { content: "▶ "; font-size: 11px; }
+        .wn-go { border: none; background: #fff; color: var(--kbo-red); font-weight: 900; font-size: 16px; border-radius: 12px; padding: 14px; cursor: pointer; }
+        .wn-later { border: none; background: transparent; color: rgba(255,255,255,.85); font-size: 13px; font-weight: 700; padding: 4px; cursor: pointer; }
 
         /* v2.41.18: 유니폼 신청 창 윗부분 — 설명 한 줄, 「대상 선수 선택」 옆에 고르기 칸, 학년·키·몸무게 한 줄 */
         .uni-guide { font-size: 12px; margin: 0 0 10px; line-height: 1.4; }
@@ -4072,6 +4105,23 @@
         <div class="modal-scroll-body" id="upnList"></div>
         <div class="modal-btns upn-btns">
             <button type="button" class="btn-save" onclick="upnClose()">확인</button>
+        </div>
+    </div>
+</div>
+
+<!-- 💿 새 기능 알림 (v2.105.0, C안 「74곡 대형 포스터」) — 새 주제곡이 나오면 로그인 후 기기마다 한 번 · 보호자는 우리 아이 새 곡 바로 가기 -->
+<div id="wnModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="wnNum">
+    <div class="wn-poster">
+        <button type="button" class="wn-x" aria-label="닫기" onclick="wnClose()">✕</button>
+        <span class="wn-kick">DAEYEON BASEBALL · NEW SONGS</span>
+        <div class="wn-num" id="wnNum">74<small>NEW SONGS</small></div>
+        <div class="wn-line" id="wnLine">선수마다 새 주제곡 2곡이 도착했어요</div>
+        <div class="wn-marq" aria-hidden="true"><div class="wn-row" id="wnRow1"></div><div class="wn-row r2" id="wnRow2"></div><div class="wn-row r3" id="wnRow3"></div></div>
+        <img class="wn-bk" src="icons/bk/megaphone.webp" alt="" width="240" height="240">
+        <div class="wn-bottom">
+            <div class="wn-mine" id="wnMine" hidden></div>
+            <button type="button" class="wn-go" id="wnGo">들으러 가기</button>
+            <button type="button" class="wn-later" onclick="wnClose()">다음에 들을게요</button>
         </div>
     </div>
 </div>
@@ -7324,7 +7374,7 @@
             if (!document.documentElement.classList.contains('is-authenticated') || (lock && lock.style.display === 'flex')) return;
             if (document.documentElement.classList.contains('dy-intro')) { upnCheck(); return; }
             const list = upnPending();
-            if (!list.length) return;
+            if (!list.length) { wnCheck(); return; }
             upnShowing = list.map(n => n.id);
             document.getElementById('upnList').innerHTML = list.map(n => {
                 const cm = noticeCatMeta(n.category);
@@ -7346,7 +7396,81 @@
         if (upnShowing.length) upnMarkSeen(upnShowing);
         upnShowing = [];
         closeModal('upnModal');
+        wnCheck();   // 💿 v2.105.0: 공지 팝업을 닫은 뒤 새 기능 알림
     }
+
+    // ==========================================================
+    // 💿 v2.105.0: 새 기능 알림 「74곡 대형 포스터」(C안) — 새 주제곡(cheer-songs.json 의 more[])이 나왔다고 로그인 후 한 번 알려 줌
+    //   · 빨간 포스터에 새 곡 수(74) · 장르 이름표가 흘러감 · 확성기 부캉이 · 휴대폰은 화면 전체
+    //   · 보호자: 우리 아이 새 곡 제목 + 「OOO 선수 곡부터 듣기」 → 그 선수 상세에서 그 곡이 골라진 채로 열림
+    //   · 운영진 등 자녀가 없는 로그인: 「명단에서 선수 골라 듣기」(닫기) · 1922 손님은 안 띄움 (공지 팝업과 같게)
+    //   · 기기마다 한 번 (닫기 · 곡 누르기 = daeyeon_whatsnew_seen 에 WN_ID 기록) · WN_UNTIL 이 지나면 안 띄움 (새로 오신 분께 옛 소식이 안 뜨게)
+    //   · 다음에 새 곡을 또 내면 WN_ID 만 바꾸면 다시 한 번 뜸 (새 곡 판별: more[] 의 key 가 WN_KEY_RE 에 맞는 곡)
+    //   · 서버 · 시트 호출 없음 (명단 · cheer-songs.json 은 원래 받던 것)
+    // ==========================================================
+    const WN_ID = 'songs-2026-11', WN_UNTIL = '2026-12-31', WN_SEEN_KEY = 'daeyeon_whatsnew_seen', WN_KEY_RE = /^(\d+-\d+-\d+|P\d+)$/;
+    let wnTimer = null;
+    function wnSeen() { try { return localStorage.getItem(WN_SEEN_KEY) === WN_ID; } catch (e) { return true; } }
+    function wnMark() { try { localStorage.setItem(WN_SEEN_KEY, WN_ID); } catch (e) {} }
+    function wnTracks(p) {   // 이 선수의 새 곡 → [{ p, i(more 순번), m }]
+        const song = typeof window.cheerSongFor === 'function' ? window.cheerSongFor(p) : null;
+        return (song && Array.isArray(song.more) ? song.more : []).map((m, i) => ({ p: p, i: i, m: m })).filter(x => x.m && x.m.src && WN_KEY_RE.test(String(x.m.key || '')));
+    }
+    function wnPath(p) { return `${p.grade}/${p.no || p.name}`; }
+    function wnOpenTrack(path, i) {
+        wnMark(); closeModal('wnModal');
+        window.location.href = `player.html?path=${encodeURIComponent(path)}&song=m${i}`;
+    }
+    function wnCheck() {
+        clearTimeout(wnTimer);
+        wnTimer = setTimeout(function () {
+            if (wnSeen() || ymdOf(new Date()) > WN_UNTIL) return;
+            const au = getActiveUser();
+            if (currentRole === 'guest' && !(au && Array.isArray(au.children) && au.children.length)) return;   // 보호자도 currentRole 은 'guest' → 자녀 정보가 있으면 보호자
+            if (!document.documentElement.classList.contains('is-authenticated') || document.documentElement.classList.contains('dy-intro')) return;
+            const lock = document.getElementById('lockOverlay');
+            if (lock && lock.style.display === 'flex') return;
+            if (Array.from(document.querySelectorAll('.modal')).some(m => m.style.display === 'flex')) return;   // 다른 창(공지 팝업 등)이 열려 있으면 그 창을 닫을 때 다시 봄
+            if (!players.length || typeof window.loadCheerSongs !== 'function') return;
+            window.loadCheerSongs().then(function () {
+                const kids = players.filter(p => !isStaff(p.grade) && isParentOfPlayer(p));
+                const vis = players.filter(p => !isStaff(p.grade) && p.visible !== false);
+                const isNew = r => /^\d+-\d+-\d+$/.test(String(r.m.key));
+                const fresh = vis.reduce((a, p) => a.concat(wnTracks(p).filter(isNew)), []);   // 이번에 새로 나온 곡 (김승원 시범 곡 P1~P3 은 빼고 셈)
+                if (!fresh.length) return;
+                let mine = []; kids.forEach(p => { mine = mine.concat(wnTracks(p)); });
+                // 장르 이름표 — 새 곡들의 장르에서 BPM 을 떼고 겹치지 않게 섞어서 세 줄로
+                const gen = Array.from(new Set(fresh.map(r => String(r.m.beat || '').replace(/\s*\d+\s*BPM.*$/i, '').trim()).filter(Boolean)));
+                for (let k = gen.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); const t = gen[k]; gen[k] = gen[j]; gen[j] = t; }
+                const third = Math.ceil(gen.length / 3);
+                const chips = (a, off) => { const h = a.map((g, n) => `<span class="wn-chip${(n + off) % 3 === 1 ? ' n' : ''}">${escapeHtml(g)}</span>`).join(''); return h + h; };   // 두 번 이어 붙여 끊김 없이 흐르게
+                [0, 1, 2].forEach(r => { document.getElementById('wnRow' + (r + 1)).innerHTML = chips(gen.slice(r * third, (r + 1) * third), r); });
+                document.getElementById('wnNum').firstChild.nodeValue = String(fresh.length);
+                const mineBox = document.getElementById('wnMine'), goBtn = document.getElementById('wnGo');
+                if (mine.length) {
+                    const names = Array.from(new Set(mine.map(r => r.p.name)));
+                    document.getElementById('wnLine').textContent = names.length === 1 ? `${names[0]} 선수에게도 새 주제곡 ${mine.length}곡이 도착했어요` : '우리 아이들에게도 새 주제곡이 도착했어요';
+                    mineBox.innerHTML = `<small>${names.length === 1 ? escapeHtml(names[0]) + ' 새 곡' : '우리 아이 새 곡'}</small>` + mine.slice(0, 4).map(r =>
+                        `<button type="button" data-path="${escapeHtml(wnPath(r.p))}" data-i="${r.i}">${escapeHtml((names.length > 1 ? r.p.name + ' · ' : '') + (r.m.title || r.m.label || '새 주제곡'))}</button>`).join('');
+                    mineBox.querySelectorAll('button').forEach(b => b.addEventListener('click', function () { wnOpenTrack(this.dataset.path, this.dataset.i); }));
+                    mineBox.hidden = false;
+                    goBtn.textContent = names.length === 1 ? `${names[0]} 선수 곡부터 듣기` : '우리 아이 곡부터 듣기';
+                    goBtn.onclick = function () { wnOpenTrack(wnPath(mine[0].p), mine[0].i); };
+                } else {
+                    document.getElementById('wnLine').textContent = '선수마다 새 주제곡 2곡이 도착했어요';
+                    mineBox.hidden = true; mineBox.innerHTML = '';
+                    goBtn.textContent = '명단에서 선수 골라 듣기';
+                    goBtn.onclick = function () { wnClose(); };
+                }
+                const modal = document.getElementById('wnModal');
+                if (Array.from(document.querySelectorAll('.modal')).some(m => m !== modal && m.style.display === 'flex')) return;
+                const card = modal.querySelector('.wn-poster');
+                card.classList.remove('wn-go-anim'); void card.offsetWidth; card.classList.add('wn-go-anim');
+                modal.style.display = 'flex';
+            });
+        }, 1200);
+    }
+    function wnClose() { wnMark(); closeModal('wnModal'); }
     function openNoticeEditor(id) {
         if (!canEditSchedule()) return;
         const n = id ? noticeList.find(x => x.id === id) : null;
@@ -9038,7 +9162,7 @@
         fitCardNames();
     }
     // 🎵 주제곡 목록(cheer-songs.json, GitHub 에서 받음 · 구글 서버 안 거침)이 명단보다 늦게 오면 🎵 표시를 위해 한 번 더 그림 (v2.92.0)
-    if (typeof window.loadCheerSongs === 'function') window.loadCheerSongs().then(n => { if (n && players.length) render(); });
+    if (typeof window.loadCheerSongs === 'function') window.loadCheerSongs().then(n => { if (n && players.length) { render(); wnCheck(); } });
 
     // ==========================================================
     // 🎓 졸업생 (OB) 명단 (v2.45.0) — 명단 탭 「🎓 졸업생」: 졸업 연도별로 묶어서 사진 · 배번 · 이름 · 포지션
@@ -10718,6 +10842,7 @@
         // 명단이 들어오면 "우리 아이" 학년을 알 수 있으므로 일정 화면도 다시 그림
         renderNextEventBanner();
         if (currentMainTab === 'schedule') renderSchedule();
+        wnCheck();   // 💿 v2.105.0: 명단이 와야 우리 아이 새 곡을 알 수 있음
         return true;
     }
 

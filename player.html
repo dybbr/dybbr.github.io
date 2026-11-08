@@ -442,6 +442,8 @@
 
         /* 🎵 주제곡 듣기 (v2.92.0) — 곡이 있는 선수만 · 자동 재생 없음 · 처음 누르면 가사가 같이 펼쳐짐 */
         .cheer-box { background: linear-gradient(135deg, #fff7ed, #fef2f2); border: 1px solid #fed7aa; border-radius: 12px; padding: 12px 12px 10px; display: flex; flex-direction: column; gap: 8px; }
+        .cheer-box.cpl-flash { animation: cplFlash 1.8s ease-out; }   /* 💿 v2.105.0: 새 기능 알림에서 곡을 눌러 왔을 때 한 번 반짝 */
+        @keyframes cplFlash { 0%, 40% { box-shadow: 0 0 0 4px rgba(200,16,46,.45); } 100% { box-shadow: 0 0 0 0 rgba(200,16,46,0); } }
         .cheer-head { display: flex; align-items: center; gap: 10px; }
         .cheer-play { flex: 0 0 auto; width: 48px; height: 48px; border-radius: 50%; border: none; background: var(--kbo-red); color: #ffffff; font-size: 18px; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 3px 8px rgba(200,16,46,0.35); transition: transform .1s; }
         .cheer-play:active { transform: scale(0.94); }
@@ -1705,7 +1707,11 @@
         seek.addEventListener('input', function () { seeking = true; const d = audio.duration; if (isFinite(d) && d > 0) time.textContent = fmtCheerTime(seek.value / 1000 * d) + ' / ' + fmtCheerTime(d); });
         seek.addEventListener('change', function () { seeking = false; const d = audio.duration; if (isFinite(d) && d > 0) audio.currentTime = seek.value / 1000 * d; else seek.value = 0; });
         lyrBtn.addEventListener('click', function () { openedOnce = true; setLyrics(lyr.hidden); });
-        select(0, false);
+        // 💿 v2.105.0: 새 기능 알림(첫 화면)에서 곡을 눌러 왔으면(?song=m0) 그 곡을 골라 두고 주제곡 칸으로 내려 줌 (재생은 ▶ 를 눌러야 — 휴대폰이 자동 재생을 막음)
+        const want = new URLSearchParams(window.location.search).get('song');
+        const wi = want ? vers.findIndex(v => v.key === want) : -1;
+        select(wi >= 0 ? wi : 0, false);
+        if (wi >= 0) setTimeout(function () { box.scrollIntoView({ behavior: 'smooth', block: 'start' }); box.classList.add('cpl-flash'); setTimeout(() => box.classList.remove('cpl-flash'), 1800); }, 350);
     }
 
     // 🎤 노래방 줄 강조 (v2.94.0) — 재생 위치에 맞춰 지금 부르는 가사 줄을 강조 · 빨간색이 왼쪽부터 차오름 · 가사 칸 안에서만 살짝 스크롤
