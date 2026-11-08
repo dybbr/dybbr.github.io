@@ -28,7 +28,7 @@
         }
     </script>
     <!-- 🎵 선수별 주제곡 (v2.92.0) — 곡 목록은 cheer-songs.json (그 파일만 고치면 됨) · cheer-songs.js 를 고칠 때만 아래 ?v= 숫자 올리기 -->
-    <script src="cheer-songs.js?v=2.101.0"></script>
+    <script src="cheer-songs.js?v=2.102.0"></script>
 
     <!-- 브라우저 캐시 원천 방지 메타태그 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -459,6 +459,7 @@
         .cheer-lyr-btn, .cheer-dl { font-size: 12px; font-weight: 800; padding: 6px 10px; border-radius: 8px; border: 1px solid #fdba74; background: #ffffff; color: #9a3412; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; font-family: inherit; }
         .cheer-msg { font-size: 12px; font-weight: 700; color: #b91c1c; }
         .cheer-seg { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; padding: 3px; background: #ffffff; border: 1px solid #fed7aa; border-radius: 10px; }
+        .cheer-seg[data-n="3"] { grid-template-columns: 1fr 1fr 1fr; }   /* 곡이 3개면 한 줄, 4개 이상은 두 개씩 줄바꿈 (v2.102.0) */
         .cheer-ver { border: none; background: transparent; color: #9a3412; font: inherit; font-size: 13px; font-weight: 900; border-radius: 7px; padding: 7px 4px; cursor: pointer; }
         .cheer-ver small { font-size: 11.5px; font-weight: 700; opacity: .85; font-variant-numeric: tabular-nums; }
         .cheer-ver.on { background: var(--kbo-red); color: #ffffff; }
@@ -1546,7 +1547,7 @@
         const sub = [song.beat, song.vocal].filter(Boolean).join(' · ');
         return `
             <div class="cheer-box" id="cheerBox" data-who="${escapeHtml(cheerWho(p))}" data-ver="${song.key}">
-                ${vers.length > 1 ? `<div class="cheer-seg" role="radiogroup" aria-label="주제곡 버전">${vers.map(v => `<button type="button" role="radio" class="cheer-ver${v.key === song.key ? ' on' : ''}" data-ver="${v.key}" aria-checked="${v.key === song.key}">${v.label}${v.len ? ` <small>${escapeHtml(v.len)}</small>` : ''}</button>`).join('')}</div>` : ''}
+                ${vers.length > 1 ? `<div class="cheer-seg" role="radiogroup" aria-label="주제곡 버전" data-n="${vers.length}">${vers.map(v => `<button type="button" role="radio" class="cheer-ver${v.key === song.key ? ' on' : ''}" data-ver="${v.key}" aria-checked="${v.key === song.key}">${v.label}${v.len ? ` <small>${escapeHtml(v.len)}</small>` : ''}</button>`).join('')}</div>` : ''}
                 <div class="cheer-head">
                     <button type="button" class="cheer-play" id="cheerPlayBtn" aria-label="주제곡 듣기"><span class="ico-play">▶</span><span class="ico-pause">❚❚</span></button>
                     <div class="cheer-meta">
