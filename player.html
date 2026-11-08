@@ -28,7 +28,7 @@
         }
     </script>
     <!-- 🎵 선수별 주제곡 (v2.92.0) — 곡 목록은 cheer-songs.json (그 파일만 고치면 됨) · cheer-songs.js 를 고칠 때만 아래 ?v= 숫자 올리기 -->
-    <script src="cheer-songs.js?v=2.94.1"></script>
+    <script src="cheer-songs.js?v=2.101.0"></script>
 
     <!-- 브라우저 캐시 원천 방지 메타태그 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -458,6 +458,12 @@
         .cheer-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
         .cheer-lyr-btn, .cheer-dl { font-size: 12px; font-weight: 800; padding: 6px 10px; border-radius: 8px; border: 1px solid #fdba74; background: #ffffff; color: #9a3412; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; font-family: inherit; }
         .cheer-msg { font-size: 12px; font-weight: 700; color: #b91c1c; }
+        .cheer-seg { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; padding: 3px; background: #ffffff; border: 1px solid #fed7aa; border-radius: 10px; }
+        .cheer-ver { border: none; background: transparent; color: #9a3412; font: inherit; font-size: 13px; font-weight: 900; border-radius: 7px; padding: 7px 4px; cursor: pointer; }
+        .cheer-ver small { font-size: 11.5px; font-weight: 700; opacity: .85; font-variant-numeric: tabular-nums; }
+        .cheer-ver.on { background: var(--kbo-red); color: #ffffff; }
+        .cheer-ver:focus-visible { outline: 3px solid #29a8e0; outline-offset: 2px; }
+        .cheer-vlab { font-size: 11px; font-weight: 900; color: #ffffff; background: var(--kbo-red); border-radius: 99px; padding: 1px 7px; vertical-align: 2px; }
         .cheer-lyrics { background: #ffffff; border: 1px solid #fde2c4; border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 10px; max-height: 46vh; overflow-y: auto; overscroll-behavior: contain; }
         .cheer-lyrics[hidden] { display: none; }
         .cl-block { display: flex; flex-direction: column; gap: 3px; }
@@ -482,6 +488,9 @@
             .cheer-sub { color: #f0b48a; }
             .cheer-time { color: #97a3b7; }
             .cheer-lyr-btn, .cheer-dl { background: #151e2e; border-color: #5a3a2a; color: #f0b48a; }
+            .cheer-seg { background: #151e2e; border-color: #5a3a2a; }
+            .cheer-ver { color: #f0b48a; }
+            .cheer-ver.on { background: #c8102e; color: #ffffff; }
             .cheer-msg { color: #e78d8d; }
             .cheer-lyrics { background: #151e2e; border-color: #3a2d28; }
             .cl-line { color: #dde3ec; }
@@ -1491,12 +1500,41 @@
             const hv = document.getElementById('hvBox');   // 🎬 영상 칸이 먼저 붙었으면 주제곡은 그 위에
             if (hv && hv.parentNode === body) hv.insertAdjacentHTML('beforebegin', html);
             else body.insertAdjacentHTML('beforeend', html);
-            setupCheerPlayer();
+            setupCheerPlayer(p);
         });
     }
-    function cheerSongHtml(p) {
+    // 숏 ↔ 롱 바꾸기 — 듣던 중이면 바꾼 버전을 처음부터 이어서 틀어 줌 · 가사가 열려 있었으면 그대로 열어 둠
+    function switchCheerVersion(p, verKey) {
+        const old = document.getElementById('cheerBox');
+        if (!old || old.dataset.ver === verKey) return;
+        const a = document.getElementById('cheerAudio');
+        const wasPlaying = a && !a.paused, lyrOpen = !document.getElementById('cheerLyrics').hidden;
+        if (a) a.pause();
+        cheerSaveVer(verKey);
+        const html = cheerSongHtml(p, verKey);
+        if (!html) return;
+        old.insertAdjacentHTML('afterend', html);
+        old.remove();
+        setupCheerPlayer(p, lyrOpen);
+        const box = document.getElementById('cheerBox');
+        const on = box && box.querySelector('.cheer-ver.on');
+        if (on) on.focus();
+        if (wasPlaying) document.getElementById('cheerPlayBtn').click();
+    }
+    // 🎵 숏 · 롱 (v2.101.0) — 마지막에 고른 버전을 기억해 다음 선수도 그 버전으로 열림 (그 선수에게 없으면 숏)
+    const CHEER_VER_KEY = 'daeyeon_cheer_ver';
+    function cheerPrefVer() { try { return localStorage.getItem(CHEER_VER_KEY) || 's'; } catch (e) { return 's'; } }
+    function cheerSaveVer(v) { try { localStorage.setItem(CHEER_VER_KEY, v); } catch (e) {} }
+    function cheerVersionsFor(p) {
         const song = (typeof window.cheerSongFor === 'function') ? window.cheerSongFor(p) : null;
-        if (!song || !song.src) return '';
+        if (!song || !song.src) return [];
+        return (typeof window.cheerVersions === 'function') ? window.cheerVersions(song) : [{ key: 's', label: '숏', src: song.src, lyrics: song.lyrics, times: song.times, len: song.len || '', beat: song.beat, vocal: song.vocal }];
+    }
+    function cheerSongHtml(p, verKey) {
+        const vers = cheerVersionsFor(p);
+        if (!vers.length) return '';
+        const want = verKey || cheerPrefVer();
+        const song = vers.find(v => v.key === want) || vers[0];
         const blocks = (typeof window.cheerLyricBlocks === 'function') ? window.cheerLyricBlocks(song) : [];
         const kara = (typeof window.cheerLineTimes === 'function') && !!window.cheerLineTimes(song);   // 🎤 노래방 시간표 있는 곡 (v2.94.0)
         let li = 0;   // 가사 줄 번호 (이름표 빼고 0부터) — 시간표 times 의 순서와 같음
@@ -1507,11 +1545,12 @@
             </div>`).join('');
         const sub = [song.beat, song.vocal].filter(Boolean).join(' · ');
         return `
-            <div class="cheer-box" id="cheerBox" data-who="${escapeHtml(cheerWho(p))}">
+            <div class="cheer-box" id="cheerBox" data-who="${escapeHtml(cheerWho(p))}" data-ver="${song.key}">
+                ${vers.length > 1 ? `<div class="cheer-seg" role="radiogroup" aria-label="주제곡 버전">${vers.map(v => `<button type="button" role="radio" class="cheer-ver${v.key === song.key ? ' on' : ''}" data-ver="${v.key}" aria-checked="${v.key === song.key}">${v.label}${v.len ? ` <small>${escapeHtml(v.len)}</small>` : ''}</button>`).join('')}</div>` : ''}
                 <div class="cheer-head">
                     <button type="button" class="cheer-play" id="cheerPlayBtn" aria-label="주제곡 듣기"><span class="ico-play">▶</span><span class="ico-pause">❚❚</span></button>
                     <div class="cheer-meta">
-                        <span class="cheer-title">🎵 ${escapeHtml(p.name)} 주제곡</span>
+                        <span class="cheer-title">🎵 ${escapeHtml(p.name)} 주제곡${vers.length > 1 ? ` <span class="cheer-vlab">${song.label}</span>` : ''}</span>
                         <span class="cheer-sub">${escapeHtml(sub)}</span>
                     </div>
                     <span class="cheer-time" id="cheerTime">0:00</span>
@@ -1527,9 +1566,12 @@
                 <audio id="cheerAudio" preload="none" src="${escapeHtml(song.src)}"></audio>
             </div>`;
     }
-    function setupCheerPlayer() {
+    function setupCheerPlayer(p, lyrOpen) {
         const box = document.getElementById('cheerBox');
         if (!box) return;
+        const vers = cheerVersionsFor(p || currentPlayer);
+        box._song = vers.find(v => v.key === box.dataset.ver) || vers[0] || null;
+        box.querySelectorAll('.cheer-ver').forEach(b => b.addEventListener('click', () => switchCheerVersion(p || currentPlayer, b.dataset.ver)));
         const audio = document.getElementById('cheerAudio'), btn = document.getElementById('cheerPlayBtn');
         const seek = document.getElementById('cheerSeek'), time = document.getElementById('cheerTime');
         const lyrBtn = document.getElementById('cheerLyrBtn'), lyr = document.getElementById('cheerLyrics'), msg = document.getElementById('cheerMsg');
@@ -1562,6 +1604,7 @@
         seek.addEventListener('input', function () { seeking = true; const d = audio.duration; if (isFinite(d) && d > 0) time.textContent = fmtCheerTime(seek.value / 1000 * d) + ' / ' + fmtCheerTime(d); });
         seek.addEventListener('change', function () { seeking = false; const d = audio.duration; if (isFinite(d) && d > 0) audio.currentTime = seek.value / 1000 * d; else seek.value = 0; });
         lyrBtn.addEventListener('click', function () { openedOnce = true; setLyrics(lyr.hidden); });
+        if (lyrOpen) { openedOnce = true; setLyrics(true); }
         setupCheerKaraoke(box, audio, lyr);
     }
 
@@ -1569,7 +1612,7 @@
     //   시간표는 cheer-songs.json 의 times (줄마다 [시작초, 끝초]) · 없는 곡은 아무것도 안 함 (예전처럼 가사만)
     //   가사 줄을 누르면 그 줄부터 다시 들음 · 가사 칸을 손으로 넘기면 4초 동안은 자동 스크롤 멈춤
     function setupCheerKaraoke(box, audio, lyr) {
-        const song = (typeof window.cheerSongFor === 'function') ? window.cheerSongFor(currentPlayer) : null;
+        const song = box._song || null;   // 지금 고른 버전(숏 · 롱)의 가사 · 시간표
         const times = (song && typeof window.cheerLineTimes === 'function') ? window.cheerLineTimes(song) : null;
         if (!times || !lyr.classList.contains('kara')) return;
         const LEAD = 0.15;   // 눈으로 따라 읽기 좋게 줄을 조금 먼저 바꿈 (초)
