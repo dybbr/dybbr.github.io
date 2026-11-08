@@ -1,5 +1,5 @@
 // ==========================================================
-// 🎵 선수별 주제곡 도우미 (v2.92.0) — 명단 이미지형 카드의 🎵 표시 · 선수 상세의 「주제곡 듣기」 · 가사 · 🎤 노래방 줄 강조(v2.94.0) · 숏 · 롱 두 버전(v2.101.0) · 추가 곡 탭(v2.102.0)
+// 🎵 선수별 주제곡 도우미 (v2.92.0) — 명단 이미지형 카드의 🎵 표시 · 선수 상세의 「주제곡 듣기」 · 가사 · 🎤 노래방 줄 강조(v2.94.0) · 숏 · 롱 두 버전(v2.101.0) · 추가 곡 탭(v2.102.0) · 제목 붙은 플레이리스트(v2.103.0)
 // ==========================================================
 // 곡 목록(배번 · 이름 · MP3 주소 · 가사)은 cheer-songs.json 에 있음 → 곡 추가 · 수정은 그 파일만 고치면 됨 (이 파일 · 앱 버전은 그대로)
 //   · 구글 서버 · 시트에는 묻지 않음 (GitHub 에서 바로 받음 → 학부모님이 동시에 많이 써도 서버 호출이 안 늘어남)
@@ -70,13 +70,16 @@
     //   롱은 테마 · 가사 · 장르 · 목소리가 숏과 다른 별개 곡 → long 에 beat · vocal 이 있으면 그걸 보여 주고, 없으면 숏 것을 같이 씀 · len 은 탭에 보여 줄 길이 글자 ("1:24")
     function cheerVersions(song) {
         if (!song || !song.src) return [];
-        const out = [{ key: 's', label: '숏', src: song.src, lyrics: song.lyrics, times: song.times, len: song.len || '', beat: song.beat, vocal: song.vocal }];
-        const L = song.long;
-        if (L && L.src) out.push({ key: 'l', label: '롱', src: L.src, lyrics: L.lyrics || song.lyrics, times: L.lyrics ? L.times : song.times, len: L.len || '', beat: L.beat || song.beat, vocal: L.vocal || song.vocal });
-        // 🎵 추가 곡 (v2.102.0) — more: [{ label, src, len, beat, vocal, lyrics, times }, …] 가 있으면 숏 · 롱 뒤에 탭이 더 붙음 (곡 수 제한 없음 · 지금은 김승원)
+        // 🎵 플레이리스트 (v2.103.0) — 곡마다 title(제목)이 있으면 그걸 이름으로 씀 · 순서는 추가 곡(more, 새 전문 작사 곡) → 숏 → 롱
+        const S = { key: 's', label: song.title || '숏', title: song.title || '', src: song.src, lyrics: song.lyrics, times: song.times, len: song.len || '', beat: song.beat, vocal: song.vocal };
+        const out = [];
+        // 🎵 추가 곡 (v2.102.0) — more: [{ title, label, src, len, beat, vocal, lyrics, times }, …] (곡 수 제한 없음)
         (Array.isArray(song.more) ? song.more : []).forEach((M, i) => {
-            if (M && M.src) out.push({ key: 'm' + i, label: M.label || ('추가 ' + (i + 1)), src: M.src, lyrics: M.lyrics || [], times: M.times, len: M.len || '', beat: M.beat || '', vocal: M.vocal || '' });
+            if (M && M.src) out.push({ key: 'm' + i, label: M.title || M.label || ('추가 ' + (i + 1)), title: M.title || M.label || '', src: M.src, lyrics: M.lyrics || [], times: M.times, len: M.len || '', beat: M.beat || '', vocal: M.vocal || '' });
         });
+        out.push(S);
+        const L = song.long;
+        if (L && L.src) out.push({ key: 'l', label: L.title || '롱', title: L.title || '', src: L.src, lyrics: L.lyrics || song.lyrics, times: L.lyrics ? L.times : song.times, len: L.len || '', beat: L.beat || song.beat, vocal: L.vocal || song.vocal });
         return out;
     }
 

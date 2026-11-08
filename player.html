@@ -28,7 +28,7 @@
         }
     </script>
     <!-- 🎵 선수별 주제곡 (v2.92.0) — 곡 목록은 cheer-songs.json (그 파일만 고치면 됨) · cheer-songs.js 를 고칠 때만 아래 ?v= 숫자 올리기 -->
-    <script src="cheer-songs.js?v=2.102.0"></script>
+    <script src="cheer-songs.js?v=2.103.0"></script>
 
     <!-- 브라우저 캐시 원천 방지 메타태그 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -458,13 +458,34 @@
         .cheer-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
         .cheer-lyr-btn, .cheer-dl { font-size: 12px; font-weight: 800; padding: 6px 10px; border-radius: 8px; border: 1px solid #fdba74; background: #ffffff; color: #9a3412; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; font-family: inherit; }
         .cheer-msg { font-size: 12px; font-weight: 700; color: #b91c1c; }
-        .cheer-seg { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; padding: 3px; background: #ffffff; border: 1px solid #fed7aa; border-radius: 10px; }
-        .cheer-seg[data-n="3"] { grid-template-columns: 1fr 1fr 1fr; }   /* 곡이 3개면 한 줄, 4개 이상은 두 개씩 줄바꿈 (v2.102.0) */
-        .cheer-ver { border: none; background: transparent; color: #9a3412; font: inherit; font-size: 13px; font-weight: 900; border-radius: 7px; padding: 7px 4px; cursor: pointer; }
-        .cheer-ver small { font-size: 11.5px; font-weight: 700; opacity: .85; font-variant-numeric: tabular-nums; }
-        .cheer-ver.on { background: var(--kbo-red); color: #ffffff; }
-        .cheer-ver:focus-visible { outline: 3px solid #29a8e0; outline-offset: 2px; }
-        .cheer-vlab { font-size: 11px; font-weight: 900; color: #ffffff; background: var(--kbo-red); border-radius: 99px; padding: 1px 7px; vertical-align: 2px; }
+        /* 🎵 플레이리스트 (v2.103.0, C안) — 빨간 머리 칸에 큰 플레이어 (‹ › · 1 / N), 아래 번호 목록 · 곡이 끝나면 다음 곡 */
+        .cheer-box.cpl { padding: 0; gap: 0; overflow: hidden; background: #fff7ed; border-radius: 14px; }
+        .cpl-top { background: var(--kbo-red); color: #ffffff; padding: 12px 12px 10px; display: flex; flex-direction: column; gap: 8px; }
+        .cpl-info { display: flex; align-items: center; gap: 8px; min-width: 0; }
+        .cpl-count { flex: 0 0 auto; font-size: 11.5px; font-weight: 900; background: rgba(255,255,255,.2); border-radius: 6px; padding: 2px 7px; font-variant-numeric: tabular-nums; }
+        .cpl-genre { font-size: 11.5px; font-weight: 700; opacity: .92; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+        .cpl-nav { flex: 0 0 auto; width: 36px; height: 36px; border-radius: 50%; border: 1px solid rgba(255,255,255,.55); background: transparent; color: #ffffff; font-size: 20px; font-weight: 900; line-height: 1; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0 0 2px; font-family: inherit; }
+        .cpl-nav:disabled { opacity: .3; cursor: default; }
+        .cpl-nav:focus-visible { outline: 3px solid #ffffff; outline-offset: 2px; }
+        .cpl-top .cheer-play { width: 54px; height: 54px; background: #ffffff; color: var(--kbo-red); font-size: 20px; box-shadow: 0 3px 8px rgba(0,0,0,.2); }
+        .cpl-top .cheer-play:focus-visible { outline-color: #ffffff; }
+        .cpl-top .cheer-title { color: #ffffff; font-size: 17px; line-height: 1.25; word-break: keep-all; }
+        .cpl-top .cheer-time { color: rgba(255,255,255,.9); }
+        .cpl-top .cheer-seek { accent-color: #ffffff; }
+        .cpl-top .cheer-lyr-btn, .cpl-top .cheer-dl { flex: 1 1 0; justify-content: center; padding: 8px; background: transparent; border-color: rgba(255,255,255,.6); color: #ffffff; }
+        .cpl-top .cheer-msg { color: #ffffff; background: rgba(0,0,0,.18); border-radius: 8px; padding: 6px 8px; }
+        .cheer-box.cpl .cheer-lyrics { margin: 10px 10px 0; }
+        .cpl-list { list-style: none; margin: 0; padding: 4px 0; }
+        .cpl-pick { width: 100%; display: flex; align-items: center; gap: 10px; padding: 9px 14px; border: none; border-bottom: 1px solid #fed7aa; background: transparent; text-align: left; font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        .cpl-item:last-child .cpl-pick { border-bottom: none; }
+        .cpl-pick:focus-visible { outline: 3px solid #29a8e0; outline-offset: -3px; }
+        .cpl-no { flex: 0 0 20px; text-align: center; font-size: 13px; font-weight: 900; color: #9a3412; }
+        .cpl-t { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+        .cpl-t b { font-size: 14px; font-weight: 900; color: var(--text-title); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .cpl-t small { font-size: 11px; font-weight: 700; color: #9a3412; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .cpl-len { flex: 0 0 auto; font-size: 12px; font-weight: 800; color: var(--text-sub); font-variant-numeric: tabular-nums; }
+        .cpl-item.on .cpl-pick { background: #ffedd5; }
+        .cpl-item.on .cpl-no, .cpl-item.on .cpl-t b, .cpl-item.on .cpl-len { color: var(--kbo-red); }
         .cheer-lyrics { background: #ffffff; border: 1px solid #fde2c4; border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 10px; max-height: 46vh; overflow-y: auto; overscroll-behavior: contain; }
         .cheer-lyrics[hidden] { display: none; }
         .cl-block { display: flex; flex-direction: column; gap: 3px; }
@@ -482,16 +503,25 @@
         .cheer-lyrics.kara .cl-line.chant.now .cl-txt { background-image: linear-gradient(90deg, var(--kbo-red) 0, var(--kbo-red) var(--p, 0%), #64748b var(--p, 0%)); }
         .cheer-kara-tip { font-size: 11px; font-weight: 700; color: #9a3412; opacity: .85; }
         @media (prefers-reduced-motion: reduce) { .cheer-lyrics.kara .cl-line { transition: none; } }
-        @media (max-width: 600px) { .cheer-box { padding: 10px 10px 8px; } .cheer-play { width: 44px; height: 44px; } }
+        @media (max-width: 600px) { .cheer-box:not(.cpl) { padding: 10px 10px 8px; } .cheer-play { width: 44px; height: 44px; } .cpl-top .cheer-play { width: 52px; height: 52px; } .cpl-top { padding: 10px 10px 9px; } }
         @media (prefers-color-scheme: dark) {
             .cheer-box { background: linear-gradient(135deg, #2a1f1a, #2a1a22); border-color: #5a3a2a; }
             .cheer-title { color: #dde3ec; }
             .cheer-sub { color: #f0b48a; }
             .cheer-time { color: #97a3b7; }
             .cheer-lyr-btn, .cheer-dl { background: #151e2e; border-color: #5a3a2a; color: #f0b48a; }
-            .cheer-seg { background: #151e2e; border-color: #5a3a2a; }
-            .cheer-ver { color: #f0b48a; }
-            .cheer-ver.on { background: #c8102e; color: #ffffff; }
+            .cheer-box.cpl { background: #1d1a1c; }
+            .cpl-top { background: #a50d26; }
+            .cpl-top .cheer-title { color: #ffffff; }
+            .cpl-top .cheer-time { color: rgba(255,255,255,.9); }
+            .cpl-top .cheer-lyr-btn, .cpl-top .cheer-dl { background: transparent; border-color: rgba(255,255,255,.6); color: #ffffff; }
+            .cpl-top .cheer-msg { color: #ffffff; }
+            .cpl-pick { border-bottom-color: #3a2d28; }
+            .cpl-no, .cpl-t small { color: #f0b48a; }
+            .cpl-t b { color: #dde3ec; }
+            .cpl-len { color: #97a3b7; }
+            .cpl-item.on .cpl-pick { background: #3a2a1c; }
+            .cpl-item.on .cpl-no, .cpl-item.on .cpl-t b, .cpl-item.on .cpl-len { color: #ff8a9b; }
             .cheer-msg { color: #e78d8d; }
             .cheer-lyrics { background: #151e2e; border-color: #3a2d28; }
             .cl-line { color: #dde3ec; }
@@ -1504,86 +1534,81 @@
             setupCheerPlayer(p);
         });
     }
-    // 숏 ↔ 롱 바꾸기 — 듣던 중이면 바꾼 버전을 처음부터 이어서 틀어 줌 · 가사가 열려 있었으면 그대로 열어 둠
-    function switchCheerVersion(p, verKey) {
-        const old = document.getElementById('cheerBox');
-        if (!old || old.dataset.ver === verKey) return;
-        const a = document.getElementById('cheerAudio');
-        const wasPlaying = a && !a.paused, lyrOpen = !document.getElementById('cheerLyrics').hidden;
-        if (a) a.pause();
-        cheerSaveVer(verKey);
-        const html = cheerSongHtml(p, verKey);
-        if (!html) return;
-        old.insertAdjacentHTML('afterend', html);
-        old.remove();
-        setupCheerPlayer(p, lyrOpen);
-        const box = document.getElementById('cheerBox');
-        const on = box && box.querySelector('.cheer-ver.on');
-        if (on) on.focus();
-        if (wasPlaying) document.getElementById('cheerPlayBtn').click();
-    }
-    // 🎵 숏 · 롱 (v2.101.0) — 마지막에 고른 버전을 기억해 다음 선수도 그 버전으로 열림 (그 선수에게 없으면 숏)
-    const CHEER_VER_KEY = 'daeyeon_cheer_ver';
-    function cheerPrefVer() { try { return localStorage.getItem(CHEER_VER_KEY) || 's'; } catch (e) { return 's'; } }
-    function cheerSaveVer(v) { try { localStorage.setItem(CHEER_VER_KEY, v); } catch (e) {} }
+    // 🎵 주제곡 플레이리스트 (v2.103.0, C안) — 위에 큰 플레이어(‹ › 로 앞뒤 곡 · 1 / N), 아래 번호 목록(제목 · 장르 · 길이)
+    //   한 곡이 끝나면 다음 곡을 이어서 틀어 줌 (마지막 곡이 끝나면 멈춤) · 목록에서 곡을 누르면 그 곡부터 재생
+    //   오디오 칸은 하나만 쓰고 주소만 바꿈 → 휴대폰에서도 다음 곡이 끊기지 않고 이어짐 · 숏 · 롱이라는 글자는 안 보임 (곡 제목으로)
     function cheerVersionsFor(p) {
         const song = (typeof window.cheerSongFor === 'function') ? window.cheerSongFor(p) : null;
         if (!song || !song.src) return [];
-        return (typeof window.cheerVersions === 'function') ? window.cheerVersions(song) : [{ key: 's', label: '숏', src: song.src, lyrics: song.lyrics, times: song.times, len: song.len || '', beat: song.beat, vocal: song.vocal }];
+        return (typeof window.cheerVersions === 'function') ? window.cheerVersions(song) : [{ key: 's', label: song.title || '주제곡', title: song.title || '', src: song.src, lyrics: song.lyrics, times: song.times, len: song.len || '', beat: song.beat, vocal: song.vocal }];
     }
-    function cheerSongHtml(p, verKey) {
-        const vers = cheerVersionsFor(p);
-        if (!vers.length) return '';
-        const want = verKey || cheerPrefVer();
-        const song = vers.find(v => v.key === want) || vers[0];
+    function cheerLyricsHtml(song) {
         const blocks = (typeof window.cheerLyricBlocks === 'function') ? window.cheerLyricBlocks(song) : [];
-        const kara = (typeof window.cheerLineTimes === 'function') && !!window.cheerLineTimes(song);   // 🎤 노래방 시간표 있는 곡 (v2.94.0)
         let li = 0;   // 가사 줄 번호 (이름표 빼고 0부터) — 시간표 times 의 순서와 같음
-        const lyricsHtml = blocks.map(b => `
+        return blocks.map(b => `
             <div class="cl-block${b.label === '후렴' ? ' chorus' : ''}">
                 ${b.label ? `<span class="cl-label">${escapeHtml(b.label)}</span>` : ''}
                 ${b.lines.map(l => `<div class="cl-line${/^\(.*\)$/.test(l) ? ' chant' : ''}" data-i="${li++}"><span class="cl-txt">${escapeHtml(l)}</span></div>`).join('')}
             </div>`).join('');
-        const sub = [song.beat, song.vocal].filter(Boolean).join(' · ');
+    }
+    function cheerSongHtml(p) {
+        const vers = cheerVersionsFor(p);
+        if (!vers.length) return '';
+        const multi = vers.length > 1;
+        const list = multi ? `<ol class="cpl-list" aria-label="${escapeHtml(p.name)} 주제곡 목록">${vers.map((v, i) => `
+                    <li class="cpl-item" data-i="${i}"><button type="button" class="cpl-pick" data-i="${i}">
+                        <span class="cpl-no">${i + 1}</span>
+                        <span class="cpl-t"><b>${escapeHtml(v.label)}</b>${v.beat ? `<small>${escapeHtml(v.beat)}</small>` : ''}</span>
+                        <span class="cpl-len" data-len="${escapeHtml(v.len || '')}">${escapeHtml(v.len || '')}</span>
+                    </button></li>`).join('')}
+                </ol>` : '';
         return `
-            <div class="cheer-box" id="cheerBox" data-who="${escapeHtml(cheerWho(p))}" data-ver="${song.key}">
-                ${vers.length > 1 ? `<div class="cheer-seg" role="radiogroup" aria-label="주제곡 버전" data-n="${vers.length}">${vers.map(v => `<button type="button" role="radio" class="cheer-ver${v.key === song.key ? ' on' : ''}" data-ver="${v.key}" aria-checked="${v.key === song.key}">${v.label}${v.len ? ` <small>${escapeHtml(v.len)}</small>` : ''}</button>`).join('')}</div>` : ''}
-                <div class="cheer-head">
-                    <button type="button" class="cheer-play" id="cheerPlayBtn" aria-label="주제곡 듣기"><span class="ico-play">▶</span><span class="ico-pause">❚❚</span></button>
-                    <div class="cheer-meta">
-                        <span class="cheer-title">🎵 ${escapeHtml(p.name)} 주제곡${vers.length > 1 ? ` <span class="cheer-vlab">${song.label}</span>` : ''}</span>
-                        <span class="cheer-sub">${escapeHtml(sub)}</span>
+            <div class="cheer-box cpl" id="cheerBox" data-who="${escapeHtml(cheerWho(p))}" data-ver="${vers[0].key}">
+                <div class="cpl-top">
+                    <div class="cpl-info"><span class="cpl-count" id="cheerCount">🎵 주제곡</span><span class="cpl-genre" id="cheerSub"></span></div>
+                    <div class="cheer-head">
+                        ${multi ? '<button type="button" class="cpl-nav" id="cheerPrev" aria-label="이전 곡">‹</button>' : ''}
+                        <button type="button" class="cheer-play" id="cheerPlayBtn" aria-label="주제곡 듣기"><span class="ico-play">▶</span><span class="ico-pause">❚❚</span></button>
+                        <div class="cheer-meta">
+                            <span class="cheer-title" id="cheerTitle"></span>
+                            <span class="cheer-time" id="cheerTime">0:00</span>
+                        </div>
+                        ${multi ? '<button type="button" class="cpl-nav" id="cheerNext" aria-label="다음 곡">›</button>' : ''}
                     </div>
-                    <span class="cheer-time" id="cheerTime">0:00</span>
+                    <input type="range" class="cheer-seek" id="cheerSeek" min="0" max="1000" value="0" step="1" aria-label="재생 위치">
+                    <div class="cheer-actions">
+                        <button type="button" class="cheer-lyr-btn" id="cheerLyrBtn" aria-expanded="false" aria-controls="cheerLyrics">📜 가사 보기 ▾</button>
+                        <a class="cheer-dl" id="cheerDl" href="#" target="_blank" rel="noopener">⬇️ MP3 저장</a>
+                    </div>
+                    <div class="cheer-msg" id="cheerMsg" hidden></div>
                 </div>
-                <input type="range" class="cheer-seek" id="cheerSeek" min="0" max="1000" value="0" step="1" aria-label="재생 위치">
-                <div class="cheer-actions">
-                    <button type="button" class="cheer-lyr-btn" id="cheerLyrBtn" aria-expanded="false" aria-controls="cheerLyrics">📜 가사 보기 ▾</button>
-                    ${kara ? '<span class="cheer-kara-tip">🎤 노래방 가사</span>' : ''}
-                    <a class="cheer-dl" id="cheerDl" href="${escapeHtml(song.src)}" target="_blank" rel="noopener" download="${escapeHtml(cheerFileName(p, song, vers.length > 1))}">⬇️ MP3 저장</a>
-                </div>
-                <div class="cheer-msg" id="cheerMsg" hidden></div>
-                <div class="cheer-lyrics${kara ? ' kara' : ''}" id="cheerLyrics" hidden>${lyricsHtml}</div>
-                <audio id="cheerAudio" preload="none" src="${escapeHtml(song.src)}"></audio>
+                <div class="cheer-lyrics" id="cheerLyrics" hidden></div>
+                ${list}
+                <audio id="cheerAudio" preload="none"></audio>
             </div>`;
     }
-    // ⬇️ 저장 파일 이름 (v2.101.1) — 「김수현 주제곡 롱 - 힙합 팝 95 BPM · 남성 랩 + 여성 후렴.mp3」 (파일 이름에 못 쓰는 글자는 뺌)
-    function cheerFileName(p, song, withVer) {
+    // ⬇️ 저장 파일 이름 (v2.103.0) — 「김승원 주제곡 - Light It Up (아이돌 댄스 팝 126 BPM · 보이그룹식 혼성).mp3」 (파일 이름에 못 쓰는 글자는 뺌)
+    function cheerFileName(p, song) {
+        const t = song.title || song.label || '';
         const mood = [song.beat, song.vocal].filter(Boolean).join(' · ');
-        let n = p.name + ' 주제곡' + (withVer ? ' ' + song.label : '') + (mood ? ' - ' + mood : '');
+        let n = p.name + ' 주제곡' + (t ? ' - ' + t : '') + (mood ? ' (' + mood + ')' : '');
         n = n.replace(/[\\/:*?"<>|]/g, ' ').replace(/\s+/g, ' ').trim();
         return n.slice(0, 120) + '.mp3';
     }
     // 음원은 다른 서버(cdn)에 있어 링크의 download 이름이 무시되고 서버 파일 이름(긴 영문)으로 저장됨
-    //   → 먼저 파일을 받아 우리 이름을 붙여 저장 · 안 되는 기기(또는 서버가 막으면)는 예전처럼 링크로 엶
-    function setupCheerDownload(p, song, withVer) {
+    //   → 먼저 파일을 받아 우리 이름을 붙여 저장 · 안 되는 기기(또는 서버가 막으면)는 예전처럼 링크로 엶 · 지금 고른 곡을 받음
+    function setupCheerDownload(p, box) {
         const dl = document.getElementById('cheerDl');
-        if (!dl || !song || !window.fetch || !window.Blob || !window.URL || !URL.createObjectURL) return;
-        const label = dl.textContent, fname = cheerFileName(p, song, withVer);
+        if (!dl || !window.fetch || !window.Blob || !window.URL || !URL.createObjectURL) return;
+        const label = dl.textContent;
         let busy = false;
         dl.addEventListener('click', function (ev) {
-            if (busy) { ev.preventDefault(); return; }
-            ev.preventDefault(); busy = true; dl.textContent = '⬇️ 받는 중…'; dl.setAttribute('aria-busy', 'true');
+            const song = box._song;
+            if (!song) return;
+            ev.preventDefault();
+            if (busy) return;
+            busy = true; dl.textContent = '⬇️ 받는 중…'; dl.setAttribute('aria-busy', 'true');
+            const fname = cheerFileName(p, song);
             fetch(song.src, { mode: 'cors', cache: 'force-cache' })
                 .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.blob(); })
                 .then(b => {
@@ -1597,68 +1622,117 @@
                 .then(() => { busy = false; dl.textContent = label; dl.removeAttribute('aria-busy'); });
         });
     }
-    function setupCheerPlayer(p, lyrOpen) {
+    function setupCheerPlayer(p) {
         const box = document.getElementById('cheerBox');
         if (!box) return;
-        const vers = cheerVersionsFor(p || currentPlayer);
-        box._song = vers.find(v => v.key === box.dataset.ver) || vers[0] || null;
-        box.querySelectorAll('.cheer-ver').forEach(b => b.addEventListener('click', () => switchCheerVersion(p || currentPlayer, b.dataset.ver)));
-        setupCheerDownload(p || currentPlayer, box._song, vers.length > 1);
+        p = p || currentPlayer;
+        const vers = cheerVersionsFor(p);
+        if (!vers.length) return;
         const audio = document.getElementById('cheerAudio'), btn = document.getElementById('cheerPlayBtn');
         const seek = document.getElementById('cheerSeek'), time = document.getElementById('cheerTime');
         const lyrBtn = document.getElementById('cheerLyrBtn'), lyr = document.getElementById('cheerLyrics'), msg = document.getElementById('cheerMsg');
+        const titleEl = document.getElementById('cheerTitle'), subEl = document.getElementById('cheerSub'), countEl = document.getElementById('cheerCount');
+        const prev = document.getElementById('cheerPrev'), next = document.getElementById('cheerNext'), dl = document.getElementById('cheerDl');
+        const items = Array.from(box.querySelectorAll('.cpl-item'));
         let seeking = false, openedOnce = false;
+        box._vers = vers;
+        setupCheerDownload(p, box);
+        const kara = setupCheerKaraoke(box, audio, lyr);
         function setLyrics(open) {
             lyr.hidden = !open;
             lyrBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
             lyrBtn.textContent = open ? '📜 가사 접기 ▴' : '📜 가사 보기 ▾';
         }
         function showTime() {
-            const d = audio.duration, c = audio.currentTime;
-            time.textContent = isFinite(d) && d > 0 ? fmtCheerTime(c) + ' / ' + fmtCheerTime(d) : fmtCheerTime(c);
+            const d = audio.duration, c = audio.currentTime, len = box._song ? box._song.len : '';
+            time.textContent = isFinite(d) && d > 0 ? fmtCheerTime(c) + ' / ' + fmtCheerTime(d) : fmtCheerTime(c) + (len ? ' / ' + len : '');
             if (!seeking) seek.value = isFinite(d) && d > 0 ? Math.round(c / d * 1000) : 0;
         }
-        btn.addEventListener('click', function () {
+        function markList() {
+            const playing = box.classList.contains('playing') || box.classList.contains('loading');
+            items.forEach((li, i) => {
+                const on = i === box._idx, len = li.querySelector('.cpl-len');
+                li.classList.toggle('on', on);
+                if (on) li.setAttribute('aria-current', 'true'); else li.removeAttribute('aria-current');
+                if (len) len.textContent = on && playing ? '♪ 듣는 중' : (len.dataset.len || '');
+            });
+        }
+        function play() {
             msg.hidden = true;
-            if (audio.paused) {
-                if (!openedOnce) { openedOnce = true; setLyrics(true); }
-                box.classList.add('loading');
-                const pr = audio.play();
-                if (pr && pr.catch) pr.catch(function (e) { box.classList.remove('loading'); if (e && e.name !== 'AbortError') { msg.textContent = '주제곡을 재생하지 못했어요. 잠시 뒤 다시 눌러 주세요.'; msg.hidden = false; } });
-            } else audio.pause();
+            if (!openedOnce) { openedOnce = true; setLyrics(true); }
+            box.classList.add('loading'); markList();
+            const pr = audio.play();
+            if (pr && pr.catch) pr.catch(function (e) { box.classList.remove('loading'); markList(); if (e && e.name !== 'AbortError') { msg.textContent = '주제곡을 재생하지 못했어요. 잠시 뒤 다시 눌러 주세요.'; msg.hidden = false; } });
+        }
+        // 곡 고르기 — i 번째 곡을 플레이어에 올림 · andPlay 면 바로 재생
+        function select(i, andPlay) {
+            if (i < 0 || i >= vers.length) return;
+            const song = vers[i];
+            if (!audio.paused) audio.pause();
+            box._idx = i; box._song = song; box.dataset.ver = song.key;
+            audio.src = song.src;
+            titleEl.textContent = song.label || (p.name + ' 주제곡');
+            subEl.textContent = [song.beat, song.vocal].filter(Boolean).join(' · ');
+            countEl.textContent = vers.length > 1 ? '🎵 ' + (i + 1) + ' / ' + vers.length : '🎵 주제곡';
+            dl.href = song.src; dl.setAttribute('download', cheerFileName(p, song));
+            if (prev) prev.disabled = i === 0;
+            if (next) next.disabled = i === vers.length - 1;
+            lyr.innerHTML = cheerLyricsHtml(song);
+            lyr.scrollTop = 0;
+            seek.value = 0; showTime();
+            kara.reset();
+            markList();
+            if (andPlay) play();
+        }
+        btn.addEventListener('click', function () { if (audio.paused) play(); else audio.pause(); });
+        if (prev) prev.addEventListener('click', () => select(box._idx - 1, !audio.paused));
+        if (next) next.addEventListener('click', () => select(box._idx + 1, !audio.paused));
+        items.forEach(li => li.querySelector('.cpl-pick').addEventListener('click', function () {
+            const i = Number(this.dataset.i);
+            if (i === box._idx) { if (audio.paused) play(); else audio.pause(); return; }
+            select(i, true);
+        }));
+        audio.addEventListener('playing', function () { box.classList.remove('loading'); box.classList.add('playing'); btn.setAttribute('aria-label', '주제곡 멈춤'); markList(); });
+        audio.addEventListener('pause', function () { box.classList.remove('playing', 'loading'); btn.setAttribute('aria-label', '주제곡 듣기'); markList(); });
+        // 한 곡이 끝나면 다음 곡을 이어서 (마지막 곡이면 처음 위치로 돌아가 멈춤)
+        audio.addEventListener('ended', function () {
+            if (box._idx < vers.length - 1) select(box._idx + 1, true);
+            else { audio.currentTime = 0; showTime(); }
         });
-        audio.addEventListener('playing', function () { box.classList.remove('loading'); box.classList.add('playing'); btn.setAttribute('aria-label', '주제곡 멈춤'); });
-        audio.addEventListener('pause', function () { box.classList.remove('playing', 'loading'); btn.setAttribute('aria-label', '주제곡 듣기'); });
-        audio.addEventListener('ended', function () { audio.currentTime = 0; showTime(); });
         audio.addEventListener('timeupdate', showTime);
         audio.addEventListener('loadedmetadata', showTime);
-        audio.addEventListener('error', function () { box.classList.remove('playing', 'loading'); msg.textContent = '주제곡 파일을 불러오지 못했어요. 인터넷 연결을 확인해 주세요.'; msg.hidden = false; });
+        audio.addEventListener('error', function () { if (!audio.getAttribute('src')) return; box.classList.remove('playing', 'loading'); markList(); msg.textContent = '주제곡 파일을 불러오지 못했어요. 인터넷 연결을 확인해 주세요.'; msg.hidden = false; });
         seek.addEventListener('input', function () { seeking = true; const d = audio.duration; if (isFinite(d) && d > 0) time.textContent = fmtCheerTime(seek.value / 1000 * d) + ' / ' + fmtCheerTime(d); });
         seek.addEventListener('change', function () { seeking = false; const d = audio.duration; if (isFinite(d) && d > 0) audio.currentTime = seek.value / 1000 * d; else seek.value = 0; });
         lyrBtn.addEventListener('click', function () { openedOnce = true; setLyrics(lyr.hidden); });
-        if (lyrOpen) { openedOnce = true; setLyrics(true); }
-        setupCheerKaraoke(box, audio, lyr);
+        select(0, false);
     }
 
     // 🎤 노래방 줄 강조 (v2.94.0) — 재생 위치에 맞춰 지금 부르는 가사 줄을 강조 · 빨간색이 왼쪽부터 차오름 · 가사 칸 안에서만 살짝 스크롤
     //   시간표는 cheer-songs.json 의 times (줄마다 [시작초, 끝초]) · 없는 곡은 아무것도 안 함 (예전처럼 가사만)
     //   가사 줄을 누르면 그 줄부터 다시 들음 · 가사 칸을 손으로 넘기면 4초 동안은 자동 스크롤 멈춤
+    //   (v2.103.0) 플레이리스트에서 곡이 바뀌면 reset() 으로 지금 곡의 시간표를 다시 읽음 (듣는 곳은 한 번만 붙임)
     function setupCheerKaraoke(box, audio, lyr) {
-        const song = box._song || null;   // 지금 고른 버전(숏 · 롱)의 가사 · 시간표
-        const times = (song && typeof window.cheerLineTimes === 'function') ? window.cheerLineTimes(song) : null;
-        if (!times || !lyr.classList.contains('kara')) return;
         const LEAD = 0.15;   // 눈으로 따라 읽기 좋게 줄을 조금 먼저 바꿈 (초)
-        const lines = Array.from(lyr.querySelectorAll('.cl-line'));
-        let cur = -1, raf = 0, userScrollUntil = 0;
-        // 줄마다 강조가 끝나는 시각: 끝초가 있으면 그것, 없으면 다음 줄 시작 (글자 수로 너무 길어지지 않게)
-        const spans = times.map((t, i) => {
-            if (!t) return null;
-            let next = null;
-            for (let k = i + 1; k < times.length; k++) if (times[k]) { next = times[k].s; break; }
-            const txtLen = (lines[i] ? lines[i].textContent.length : 10);
-            let e = t.e != null ? t.e : (next != null ? Math.min(next, t.s + txtLen * 0.35 + 1) : t.s + txtLen * 0.35 + 1);
-            return { s: t.s, e: Math.max(e, t.s + 0.3) };
-        });
+        let lines = [], spans = null, cur = -1, raf = 0, userScrollUntil = 0;
+        function reset() {
+            const song = box._song || null;
+            const times = (song && typeof window.cheerLineTimes === 'function') ? window.cheerLineTimes(song) : null;
+            lyr.classList.toggle('kara', !!times);
+            lyr.classList.remove('on');
+            lines = Array.from(lyr.querySelectorAll('.cl-line'));
+            cur = -1;
+            if (raf) { cancelAnimationFrame(raf); raf = 0; }
+            // 줄마다 강조가 끝나는 시각: 끝초가 있으면 그것, 없으면 다음 줄 시작 (글자 수로 너무 길어지지 않게)
+            spans = times ? times.map((t, i) => {
+                if (!t) return null;
+                let next = null;
+                for (let k = i + 1; k < times.length; k++) if (times[k]) { next = times[k].s; break; }
+                const txtLen = (lines[i] ? lines[i].textContent.length : 10);
+                let e = t.e != null ? t.e : (next != null ? Math.min(next, t.s + txtLen * 0.35 + 1) : t.s + txtLen * 0.35 + 1);
+                return { s: t.s, e: Math.max(e, t.s + 0.3) };
+            }) : null;
+        }
         function activeAt(sec) {
             let a = -1;
             for (let i = 0; i < spans.length; i++) if (spans[i] && spans[i].s <= sec + LEAD) a = i;
@@ -1670,6 +1744,7 @@
             lyr.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
         }
         function paint() {
+            if (!spans) return;
             const sec = audio.currentTime;
             const a = activeAt(sec);
             if (a !== cur) {
@@ -1684,14 +1759,14 @@
             }
         }
         function loop() { paint(); raf = audio.paused ? 0 : requestAnimationFrame(loop); }
-        audio.addEventListener('playing', function () { lyr.classList.add('on'); if (!raf) raf = requestAnimationFrame(loop); });
+        audio.addEventListener('playing', function () { if (!spans) return; lyr.classList.add('on'); if (!raf) raf = requestAnimationFrame(loop); });
         audio.addEventListener('pause', function () { if (raf) cancelAnimationFrame(raf); raf = 0; paint(); });
         audio.addEventListener('seeked', paint);
         audio.addEventListener('ended', function () { lines.forEach(el => { el.classList.remove('now', 'past'); el.style.removeProperty('--p'); }); cur = -1; lyr.classList.remove('on'); lyr.scrollTo({ top: 0 }); });
         ['touchstart', 'wheel'].forEach(ev => lyr.addEventListener(ev, function () { userScrollUntil = Date.now() + 4000; }, { passive: true }));
         lyr.addEventListener('click', function (e) {
             const el = e.target.closest('.cl-line');
-            if (!el) return;
+            if (!el || !spans) return;
             const sp = spans[Number(el.dataset.i)];
             if (!sp) return;
             userScrollUntil = 0;
@@ -1699,6 +1774,7 @@
             if (audio.paused) document.getElementById('cheerPlayBtn').click();
             else paint();
         });
+        return { reset: reset };
     }
 
     // 이전 / 다음 선수 바로가기 버튼 생성
