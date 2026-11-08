@@ -1559,12 +1559,42 @@
                 <div class="cheer-actions">
                     <button type="button" class="cheer-lyr-btn" id="cheerLyrBtn" aria-expanded="false" aria-controls="cheerLyrics">📜 가사 보기 ▾</button>
                     ${kara ? '<span class="cheer-kara-tip">🎤 노래방 가사</span>' : ''}
-                    <a class="cheer-dl" href="${escapeHtml(song.src)}" target="_blank" rel="noopener" download>⬇️ MP3 저장</a>
+                    <a class="cheer-dl" id="cheerDl" href="${escapeHtml(song.src)}" target="_blank" rel="noopener" download="${escapeHtml(cheerFileName(p, song, vers.length > 1))}">⬇️ MP3 저장</a>
                 </div>
                 <div class="cheer-msg" id="cheerMsg" hidden></div>
                 <div class="cheer-lyrics${kara ? ' kara' : ''}" id="cheerLyrics" hidden>${lyricsHtml}</div>
                 <audio id="cheerAudio" preload="none" src="${escapeHtml(song.src)}"></audio>
             </div>`;
+    }
+    // ⬇️ 저장 파일 이름 (v2.101.1) — 「김수현 주제곡 롱 - 힙합 팝 95 BPM · 남성 랩 + 여성 후렴.mp3」 (파일 이름에 못 쓰는 글자는 뺌)
+    function cheerFileName(p, song, withVer) {
+        const mood = [song.beat, song.vocal].filter(Boolean).join(' · ');
+        let n = p.name + ' 주제곡' + (withVer ? ' ' + song.label : '') + (mood ? ' - ' + mood : '');
+        n = n.replace(/[\\/:*?"<>|]/g, ' ').replace(/\s+/g, ' ').trim();
+        return n.slice(0, 120) + '.mp3';
+    }
+    // 음원은 다른 서버(cdn)에 있어 링크의 download 이름이 무시되고 서버 파일 이름(긴 영문)으로 저장됨
+    //   → 먼저 파일을 받아 우리 이름을 붙여 저장 · 안 되는 기기(또는 서버가 막으면)는 예전처럼 링크로 엶
+    function setupCheerDownload(p, song, withVer) {
+        const dl = document.getElementById('cheerDl');
+        if (!dl || !song || !window.fetch || !window.Blob || !window.URL || !URL.createObjectURL) return;
+        const label = dl.textContent, fname = cheerFileName(p, song, withVer);
+        let busy = false;
+        dl.addEventListener('click', function (ev) {
+            if (busy) { ev.preventDefault(); return; }
+            ev.preventDefault(); busy = true; dl.textContent = '⬇️ 받는 중…'; dl.setAttribute('aria-busy', 'true');
+            fetch(song.src, { mode: 'cors', cache: 'force-cache' })
+                .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.blob(); })
+                .then(b => {
+                    const blob = (b.type && b.type.indexOf('audio') === 0) ? b : new Blob([b], { type: 'audio/mpeg' });
+                    const u = URL.createObjectURL(blob), a = document.createElement('a');
+                    a.href = u; a.download = fname; a.style.display = 'none';
+                    document.body.appendChild(a); a.click(); a.remove();
+                    setTimeout(() => URL.revokeObjectURL(u), 60000);
+                })
+                .catch(e => { console.warn('MP3 이름 붙여 저장 실패 → 링크로 엶:', e); window.open(song.src, '_blank', 'noopener'); })
+                .then(() => { busy = false; dl.textContent = label; dl.removeAttribute('aria-busy'); });
+        });
     }
     function setupCheerPlayer(p, lyrOpen) {
         const box = document.getElementById('cheerBox');
@@ -1572,6 +1602,7 @@
         const vers = cheerVersionsFor(p || currentPlayer);
         box._song = vers.find(v => v.key === box.dataset.ver) || vers[0] || null;
         box.querySelectorAll('.cheer-ver').forEach(b => b.addEventListener('click', () => switchCheerVersion(p || currentPlayer, b.dataset.ver)));
+        setupCheerDownload(p || currentPlayer, box._song, vers.length > 1);
         const audio = document.getElementById('cheerAudio'), btn = document.getElementById('cheerPlayBtn');
         const seek = document.getElementById('cheerSeek'), time = document.getElementById('cheerTime');
         const lyrBtn = document.getElementById('cheerLyrBtn'), lyr = document.getElementById('cheerLyrics'), msg = document.getElementById('cheerMsg');
