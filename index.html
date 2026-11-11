@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.111.0 · b261112";
+        const APP_VERSION = "v2.111.1 · b261112";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -4309,9 +4309,9 @@
     const API_HEDGE_RE = /^action=(bootstrap|getRoster|getSettings|getSchedule|getNotices|getUniformRows|seasonStatus|seasonPreview)\b/;
     function apiHedgePlan(params) {
         const a = (params.match(/^action=(\w+)/) || [])[1] || '';
-        if (a === 'bootstrap' || a === 'getRoster') return { first: 5000, gap: 4500, extra: 2, cap: 30000 };   // 보통 4초
+        if (a === 'bootstrap' || a === 'getRoster') return { first: 4000, gap: 4000, extra: 2, cap: 30000 };   // 보통 2초 안팎(서버가 10분마다 미리 읽어 둠)
         if (a === 'getSettings' || a === 'seasonStatus') return { first: 3000, gap: 4000, extra: 2, cap: 30000 };   // 보통 1~2초
-        return { first: 4500, gap: 4500, extra: 2, cap: 30000 };                               // 일정 · 공지 · 로그 목록 등 보통 2~4초
+        return { first: 4000, gap: 4000, extra: 2, cap: 30000 };                               // 일정 · 공지 · 로그 목록 등 보통 2~3초
     }
     function apiHedgeJson(params) {
         const pl = apiHedgePlan(params), hedges = [];
