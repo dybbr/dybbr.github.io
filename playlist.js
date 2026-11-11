@@ -19,6 +19,19 @@
     const AWAY_MAX = 10 * 60 * 1000;       // 화면을 끄거나 다른 앱에 이보다 오래 가 있었으면 미루지 않음
     const FADE_MS = 1600;     // 서서히 끄기 길이
     const FADE_IN_MS = 2000;  // 서서히 시작 길이 (타석 곡)
+    // 📣 타석 모드 아래 효과음 띠 — mu: 음악(한 번 더 누르면 꺼짐 · 등장곡은 서서히 꺼짐) · max: 이 초가 지나면 저절로 꺼짐
+    const SND_CDN = 'https://cdn.abocado.ai/ai/audio/google_a7d80a06/mcp_google_a7d80a06_';
+    const SND = [
+        { id: 'clap', em: '👏', nm: '박수', src: 'sfx/clap.mp3?v=1' },
+        { id: 'cheer', em: '📣', nm: '함성', src: 'sfx/cheer.mp3?v=1' },
+        { id: 'hit', em: '⚾', nm: '안타!', src: 'sfx/hit.mp3?v=1' },
+        { id: 'hr', em: '💥', nm: '홈런!', mu: 1, max: 25, src: SND_CDN + '20261111144949_pbu6ri_0.mp3' },
+        { id: 'run', em: '🎉', nm: '득점 축하', mu: 1, max: 20, src: SND_CDN + '20261111144950_o97m30_0.mp3' },
+        { id: 'so', em: '🔥', nm: '삼진 잡았다', src: 'sfx/strikeout.mp3?v=1' },
+        { id: 'fight', em: '💪', nm: '파이팅', src: 'sfx/fighting.mp3?v=1' },
+        { id: 'chg', em: '🔄', nm: '공수 교대', mu: 1, max: 150, src: SND_CDN + '20261111144952_iu8ad4_0.mp3' }
+    ];
+    const SND_FADE_MS = 1200;   // 효과음 파일을 바꾸면 ?v= 숫자를 올린다 (기기에 받아 둔 옛 소리 대신 새 소리를 받게)
     const I = {
         play: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>',
         pause: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5.5" y="4.5" width="4.5" height="15" rx="1"/><rect x="14" y="4.5" width="4.5" height="15" rx="1"/></svg>',
@@ -67,6 +80,8 @@
     let lines = [], spans = null, kIdx = -2;                    // 가사 줄 · 시간표 · 지금 줄
     let bigOpen = false, lyrOpen = false, wake = null, preBusy = false, preText = '';
     const blobUrl = {};                                         // 미리 받아 둔 곡: 음원 주소 → 기기 안 주소
+    const sndEl = {};                                           // 효과음 띠: 버튼마다 소리 하나
+    let muOn = '', muFade = 0, muFadeEl = null, volOk = null, sndWarmed = false;   // 켜져 있는 음악 버튼 · 서서히 끄는 중 · 소리 크기를 바꿀 수 있는 기기인지
 
     const personOf = pid => people.find(p => p.pid === pid) || null;
     const who = t => `${t.name} · ${t.g ? t.g + '학년 ' : ''}${t.no ? t.no + '번' : ''}`.trim();
@@ -159,6 +174,7 @@
         ensureAudio();
         if (!attached) attach(pendingSeek || 0);
         if (!fadeInTimer) { try { audio.volume = 1; } catch (e) {} }
+        if (muOn) muStop();   // 축하곡 · 공수 교대 음악이 나오던 중이면 서서히 끔
         const pr = audio.play();
         if (pr && pr.catch) pr.catch(e => { if (e && e.name !== 'AbortError' && e.name !== 'NotSupportedError') showMsg('재생하지 못했어요. ▶ 를 한 번 더 눌러 주세요.'); paintState(); });
     }
@@ -215,7 +231,7 @@
         paintTime();
     }
     function stopAll() {
-        clearFade();
+        clearFade(); sndStopAll();
         try { if (audio) { audio.pause(); audio.removeAttribute('src'); audio.load(); } } catch (e) {}
         cur = null; qi = -1; attached = false; walk = false; pendingSeek = null;
         closeBig(); renderNow(); paintState();
@@ -265,6 +281,7 @@
     function fadeOut() {
         if (!audio || audio.paused || fadeTimer) return;
         stopFadeIn();
+        if (!canVol()) { try { audio.pause(); } catch (e) {} walk = false; paintVol(1); paintState(); return; }   // 아이폰: 소리 크기를 못 바꾸니 기다리지 않고 바로 멈춤
         let v0 = 1; try { v0 = Math.max(0.05, audio.volume); } catch (e) {}   // 서서히 시작하던 중이면 그 크기에서 줄임
         const t0 = Date.now();
         fadeTimer = setInterval(() => {
@@ -273,6 +290,85 @@
             else { try { audio.volume = v0 * k * k; } catch (e) {} paintVol(k); }
         }, 50);
         paintState();
+    }
+
+    // 📣 효과음 띠 — 짧은 소리는 등장곡 위에 겹쳐 나오고, 음악(노란 버튼)은 등장곡을 서서히 끄고 나옴
+    function canVol() {   // 아이폰은 웹에서 소리 크기를 못 바꿈 → 서서히 끄지 않고 바로 멈춤
+        if (volOk == null) { try { const a = new Audio(); a.volume = 0.5; volOk = a.volume === 0.5; } catch (e) { volOk = false; } }
+        return volOk;
+    }
+    function sndAudio(s) {
+        let a = sndEl[s.id];
+        if (a) return a;
+        a = sndEl[s.id] = new Audio();
+        a.preload = 'auto'; a.src = blobUrl[s.src] || s.src;
+        if (s.mu) {
+            a.addEventListener('ended', () => { if (muOn === s.id) muStop(true); });
+            a.addEventListener('timeupdate', () => { if (muOn === s.id && s.max && a.currentTime >= s.max) muStop(); });
+        }
+        a.addEventListener('error', () => { if (muOn === s.id) { muOn = ''; paintSnd(); } delete sndEl[s.id]; notify('소리를 불러오지 못했어요', '인터넷 연결을 확인해 주세요'); });
+        return a;
+    }
+    function sndBlob(m, blob) {   // 미리 받아 둔 음악으로 바꿔 끼움 (나오는 중이면 그대로 둠)
+        if (blobUrl[m.src]) return;
+        blobUrl[m.src] = URL.createObjectURL(blob);
+        if (sndEl[m.id] && muOn !== m.id && muFadeEl !== sndEl[m.id]) delete sndEl[m.id];
+    }
+    const sndUrl = s => new URL(s.src, location.href).href;
+    async function sndWarm() {   // 타석 모드를 열면 짧은 효과음을 기기에 받아 둠 (누르면 바로 · 신호가 약해도 나오게)
+        if (sndWarmed) return;
+        sndWarmed = true;
+        const fx = SND.filter(s => !s.mu);
+        if (!('caches' in window)) { fx.forEach(s => { try { sndAudio(s).load(); } catch (e) {} }); return; }
+        try {
+            const c = await caches.open(CACHE_NAME);
+            for (const s of fx) {
+                if (blobUrl[s.src]) continue;
+                try {
+                    const u = sndUrl(s);
+                    let r = await c.match(u);
+                    if (!r) { r = await fetch(u); if (!r.ok) throw new Error('HTTP ' + r.status); await c.put(u, r.clone()); }
+                    sndBlob(s, await r.blob());
+                } catch (e) { sndWarmed = false; }   // 못 받은 소리는 다음에 타석 모드를 열 때 다시
+            }
+        } catch (e) { sndWarmed = false; }
+    }
+    function sndPlay(id) {
+        const s = SND.find(x => x.id === id);
+        if (!s) return;
+        if (s.mu && muOn === id) { muStop(); return; }   // 음악: 한 번 더 누르면 끔
+        const a = sndAudio(s);
+        if (s.mu) {
+            muStop(true);
+            if (audio && !audio.paused) fadeOut();
+            muOn = id;
+        }
+        try { a.pause(); a.currentTime = 0; a.volume = 1; } catch (e) {}
+        const pr = a.play();
+        if (pr && pr.catch) pr.catch(e => { if (e && e.name === 'AbortError') return; if (muOn === id) { muOn = ''; paintSnd(); } notify('소리를 틀지 못했어요', '한 번 더 눌러 주세요'); });
+        paintSnd(s.mu ? '' : id);
+    }
+    function muStop(now) {   // 음악 버튼 끄기 — 서서히 (now 면 바로)
+        if (muFade) { clearInterval(muFade); muFade = 0; try { muFadeEl.pause(); muFadeEl.volume = 1; } catch (e) {} muFadeEl = null; }
+        const a = sndEl[muOn];
+        muOn = ''; paintSnd();
+        if (!a || a.paused) return;
+        if (now || !canVol()) { try { a.pause(); a.volume = 1; } catch (e) {} return; }
+        const t0 = Date.now(); muFadeEl = a;
+        muFade = setInterval(() => {
+            const k = 1 - (Date.now() - t0) / SND_FADE_MS;
+            if (k <= 0) { clearInterval(muFade); muFade = 0; muFadeEl = null; try { a.pause(); a.volume = 1; } catch (e) {} }
+            else { try { a.volume = k * k; } catch (e) {} }
+        }, 50);
+    }
+    function sndStopAll() { muStop(true); Object.keys(sndEl).forEach(k => { try { sndEl[k].pause(); } catch (e) {} }); }
+    function paintSnd(hit) {
+        document.querySelectorAll('#plSnd button').forEach(b => {
+            const on = !!muOn && b.dataset.s === muOn;
+            b.classList.toggle('on', on);
+            if (b.classList.contains('mu')) b.setAttribute('aria-pressed', on ? 'true' : 'false');
+            if (hit && b.dataset.s === hit) { b.classList.remove('hit'); void b.offsetWidth; b.classList.add('hit'); }
+        });
     }
 
     // 🔒 잠금 화면 · 알림 창 조작
@@ -394,7 +490,15 @@
                 } catch (e) { bad++; console.warn('타석 곡 미리 받기 실패:', t.title, e); }
                 say();
             }
-            const keep = new Set(list.map(t => t.src));
+            for (const m of SND) {   // 축하곡 · 공수 교대 음악도 같이 받아 둠 (실패해도 곡 수에는 안 셈)
+                if (!m.mu) continue;
+                try {
+                    let r = await c.match(m.src);
+                    if (!r) { r = await fetch(m.src, { mode: 'cors' }); if (!r.ok) throw new Error('HTTP ' + r.status); await c.put(m.src, r.clone()); }
+                    sndBlob(m, await r.blob());
+                } catch (e) { console.warn('축하곡 미리 받기 실패:', m.nm, e); }
+            }
+            const keep = new Set(list.map(t => t.src).concat(SND.map(m => m.mu ? m.src : sndUrl(m))));
             (await c.keys()).forEach(req => { if (!keep.has(req.url)) c.delete(req); });
         } catch (e) { bad = list.length - done; }
         preBusy = false;
@@ -413,6 +517,7 @@
                 const r = await c.match(t.src);
                 if (r) { blobUrl[t.src] = URL.createObjectURL(await r.blob()); n++; }
             }
+            for (const m of SND) { if (m.mu && !blobUrl[m.src]) { const r = await c.match(m.src); if (r) sndBlob(m, await r.blob()); } }
             preText = n ? (n === list.length ? `${n}곡 받아 둠 ✓ 인터넷이 느려도 바로 나와요` : `${n} / ${list.length}곡 받아 둠`) : '';
             const el = $('plPreTxt'); if (el) el.textContent = preText;
         } catch (e) {}
@@ -539,6 +644,13 @@
         mini.addEventListener('click', onClick);
         document.body.appendChild(mini);
 
+        const snd = document.createElement('div');   // 📣 타석 모드 아래 효과음 띠
+        snd.id = 'plSnd'; snd.className = 'pl-snd';
+        snd.setAttribute('role', 'group'); snd.setAttribute('aria-label', '응원 효과음 · 축하곡');
+        snd.innerHTML = `<div class="pl-snd-in">${SND.map(s => `<button type="button"${s.mu ? ' class="mu" aria-pressed="false"' : ''} data-pl="snd" data-s="${s.id}"><span aria-hidden="true">${s.em}</span>${s.nm}</button>`).join('')}</div>`;
+        snd.addEventListener('click', onClick);
+        document.body.appendChild(snd);
+
         const big = document.createElement('div');
         big.id = 'plBig'; big.className = 'pl-big'; big.hidden = true;
         big.setAttribute('role', 'dialog'); big.setAttribute('aria-label', '주제곡 플레이어');
@@ -659,7 +771,12 @@
     }
     function luFlag(tab) {   // 타순 정하기 화면이 보이는 동안: 떠 있는 글자 크기 버튼을 숨김 (아래 타순 띠를 가리지 않게)
         let t = tab; try { if (!t && typeof currentMainTab !== 'undefined') t = currentMainTab; } catch (e) {}
-        root.classList.toggle('pl-lu-on', mode === 'lineup' && view === 'bat' && (!t || t === 'music'));
+        const inBat = view === 'bat' && (!t || t === 'music');
+        root.classList.toggle('pl-lu-on', mode === 'lineup' && inBat);
+        const sndOn = inBat && mode !== 'lineup' && people.length > 0;   // 📣 효과음 띠: 타석 모드에서만 (타순 정하는 동안은 타순 띠가 그 자리)
+        if (sndOn && !root.classList.contains('pl-snd-on')) sndWarm();
+        root.classList.toggle('pl-snd-on', sndOn);
+        if (!inBat && muOn) muStop();   // 타석 모드를 벗어나면 끌 버튼이 안 보이니 음악을 끔
     }
     function renderLineup(box) {
         const n = luEdit.length;
@@ -906,6 +1023,7 @@
             case 'xl': cfg.xl = !cfg.xl; saveCfg(); $('plLyr').classList.toggle('xl', cfg.xl); $('plXl').textContent = cfg.xl ? '가 작게' : '가 크게'; kIdx = -2; paintLyrics(true); break;
             case 'dl': download(); break;
             case 'fade': fadeOut(); break;
+            case 'snd': sndPlay(d.s); break;
             case 'opt': {
                 const v = +d.v;
                 if (d.o === 'hook' || d.o === 'fadeIn') cfg[d.o] = v === 1;
@@ -952,7 +1070,7 @@
         mode = ''; pickPid = '';
         document.querySelectorAll('#musicSection .pl-seg button').forEach(b => b.classList.toggle('on', b.dataset.v === view));
         $('plList').hidden = view !== 'list'; $('plBat').hidden = view !== 'bat';
-        if (view === 'bat') { renderBat(); hydrate(); wakeOn(); } else wakeOff();
+        if (view === 'bat') { renderBat(); hydrate(); wakeOn(); } else { wakeOff(); luFlag(); }
         holdSync();
     }
 

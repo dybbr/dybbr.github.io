@@ -31,6 +31,7 @@ self.addEventListener('fetch', function (event) {
     if (url.origin !== self.location.origin) return;                   // 외부(구글) 요청은 그대로 통과
     if (url.searchParams.has('vcheck')) return;                        // 🆕 새 버전 확인(맨 앞 몇 KB만 읽음)은 그대로 통과 — 저장 안 함
     if (/\.(mp4|m4v|webm|mov)$/i.test(url.pathname)) return;         // 🎬 v2.100.0: 영상 파일은 그대로 통과 (나눠 받기 · 휴대폰 저장 공간 아끼기)
+    if (/\.(mp3|m4a|wav|ogg)$/i.test(url.pathname)) return;           // 📣 v2.111.0: 소리 파일도 그대로 통과 (나눠 받기 요청에 통째 저장본을 주면 아이폰에서 안 나옴 · 효과음은 playlist.js 가 따로 받아 둠)
 
     const isNav = req.mode === 'navigate';
     // 화면(페이지)은 주소 뒤 ?… 를 떼고 한 칸에만 저장 (player.html?path=… 마다 따로 쌓이지 않게)
