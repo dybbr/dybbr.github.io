@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.105.3 · b261110";
+        const APP_VERSION = "v2.106.0 · b261111";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -107,6 +107,9 @@
     </script>
     <!-- 🎵 선수별 주제곡 (v2.92.0) — 곡 목록은 cheer-songs.json (그 파일만 고치면 됨) · cheer-songs.js 를 고칠 때만 아래 ?v= 숫자 올리기 -->
     <script src="cheer-songs.js?v=2.103.0"></script>
+    <!-- 🎧 주제곡 플레이리스트 (v2.106.0) — 「음악」 탭 · 아래 작은 플레이어 띠 · 큰 플레이어 · ⚾ 타석 모드 · playlist.js / playlist.css 를 고칠 때만 아래 ?v= 숫자 올리기 -->
+    <link rel="stylesheet" href="playlist.css?v=2.106.0">
+    <script src="playlist.js?v=2.106.0"></script>
     <!-- 🦈 부캉이 그림 (v2.98.0: 따로 뺌 — 그림을 바꿀 때만 아래 ?v= 숫자 올리기) -->
     <link rel="stylesheet" href="bk-img.css?v=2.98.0">
 
@@ -3283,10 +3286,11 @@
         <div class="ptr-mitt" id="ptrMitt"></div>
     </div></div>
     <!-- 상단 메뉴 탭 (로그인 후 표시) -->
-    <nav class="main-tabs" id="mainTabs" style="display: none;">   <!-- v2.73.0: 탭 순서 일정 · 공지 · 명단 · 구장 · 관리 -->
+    <nav class="main-tabs" id="mainTabs" style="display: none;">   <!-- v2.73.0: 탭 순서 일정 · 공지 · 명단 · 음악(v2.106.0) · 구장 · 관리 -->
         <button type="button" class="main-tab" data-tab="schedule" id="tabBtnSchedule" onclick="showMainTab('schedule')"><span class="tab-ico">📅</span><span class="tab-txt">일정</span></button>
         <button type="button" class="main-tab" data-tab="notice" id="tabBtnNotice" onclick="showMainTab('notice')"><span class="tab-ico">📢</span><span class="tab-txt">공지</span><span class="tab-dot" id="noticeDot"></span></button>
         <button type="button" class="main-tab active" data-tab="roster" onclick="showMainTab('roster')"><span class="tab-ico">👥</span><span class="tab-txt">명단</span></button>
+        <button type="button" class="main-tab" data-tab="music" id="tabBtnMusic" onclick="showMainTab('music')"><span class="tab-ico">🎵</span><span class="tab-txt">음악</span></button>   <!-- 🎧 v2.106.0: 주제곡 플레이리스트 (로그인한 모든 분) -->
         <button type="button" class="main-tab" data-tab="venue" id="tabBtnVenue" onclick="showMainTab('venue')"><span class="tab-ico">🏟️</span><span class="tab-txt">구장</span></button>
         <button type="button" class="main-tab admin-tab" data-tab="admin" id="tabBtnAdmin" style="display: none;" onclick="showMainTab('admin')"><span class="tab-ico">⚙️</span><span class="tab-txt">관리</span></button>
     </nav>
@@ -3498,6 +3502,9 @@
         <div class="notice-cats" id="noticeCats"></div>
         <div id="noticeList"><div class="bk-state loading"><span class="bk-img" aria-hidden="true"></span><div class="bk-msg">공지사항을 불러오는 중...</div></div></div>
     </section>
+
+    <!-- 🎧 음악 탭 (v2.106.0) — 전체 주제곡 플레이리스트 · ⚾ 타석 모드 (내용은 playlist.js 가 채움) -->
+    <section id="musicSection" class="app-section"></section>
 
     <!-- 🏟️ 구장 탭 (v2.43.0) — 자주 가는 훈련장 · 경기장 (수정: 대표님 · 개발자) -->
     <section id="venueSection" class="app-section">
@@ -4866,7 +4873,7 @@
         document.getElementById('tabBtnNotice').style.display = nv ? '' : 'none';
         document.getElementById('tabBtnVenue').style.display = sv ? '' : 'none';
         document.getElementById('tabBtnAdmin').style.display = av ? '' : 'none';
-        tabs.style.display = (sv || nv || av) ? 'flex' : 'none';
+        tabs.style.display = (sv || nv || av || isAuthValid()) ? 'flex' : 'none';   // 🎧 v2.106.0: 음악 탭이 생겨 일반 열람자도 탭 막대(명단 · 음악)가 보임
         if (!sv) { schedEvents = []; schedVenues = []; schedLoaded = false; }
         if (!nv) { noticeList = []; noticeLoaded = false; }
         if (((currentMainTab === 'schedule' || currentMainTab === 'venue') && !sv) || (currentMainTab === 'notice' && !nv) || (currentMainTab === 'admin' && !av)) currentMainTab = 'roster';
@@ -4883,6 +4890,8 @@
         document.getElementById('noticeSection').classList.toggle('active', tab === 'notice');
         document.getElementById('venueSection').classList.toggle('active', tab === 'venue');
         document.getElementById('adminSection').classList.toggle('active', tab === 'admin');
+        document.getElementById('musicSection').classList.toggle('active', tab === 'music');   // 🎧 v2.106.0
+        try { if (window.plTab) window.plTab(tab); } catch (e) {}   // 큰 플레이어가 열려 있으면 닫고(노래는 계속) · 음악 탭이면 목록을 맞춤
         if (tab !== 'admin' && ofaOpenSt) { ofaOpenSt = false; try { ofaFoldSync(); } catch (e) {} }   // v2.87.0: 다른 탭으로 가면 집행부 버튼 묶음은 다시 접힘
         if (tab !== 'admin' && jsyOpenSt) { jsyOpenSt = false; jerseyEdit = null; try { renderJerseyPanel(); jsyFoldSync(); } catch (e) {} }   // v2.88.0: 유니폼 색도
         if (tab !== 'admin' && ssnOpenSt) { ssnOpenSt = false; try { ssnFoldSync(); } catch (e) {} }   // v2.98.1: 새 학년도
@@ -7896,6 +7905,7 @@
 
                 const overlay = document.getElementById('lockOverlay');
                 if (overlay) overlay.style.display = 'flex';
+                try { if (window.plOnLock) window.plOnLock('자동 잠금'); } catch (e) {}   // 🎧 v2.106.0
                 bkNotify('sleep', '시간이 다 돼서 잠갔캉 💤', '다시 로그인해 주세요', { ms: 6000 });
             } else {
                 const hours = Math.floor(diff / (1000 * 60 * 60));
@@ -7913,6 +7923,7 @@
     // quiet: 앱이 닫히는 중 (v2.48.0) — 알림 · 입력칸 포커스 없이, 서버에는 sendBeacon 으로
     function lockScreenNow(why, quiet) {
         why = why || '로그아웃';
+        try { if (window.plOnLock) window.plOnLock(why); } catch (e) {}   // 🎧 v2.106.0: 큰 플레이어는 닫음 · 자동 잠금이면 듣던 노래는 그대로, 직접 로그아웃하면 멈춤
         if (why === '로그아웃') snapClear();   // 💾 v2.64.0: 로그아웃을 누르면 기기에 저장한 명단 · 일정 · 공지도 지움
         try { if (getToken()) (quiet ? beaconApi : postApi)({ action: 'logout', token: getToken() }); } catch (e) {}   // 서버 세션도 폐기
         localStorage.removeItem('daeyeon_auth_expire');
@@ -9066,6 +9077,7 @@
     setInterval(applyBkMood, 5 * 60 * 1000);
 
     function render() {
+        try { if (window.plSync) window.plSync(); } catch (e) {}   // 🎧 v2.106.0: 플레이리스트 곡 목록 = 명단에 보이는 선수의 주제곡 (바뀐 게 없으면 그대로)
         const searchEl = document.getElementById('searchInput');
         const rawQuery = searchEl.value.trim().toLowerCase();
         const numberQuery = rawQuery.replace(/^(no\.?|번)\s*|\s*번$/gi, '').trim();
@@ -10791,7 +10803,8 @@
     function openLayerCount() {   // 뒤로가기로 닫을 수 있는 것 개수 (closeTopLayer와 같은 기준)
         return (bkAskResolve ? 1 : 0) + (document.getElementById('appPick') ? 1 : 0) + document.querySelectorAll('.cf-layer:not(.out)').length +
             [...document.querySelectorAll('.modal')].filter(m => m.style.display === 'flex').length +
-            document.querySelectorAll('.gsel-wrap.open, .cgsel-wrap.open').length;
+            document.querySelectorAll('.gsel-wrap.open, .cgsel-wrap.open').length +
+            (window.plLayers ? window.plLayers() : 0);   // 🎧 v2.106.0: 큰 플레이어 · 전체 가사
     }
     function backGuardTopUp(epoch) {   // 화면을 누르고 뗀 직후에만 부름 (그사이 뒤로가기가 있었으면 안 넣음)
         if (epoch !== backEpoch) return;
@@ -10815,6 +10828,7 @@
             return true;
         }
         const dd = document.querySelector('.gsel-wrap.open, .cgsel-wrap.open'); if (dd) { dd.classList.remove('open'); return true; }
+        if (window.plBack && window.plBack()) return true;   // 🎧 v2.106.0: 전체 가사 → 큰 플레이어 순서로 닫음 (노래는 계속)
         return false;
     }
     function backArm() {
@@ -10967,7 +10981,7 @@
             if (window.scrollY > 0 || currentMainTab === 'admin') return false;
             const lock = document.getElementById('lockOverlay');
             if (lock && getComputedStyle(lock).display !== 'none') return false;
-            if (target && target.closest && target.closest('.modal, .modal-overlay, #lockOverlay, .gsel-menu, .cgsel-menu, input, textarea, select, .cal-grid, .ui-zoom-ctrl, .vn-map')) return false;   // v2.43.1: 구장 지도를 아래로 끌 때는 새로고침 안 함
+            if (target && target.closest && target.closest('.modal, .modal-overlay, #lockOverlay, .gsel-menu, .cgsel-menu, input, textarea, select, .cal-grid, .ui-zoom-ctrl, .vn-map, .pl-big, .pl-mini')) return false;   // v2.43.1: 구장 지도를 아래로 끌 때는 새로고침 안 함
             return true;
         }
         function setPull(d) {
