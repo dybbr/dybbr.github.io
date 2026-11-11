@@ -214,6 +214,35 @@ html.pl-on.is-authenticated .bk-upd { bottom: calc(76px + 62px * var(--ui-zoom, 
     html.pl-on.is-authenticated .ui-zoom-ctrl { bottom: calc(146px * var(--ui-zoom, 1) + env(safe-area-inset-bottom, 0px)); }
     html.pl-on.is-authenticated .bk-upd { bottom: calc(142px * var(--ui-zoom, 1) + env(safe-area-inset-bottom, 0px)); }
 }
+/* 📣 타석 모드 아래 효과음 띠 (v2.110.0) — 탭 바로 위(노래가 나오면 띠 위)에 늘 떠 있음 · 휴대폰은 옆으로 밀고 태블릿 · PC 는 가운데로 */
+.pl-snd { display: none; position: fixed; left: 0; right: 0; bottom: calc(var(--pl-tabh) - 18px); z-index: 938; padding: 8px 0 26px; background: var(--pl-card); border-top: 1px solid var(--pl-line); box-shadow: 0 -6px 14px -8px rgba(15, 23, 42, .3); }
+html.pl-snd-on.is-authenticated .pl-snd { display: block; }
+html.pl-on .pl-snd { bottom: calc(var(--pl-tabh) - 18px + var(--pl-minih, 80px)); padding-bottom: 8px; }
+.pl-snd-in { max-width: 1000px; margin: 0 auto; display: flex; gap: 6px; overflow-x: auto; padding: 0 max(10px, env(safe-area-inset-right, 0px)) 0 max(10px, env(safe-area-inset-left, 0px)); scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.pl-snd-in::-webkit-scrollbar { display: none; }
+.pl-snd button { flex: none; display: inline-flex; align-items: center; gap: 5px; height: 44px; padding: 0 13px; border: 1.5px solid var(--pl-line); border-radius: 22px; background: var(--pl-page); color: var(--pl-fg); font: inherit; font-size: 14px; font-weight: 800; white-space: nowrap; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.pl-snd button span { font-size: 17px; line-height: 1; }
+.pl-snd button.mu { background: var(--pl-cream); border-color: var(--pl-gold); }   /* 노란 버튼 = 음악 */
+.pl-snd button.on { background: var(--pl-navy); border-color: var(--pl-navy); color: #ffffff; }
+.pl-snd button:active { transform: scale(.95); }
+.pl-snd button.hit { animation: plSndHit .45s ease-out; }
+@keyframes plSndHit { 0% { background: var(--pl-gold); border-color: var(--pl-gold); color: #0b2240; } 100% { background: var(--pl-page); } }
+@media (prefers-color-scheme: dark) { .pl-snd button.on { background: var(--pl-gold); border-color: var(--pl-gold); color: #0b2240; } }
+@media (min-width: 700px) { .pl-snd-in { justify-content: safe center; } }
+@media (min-width: 700px) and (max-width: 899px) { .pl-snd button { padding: 0 10px; gap: 4px; } }   /* 태블릿: 여덟 개가 한 줄에 다 보이게 */
+@media (prefers-reduced-motion: reduce) { .pl-snd button.hit { animation: none; } .pl-snd button:active { transform: none; } }
+/* 띠가 떠 있는 동안: 타석 화면 맨 아래가 가려지지 않게 · 오른쪽 아래 떠 있는 버튼들은 그 위로 */
+html.pl-snd-on.is-authenticated .container { padding-bottom: calc(150px + env(safe-area-inset-bottom, 0px)) !important; }
+html.pl-snd-on.is-authenticated .ui-zoom-ctrl { bottom: calc(80px + 62px + env(safe-area-inset-bottom, 0px)); }
+html.pl-snd-on.is-authenticated .bk-upd { bottom: calc(76px + 62px + env(safe-area-inset-bottom, 0px)); }
+html.pl-snd-on.pl-on.is-authenticated .container { padding-bottom: calc(280px + env(safe-area-inset-bottom, 0px)) !important; }
+html.pl-snd-on.pl-on.is-authenticated .ui-zoom-ctrl { bottom: calc(80px + 62px + 62px * var(--ui-zoom, 1) + env(safe-area-inset-bottom, 0px)); }
+html.pl-snd-on.pl-on.is-authenticated .bk-upd { bottom: calc(76px + 62px + 62px * var(--ui-zoom, 1) + env(safe-area-inset-bottom, 0px)); }
+@media (min-width: 601px) {
+    html.pl-snd-on.pl-on.is-authenticated .container { padding-bottom: calc(260px + env(safe-area-inset-bottom, 0px)) !important; }
+    html.pl-snd-on.pl-on.is-authenticated .ui-zoom-ctrl { bottom: calc(146px * var(--ui-zoom, 1) + 62px + env(safe-area-inset-bottom, 0px)); }
+    html.pl-snd-on.pl-on.is-authenticated .bk-upd { bottom: calc(142px * var(--ui-zoom, 1) + 62px + env(safe-area-inset-bottom, 0px)); }
+}
 html.pl-big-on .ui-zoom-ctrl { display: none !important; }
 html.pl-lu-on .ui-zoom-ctrl { display: none !important; }   /* 타순 정하기: 아래 타순 띠를 가리지 않게 */
 
