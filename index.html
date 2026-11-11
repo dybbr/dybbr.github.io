@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.108.0 · b261111";
+        const APP_VERSION = "v2.108.1 · b261111";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -3988,7 +3988,7 @@
                         <select class="uniform-item-qty" disabled><option value="1벌">1벌</option><option value="2벌">2벌</option><option value="3벌">3벌</option></select>
                     </div>
                     <div class="uniform-item-row uni-cheer" id="rowCheer">
-                        <label class="uniform-item-name"><input type="checkbox" id="chkCheer" onchange="toggleCheerInputs(this)"> <svg class="ck-ic" aria-hidden="true"><use href="#ck-cheer"/></svg> <span class="uin-t">응원복<small>학부모</small></span></label>
+                        <label class="uniform-item-name"><input type="checkbox" id="chkCheer" onchange="toggleCheerInputs(this)"> <svg class="ck-ic" aria-hidden="true"><use href="#ck-cheer"/></svg> <span class="uin-t">응원복<small>학부모 · 남녀공용</small></span></label>
                         <div class="cheer-lines" id="cheerLines"></div>
                     </div>
                 </div>
@@ -9812,7 +9812,9 @@
     //   - 서버가 아직 예전 버전이면(myOrder 를 모름) 예전처럼 새 신청만 받음 — 응원복 줄은 숨김
     // ==========================================================
     const UNI_ITEM_LABEL = { '모자': '모자', '유니폼상의': '유니폼 상의', '바지': '바지', '여름훈련티': '여름훈련티', '겨울훈련티': '겨울훈련티', '바람막이': '바람막이', '풀오버': '풀오버', '겨울점퍼': '겨울점퍼', '응원복': '응원복' };
+    // 응원복은 학부모용 남녀공용 성인 사이즈 (따로 사이즈표 없음 — 숫자 옆에 알파벳 표기를 같이 보여 줌, 시트에는 숫자만 저장)
     const CHEER_SIZES = ['85', '90', '95', '100', '105', '110', '115', '120'];
+    const CHEER_SIZE_LABEL = { '85': 'XS', '90': 'S', '95': 'M', '100': 'L', '105': 'XL', '110': '2XL', '115': '3XL', '120': '4XL' };
     const CHEER_MAX_LINES = 4;
     let uniState = { key: '', loading: false, found: false, hasOrder: false, items: {}, date: '', status: '', legacy: false, editing: false };
     let uniLoadSeq = 0;
@@ -9851,7 +9853,7 @@
     // 📣 응원복 줄 (사이즈 + 수량) — 엄마 · 아빠 사이즈가 다를 수 있어 여러 줄
     function cheerLineHtml(size, qty, first) {
         const sizes = CHEER_SIZES.includes(String(size)) ? CHEER_SIZES : CHEER_SIZES.concat([String(size)]);
-        return `<div class="cheer-line"><select class="uniform-item-size cheer-size">${sizes.map(s => `<option value="${escapeHtml(s)}"${String(s) === String(size) ? ' selected' : ''}>${escapeHtml(s)}</option>`).join('')}</select>`
+        return `<div class="cheer-line"><select class="uniform-item-size cheer-size">${sizes.map(s => `<option value="${escapeHtml(s)}"${String(s) === String(size) ? ' selected' : ''}>${escapeHtml(s)}${CHEER_SIZE_LABEL[s] ? ' (' + CHEER_SIZE_LABEL[s] + ')' : ''}</option>`).join('')}</select>`
             + `<select class="uniform-item-qty cheer-qty">${[1, 2, 3].map(n => `<option value="${n}벌"${n === qty ? ' selected' : ''}>${n}벌</option>`).join('')}</select>`
             + (first ? '' : `<button type="button" class="cheer-del" title="이 사이즈 빼기" onclick="cheerRemoveLine(this)">✕</button>`) + `</div>`;
     }
