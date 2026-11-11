@@ -964,6 +964,7 @@ function handleUpdatePlayerInfo(ss, data) {
 //   - v2.41.0: 「화면 그대로 바꾸기」(replace) — 체크를 푼 품목은 칸을 비움 (예전엔 건너뛰어 품목을 뺄 수 없었음)
 //   - v2.41.0: 보호자는 내 자녀만 · 접수 기간에만 (마감 뒤 수정 · 취소는 대표님 · 개발자만)
 //   - v2.41.0: 시트 맨 오른쪽에 「응원복」 · 「신청자」 · 「상태」 칸이 없으면 머리줄만 만들어 씀 (기존 칸 · 값은 그대로)
+//   - v2.41.0: 신청 · 수정 · 취소마다 「유니폼 변경기록」 탭에 이전 → 새 내용을 한 줄 남김 (빠진 품목도 되살릴 수 있게)
 var ORDER_EXTRA_COLS = ["응원복", "신청자", "상태"];
 
 function orderSheetInfo(ss) {
@@ -998,6 +999,26 @@ function ensureOrderCols(info) {
     info.byIdx = findColIdx(info.headers, ["신청자"]);
     info.stIdx = findColIdx(info.headers, ["상태"]);
   }
+}
+
+// 🧾 변경 기록: 신청 · 수정 · 취소를 「유니폼 변경기록」 탭에 한 줄씩 쌓음 (지워진 품목도 여기 남음 · 탭이 없으면 만듦)
+//   기록을 못 써도 접수는 그대로 진행 (같은 요청 안에서 쓰므로 앱이 서버를 더 부르지 않음)
+var ORDER_LOG_SHEET = "유니폼 변경기록";
+function orderItemsText(items) {
+  var out = [];
+  ALLOWED_ORDER_ITEMS.forEach(function (k) { if (items && items[k]) out.push(k + " " + items[k]); });
+  return out.join(" / ");
+}
+function logOrderChange(ss, kind, no, name, by, beforeItems, afterItems, dateStr) {
+  try {
+    var sh = ss.getSheetByName(ORDER_LOG_SHEET);
+    if (!sh) {
+      sh = ss.insertSheet(ORDER_LOG_SHEET, ss.getSheets().length);
+      sh.appendRow(["시각", "배번", "선수이름", "구분", "신청자", "이전 내용", "새 내용"]);
+      sh.setFrozenRows(1);
+    }
+    sh.appendRow([dateStr, no > 0 ? no : "", name, kind, by || "", orderItemsText(beforeItems), orderItemsText(afterItems)]);
+  } catch (eLog) {}
 }
 
 function findOrderRow(info, reqNo, reqName, reqGrade) {
@@ -1102,7 +1123,7 @@ function handleSubmitOrder(ss, data, session) {
 
   var dateStr = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy. MM. dd. HH:mm");
   var rowIdx = findOrderRow(info, reqNo, reqName, reqGrade);
-  var before = rowIdx > 0 ? orderItemsOfRow(info, info.values[rowIdx]) : { has: false };
+  var before = rowIdx > 0 ? orderItemsOfRow(info, info.values[rowIdx]) : { has: false, items: {} };
   var statusStr = (before.has ? "수정 " : "신청 ") + dateStr;
   var by = orderApplicant(session) || cleanText(data.applicant, 40);
 
@@ -1136,6 +1157,12 @@ function handleSubmitOrder(ss, data, session) {
     info.sheet.appendRow(newRow);
   }
 
+  // 기록에 남길 「새 내용」: 화면 그대로 바꾸기면 보낸 품목, 예전 방식(합치기)이면 이전 + 보낸 품목
+  var afterItems = {};
+  if (!replace) for (var bk in before.items) afterItems[bk] = before.items[bk];
+  for (var ak in items) afterItems[ak] = items[ak];
+  logOrderChange(ss, before.has ? "수정" : "신청", reqNo, reqName, by, before.items, afterItems, dateStr);
+
   return json({ result: "success", edited: before.has, items: items, date: dateStr, status: statusStr, uniformActive: getUniformActive() });
 }
 
@@ -1151,13 +1178,15 @@ function handleCancelOrder(ss, data, session) {
   var info = orderSheetInfo(ss);
   if (!info) return json({ result: "error", message: "유니폼 시트를 찾을 수 없습니다." });
   var rowIdx = findOrderRow(info, reqNo, reqName, String(data.playerGrade || '').replace(/[^0-9]/g, ''));
-  if (rowIdx < 1 || !orderItemsOfRow(info, info.values[rowIdx]).has) return json({ result: "error", message: "취소할 신청이 없어요." });
+  var beforeC = rowIdx > 0 ? orderItemsOfRow(info, info.values[rowIdx]) : { has: false, items: {} };
+  if (!beforeC.has) return json({ result: "error", message: "취소할 신청이 없어요." });
   ensureOrderCols(info);
   var sr = rowIdx + 1, sh = info.sheet;
   ALLOWED_ORDER_ITEMS.forEach(function (key) { var c = findColIdx(info.headers, key); if (c !== -1) sh.getRange(sr, c + 1).setValue(""); });
   var dateStr = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy. MM. dd. HH:mm");
   if (info.byIdx !== -1) sh.getRange(sr, info.byIdx + 1).setValue(orderApplicant(session));
   if (info.stIdx !== -1) sh.getRange(sr, info.stIdx + 1).setValue("취소 " + dateStr);
+  logOrderChange(ss, "취소", reqNo, reqName, orderApplicant(session), beforeC.items, {}, dateStr);
   return json({ result: "success", cancelled: true, status: "취소 " + dateStr, uniformActive: getUniformActive() });
 }
 
