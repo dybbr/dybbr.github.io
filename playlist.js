@@ -617,9 +617,9 @@
             const ps = people.filter(p => p.g === g);
             return `<div class="pl-gh"><i class="pl-g${g || 0}"></i>${g ? g + '학년' : '기타'}<span>${ps.length}명</span></div>` + ps.map(p => {
                 const k = luEdit.indexOf(p.pid);
-                return `<button type="button" class="pl-lrow${k >= 0 ? ' in' : ''}" data-pl="lu-pick" data-pid="${esc(p.pid)}">${photo(p, 44)}` +
+                return `<button type="button" class="pl-lrow${k >= 0 ? ' in' : ''}" data-pl="lu-pick" data-pid="${esc(p.pid)}" aria-label="${esc(p.no)}번 ${esc(p.name)}${k >= 0 ? ' · ' + (k + 1) + '번 타자 (누르면 빠짐)' : ' · 타순에 넣기'}">${photo(p, 32)}` +
                     `<span class="t"><b>${esc(p.name)}</b><small>${esc(p.no)}번${p.pos ? ' · ' + esc(p.pos) : ''}</small></span>` +
-                    (k >= 0 ? `<span class="k">${k + 1}번</span>` : `<span class="add">+ 넣기</span>`) + `</button>`;
+                    (k >= 0 ? `<span class="k">${k + 1}번</span>` : '') + `</button>`;
             }).join('');
         }).join('');
         box.innerHTML = `
@@ -630,10 +630,10 @@
                         <button type="button" class="pl-sbtn on" data-pl="lu-done">완료</button></div>
                     <div class="pl-lue-tip"><span>${head}</span><button type="button" class="pl-lnk" data-pl="lu-clear"${n ? '' : ' disabled'}>모두 지우기</button></div>
                     <div class="pl-slots">${slots}</div>
-                    <p class="pl-lue-hint">${luFix >= 0 ? `<b>${luFix + 1}번 칸</b>을 바꾸는 중이에요. 아래에서 선수를 누르세요.` : '칸을 먼저 누르면 그 칸에 넣거나 바꿀 수 있어요 · 목록에서 다시 누르면 빠져요'}</p>
+                    <p class="pl-lue-hint${luFix >= 0 ? ' fix' : ''}">${luFix >= 0 ? `<b>${luFix + 1}번 칸</b>을 바꾸는 중이에요. 아래에서 선수를 누르세요.` : '칸을 먼저 누르면 그 칸에 넣거나 바꿀 수 있어요 · 목록에서 다시 누르면 빠져요'}</p>
                 </div>
                 <div class="pl-chips pl-lue-chips">${chips}</div>
-                <div class="pl-rows pl-lue-list">${list || '<div class="pl-empty">선수 명단을 불러오는 중이에요.</div>'}</div>
+                <div class="pl-lue-list">${list || '<div class="pl-empty">선수 명단을 불러오는 중이에요.</div>'}</div>
                 <button type="button" class="pl-lue-done" data-pl="lu-done">완료 · 타석 모드로 (${n}명)</button>
             </div>`;
     }

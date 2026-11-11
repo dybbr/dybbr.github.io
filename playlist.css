@@ -108,7 +108,7 @@ html.pl-playing .pl-row.cur .eq i { animation: plEq .7s ease-in-out infinite alt
 /* 📋 타순 고르기 화면 (v2.107.0) */
 .pl-lue-top { position: sticky; top: calc(54px + env(safe-area-inset-top, 0px)); z-index: 6; margin: 0 -12px; padding: 10px 12px 8px; background: var(--pl-page); border-bottom: 1px solid var(--pl-line); box-shadow: 0 8px 14px -12px rgba(15, 23, 42, .4); }
 .pl-lue-h { display: flex; align-items: center; gap: 8px; }
-.pl-lue-h b { font-size: 17px; } .pl-lue-h small { flex: 1; font-size: 13px; font-weight: 800; color: var(--pl-sub); }
+.pl-lue-h b { font-size: 17px; white-space: nowrap; } .pl-lue-h small { flex: 1; white-space: nowrap; font-size: 13px; font-weight: 800; color: var(--pl-sub); }
 .pl-sbtn:disabled { opacity: .4; cursor: default; }
 .pl-lue-tip { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 8px 2px 7px; font-size: 13.5px; font-weight: 700; word-break: keep-all; }
 .pl-lue-tip .hot { color: var(--pl-hot); }
@@ -130,19 +130,30 @@ html.pl-playing .pl-row.cur .eq i { animation: plEq .7s ease-in-out infinite alt
 .pl-lue-hint { margin: 7px 2px 0; font-size: 12px; font-weight: 700; color: var(--pl-sub); word-break: keep-all; }
 .pl-lue-hint b { color: var(--pl-hot); }
 .pl-lue-chips { margin-top: 12px; }
-.pl-gh { display: flex; align-items: center; gap: 7px; padding: 7px 12px; font-size: 13px; font-weight: 900; background: var(--pl-soft); border-bottom: 1px solid var(--pl-line); }
+.pl-lue-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(132px, calc(50% - 3px)), 1fr)); gap: 6px; }   /* 얇은 한 줄(v2.107.2 하코 C안): 화면 너비에 맞춰 한 줄에 2~7명 (휴대폰도 최소 2명) */
+.pl-gh { grid-column: 1 / -1; display: flex; align-items: center; gap: 7px; margin: 8px 2px 0; font-size: 13.5px; font-weight: 900; }
+.pl-gh:first-child { margin-top: 0; }
 .pl-gh span { color: var(--pl-sub); font-weight: 700; }
-.pl-lrow { display: flex; align-items: center; gap: 11px; width: 100%; min-height: 60px; padding: 8px 12px; border: 0; border-bottom: 1px solid var(--pl-line); background: transparent; color: inherit; text-align: left; cursor: pointer; }
-.pl-lrow:last-child { border-bottom: 0; }
-.pl-lrow .t { flex: 1; min-width: 0; display: grid; gap: 1px; }
-.pl-lrow .t b { font-size: 15.5px; } .pl-lrow .t small { font-size: 12.5px; color: var(--pl-sub); }
-.pl-lrow .add { flex: none; font-size: 12.5px; font-weight: 800; color: var(--pl-sub); }
-.pl-lrow .k { flex: none; min-width: 46px; height: 30px; padding: 0 8px; border-radius: 15px; display: grid; place-items: center; background: var(--pl-gold); color: var(--pl-navy); font-size: 14px; font-weight: 900; font-variant-numeric: tabular-nums; }
-.pl-lrow.in { background: var(--pl-cream); }
-.pl-lrow:active { background: var(--pl-soft); }
+.pl-lrow { position: relative; display: flex; align-items: center; gap: 7px; min-width: 0; min-height: 44px; padding: 5px 8px 5px 5px; border: 1.5px solid var(--pl-line); border-radius: 22px; background: var(--pl-card); color: inherit; text-align: left; cursor: pointer; }
+.pl-lrow .t { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 5px; }
+.pl-lrow .t b { flex: none; max-width: 70%; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl-lrow .t small { font-size: 12px; color: var(--pl-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl-lrow .k { position: absolute; top: -7px; right: -4px; min-width: 34px; height: 22px; padding: 0 7px; border-radius: 11px; display: grid; place-items: center; background: var(--pl-gold); color: var(--pl-navy); font-size: 12px; font-weight: 900; font-variant-numeric: tabular-nums; box-shadow: 0 1px 3px rgba(0, 0, 0, .3); }
+.pl-lrow.in { background: var(--pl-cream); border-color: var(--pl-gold); }
+.pl-lrow:active { transform: scale(.97); }
+@media (hover: hover) { .pl-lrow:hover { border-color: var(--pl-sub); } .pl-lrow.in:hover { border-color: var(--pl-gold); } }
 .pl-ph { flex: none; display: block; border-radius: 50%; object-fit: cover; background: var(--pl-soft); }
 span.pl-ph { display: grid; place-items: center; font-size: 17px; }
+.pl-lrow span.pl-ph { font-size: 13px; }
 .pl-lue-done { display: block; width: 100%; height: 50px; margin: 12px 0 4px; border: 0; border-radius: 13px; background: var(--pl-red); color: #ffffff; font-size: 16px; font-weight: 900; cursor: pointer; }
+/* 좁거나 낮은 휴대폰: 위 칸판을 줄여 아래 선수 목록이 더 보이게 */
+@media (max-width: 360px), (max-height: 700px) and (max-width: 600px) {
+  .pl-lue-top { padding: 8px 12px 7px; }
+  .pl-lue-h b { font-size: 16px; }
+  .pl-lue-tip { margin: 6px 2px 6px; font-size: 13px; }
+  .pl-slots { gap: 5px; } .pl-slot { height: 38px; }
+  .pl-lue-hint:not(.fix) { display: none; }
+}
 
 .pl-pick { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--pl-line); }
 .pl-pick button.opt { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 6px; border: 0; border-bottom: 1px solid var(--pl-line); background: transparent; color: inherit; text-align: left; cursor: pointer; font-size: 14.5px; font-weight: 800; }
