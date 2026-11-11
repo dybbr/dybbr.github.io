@@ -70,11 +70,16 @@ html.pl-playing .pl-row.cur .eq i { animation: plEq .7s ease-in-out infinite alt
 .pl-vol i.off { background: rgba(255, 255, 255, .25); }
 .pl-fade { flex: none; height: 40px; padding: 0 12px; border-radius: 10px; border: 1.5px solid rgba(255, 255, 255, .55); background: transparent; color: #ffffff; font-size: 13.5px; font-weight: 800; cursor: pointer; white-space: nowrap; }
 .pl-fade:disabled { opacity: .4; }
-.pl-opts { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 0 2px 12px; font-size: 14px; font-weight: 700; color: var(--pl-sub); }
-.pl-opts button { display: flex; align-items: center; gap: 7px; min-height: 32px; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
-.pl-opts button i { flex: none; width: 20px; height: 20px; border-radius: 5px; border: 2px solid var(--pl-line); background: var(--pl-card); box-sizing: border-box; display: grid; place-items: center; font-style: normal; }
-.pl-opts button[aria-pressed="true"] i { background: var(--pl-red); border-color: var(--pl-red); }
-.pl-opts button[aria-pressed="true"] i::after { content: "✓"; color: #fff; font-size: 13px; font-weight: 900; line-height: 1; }
+/* 타석 옵션 — 둘 중 고르기 (v2.109.0 하코 B안): 휴대폰 세 줄, 태블릿·PC 한 줄 */
+.pl-opts { display: grid; gap: 10px; margin: 0 0 12px; padding: 12px; border: 1px solid var(--pl-line); border-radius: 14px; background: var(--pl-card); }
+@media (min-width: 700px) { .pl-opts { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr) minmax(0, 1.6fr); gap: 12px; } }
+.pl-og { min-width: 0; }
+.pl-og > span { display: block; margin: 0 2px 5px; font-size: 13px; font-weight: 900; color: var(--pl-sub); }
+.pl-sg { display: flex; border: 1.5px solid var(--pl-line); border-radius: 11px; overflow: hidden; }
+.pl-sg button { flex: 1 1 0; min-width: 0; min-height: 40px; padding: 0 4px; border: 0; border-right: 1.5px solid var(--pl-line); background: var(--pl-page); color: var(--pl-fg); font: inherit; font-size: 14px; font-weight: 800; white-space: nowrap; cursor: pointer; }
+.pl-sg button:last-child { border-right: 0; }
+.pl-sg button[aria-pressed="true"] { background: var(--pl-navy); color: #ffffff; }
+@media (prefers-color-scheme: dark) { .pl-sg button[aria-pressed="true"] { background: var(--pl-gold); color: #0b2240; } }   /* 어두운 화면: 고른 쪽이 또렷하게 */
 .pl-box { background: var(--pl-card); border: 1px solid var(--pl-line); border-radius: 14px; padding: 12px; margin-bottom: 12px; }
 .pl-h { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; }
 .pl-h b { flex: 1; min-width: 0; font-size: 16px; }
@@ -85,6 +90,28 @@ html.pl-playing .pl-row.cur .eq i { animation: plEq .7s ease-in-out infinite alt
 .pl-nextbat svg { flex: none; width: 34px; height: 34px; }
 .pl-nextbat small { display: block; font-size: 12.5px; font-weight: 700; opacity: .88; }
 .pl-nextbat b { display: block; font-size: 20px; line-height: 1.25; word-break: keep-all; }
+/* 다음 타자 + 대타 · 저장해 둔 타순 (v2.109.0) */
+.pl-nbrow { display: flex; gap: 8px; align-items: stretch; }
+.pl-nbrow .pl-nextbat { flex: 1 1 0; min-width: 0; width: auto; }
+.pl-phb { flex: none; width: 70px; display: grid; place-content: center; justify-items: center; gap: 1px; border: 1.5px solid var(--pl-line); border-radius: 14px; background: var(--pl-page); color: var(--pl-fg); font: inherit; font-size: 14px; font-weight: 900; cursor: pointer; }
+.pl-phb span { font-size: 19px; line-height: 1.1; }
+.pl-phb.on { border-color: var(--pl-red); background: var(--pl-cream); }
+.pl-php { margin-top: 10px; padding: 10px; border: 1.5px solid var(--pl-red); border-radius: 14px; background: var(--pl-page); }
+.pl-php .pl-h { margin-bottom: 8px; } .pl-php .pl-h small { flex: 1; min-width: 0; }
+.pl-lrow.dim { opacity: .55; }
+.pl-sets { display: flex; gap: 6px; overflow-x: auto; margin: 0 0 10px; padding-bottom: 1px; scrollbar-width: none; }
+.pl-sets::-webkit-scrollbar { display: none; }
+.pl-sets button { flex: none; min-height: 36px; padding: 0 13px; border: 1.5px solid var(--pl-line); border-radius: 999px; background: var(--pl-page); color: var(--pl-fg); font: inherit; font-size: 13.5px; font-weight: 800; white-space: nowrap; cursor: pointer; }
+.pl-sets button.on { background: var(--pl-navy); border-color: var(--pl-navy); color: #ffffff; }
+.pl-sets button.add { border-style: dashed; color: var(--pl-sub); }
+.pl-sets button.add.on { background: var(--pl-cream); border-color: var(--pl-gold); border-style: solid; color: var(--pl-fg); }
+.pl-setpan { display: grid; gap: 8px; margin: 0 0 12px; padding: 12px; border: 1.5px solid var(--pl-gold); border-radius: 14px; background: var(--pl-cream); }
+.pl-setpan > b { font-size: 14.5px; } .pl-setpan > b small { margin-left: 4px; font-size: 12.5px; font-weight: 700; color: var(--pl-sub); }
+.pl-setpan > .pl-sbtn { justify-self: end; }
+.pl-setnames { display: flex; flex-wrap: wrap; gap: 6px; }
+.pl-setnames button { min-height: 40px; padding: 0 14px; border: 1.5px solid var(--pl-line); border-radius: 11px; background: var(--pl-card); color: var(--pl-fg); font: inherit; font-size: 14px; font-weight: 800; cursor: pointer; }
+.pl-setnames button small { display: block; font-size: 10.5px; font-weight: 700; color: var(--pl-hot); line-height: 1; }
+.pl-setnames.del button { color: var(--pl-sub); font-weight: 700; }
 .pl-lu { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 0; padding: 0; list-style: none; }
 .pl-lu button { display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 10px 0 4px; border-radius: 999px; border: 1px solid var(--pl-line); background: var(--pl-card); color: var(--pl-fg); font-size: 13.5px; font-weight: 800; cursor: pointer; }
 .pl-lu button i { font-style: normal; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: var(--pl-soft); color: var(--pl-hot); font-size: 12.5px; }
@@ -106,29 +133,32 @@ html.pl-playing .pl-row.cur .eq i { animation: plEq .7s ease-in-out infinite alt
 .pl-gl i, .pl-gh i { width: 10px; height: 10px; border-radius: 3px; background: var(--gc); }
 
 /* 📋 타순 고르기 화면 (v2.107.0) */
+.pl-lue { padding-bottom: 118px; }   /* 아래 「오늘 타순」 띠에 가리지 않게 */
 .pl-lue-top { position: sticky; top: calc(54px + env(safe-area-inset-top, 0px)); z-index: 6; margin: 0 -12px; padding: 10px 12px 8px; background: var(--pl-page); border-bottom: 1px solid var(--pl-line); box-shadow: 0 8px 14px -12px rgba(15, 23, 42, .4); }
 .pl-lue-h { display: flex; align-items: center; gap: 8px; }
 .pl-lue-h b { font-size: 17px; white-space: nowrap; } .pl-lue-h small { flex: 1; white-space: nowrap; font-size: 13px; font-weight: 800; color: var(--pl-sub); }
 .pl-sbtn:disabled { opacity: .4; cursor: default; }
-.pl-lue-tip { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 8px 2px 7px; font-size: 13.5px; font-weight: 700; word-break: keep-all; }
-.pl-lue-tip .hot { color: var(--pl-hot); }
 .pl-lnk { flex: none; border: 0; background: none; padding: 4px 2px; color: var(--pl-sub); font-size: 12.5px; font-weight: 800; text-decoration: underline; cursor: pointer; }
 .pl-lnk:disabled { opacity: .4; cursor: default; }
-.pl-slots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
-@media (min-width: 601px) { .pl-slots { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
-.pl-slot { display: flex; align-items: center; gap: 6px; min-width: 0; height: 44px; padding: 0 6px 0 5px; border-radius: 10px; border: 1.5px dashed var(--pl-line); background: transparent; color: inherit; cursor: pointer; text-align: left; }
-.pl-slot i { flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: 13px; font-weight: 900; background: var(--pl-soft); color: var(--pl-sub); font-variant-numeric: tabular-nums; }
-.pl-slot span { min-width: 0; font-size: 14px; font-weight: 800; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pl-slot span small { display: block; font-size: 11px; font-weight: 700; color: var(--pl-sub); }
-.pl-slot span.e { font-size: 12.5px; color: var(--pl-sub); font-weight: 700; }
-.pl-slot.fill { border-style: solid; background: var(--pl-card); }
-.pl-slot.fill i { background: var(--pl-gold); color: var(--pl-navy); }
-.pl-slot.next { border-style: solid; border-color: var(--pl-red); box-shadow: 0 0 0 2px rgba(200, 16, 46, .2); }
-.pl-slot.next i { background: var(--pl-red); color: #ffffff; }
-.pl-slot.next span.e { color: var(--pl-hot); }
-.pl-slot.add i { background: transparent; border: 1.5px dashed var(--pl-line); }
-.pl-lue-hint { margin: 7px 2px 0; font-size: 12px; font-weight: 700; color: var(--pl-sub); word-break: keep-all; }
-.pl-lue-hint b { color: var(--pl-hot); }
+.pl-lue-guide { margin-top: 8px; padding: 8px 12px; border: 1px solid var(--pl-line); border-radius: 12px; background: var(--pl-card); word-break: keep-all; }
+.pl-lue-guide b { display: block; font-size: 15px; } .pl-lue-guide .hot { color: var(--pl-hot); }
+.pl-lue-guide small { display: block; margin-top: 1px; font-size: 12.5px; font-weight: 600; color: var(--pl-sub); }
+/* 아래에 늘 떠 있는 「오늘 타순」 띠 (v2.109.0 하코 A안): 누른 순서대로 쌓임 · 번호 두 개를 누르면 자리 바꿈 · ✕ 빼기 */
+.pl-ludock { position: fixed; left: 0; right: 0; bottom: calc(var(--pl-tabh) - 18px); z-index: 938; padding: 8px max(12px, env(safe-area-inset-left, 0px)) 26px; background: var(--pl-card); border-top: 1px solid var(--pl-line); box-shadow: 0 -6px 14px -8px rgba(15, 23, 42, .3); }
+html.pl-on .pl-ludock { bottom: calc(var(--pl-tabh) - 18px + var(--pl-minih, 80px)); padding-bottom: 9px; }
+.pl-ludock-in { max-width: 1000px; margin: 0 auto; }
+.pl-ludock-h { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 13.5px; }
+.pl-ludock-h b { white-space: nowrap; } .pl-ludock-h small { flex: 1; min-width: 0; font-size: 12px; font-weight: 700; color: var(--pl-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl-ludock-row { display: flex; gap: 6px; overflow-x: auto; padding: 2px 1px 3px; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
+@media (min-width: 700px) { .pl-ludock-row { flex-wrap: wrap; overflow: visible; } }
+.pl-lchip { flex: none; display: flex; align-items: center; height: 40px; border-radius: 20px; border: 1.5px solid var(--pl-gold); background: var(--pl-cream); font-size: 14px; font-weight: 800; white-space: nowrap; }
+.pl-lchip button { border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+.pl-lchip .m { display: flex; align-items: center; gap: 6px; height: 100%; padding: 0 4px 0 4px; border-radius: 20px 0 0 20px; }
+.pl-lchip i { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--pl-gold); color: var(--pl-navy); font-style: normal; font-size: 13px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.pl-lchip .x { flex: none; width: 34px; height: 100%; padding: 0; border-radius: 0 20px 20px 0; color: var(--pl-sub); font-size: 13px; font-weight: 900; }
+.pl-lchip.sel { border-color: var(--pl-red); box-shadow: 0 0 0 2px rgba(200, 16, 46, .25); }
+.pl-lchip.next { gap: 6px; padding: 0 12px 0 4px; border-style: dashed; border-color: var(--pl-red); background: transparent; color: var(--pl-hot); }
+.pl-lchip.next i { background: var(--pl-red); color: #ffffff; }
 .pl-lue-chips { margin-top: 12px; }
 .pl-lue-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(132px, calc(50% - 3px)), 1fr)); gap: 6px; }   /* 얇은 한 줄(v2.107.2 하코 C안): 화면 너비에 맞춰 한 줄에 2~7명 (휴대폰도 최소 2명) */
 .pl-gh { grid-column: 1 / -1; display: flex; align-items: center; gap: 7px; margin: 8px 2px 0; font-size: 13.5px; font-weight: 900; }
@@ -145,14 +175,12 @@ html.pl-playing .pl-row.cur .eq i { animation: plEq .7s ease-in-out infinite alt
 .pl-ph { flex: none; display: block; border-radius: 50%; object-fit: cover; background: var(--pl-soft); }
 span.pl-ph { display: grid; place-items: center; font-size: 17px; }
 .pl-lrow span.pl-ph { font-size: 13px; }
-.pl-lue-done { display: block; width: 100%; height: 50px; margin: 12px 0 4px; border: 0; border-radius: 13px; background: var(--pl-red); color: #ffffff; font-size: 16px; font-weight: 900; cursor: pointer; }
-/* 좁거나 낮은 휴대폰: 위 칸판을 줄여 아래 선수 목록이 더 보이게 */
+/* 좁거나 낮은 휴대폰: 위 안내를 줄여 선수 목록이 더 보이게 */
 @media (max-width: 360px), (max-height: 700px) and (max-width: 600px) {
   .pl-lue-top { padding: 8px 12px 7px; }
   .pl-lue-h b { font-size: 16px; }
-  .pl-lue-tip { margin: 6px 2px 6px; font-size: 13px; }
-  .pl-slots { gap: 5px; } .pl-slot { height: 38px; }
-  .pl-lue-hint:not(.fix) { display: none; }
+  .pl-lue-guide { margin-top: 6px; padding: 6px 10px; } .pl-lue-guide small { display: none; }
+  .pl-ludock-h small { display: none; } .pl-ludock-h b { flex: 1; }
 }
 
 .pl-pick { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--pl-line); }
@@ -187,6 +215,7 @@ html.pl-on.is-authenticated .bk-upd { bottom: calc(76px + 62px * var(--ui-zoom, 
     html.pl-on.is-authenticated .bk-upd { bottom: calc(142px * var(--ui-zoom, 1) + env(safe-area-inset-bottom, 0px)); }
 }
 html.pl-big-on .ui-zoom-ctrl { display: none !important; }
+html.pl-lu-on .ui-zoom-ctrl { display: none !important; }   /* 타순 정하기: 아래 타순 띠를 가리지 않게 */
 
 /* ───── 큰 플레이어 (아래 탭은 그대로 보임) ───── */
 .pl-big { position: fixed; left: 0; right: 0; top: 0; bottom: calc(var(--pl-tabh) - 18px); z-index: 945; display: flex; flex-direction: column; color: #ffffff;
@@ -198,6 +227,18 @@ html.pl-big-on .ui-zoom-ctrl { display: none !important; }
 .pl-bhead .cnt { min-width: 62px; text-align: right; font-variant-numeric: tabular-nums; }
 .pl-fs { height: 36px; padding: 0 11px; border-radius: 9px; border: 1.5px solid rgba(255, 255, 255, .5); background: transparent; color: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
 .pl-main { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
+/* 가사 보는 법 — 처음 한 번 부캉이 말풍선 */
+.pl-coach { position: absolute; inset: 0; z-index: 5; background: rgba(5, 10, 20, .64); }
+.pl-coach[hidden] { display: none !important; }
+.pl-k3.coach { position: relative; z-index: 6; flex: 0 1 auto; margin: auto 0; padding: 14px 8px; border-radius: 18px; outline: 3px dashed var(--pl-gold); outline-offset: 2px; background: rgba(120, 14, 40, .55); }
+.pl-coach-bub { position: absolute; left: 50%; top: 60%; transform: translateX(-50%); width: min(340px, calc(100% - 32px)); display: grid; gap: 8px; padding: 14px 16px; border-radius: 18px; background: #ffffff; color: #0f172a; box-shadow: 0 12px 26px rgba(0, 0, 0, .4); z-index: 7; }
+.pl-coach-bub::before { content: ""; position: absolute; top: -10px; left: 50%; margin-left: -10px; border: 10px solid transparent; border-top: 0; border-bottom-color: #ffffff; }
+.pl-coach-bub .who { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 900; }
+.pl-coach-bub .who i { width: 40px; height: 42px; background: var(--bk-img) center / contain no-repeat; }
+.pl-coach-bub p { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.5; word-break: keep-all; }
+.pl-coach-bub p b { color: #c8102e; }
+.pl-coach-bub button { justify-self: end; min-height: 40px; padding: 0 18px; border: 0; border-radius: 11px; background: #c8102e; color: #ffffff; font: inherit; font-size: 15px; font-weight: 900; cursor: pointer; }
+
 .pl-song { flex: none; display: flex; align-items: center; gap: 12px; padding: 6px 0 0; }
 .pl-song .pl-cv { width: 58px; height: 58px; border-radius: 12px; font-size: 26px; border: 1.5px solid rgba(255, 255, 255, .5); }
 .pl-song .tx { flex: 1; min-width: 0; display: grid; gap: 1px; }

@@ -14,10 +14,11 @@
     'use strict';
     const LS_KEY = 'daeyeon_pl', SS_KEY = 'daeyeon_pl_now', CACHE_NAME = 'daeyeon-walkup-v1';
     const LEAD = 0.15;        // 가사 줄을 눈으로 따라 읽기 좋게 조금 먼저 바꿈 (초) — 선수 상세와 같음
-    const WALK_SEC = 20;      // 타석 곡: 이만큼 지나면 자동으로 서서히 끔 (켜 둔 경우)
+    const WALK_SECS = [10, 15, 20, 30];   // 타석 곡: 고른 시간이 지나면 자동으로 서서히 끔 (0 = 안 끔)
     const HOLD_MAX = 3 * 60 * 60 * 1000;   // 타석 모드 화면에서 자동 잠금을 미루는 시간 (켠 뒤 최대 3시간)
     const AWAY_MAX = 10 * 60 * 1000;       // 화면을 끄거나 다른 앱에 이보다 오래 가 있었으면 미루지 않음
     const FADE_MS = 1600;     // 서서히 끄기 길이
+    const FADE_IN_MS = 2000;  // 서서히 시작 길이 (타석 곡)
     const I = {
         play: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>',
         pause: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5.5" y="4.5" width="4.5" height="15" rx="1"/><rect x="14" y="4.5" width="4.5" height="15" rx="1"/></svg>',
@@ -38,17 +39,21 @@
     const notify = (text, sub) => { try { if (typeof bkNotify === 'function') bkNotify('info', text, sub || '', { ms: 3500 }); } catch (e) {} };
 
     // ---------------- 이 기기에 저장하는 설정 ----------------
-    const cfg = { shuffle: false, repeat: 'all', hook: true, auto20: true, lineup: [], walkSong: {}, batIdx: -1, xl: false };
+    const cfg = { shuffle: false, repeat: 'all', hook: true, fadeIn: true, autoSec: 20, lineup: [], walkSong: {}, batIdx: -1, xl: false, sets: [], lyrTip: false };
     try {
         const j = JSON.parse(localStorage.getItem(LS_KEY) || '{}') || {};
         if (typeof j.shuffle === 'boolean') cfg.shuffle = j.shuffle;
         if (REPEAT_LABEL[j.repeat]) cfg.repeat = j.repeat;
         if (typeof j.hook === 'boolean') cfg.hook = j.hook;
-        if (typeof j.auto20 === 'boolean') cfg.auto20 = j.auto20;
+        if (typeof j.fadeIn === 'boolean') cfg.fadeIn = j.fadeIn;
+        if (j.autoSec === 0 || WALK_SECS.indexOf(j.autoSec) >= 0) cfg.autoSec = j.autoSec;
+        else if (j.auto20 === false) cfg.autoSec = 0;   // 예전 설정(20초 끄기 끔)을 이어받음
         if (Array.isArray(j.lineup)) cfg.lineup = j.lineup.filter(x => typeof x === 'string').slice(0, 30);
         if (j.walkSong && typeof j.walkSong === 'object') cfg.walkSong = j.walkSong;
         if (typeof j.batIdx === 'number') cfg.batIdx = j.batIdx;
         if (typeof j.xl === 'boolean') cfg.xl = j.xl;
+        if (typeof j.lyrTip === 'boolean') cfg.lyrTip = j.lyrTip;
+        if (Array.isArray(j.sets)) cfg.sets = j.sets.filter(x => x && typeof x.name === 'string' && Array.isArray(x.lineup)).slice(0, 8).map(x => ({ name: x.name.slice(0, 12), lineup: x.lineup.filter(y => typeof y === 'string').slice(0, 30) }));
     } catch (e) {}
     function saveCfg() { try { localStorage.setItem(LS_KEY, JSON.stringify(cfg)); } catch (e) {} }
 
@@ -56,7 +61,7 @@
     let people = [], tracks = [], byId = new Map(), sig = '';   // 명단에 보이는 선수와 곡
     let base = [], order = [], qi = -1, cur = null;             // 재생 줄(고른 목록 · 실제 순서 · 지금 자리 · 지금 곡)
     let attached = false, pendingSeek = null, fails = 0;        // 음원 붙였는지 · 붙인 뒤 옮길 자리 · 연달아 실패한 횟수
-    let walk = false, walkHeard = 0, walkLast = 0, fadeTimer = 0;   // 타석 곡 재생 중 · 흘러나온 시간 · 직전 자리 · 서서히 끄는 중
+    let walk = false, walkHeard = 0, walkLast = 0, fadeTimer = 0, fadeInTimer = 0;   // 타석 곡 재생 중 · 흘러나온 시간 · 직전 자리 · 서서히 끄는 중
     let view = 'list', filter = 'all', mode = '', pickPid = ''; // 음악 탭 안: 전체 곡/타석 · 학년 걸러 보기 · 타순 정하기/곡 고르기
     let built = false, audio = null, raf = 0, seeking = false, seekF = 0;
     let lines = [], spans = null, kIdx = -2;                    // 가사 줄 · 시간표 · 지금 줄
@@ -153,7 +158,7 @@
         if (!cur) return;
         ensureAudio();
         if (!attached) attach(pendingSeek || 0);
-        try { audio.volume = 1; } catch (e) {}
+        if (!fadeInTimer) { try { audio.volume = 1; } catch (e) {} }
         const pr = audio.play();
         if (pr && pr.catch) pr.catch(e => { if (e && e.name !== 'AbortError' && e.name !== 'NotSupportedError') showMsg('재생하지 못했어요. ▶ 를 한 번 더 눌러 주세요.'); paintState(); });
     }
@@ -220,7 +225,7 @@
             const c = audio.currentTime, d = c - walkLast;
             walkLast = c;
             if (d > 0 && d < 1.5) walkHeard += d;
-            if (cfg.auto20 && !fadeTimer && !audio.paused && walkHeard >= WALK_SEC) fadeOut();
+            if (cfg.autoSec && !fadeTimer && !audio.paused && walkHeard >= cfg.autoSec) fadeOut();
         }
         paintTime();
     }
@@ -238,14 +243,34 @@
         if (!walk && fails < 3 && order.length > 1) setTimeout(() => { if (fails && fails < 3) next(true); }, 1500);   // 다음 곡으로 넘어가 봄 (3번까지만)
     }
     // 서서히 끄기 — 소리를 줄이며 멈춤 (아이폰은 소리 크기를 못 바꿔서 끝에 바로 멈춤)
-    function clearFade() { if (fadeTimer) { clearInterval(fadeTimer); fadeTimer = 0; } try { if (audio) audio.volume = 1; } catch (e) {} paintVol(1); }
+    function stopFadeIn() { if (fadeInTimer) { clearInterval(fadeInTimer); fadeInTimer = 0; } }
+    function clearFade() { stopFadeIn(); if (fadeTimer) { clearInterval(fadeTimer); fadeTimer = 0; } try { if (audio) audio.volume = 1; } catch (e) {} paintVol(1); }
+    // 서서히 시작 — 타석 곡을 작은 소리에서 키움 (실제로 소리가 나는 동안만 셈 · 아이폰은 소리 크기를 못 바꿔서 바로 시작)
+    function fadeIn() {
+        if (!audio) return;
+        stopFadeIn();
+        let heard = 0, last = Date.now();
+        try { audio.volume = 0; } catch (e) { return; }
+        paintVol(0);
+        fadeInTimer = setInterval(() => {
+            const now = Date.now(), dt = now - last; last = now;
+            if (audio.paused || audio.readyState < 3) return;
+            heard += dt;
+            const k = Math.min(1, heard / FADE_IN_MS);
+            try { audio.volume = k * k; } catch (e) {}
+            paintVol(k);
+            if (k >= 1) stopFadeIn();
+        }, 50);
+    }
     function fadeOut() {
         if (!audio || audio.paused || fadeTimer) return;
+        stopFadeIn();
+        let v0 = 1; try { v0 = Math.max(0.05, audio.volume); } catch (e) {}   // 서서히 시작하던 중이면 그 크기에서 줄임
         const t0 = Date.now();
         fadeTimer = setInterval(() => {
             const k = 1 - (Date.now() - t0) / FADE_MS;
             if (k <= 0) { clearInterval(fadeTimer); fadeTimer = 0; try { audio.pause(); audio.volume = 1; } catch (e) {} walk = false; paintVol(1); paintState(); }
-            else { try { audio.volume = k * k; } catch (e) {} paintVol(k); }
+            else { try { audio.volume = v0 * k * k; } catch (e) {} paintVol(k); }
         }, 50);
         paintState();
     }
@@ -302,15 +327,17 @@
         } catch (e) {}
         return 0;
     }
-    function playWalk(pid) {
+    function playWalk(pid, asPinch) {
         const person = personOf(pid);
         if (!person) return;
+        pinchOn = !!asPinch;
         const t = walkTrack(person);
         const at = cfg.hook ? hookTime(t) : 0;
         setQueue(tracks.map(x => x.id), t.id);
         load(t, true, at);
+        if (cfg.fadeIn) fadeIn();
         walk = true; walkHeard = 0; walkLast = at;
-        const li = cfg.lineup.indexOf(pid);
+        const li = asPinch ? -1 : cfg.lineup.indexOf(pid);
         if (li >= 0 && li !== cfg.batIdx) { cfg.batIdx = li; saveCfg(); }
         renderBat();
     }
@@ -319,6 +346,32 @@
         if (!n) return;
         cfg.batIdx = (cfg.batIdx + 1) % n; saveCfg();
         playWalk(cfg.lineup[cfg.batIdx]);
+    }
+    function pinch(pid) {   // 대타: 이번 타석만 다른 선수 곡 (타순은 그대로 · 차례는 한 칸 넘어감)
+        const n = cfg.lineup.length;
+        if (n) { cfg.batIdx = (cfg.batIdx + 1) % n; saveCfg(); }
+        mode = '';
+        playWalk(pid, true);
+    }
+    // 저장해 둔 타순 (A팀 · B팀 …) — 이 기기에만 저장
+    const sameLu = a => a.join('|') === cfg.lineup.join('|');
+    function setSave(name) {
+        name = String(name || '').replace(/\s+/g, ' ').trim().slice(0, 12);
+        if (!name || !cfg.lineup.length) return;
+        const k = cfg.sets.findIndex(x => x.name === name);
+        if (k >= 0) cfg.sets[k].lineup = cfg.lineup.slice();
+        else if (cfg.sets.length >= SET_MAX) { showMsg('타순은 ' + SET_MAX + '개까지 저장할 수 있어요. 안 쓰는 것을 지워 주세요.'); return; }
+        else cfg.sets.push({ name: name, lineup: cfg.lineup.slice() });
+        saveCfg(); setOpen = false;
+        notify('「' + name + '」 타순을 저장했어요', cfg.lineup.length + '명');
+    }
+    function setLoad(i) {
+        const st = cfg.sets[i];
+        if (!st || sameLu(st.lineup)) return;
+        if (cfg.lineup.length && !cfg.sets.some(x => sameLu(x.lineup)) && !window.confirm('지금 타순은 저장되지 않았어요.\n「' + st.name + '」 타순으로 바꿀까요?')) return;
+        cfg.lineup = st.lineup.slice(); cfg.batIdx = -1; preText = ''; saveCfg();
+        hydrate();
+        notify('「' + st.name + '」 타순을 불러왔어요', st.lineup.map(personOf).filter(Boolean).length + '명');
     }
     // 타순 곡 미리 받아 두기 — 기기에 저장해 두면 인터넷이 느려도 바로 나옴 (타순에서 빠진 곡은 지움)
     function lineupTracks() { return cfg.lineup.map(personOf).filter(Boolean).map(walkTrack); }
@@ -374,7 +427,9 @@
     //   · 화면을 끄거나 다른 앱에 10분 넘게 가 있었으면 미루지 않음 (돌아온 순간 원래 규칙대로)
     let holdFrom = 0, awaySince = 0;
     // 📋 타순 고르기 화면(v2.107.0): 위 타순 칸 · 아래 학년별 사진 목록 — 누르면 다음 칸에 들어감 · 칸을 먼저 누르면 그 칸으로
-    let luEdit = [], luSnap = [], luFix = -1, luFilter = 'all';
+    let luEdit = [], luSnap = [], luFix = -1, luFilter = 'all', luAdded = false, luSnapIdx = -1;
+    let setOpen = false, pinchOn = false;   // 타순 저장 판 열림 · 지금 나오는 곡이 대타 곡인지
+    const SET_MAX = 8, SET_NAMES = ['A팀', 'B팀', 'C팀', '연습 경기'];
     const lockIfDue = () => setTimeout(() => { try { if (typeof window.dyLockIfDue === 'function') window.dyLockIfDue(); } catch (e) {} }, 0);
     function holdSync() {   // 타석 모드에 들어오고 나갈 때마다
         const on = batShown();
@@ -499,6 +554,7 @@
                 <button type="button" class="pl-k3" data-pl="lyrics" id="plK3" aria-label="가사 전체 보기"></button>
             </div>
             <div class="pl-lyr${cfg.xl ? ' xl' : ''}" id="plLyr" hidden></div>
+            <div class="pl-coach" id="plCoach" data-pl="coach-ok" hidden><div class="pl-coach-bub" id="plCoachBub" role="dialog" aria-label="가사 보는 법"><div class="who"><i></i>부캉이</div><p>여기 <b>가사를 누르면</b> 노래 전체 가사를 크게 볼 수 있어요!</p><button type="button" data-pl="coach-ok">알겠어요</button></div></div>
             <div class="pl-prog"><div class="pl-seek" id="plSeek" role="slider" tabindex="0" aria-label="재생 위치" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i><i id="plSeekFill"></i></i><b id="plSeekKnob"></b></div>
                 <div class="pl-times"><span id="plCurT">0:00</span><span id="plDurT"></span></div></div>
             <div class="pl-ctl">
@@ -548,6 +604,7 @@
         const t = $('mainTabs');
         const h = t && getComputedStyle(t).position === 'fixed' ? t.offsetHeight : 0;
         root.style.setProperty('--pl-tabh', h + 'px');
+        const m = $('plMini'); if (m && !m.hidden && m.offsetHeight) root.style.setProperty('--pl-minih', m.offsetHeight + 'px');   // 띠 높이 → 타순 띠가 그 위에 붙음
     }
     function listIds() {
         return tracks.filter(t => filter === 'all' ? true : filter === 'mine' ? (personOf(t.pid) || {}).mine : String(t.g) === String(filter)).map(t => t.id);
@@ -570,7 +627,7 @@
         }).join('') : `<div class="pl-empty">${tracks.length ? '이 학년에는 아직 곡이 없어요' : '주제곡을 불러오는 중이에요.<br>잠시 뒤에도 안 보이면 인터넷 연결을 확인해 주세요.'}</div>`;
     }
     // ---------------- 📋 타순 고르기 ----------------
-    const LU_MIN = 9, LU_MAX = 30;
+    const LU_MAX = 30;
     function canSeeHidden() { try { return currentRole === 'sub' || currentRole === 'general' || (typeof isSuperOrDev === 'function' && isSuperOrDev()); } catch (e) { return false; } }
     function photo(person, size) {   // 명단 탭과 같은 사진 · 사진을 숨긴 선수는 등번호 그림
         let src = '';
@@ -579,38 +636,37 @@
         return `<img class="pl-ph" src="${esc(src)}" alt="" loading="lazy" decoding="async" width="${size}" height="${size}" onerror="try{handleImgError(this)}catch(e){this.onerror=null;this.style.visibility='hidden'}">`;
     }
     function luOpen() {
-        luSnap = cfg.lineup.slice();
+        luSnap = cfg.lineup.slice(); luSnapIdx = cfg.batIdx;
         luEdit = cfg.lineup.slice();
-        while (luEdit.length < LU_MIN) luEdit.push(null);
         luFix = -1; luFilter = 'all';
     }
-    function luSave() {
-        while (luEdit.length > LU_MIN && luEdit[luEdit.length - 1] == null) luEdit.pop();   // 끝에 남은 빈 칸은 9칸까지 줄임
-        cfg.lineup = luEdit.filter(Boolean); cfg.batIdx = -1; preText = ''; saveCfg();
-    }
-    function luPick(pid) {
+    function luSave() { cfg.lineup = luEdit.slice(); cfg.batIdx = -1; preText = ''; saveCfg(); }
+    function luPick(pid) {   // 목록에서 선수를 누름: 차례로 뒤에 붙음 · 다시 누르면 빠짐 · 아래 띠에서 번호를 골라 둔 때는 그 자리로
         const k = luEdit.indexOf(pid);
-        if (luFix >= 0) {   // 칸을 먼저 골라 두었으면 그 칸으로 (다른 칸에 있던 선수면 자리를 바꿈 · 같은 칸이면 뺌)
-            if (k === luFix) luEdit[k] = null;
-            else { if (k >= 0) luEdit[k] = luEdit[luFix]; luEdit[luFix] = pid; }
+        if (luFix >= 0) {
+            if (k >= 0) { const x = luEdit[k]; luEdit[k] = luEdit[luFix]; luEdit[luFix] = x; }
+            else luEdit[luFix] = pid;
             luFix = -1;
-        } else if (k >= 0) luEdit[k] = null;   // 이미 들어간 선수를 다시 누르면 뺌
-        else {
-            let e = luEdit.indexOf(null);
-            if (e < 0 && luEdit.length < LU_MAX) { luEdit.push(null); e = luEdit.length - 1; }   // 9칸이 다 찼으면 칸을 하나 늘림 (모두 치는 경기)
-            if (e >= 0) luEdit[e] = pid;
-        }
+        } else if (k >= 0) luEdit.splice(k, 1);
+        else if (luEdit.length < LU_MAX) luEdit.push(pid);
+        else { showMsg('타순은 ' + LU_MAX + '명까지 넣을 수 있어요.'); return; }
         luSave();
     }
+    function luChip(i) {     // 아래 띠에서 번호를 누름: 두 번호를 차례로 누르면 자리가 바뀜
+        if (luFix < 0) luFix = i;
+        else if (luFix === i) luFix = -1;
+        else { const x = luEdit[i]; luEdit[i] = luEdit[luFix]; luEdit[luFix] = x; luFix = -1; luSave(); }
+    }
+    function luFlag(tab) {   // 타순 정하기 화면이 보이는 동안: 떠 있는 글자 크기 버튼을 숨김 (아래 타순 띠를 가리지 않게)
+        let t = tab; try { if (!t && typeof currentMainTab !== 'undefined') t = currentMainTab; } catch (e) {}
+        root.classList.toggle('pl-lu-on', mode === 'lineup' && view === 'bat' && (!t || t === 'music'));
+    }
     function renderLineup(box) {
-        const n = luEdit.filter(Boolean).length, nx = luFix >= 0 ? luFix : luEdit.indexOf(null);
-        const same = luSnap.join('|') === luEdit.filter(Boolean).join('|');
-        const slots = luEdit.map((pid, i) => {
-            const p = pid ? personOf(pid) : null;
-            return `<button type="button" class="pl-slot${p ? ' fill' : ''}${i === nx ? ' next' : ''}" data-pl="lu-slot" data-i="${i}" aria-label="${i + 1}번 타자 ${p ? esc(p.name) + ' · 누르고 다른 선수를 고르면 바뀜' : '비어 있음'}">` +
-                `<i>${i + 1}</i>${p ? `<span>${esc(p.name)}<small>${esc(p.no)}번</small></span>` : `<span class="e">${i === nx ? '다음 차례' : '비어 있음'}</span>`}</button>`;
-        }).join('') + (luEdit.length < LU_MAX && luEdit.indexOf(null) < 0 ? `<button type="button" class="pl-slot add" data-pl="lu-more"><i>+</i><span class="e">칸 더하기</span></button>` : '');
-        const head = nx >= 0 ? `<b class="hot">${nx + 1}번 타자</b>를 아래에서 눌러 주세요` : `<b class="hot">${n}명 다 정했어요 ✓</b>`;
+        const n = luEdit.length;
+        const guide = luFix >= 0
+            ? `<b><span class="hot">${luFix + 1}번</span>과 자리를 바꿀 번호를 아래 띠에서 누르세요</b><small>같은 번호를 다시 누르면 취소 · 목록에서 선수를 누르면 그 선수로 바뀌어요</small>`
+            : n >= LU_MAX ? `<b><span class="hot">${n}명</span>을 다 넣었어요</b><small>「완료」를 누르세요</small>`
+            : `<b><span class="hot">${n + 1}번 타자</span>를 누르세요</b><small>1번 타자부터 차례로 누르면 끝! 다시 누르면 빠져요</small>`;
         const gs = [...new Set(people.map(p => p.g))];
         const chips = [['all', '전체']].concat(gs.map(g => [String(g), g ? g + '학년' : '기타'])).map(c => `<button type="button" data-pl="lu-f" data-f="${c[0]}" class="${luFilter === c[0] ? 'on' : ''}">${c[1]}</button>`).join('');
         const list = gs.filter(g => luFilter === 'all' || String(g) === luFilter).map(g => {
@@ -622,24 +678,38 @@
                     (k >= 0 ? `<span class="k">${k + 1}번</span>` : '') + `</button>`;
             }).join('');
         }).join('');
+        const dock = luEdit.map((pid, i) => {
+            const p = personOf(pid);
+            return `<span class="pl-lchip${luFix === i ? ' sel' : ''}"><button type="button" class="m" data-pl="lu-chip" data-i="${i}" aria-label="${i + 1}번 타자 ${p ? esc(p.name) : ''} · 자리 바꾸기"><i>${i + 1}</i>${p ? esc(p.name) : '?'}</button>` +
+                `<button type="button" class="x" data-pl="lu-x" data-i="${i}" aria-label="${i + 1}번 타자 빼기">✕</button></span>`;
+        }).join('') + (n < LU_MAX ? `<span class="pl-lchip next"><i>${n + 1}</i>다음</span>` : '');
+        const keep = box.querySelector('.pl-ludock-row'), sx = keep ? keep.scrollLeft : -1;
         box.innerHTML = `
             <div class="pl-lue">
                 <div class="pl-lue-top">
-                    <div class="pl-lue-h"><b>오늘 타순 정하기</b><small>${n}명</small>
-                        <button type="button" class="pl-sbtn" data-pl="lu-undo"${same ? ' disabled' : ''}>되돌리기</button>
+                    <div class="pl-lue-h"><b>타순 정하기</b><small>${n}명</small>
+                        <button type="button" class="pl-sbtn" data-pl="lu-cancel">취소</button>
                         <button type="button" class="pl-sbtn on" data-pl="lu-done">완료</button></div>
-                    <div class="pl-lue-tip"><span>${head}</span><button type="button" class="pl-lnk" data-pl="lu-clear"${n ? '' : ' disabled'}>모두 지우기</button></div>
-                    <div class="pl-slots">${slots}</div>
-                    <p class="pl-lue-hint${luFix >= 0 ? ' fix' : ''}">${luFix >= 0 ? `<b>${luFix + 1}번 칸</b>을 바꾸는 중이에요. 아래에서 선수를 누르세요.` : '칸을 먼저 누르면 그 칸에 넣거나 바꿀 수 있어요 · 목록에서 다시 누르면 빠져요'}</p>
+                    <div class="pl-lue-guide">${guide}</div>
                 </div>
                 <div class="pl-chips pl-lue-chips">${chips}</div>
                 <div class="pl-lue-list">${list || '<div class="pl-empty">선수 명단을 불러오는 중이에요.</div>'}</div>
-                <button type="button" class="pl-lue-done" data-pl="lu-done">완료 · 타석 모드로 (${n}명)</button>
+            </div>
+            <div class="pl-ludock">
+                <div class="pl-ludock-in">
+                    <div class="pl-ludock-h"><b>오늘 타순 ${n}명</b><small>번호 두 개를 차례로 누르면 자리 바뀜</small><button type="button" class="pl-lnk" data-pl="lu-clear"${n ? '' : ' disabled'}>모두 지우기</button></div>
+                    <div class="pl-ludock-row">${dock}</div>
+                </div>
             </div>`;
+        const row = box.querySelector('.pl-ludock-row');   // 새로 넣었으면 띠 끝으로 · 아니면 보던 자리 그대로
+        if (row) row.scrollLeft = luAdded || sx < 0 ? row.scrollWidth : sx;
+        luAdded = false;
     }
 
+    const ob = (o, v, label, on) => `<button type="button" data-pl="opt" data-o="${o}" data-v="${v}" aria-pressed="${on ? 'true' : 'false'}">${label}</button>`;   // 타석 옵션: 둘 중 고르기 버튼
     function renderBat() {
         const box = $('plBat');
+        luFlag();
         if (!box || view !== 'bat') return;
         if (mode === 'lineup') { renderLineup(box); paintState(); return; }
         const lu = cfg.lineup.map(personOf).filter(Boolean), n = lu.length;
@@ -647,21 +717,38 @@
         const curPid = walk && cur ? cur.pid : '';
         let lineupHtml;
         if (n) {
-            lineupHtml = `<button type="button" class="pl-nextbat" data-pl="nextbat">${I.play}<span><small>다음 타자 틀기</small><b>${(cfg.batIdx + 1) % n + 1}번 타자 ${esc(nxt.name)} <span style="opacity:.8">(${esc(nxt.no)})</span></b></span></button>` +
+            const ord = (cfg.batIdx + 1) % n + 1;
+            const phPanel = mode !== 'ph' ? '' : `<div class="pl-php"><div class="pl-h"><b>대타 고르기</b><small>이번 타석만 · 타순은 그대로</small><button type="button" class="pl-sbtn" data-pl="ph-close">취소</button></div><div class="pl-lue-list">` +
+                [...new Set(people.map(p => p.g))].map(g => `<div class="pl-gh"><i class="pl-g${g || 0}"></i>${g ? g + '학년' : '기타'}</div>` + people.filter(p => p.g === g).map(p => {
+                    const k = cfg.lineup.indexOf(p.pid);
+                    return `<button type="button" class="pl-lrow${k >= 0 ? ' dim' : ''}" data-pl="ph-pick" data-pid="${esc(p.pid)}" aria-label="대타 ${esc(p.no)}번 ${esc(p.name)}">${photo(p, 32)}<span class="t"><b>${esc(p.name)}</b><small>${esc(p.no)}번</small></span>${k >= 0 ? `<span class="k">${k + 1}번</span>` : ''}</button>`;
+                }).join('')).join('') + `</div></div>`;
+            lineupHtml = `<div class="pl-nbrow"><button type="button" class="pl-nextbat" data-pl="nextbat">${I.play}<span><small>다음 타자 틀기</small><b>${ord}번 타자 ${esc(nxt.name)} <span style="opacity:.8">(${esc(nxt.no)})</span></b></span></button>` +
+                `<button type="button" class="pl-phb${mode === 'ph' ? ' on' : ''}" data-pl="ph-open" aria-label="대타: 이번 타석만 다른 선수 곡 틀기"><span>🔁</span>대타</button></div>` + phPanel +
                 `<ol class="pl-lu">${lu.map((p, i) => `<li><button type="button" data-pl="bat" data-pid="${esc(p.pid)}" class="${i === cfg.batIdx ? 'cur' : ''}" aria-label="${i + 1}번 타자 ${esc(p.name)} 곡 틀기"><i>${i + 1}</i>${esc(p.name)}</button></li>`).join('')}</ol>` +
                 `<div class="pl-pre"><button type="button" class="pl-sbtn" data-pl="preload"${preBusy ? ' disabled' : ''}>⬇&nbsp;타순 곡 미리 받아 두기</button><span id="plPreTxt">${esc(preText)}</span></div>`;
         } else {
             lineupHtml = `<p class="pl-tip">「타순 정하기」를 누르면 선수 사진 목록에서 1번 타자부터 차례로 고를 수 있어요. 정해 두면 경기 중에는 「다음 타자」 버튼 하나만 누르면 됩니다.</p>`;
         }
+        // 저장해 둔 타순: 누르면 불러옴 · 「＋ 지금 타순 저장」을 누르면 이름을 고르는 판이 열림
+        const today = new Date(), dayName = (today.getMonth() + 1) + '/' + today.getDate() + ' 경기';
+        const setsHtml = !(cfg.sets.length || n) ? '' : `<div class="pl-sets">${cfg.sets.map((x, i) => `<button type="button" data-pl="set-load" data-i="${i}" class="${sameLu(x.lineup) ? 'on' : ''}" aria-label="「${esc(x.name)}」 타순 불러오기">${esc(x.name)}</button>`).join('')}` +
+            (n ? `<button type="button" class="add${setOpen ? ' on' : ''}" data-pl="set-open">＋ 지금 타순 저장</button>` : (cfg.sets.length ? `<button type="button" class="add${setOpen ? ' on' : ''}" data-pl="set-open">저장한 타순 정리</button>` : '')) + `</div>` +
+            (!setOpen ? '' : `<div class="pl-setpan">` +
+                (n ? `<b>어떤 이름으로 저장할까요? <small>지금 타순 ${n}명</small></b><div class="pl-setnames">${SET_NAMES.concat([dayName]).map(nm => `<button type="button" data-pl="set-save" data-name="${esc(nm)}">${esc(nm)}${cfg.sets.some(x => x.name === nm) ? '<small>덮어쓰기</small>' : ''}</button>`).join('')}<button type="button" data-pl="set-ask">직접 쓰기…</button></div>` : '') +
+                (cfg.sets.length ? `<b>저장한 타순 지우기</b><div class="pl-setnames del">${cfg.sets.map((x, i) => `<button type="button" data-pl="set-del" data-i="${i}" aria-label="「${esc(x.name)}」 지우기">${esc(x.name)} ✕</button>`).join('')}</div>` : '') +
+                `<button type="button" class="pl-sbtn" data-pl="set-close">닫기</button></div>`);
         const pick = pickPid ? personOf(pickPid) : null;
         box.innerHTML = `
             <div class="pl-batnow"><span class="tx" id="plBatTx"></span><span class="pl-vol" id="plVol" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><button type="button" class="pl-fade" data-pl="fade" id="plFade">🔉 서서히 끄기</button></div>
             <div class="pl-opts">
-                <button type="button" data-pl="opt" data-o="hook" aria-pressed="${cfg.hook ? 'true' : 'false'}"><i></i>후렴부터 시작</button>
-                <button type="button" data-pl="opt" data-o="auto20" aria-pressed="${cfg.auto20 ? 'true' : 'false'}"><i></i>${WALK_SEC}초 뒤 자동으로 끄기</button>
+                <div class="pl-og"><span>시작 위치</span><div class="pl-sg">${ob('hook', 0, '처음부터', !cfg.hook)}${ob('hook', 1, '후렴부터', cfg.hook)}</div></div>
+                <div class="pl-og"><span>시작할 때</span><div class="pl-sg">${ob('fadeIn', 0, '바로', !cfg.fadeIn)}${ob('fadeIn', 1, '서서히 커지게', cfg.fadeIn)}</div></div>
+                <div class="pl-og"><span>자동으로 끄기</span><div class="pl-sg">${ob('autoSec', 0, '안 끔', !cfg.autoSec)}${WALK_SECS.map(n => ob('autoSec', n, n + '초', cfg.autoSec === n)).join('')}</div></div>
             </div>
             <div class="pl-box">
                 <div class="pl-h"><b>오늘 타순</b><button type="button" class="pl-sbtn${n ? '' : ' on'}" data-pl="lu-edit">📋 ${n ? '타순 고치기' : '타순 정하기'}</button></div>
+                ${setsHtml}
                 ${lineupHtml}
             </div>
             <div class="pl-box">
@@ -682,6 +769,7 @@
         if (!built) return;
         const mini = $('plMini');
         mini.hidden = !cur;
+        if (cur && mini.offsetHeight) root.style.setProperty('--pl-minih', mini.offsetHeight + 'px');
         root.classList.toggle('pl-on', !!cur);
         if (cur) {
             $('plMiniCv').innerHTML = cover(cur); $('plMiniT').textContent = cur.title; $('plMiniW').textContent = who(cur);
@@ -707,7 +795,7 @@
         if (cur) $('plCnt').textContent = (qi + 1) + ' / ' + order.length;
         const bt = $('plBatTx');
         if (bt) {
-            bt.textContent = walk && cur && playing ? `${cur.no}번 ${cur.name} 등장곡 「${cur.title}」` : (mode === 'lineup' ? '타순을 정하는 중입니다' : '등번호를 누르면 바로 나옵니다');
+            bt.textContent = walk && cur && playing ? `${pinchOn ? '대타 ' : ''}${cur.no}번 ${cur.name} 등장곡 「${cur.title}」` : (mode === 'lineup' ? '타순을 정하는 중입니다' : '등번호를 누르면 바로 나옵니다');
             const fd = $('plFade'); if (fd) fd.disabled = !playing || !!fadeTimer;
             document.querySelectorAll('#plBat .pl-bat').forEach(el => el.classList.toggle('cur', walk && !!cur && el.dataset.pid === cur.pid));
             if (!fadeTimer) paintVol(1);
@@ -741,10 +829,24 @@
         root.classList.add('pl-big-on');
         setLyr(false);
         kIdx = -2; paintLyrics(true); paintTime(); startLoop();
+        coach(!cfg.lyrTip && lines.length > 0);
     }
+    // 가사 보는 법 — 큰 플레이어를 처음 열 때 한 번만 부캉이가 알려 줌 (v2.109.0 하코 B안)
+    function coach(show) {
+        const c = $('plCoach'), k = $('plK3'), big = $('plBig');
+        if (!c || !k) return;
+        c.hidden = !show; k.classList.toggle('coach', !!show);
+        if (!show) return;
+        try {   // 말풍선을 가사 바로 아래에 (자리가 모자라면 위로 당김)
+            const r = k.getBoundingClientRect(), b = big.getBoundingClientRect(), bub = $('plCoachBub');
+            bub.style.top = Math.max(8, Math.min(r.bottom - b.top + 20, b.height - bub.offsetHeight - 12)) + 'px';
+        } catch (e) {}
+    }
+    function coachDone() { if (!cfg.lyrTip) { cfg.lyrTip = true; saveCfg(); } coach(false); }
     function closeBig() {
         if (!built) return;
         bigOpen = false; lyrOpen = false;
+        coach(false);
         $('plBig').hidden = true;
         root.classList.remove('pl-big-on');
     }
@@ -799,21 +901,39 @@
             case 'prev': prev(); break;
             case 'shuffle': toggleShuffle(); break;
             case 'repeat': cycleRepeat(); break;
-            case 'lyrics': if (lines.length) setLyr(true); break;
+            case 'lyrics': if (!$('plCoach').hidden) coachDone(); if (lines.length) setLyr(true); break;
+            case 'coach-ok': coachDone(); break;
             case 'xl': cfg.xl = !cfg.xl; saveCfg(); $('plLyr').classList.toggle('xl', cfg.xl); $('plXl').textContent = cfg.xl ? '가 작게' : '가 크게'; kIdx = -2; paintLyrics(true); break;
             case 'dl': download(); break;
             case 'fade': fadeOut(); break;
-            case 'opt': if (d.o === 'hook' || d.o === 'auto20') { cfg[d.o] = !cfg[d.o]; saveCfg(); el.setAttribute('aria-pressed', cfg[d.o] ? 'true' : 'false'); } break;
-            case 'nextbat': nextBatter(); break;
+            case 'opt': {
+                const v = +d.v;
+                if (d.o === 'hook' || d.o === 'fadeIn') cfg[d.o] = v === 1;
+                else if (d.o === 'autoSec' && (v === 0 || WALK_SECS.indexOf(v) >= 0)) cfg.autoSec = v;
+                else break;
+                saveCfg();
+                el.parentNode.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b === el ? 'true' : 'false'));
+                break;
+            }
+            case 'nextbat': mode = mode === 'ph' ? '' : mode; nextBatter(); break;
+            case 'ph-open': mode = mode === 'ph' ? '' : 'ph'; pickPid = ''; renderBat(); break;
+            case 'ph-close': mode = ''; renderBat(); break;
+            case 'ph-pick': pinch(d.pid); break;
+            case 'set-open': setOpen = !setOpen; renderBat(); break;
+            case 'set-close': setOpen = false; renderBat(); break;
+            case 'set-save': setSave(d.name); renderBat(); break;
+            case 'set-ask': { let nm = null; try { nm = window.prompt('타순 이름을 써 주세요 (12자까지)', ''); } catch (e) {} if (nm) { setSave(nm); renderBat(); } break; }
+            case 'set-del': { const st = cfg.sets[+d.i]; if (st && window.confirm('「' + st.name + '」 타순을 지울까요?')) { cfg.sets.splice(+d.i, 1); saveCfg(); if (!cfg.sets.length && !cfg.lineup.length) setOpen = false; renderBat(); } break; }
+            case 'set-load': setLoad(+d.i); renderBat(); break;
             case 'preload': preload(); break;
             case 'lu-edit': luOpen(); mode = 'lineup'; pickPid = ''; renderBat(); batTop(); break;
-            case 'lu-done': mode = ''; luFix = -1; hydrate(); renderBat(); batTop(); break;
-            case 'lu-clear': luEdit = Array(LU_MIN).fill(null); luFix = -1; luSave(); renderBat(); break;
-            case 'lu-undo': luEdit = luSnap.slice(); while (luEdit.length < LU_MIN) luEdit.push(null); luFix = -1; luSave(); renderBat(); break;
-            case 'lu-slot': { const i = +d.i; luFix = luFix === i ? -1 : i; renderBat(); break; }
-            case 'lu-more': if (luEdit.length < LU_MAX) { luEdit.push(null); luFix = luEdit.length - 1; } renderBat(); break;
+            case 'lu-done': if (luSnap.join('|') === cfg.lineup.join('|')) { cfg.batIdx = luSnapIdx; saveCfg(); } mode = ''; luFix = -1; hydrate(); renderBat(); batTop(); break;
+            case 'lu-cancel': cfg.lineup = luSnap.slice(); cfg.batIdx = luSnapIdx; preText = ''; saveCfg(); mode = ''; luFix = -1; hydrate(); renderBat(); batTop(); break;   // 열기 전 타순으로 되돌리고 닫음
+            case 'lu-clear': luEdit = []; luFix = -1; luSave(); renderBat(); break;
+            case 'lu-chip': luChip(+d.i); renderBat(); break;
+            case 'lu-x': luEdit.splice(+d.i, 1); luFix = -1; luSave(); renderBat(); break;
             case 'lu-f': luFilter = d.f; renderBat(); break;
-            case 'lu-pick': luPick(d.pid); renderBat(); break;
+            case 'lu-pick': { const n0 = luEdit.length; luPick(d.pid); luAdded = luEdit.length > n0; renderBat(); break; }
             case 'lu-del': cfg.lineup = cfg.lineup.filter(x => x !== d.pid); cfg.batIdx = -1; saveCfg(); renderBat(); break;
             case 'song-edit': mode = mode === 'song' ? '' : 'song'; pickPid = ''; renderBat(); break;
             case 'song-pick': { const t = byId.get(d.id); if (t) { cfg.walkSong[t.pid] = t.key; saveCfg(); preText = ''; renderBat(); } break; }
@@ -842,7 +962,7 @@
         try {
             build();
             if (bigOpen) closeBig();
-            measure();
+            measure(); luFlag(tab);
             if (tab === 'music') { sync(); if (view === 'bat') { hydrate(); wakeOn(); } }
             else wakeOff();
             holdSync();
