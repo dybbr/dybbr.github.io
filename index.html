@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.109.0 · b261111";
+        const APP_VERSION = "v2.110.0 · b261112";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -4858,7 +4858,7 @@
         r.same.forEach(g => { if (s && s.data && SNAP_GROUP[g]) SNAP_GROUP[g].forEach(k => { if (s.data[k] !== undefined) r[k] = s.data[k]; }); });
         return r;
     }
-    function snapClear() { try { localStorage.removeItem(SNAP_KEY); } catch (e) {} }
+    function snapClear() { try { localStorage.removeItem(SNAP_KEY); localStorage.removeItem('daeyeon_uni_mine'); } catch (e) {} }
     function applyBootExtras(r, t) {
         t = t || {};
         try { if (applySettings(r.settings)) updateUniformButtonVisibility(); } catch (e) {}
@@ -9010,10 +9010,21 @@
     }
     (function () {
         let lastCheck = Date.now(), busy = false;
-        async function check() {
+        // ⚡ v2.110.0: 이제 저장된 화면을 먼저 띄우므로(sw.js), 연 직후에 한 번 새 버전을 확인 — 아직 아무것도 안 눌렀으면 조용히 새 화면으로 다시 엶
+        //   (이미 누르거나 입력을 시작했으면 지금처럼 「새 버전」 띠만 · 같은 버전으로는 한 번만 시도 → 되풀이 안 됨)
+        let touched = false;
+        ['pointerdown', 'keydown', 'touchstart', 'wheel', 'input'].forEach(ev => window.addEventListener(ev, () => { touched = true; }, { capture: true, passive: true, once: true }));
+        function canAutoApply(ver) {
+            if (touched || document.hidden) return false;
+            try { if (sessionStorage.getItem('daeyeon_autoupd') === ver) return false; } catch (e) { return false; }
+            if (Array.from(document.querySelectorAll('.modal')).some(m => m.style.display && m.style.display !== 'none')) return false;
+            if (Array.from(document.querySelectorAll('input, textarea')).some(i => i.type !== 'checkbox' && i.type !== 'radio' && i.type !== 'hidden' && i.value && i === document.activeElement)) return false;
+            return true;
+        }
+        async function check(first) {
             if (busy || document.hidden || navigator.onLine === false) return;
             if (bkUpdNew) { bkUpdShow(); return; }                     // 이미 찾았으면 다시 받지 않고 띠만 (✕ 1시간 지나면 다시)
-            if (Date.now() - lastCheck < 10 * 60 * 1000) return;
+            if (!first && Date.now() - lastCheck < 10 * 60 * 1000) return;
             busy = true; lastCheck = Date.now();
             try {
                 const res = await fetch('index.html?vcheck=' + Math.floor(Date.now() / 60000), { cache: 'no-store' });
@@ -9029,13 +9040,18 @@
                     }
                     rd.cancel().catch(() => {});
                 } else { txt = await res.text(); m = txt.match(/APP_VERSION\s*=\s*"([^"]+)"/); }
-                if (m && bkVerNum(m[1]) > bkVerNum(APP_VERSION)) { bkUpdNew = m[1]; bkUpdShow(); }
+                if (m && bkVerNum(m[1]) > bkVerNum(APP_VERSION)) {
+                    bkUpdNew = m[1];
+                    if (first === true && canAutoApply(m[1])) { try { sessionStorage.setItem('daeyeon_autoupd', m[1]); } catch (e) {} bkUpdReload(); }
+                    else bkUpdShow();
+                }
             } catch (e) {} finally { busy = false; }
         }
+        window.addEventListener('load', () => setTimeout(() => check(true), 1200));
         document.addEventListener('visibilitychange', () => { if (!document.hidden) check(); });
         window.addEventListener('pageshow', e => { if (e.persisted) check(); });
-        window.addEventListener('online', check);
-        setInterval(check, 5 * 60 * 1000);
+        window.addEventListener('online', () => check());
+        setInterval(() => check(), 5 * 60 * 1000);
         window.bkUpdCheckNow = function () { lastCheck = 0; bkUpdNew = ''; bkUpdSnooze = 0; return check(); };   // 개발자 확인용 (콘솔)
     })();
     function bkNoteAnchorEl() {
@@ -10001,19 +10017,54 @@
         uniLoadMine(opt);
     }
 
+    // ⚡ v2.110.0: 내 신청 저장본 — 지난번에 받은 내역을 기기에 두고, 창을 열면 그것부터 바로 보여 준 뒤 서버 답으로 맞춤 (서버 요청 수는 그대로 1번)
+    //   로그인한 사람이 바뀌면 안 씀(snapWho) · 로그아웃하면 지움(snapClear) · 신청 · 취소를 보내면 그 선수 것은 지움 · 7일 지난 것은 안 씀
+    const UNI_MINE_KEY = 'daeyeon_uni_mine';
+    function uniCacheAll() {
+        try { const o = JSON.parse(localStorage.getItem(UNI_MINE_KEY) || 'null'); if (o && o.who === snapWho() && o.m) return o; } catch (e) {}
+        return { who: snapWho(), m: {} };
+    }
+    function uniCacheGet(key) { const c = uniCacheAll().m[key]; return (c && Date.now() - c.t < 7 * 24 * 3600 * 1000) ? c : null; }
+    function uniCachePut(key, st) {
+        try { const o = uniCacheAll(); o.m[key] = { t: Date.now(), found: !!st.found, hasOrder: !!st.hasOrder, items: st.items || {}, date: st.date || '', status: st.status || '' }; localStorage.setItem(UNI_MINE_KEY, JSON.stringify(o)); } catch (e) {}
+    }
+    function uniCacheDrop(key) { try { const o = uniCacheAll(); delete o.m[key]; localStorage.setItem(UNI_MINE_KEY, JSON.stringify(o)); } catch (e) {} }
+    function uniSig(x) { const it = x.items || {}; return JSON.stringify([!!x.found, !!x.hasOrder, Object.keys(it).sort().map(k => [k, it[k]]), x.date || '', x.status || '']); }
+    function uniBusyNote() { if (!(uniState.loading || uniState.refreshing)) return false; bkNotify('info', '잠시만요', '최신 신청 내역을 확인하는 중이에요', { ms: 2500 }); return true; }
+
     // 📋 그 선수의 신청 내역을 서버에서 불러옴 (창을 열 때 · 선수를 바꿀 때 1번)
     async function uniLoadMine(opt) {
         const seq = ++uniLoadSeq;
         const no = parseInt(opt.dataset.no, 10) || 0, name = opt.dataset.name || opt.value;
-        uniState = { key: no + '|' + name, loading: true, found: false, hasOrder: false, items: {}, date: '', status: '', legacy: false, editing: false };
-        uniApplyItems({}); uniRender();
+        const key = no + '|' + name, cached = uniCacheGet(key);
+        uniState = cached
+            ? { key: key, loading: false, refreshing: true, found: cached.found, hasOrder: cached.hasOrder, items: cached.items || {}, date: cached.date, status: cached.status, legacy: false, editing: false }
+            : { key: key, loading: true, found: false, hasOrder: false, items: {}, date: '', status: '', legacy: false, editing: false };
+        uniApplyItems(uniState.items); uniRender();
         let res = null;
         try {
             res = await apiGetJson('action=myOrder&playerNo=' + encodeURIComponent(no > 0 ? no : '') + '&playerName=' + encodeURIComponent(name) + '&playerGrade=' + encodeURIComponent(opt.dataset.grade || ''));
         } catch (e) { res = { result: 'error', message: (e && e.message) || '서버 연결 오류' }; }
         if (seq !== uniLoadSeq) return;   // 그 사이 다른 선수를 골랐으면 버림
         uniState.loading = false;
+        if (cached) {   // ⚡ 저장본을 먼저 보여 준 경우: 서버 답과 같으면 그대로(고치던 것도 그대로), 다르면 최신으로 바꿈
+            uniState.refreshing = false;
+            if (res && res.result === 'success') {
+                const fresh = { found: !!res.found, hasOrder: !!res.hasOrder, items: res.items || {}, date: res.date || '', status: res.status || '' };
+                uniCachePut(key, fresh);
+                if (typeof res.uniformActive === 'boolean' && res.uniformActive !== isUniformActive) { isUniformActive = res.uniformActive; try { updateUniformButtonVisibility(); } catch (e) {} }
+                if (uniSig(fresh) !== uniSig(cached)) {
+                    const wasEditing = uniState.editing || uniChanges().any;
+                    Object.assign(uniState, fresh, { editing: false });
+                    uniApplyItems(uniState.items);
+                    if (wasEditing) bkNotify('info', '신청 내역이 바뀌어 있었어요', '최신 내역으로 다시 불러왔어요', { ms: 4000 });
+                }
+            }
+            uniRender();   // (서버 답을 못 받았으면 저장본을 그대로 둠 — 제출 · 취소할 때 서버가 다시 확인)
+            return;
+        }
         if (res && res.result === 'success') {
+            uniCachePut(key, { found: !!res.found, hasOrder: !!res.hasOrder, items: res.items || {}, date: res.date || '', status: res.status || '' });
             uniState.found = !!res.found; uniState.hasOrder = !!res.hasOrder; uniState.items = res.items || {};
             uniState.date = res.date || ''; uniState.status = res.status || '';
             if (typeof res.uniformActive === 'boolean' && res.uniformActive !== isUniformActive) { isUniformActive = res.uniformActive; try { updateUniformButtonVisibility(); } catch (e) {} }
@@ -10044,7 +10095,7 @@
 
         wrap.hidden = viewMode;
         btnSubmit.style.display = viewMode ? 'none' : '';
-        btnSubmit.disabled = !!st.loading || !opt || !!st.error;
+        btnSubmit.disabled = !!st.loading || !!st.refreshing || !opt || !!st.error;
         btnSubmit.textContent = has ? '수정 제출' : '신청서 제출';
         if (rowCheer) rowCheer.style.display = st.legacy ? 'none' : '';
 
@@ -10092,6 +10143,7 @@
         const opt = uniSelectedOpt();
         if (!opt) { bkNotify('info', '대상 선수를 골라줘캉!'); return; }
         if (uniState.loading) return;
+        if (uniBusyNote()) return;   // ⚡ v2.110.0: 저장본을 보여 주는 중이면 서버 확인이 끝난 뒤에
 
         const playerName = opt.dataset.name || opt.value;
         const height = document.getElementById('ordPlayerHeight').value.trim();
@@ -10110,6 +10162,7 @@
         submitBtn.disabled = true;
         submitBtn.textContent = '접수 중...';
         bkNotify('saving', wasEdit ? '수정한 신청서 보내는 중이캉' : '신청서 보내는 중이캉');
+        uniCacheDrop(uniState.key);   // ⚡ 보내는 순간 저장본은 옛것 → 다음에 열 때 서버에서 새로
         try {
             let res;
             if (uniState.legacy) {   // 서버가 예전 버전일 때만: 예전 방식(답을 못 읽음)
@@ -10139,6 +10192,7 @@
     async function cancelUniformOrder() {
         const opt = uniSelectedOpt();
         if (!opt || !uniState.hasOrder || uniState.loading) return;
+        if (uniBusyNote()) return;
         const playerName = opt.dataset.name || opt.value;
         const names = uniDisplayItems(uniState.items).map(x => x.name).join(' · ');
         const ok = await bkConfirm(`${playerName} 선수 신청을 취소할까요?`, { sub: `신청한 품목(${names})이 모두 빠져요`, ok: '신청 취소', cancel: '그대로 두기', danger: true });
@@ -10146,6 +10200,7 @@
         const btn = document.getElementById('btnCancelOrder');
         if (btn) btn.disabled = true;
         bkNotify('saving', '신청 취소하는 중이캉');
+        uniCacheDrop(uniState.key);
         try {
             const res = await apiGetJson('action=cancelOrder&' + uniOrderParams(opt));
             if (res && res.result === 'success') {
