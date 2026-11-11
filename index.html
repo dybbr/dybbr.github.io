@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.107.2 · b261111";
+        const APP_VERSION = "v2.108.0 · b261111";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -1350,7 +1350,7 @@
         .uni-guide { font-size: 12px; margin: 0 0 10px; line-height: 1.4; }
         /* 👕 v2.108.0: 내 신청 내역 · 수정 · 취소 · 📣 응원복 */
         .uni-mine { border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; font-size: 12px; line-height: 1.45; word-break: keep-all; }
-        .uni-mine[hidden], .uni-diff[hidden], #uniFormWrap[hidden], .btn-order-cancel[hidden] { display: none !important; }
+        .uni-mine[hidden], #uniFormWrap[hidden] { display: none !important; }
         .uni-mine.load { background: #f1f5f9; color: #64748b; }
         .uni-mine.none { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
         .uni-mine.has { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
@@ -1358,12 +1358,8 @@
         .uni-mine b { font-weight: 800; }
         .uni-mine-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
         .uni-mine-date { font-size: 11px; opacity: .8; white-space: nowrap; }
-        .uni-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
-        .uni-chip { background: #fff; border: 1px solid #a7f3d0; border-radius: 999px; padding: 2px 8px; font-size: 11px; font-weight: 700; color: #065f46; white-space: nowrap; }
         .uni-mine-help { margin-top: 6px; font-size: 11px; opacity: .85; }
-        .btn-order-cancel { margin-right: auto; background: #fff; color: #b91c1c; border: 1px solid #fecaca; padding: 7px 12px; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; }
-        .btn-order-cancel:disabled, #btnSubmitOrder:disabled { opacity: .55; cursor: default; }
-        /* B안: 내역 카드 먼저 */
+        #btnSubmitOrder:disabled, .uni-view-del:disabled { opacity: .55; cursor: default; }
         .uni-view-table { width: 100%; border-collapse: collapse; margin-top: 8px; background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid #a7f3d0; }
         .uni-view-table td { padding: 7px 10px; font-size: 13px; border-bottom: 1px solid #d1fae5; color: #1e293b; }
         .uni-view-table tr:last-child td { border-bottom: none; }
@@ -1374,16 +1370,6 @@
         .uni-view-edit { background: #f59e0b; color: #fff; border: none; }
         .uni-view-del { background: #fff; color: #b91c1c; border: 1px solid #fecaca; }
         .uni-back { background: none; border: none; color: inherit; font-weight: 800; font-size: 12px; text-decoration: underline; cursor: pointer; padding: 0; }
-        /* C안: 줄마다 상태 */
-        .uni-tag { flex: 0 0 auto; font-size: 10px; font-weight: 800; border-radius: 4px; padding: 1px 4px; line-height: 1.3; white-space: nowrap; }
-        .uniform-item-row.st-had { background: #ecfdf5; } .st-had .uni-tag { background: #10b981; color: #fff; }
-        .uniform-item-row.st-chg { background: #fffbeb; } .st-chg .uni-tag { background: #f59e0b; color: #fff; }
-        .uniform-item-row.st-new { background: #eff6ff; } .st-new .uni-tag { background: #3b82f6; color: #fff; }
-        .uniform-item-row.st-del { background: #fef2f2; } .st-del .uni-tag { background: #ef4444; color: #fff; }
-        .st-del .uin-t { text-decoration: line-through; opacity: .7; }
-        .uni-diff { word-break: keep-all; margin-top: 8px; border-radius: 8px; padding: 7px 10px; font-size: 12px; line-height: 1.45; background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
-        .uni-diff.same { background: #f1f5f9; border-color: #e2e8f0; color: #64748b; }
-        .uni-link-cancel { display: block; margin: 8px 0 0 auto; background: none; border: none; color: #b91c1c; font-size: 12px; font-weight: 700; text-decoration: underline; cursor: pointer; padding: 2px 0; }
         /* 📣 응원복: 사이즈를 여러 개 (엄마 · 아빠) — 사이즈 · 수량 칸이 다른 줄과 같은 자리에 오게 */
         #rowCheer { align-items: flex-start; flex-wrap: nowrap; }
         #rowCheer .uniform-item-name { padding-top: 5px; }
@@ -2442,16 +2428,11 @@
     .uni-mine.load { background: #1b2638; color: #97a3b7; }
     .uni-mine.none { background: #172a4a; border-color: #1e3a6e; color: #a9c4f5; }
     .uni-mine.has { background: #0f2e27; border-color: #1c5547; color: #8fe3c4; }
-    .uni-mine.warn, .uni-diff { background: #33280f; border-color: #5c4713; color: #f0cf85; }
-    .uni-diff.same { background: #1b2638; border-color: #2a374e; color: #97a3b7; }
-    .uni-chip { background: #151e2e; border-color: #1c5547; color: #8fe3c4; }
-    .btn-order-cancel, .uni-view-del, .cheer-del { background: #2a1519; border-color: #5b2330; color: #f2a3ad; }
-    .uni-link-cancel { color: #f2a3ad; }
+    .uni-mine.warn { background: #33280f; border-color: #5c4713; color: #f0cf85; }
+    .uni-view-del, .cheer-del { background: #2a1519; border-color: #5b2330; color: #f2a3ad; }
     .uni-view-table { background: #151e2e; border-color: #1c5547; }
     .uni-view-table td { color: #dde3ec; border-bottom-color: #1c3d35; }
     .uni-view-table td:last-child { color: #8fe3c4; }
-    .uniform-item-row.st-had { background: #0f2e27; } .uniform-item-row.st-chg { background: #33280f; }
-    .uniform-item-row.st-new { background: #172a4a; } .uniform-item-row.st-del { background: #2a1519; }
     .cheer-add { background: #1b2638; border-color: #58697e; color: #dde3ec; }
     .order-modal-tabs { border-bottom: 2px solid #2a374e; }
     .order-tab-btn { background: none; border: none; color: #97a3b7; border-bottom: 2px solid transparent; }
@@ -3920,7 +3901,7 @@
                 <label for="ordPlayerSelect">대상 선수 선택 *</label>
                 <select id="ordPlayerSelect" style="font-weight: 800; color: var(--kbo-blue);" onchange="handleUniformPlayerChange(this.value)"></select>
             </div>
-            <div id="uniMine" class="uni-mine" hidden></div>   <!-- 👕 v2.108.0: 이미 신청한 내역 · 수정 · 취소 -->
+            <div id="uniMine" class="uni-mine" hidden></div>   <!-- 👕 v2.108.0: 이미 신청한 내역 카드 (표 + 수정하기 · 신청 취소) -->
             <div id="uniFormWrap">
             <div class="uni-body-row" style="background: #f8fafc; border: 1px solid var(--card-border);">
                 <label class="ub-g">학년<input type="text" id="ordPlayerGrade" placeholder="-" readonly tabindex="-1"></label>
@@ -4011,13 +3992,11 @@
                         <div class="cheer-lines" id="cheerLines"></div>
                     </div>
                 </div>
-                <div id="uniDiff" class="uni-diff" hidden></div>
             </div>
             </div>
         </div>
 
         <div class="modal-btns">
-            <button class="btn-order-cancel" id="btnCancelOrder" hidden onclick="cancelUniformOrder()">신청 취소</button>
             <button class="btn-cancel" id="btnCloseOrder" onclick="closeModal('uniformModal')">닫기</button>
             <button class="btn-save" id="btnSubmitOrder" style="background: #f59e0b;" onclick="submitUniformOrder()">신청서 제출</button>
         </div>
@@ -9829,8 +9808,9 @@
     // 유니폼 주문 신청 · 수정 · 취소 (v2.108.0)
     //   - 선수를 고르면 서버에서 「내 신청 내역」을 불러와 체크해 둠 → 고쳐서 제출하면 화면 그대로 바뀜(체크를 풀면 그 품목은 빠짐)
     //   - 제출 · 취소는 서버 답을 읽고 안내 (예전엔 답을 못 읽어 실패해도 「완료」로 보였음 · 서버 v2.41.0)
+    //   - 이미 신청했으면 「내역 카드」(표 + 수정하기 · 신청 취소)가 먼저 보이고, 수정하기를 눌러야 품목 고르기가 열림 (하코 B안)
+    //   - 서버가 아직 예전 버전이면(myOrder 를 모름) 예전처럼 새 신청만 받음 — 응원복 줄은 숨김
     // ==========================================================
-    const UNI_VARIANT = (function () { try { return (new URLSearchParams(location.search).get('uv') || 'A').toUpperCase(); } catch (e) { return 'A'; } })();   // 시안 비교용 (A · B · C)
     const UNI_ITEM_LABEL = { '모자': '모자', '유니폼상의': '유니폼 상의', '바지': '바지', '여름훈련티': '여름훈련티', '겨울훈련티': '겨울훈련티', '바람막이': '바람막이', '풀오버': '풀오버', '겨울점퍼': '겨울점퍼', '응원복': '응원복' };
     const CHEER_SIZES = ['85', '90', '95', '100', '105', '110', '115', '120'];
     const CHEER_MAX_LINES = 4;
@@ -9871,8 +9851,8 @@
     // 📣 응원복 줄 (사이즈 + 수량) — 엄마 · 아빠 사이즈가 다를 수 있어 여러 줄
     function cheerLineHtml(size, qty, first) {
         const sizes = CHEER_SIZES.includes(String(size)) ? CHEER_SIZES : CHEER_SIZES.concat([String(size)]);
-        return `<div class="cheer-line"><select class="uniform-item-size cheer-size" onchange="uniOnFormChange()">${sizes.map(s => `<option value="${escapeHtml(s)}"${String(s) === String(size) ? ' selected' : ''}>${escapeHtml(s)}</option>`).join('')}</select>`
-            + `<select class="uniform-item-qty cheer-qty" onchange="uniOnFormChange()">${[1, 2, 3].map(n => `<option value="${n}벌"${n === qty ? ' selected' : ''}>${n}벌</option>`).join('')}</select>`
+        return `<div class="cheer-line"><select class="uniform-item-size cheer-size">${sizes.map(s => `<option value="${escapeHtml(s)}"${String(s) === String(size) ? ' selected' : ''}>${escapeHtml(s)}</option>`).join('')}</select>`
+            + `<select class="uniform-item-qty cheer-qty">${[1, 2, 3].map(n => `<option value="${n}벌"${n === qty ? ' selected' : ''}>${n}벌</option>`).join('')}</select>`
             + (first ? '' : `<button type="button" class="cheer-del" title="이 사이즈 빼기" onclick="cheerRemoveLine(this)">✕</button>`) + `</div>`;
     }
     function renderCheerLines(list) {
@@ -9881,23 +9861,21 @@
         const lines = (list && list.length) ? list.slice(0, CHEER_MAX_LINES) : [{ size: '100', qty: 1 }];
         box.innerHTML = lines.map((l, i) => cheerLineHtml(l.size, l.qty, i === 0)).join('')
             + `<div class="cheer-line cheer-line-add"><button type="button" class="cheer-add" onclick="cheerAddLine()">＋ 다른 사이즈 추가</button></div>`;
-        toggleCheerInputs(document.getElementById('chkCheer'), true);
+        toggleCheerInputs(document.getElementById('chkCheer'));
     }
     function cheerAddLine() {
         const box = document.getElementById('cheerLines');
         if (box.querySelectorAll('.cheer-size').length >= CHEER_MAX_LINES) return;
         box.querySelector('.cheer-line-add').insertAdjacentHTML('beforebegin', cheerLineHtml('100', 1, false));
-        toggleCheerInputs(document.getElementById('chkCheer'), true);
-        uniOnFormChange();
+        toggleCheerInputs(document.getElementById('chkCheer'));
     }
-    function cheerRemoveLine(btn) { btn.closest('.cheer-line').remove(); toggleCheerInputs(document.getElementById('chkCheer'), true); uniOnFormChange(); }
-    function toggleCheerInputs(chk, quiet) {
+    function cheerRemoveLine(btn) { btn.closest('.cheer-line').remove(); toggleCheerInputs(document.getElementById('chkCheer')); }
+    function toggleCheerInputs(chk) {
         const box = document.getElementById('cheerLines');
         if (!box || !chk) return;
         box.querySelectorAll('select, .cheer-del').forEach(el => { el.disabled = !chk.checked; });
         const add = box.querySelector('.cheer-add');
         if (add) add.disabled = !chk.checked || box.querySelectorAll('.cheer-size').length >= CHEER_MAX_LINES;
-        if (!quiet) uniOnFormChange();
     }
 
     // 화면(체크 · 사이즈 · 수량) → 서버에 보낼 품목 (체크한 것만)
@@ -9934,13 +9912,13 @@
                 setSelectValue(row.querySelector('.uniform-item-size'), name === '모자' ? '프리' : p.size);
                 setSelectValue(row.querySelector('.uniform-item-qty'), p.qty + itemUnit(name));
             }
-            toggleRowInputs(chk, true);
+            toggleRowInputs(chk);
         });
         const w = items['바지 (허리)'], l = items['바지 (기장)'], chkPants = document.getElementById('chkPants');
         chkPants.checked = !!(w || l);
         if (w) setSelectValue(document.getElementById('pantsWaist'), String(w).replace(/[^0-9.]/g, ''));
         if (l) { const lp = parseOrderCell(l); setSelectValue(document.getElementById('pantsLength'), lp.size); setSelectValue(document.getElementById('pantsQty'), lp.qty + '벌'); }
-        togglePantsInputs(chkPants, true);
+        togglePantsInputs(chkPants);
         const chkCheer = document.getElementById('chkCheer');
         chkCheer.checked = !!items['응원복'];
         renderCheerLines(items['응원복'] ? splitMulti(items['응원복']).map(parseOrderCell) : null);
@@ -10051,94 +10029,53 @@
     function uniChanges() {   // 처음 불러온 내역과 지금 화면의 차이
         const before = uniDisplayItems(uniState.items || {}), now = uniDisplayItems(uniCollectItems());
         const b = {}, n = {}; before.forEach(x => { b[x.name] = x.val; }); now.forEach(x => { n[x.name] = x.val; });
-        const add = [], del = [], chg = [];
-        Object.keys(n).forEach(k => { if (!(k in b)) add.push(k); else if (b[k] !== n[k]) chg.push(k); });
-        Object.keys(b).forEach(k => { if (!(k in n)) del.push(k); });
-        return { add, del, chg, any: add.length + del.length + chg.length > 0, count: now.length, b, n };
+        return { any: Object.keys(n).length !== Object.keys(b).length || Object.keys(n).some(k => b[k] !== n[k]) };
     }
-    function uniRowOf(name) { return name === '바지' ? document.getElementById('rowPants') : name === '응원복' ? document.getElementById('rowCheer') : document.querySelector('.uniform-item-row[data-name="' + ({ '유니폼 상의': '유니폼상의' }[name] || name) + '"]'); }
 
-    function uniOnFormChange() { uniRender(true); }
-
-    // 🖼️ 내 신청 영역 · 버튼 · 줄 표시를 지금 상태에 맞게
-    function uniRender(formOnly) {
-        const mine = document.getElementById('uniMine'), wrap = document.getElementById('uniFormWrap'), diff = document.getElementById('uniDiff');
-        const btnSubmit = document.getElementById('btnSubmitOrder'), btnCancel = document.getElementById('btnCancelOrder');
+    // 🖼️ 내 신청 영역 · 버튼을 지금 상태에 맞게
+    function uniRender() {
+        const mine = document.getElementById('uniMine'), wrap = document.getElementById('uniFormWrap');
+        const btnSubmit = document.getElementById('btnSubmitOrder'), rowCheer = document.getElementById('rowCheer');
         const opt = uniSelectedOpt(), st = uniState, has = !!(opt && st.hasOrder && !st.loading);
         const canWrite = isUniformActive || isSuperOrDev();
-        const list = has ? uniDisplayItems(st.items) : [];
-        const dateTxt = has ? escapeHtml(st.date || '') : '';
-        const ch = has ? uniChanges() : null;
-        const viewMode = UNI_VARIANT === 'B' && has && !st.editing;
+        const viewMode = has && !st.editing;   // 이미 신청함 → 내역 카드 먼저
 
         wrap.hidden = viewMode;
-        btnSubmit.hidden = viewMode;
         btnSubmit.style.display = viewMode ? 'none' : '';
-        btnSubmit.disabled = !!st.loading || !opt;
+        btnSubmit.disabled = !!st.loading || !opt || !!st.error;
         btnSubmit.textContent = has ? '수정 제출' : '신청서 제출';
-        btnCancel.hidden = !(has && canWrite && UNI_VARIANT === 'A');
+        if (rowCheer) rowCheer.style.display = st.legacy ? 'none' : '';
 
-        // 줄마다 상태 표시 (C안)
-        document.querySelectorAll('#uniformModal .uni-tag').forEach(t => t.remove());
-        document.querySelectorAll('#uniformModal .uniform-item-row').forEach(r => r.classList.remove('st-had', 'st-chg', 'st-new', 'st-del'));
-        if (UNI_VARIANT === 'C' && has) {
-            const mark = (name, cls, text) => { const row = uniRowOf(name); if (!row) return; row.classList.add(cls); const lab = row.querySelector('.uniform-item-name'); const t = document.createElement('span'); t.className = 'uni-tag'; t.textContent = text; lab.appendChild(t); };
-            Object.keys(ch.b).forEach(k => { if (ch.del.includes(k)) mark(k, 'st-del', '빼기'); else if (ch.chg.includes(k)) mark(k, 'st-chg', '변경'); else mark(k, 'st-had', '신청됨'); });
-            ch.add.forEach(k => mark(k, 'st-new', '추가'));
-        }
-        // 바뀌는 내용 한 줄 (C안)
-        if (UNI_VARIANT === 'C' && has) {
-            diff.hidden = false;
-            diff.className = 'uni-diff' + (ch.any ? '' : ' same');
-            const parts = [];
-            if (ch.add.length) parts.push('추가: ' + ch.add.join(' · '));
-            if (ch.chg.length) parts.push('변경: ' + ch.chg.join(' · '));
-            if (ch.del.length) parts.push('빼기: ' + ch.del.join(' · '));
-            diff.innerHTML = (ch.any ? '<b>바뀌는 내용</b> — ' + escapeHtml(parts.join(' / ')) : '아직 바꾼 내용이 없어요. 체크 · 사이즈를 고치면 여기에 보여요.')
-                + (canWrite ? '<button type="button" class="uni-link-cancel" onclick="cancelUniformOrder()">이 선수 신청 전체 취소</button>' : '');
-        } else { diff.hidden = true; diff.innerHTML = ''; }
-        if (formOnly) return;
-
-        // 내 신청 영역
         if (!opt) { mine.hidden = true; mine.innerHTML = ''; return; }
         mine.hidden = false;
         if (st.loading) { mine.className = 'uni-mine load'; mine.textContent = '신청 내역을 확인하는 중이에요…'; return; }
-        if (st.error) { mine.className = 'uni-mine warn'; mine.innerHTML = '<b>신청 내역을 불러오지 못했어요.</b> ' + escapeHtml(st.error) + '<div class="uni-mine-help">잠시 후 선수를 다시 골라 주세요.</div>'; btnSubmit.disabled = true; return; }
+        if (st.error) { mine.className = 'uni-mine warn'; mine.innerHTML = '<b>신청 내역을 불러오지 못했어요.</b> ' + escapeHtml(st.error) + '<div class="uni-mine-help">잠시 후 선수를 다시 골라 주세요.</div>'; return; }
         if (st.legacy) { mine.hidden = true; mine.innerHTML = ''; return; }
         if (!has) { mine.className = 'uni-mine none'; mine.innerHTML = '아직 신청한 내역이 없어요. 필요한 품목을 체크해 주세요.'; return; }
         mine.className = 'uni-mine has';
-        const top = `<div class="uni-mine-top"><b>✅ 이미 신청한 내역이 있어요</b><span class="uni-mine-date">${dateTxt}</span></div>`;
-        if (UNI_VARIANT === 'B') {
-            if (viewMode) {
-                mine.innerHTML = top + `<table class="uni-view-table"><tbody>${list.map(x => `<tr><td>${escapeHtml(x.name)}</td><td>${escapeHtml(x.val)}</td></tr>`).join('')}</tbody></table>`
-                    + (canWrite ? `<div class="uni-view-btns"><button type="button" class="uni-view-edit" onclick="uniStartEdit()">✏️ 수정하기</button><button type="button" class="uni-view-del" onclick="cancelUniformOrder()">신청 취소</button></div>` : '')
-                    + `<div class="uni-mine-help">${canWrite ? '접수 기간 동안은 언제든 고치거나 취소할 수 있어요.' : '접수가 마감됐어요. 바꿀 게 있으면 대표님께 말씀해 주세요.'}</div>`;
-            } else {
-                mine.innerHTML = `<div class="uni-mine-top"><b>✏️ 신청 내역을 고치는 중</b><button type="button" class="uni-back" onclick="uniStopEdit()">← 내역으로</button></div><div class="uni-mine-help">체크를 풀면 그 품목은 빠져요. 다 고쳤으면 「수정 제출」을 눌러 주세요.</div>`;
-            }
-        } else if (UNI_VARIANT === 'C') {
-            mine.innerHTML = top + `<div class="uni-mine-help">초록색 줄이 신청한 품목이에요. 체크를 풀면 빠지고, 사이즈를 바꾸면 변경돼요.</div>`;
+        if (viewMode) {
+            const list = uniDisplayItems(st.items);
+            mine.innerHTML = `<div class="uni-mine-top"><b>✅ 이미 신청한 내역이 있어요</b><span class="uni-mine-date">${escapeHtml(st.date || '')}</span></div>`
+                + `<table class="uni-view-table"><tbody>${list.map(x => `<tr><td>${escapeHtml(x.name)}</td><td>${escapeHtml(x.val)}</td></tr>`).join('')}</tbody></table>`
+                + (canWrite ? `<div class="uni-view-btns"><button type="button" class="uni-view-edit" onclick="uniStartEdit()">✏️ 수정하기</button><button type="button" class="uni-view-del" id="btnCancelOrder" onclick="cancelUniformOrder()">신청 취소</button></div>` : '')
+                + `<div class="uni-mine-help">${canWrite ? '접수 기간 동안은 언제든 고치거나 취소할 수 있어요.' : '접수가 마감됐어요. 바꿀 게 있으면 대표님께 말씀해 주세요.'}</div>`;
         } else {
-            mine.innerHTML = top + `<div class="uni-chips">${list.map(x => `<span class="uni-chip">${escapeHtml(x.name)} ${escapeHtml(x.val)}</span>`).join('')}</div>`
-                + `<div class="uni-mine-help">아래에서 고친 뒤 「수정 제출」을 누르면 화면 그대로 바뀌어요. 체크를 풀면 그 품목은 빠져요.</div>`;
+            mine.innerHTML = `<div class="uni-mine-top"><b>✏️ 신청 내역을 고치는 중</b><button type="button" class="uni-back" onclick="uniStopEdit()">← 내역으로</button></div><div class="uni-mine-help">체크를 풀면 그 품목은 빠져요. 다 고쳤으면 「수정 제출」을 눌러 주세요.</div>`;
         }
     }
-    document.addEventListener('change', e => { if (e.target && e.target.closest && e.target.closest('#uniformModal .uni-items') && e.target.tagName === 'SELECT') uniOnFormChange(); });
-    function uniStartEdit() { uniState.editing = true; uniRender(); }
+    function uniStartEdit() { uniState.editing = true; uniRender(); const b = document.querySelector('#uniformModal .modal-scroll-body'); if (b) b.scrollTop = 0; }
     function uniStopEdit() { uniState.editing = false; uniApplyItems(uniState.items); uniRender(); }
 
-    function toggleRowInputs(chk, quiet) {
+    function toggleRowInputs(chk) {
         const row = chk.closest('.uniform-item-row');
         row.querySelector('.uniform-item-size').disabled = !chk.checked;
         row.querySelector('.uniform-item-qty').disabled = !chk.checked;
-        if (quiet !== true) uniOnFormChange();
     }
 
-    function togglePantsInputs(chk, quiet) {
+    function togglePantsInputs(chk) {
         document.getElementById('pantsWaist').disabled = !chk.checked;
         document.getElementById('pantsLength').disabled = !chk.checked;
         document.getElementById('pantsQty').disabled = !chk.checked;
-        if (quiet !== true) uniOnFormChange();
     }
 
     function uniOrderParams(opt) {
@@ -10161,7 +10098,7 @@
         const wasEdit = !!uniState.hasOrder;
 
         if (Object.keys(items).length === 0) {
-            if (wasEdit) bkNotify('info', '품목이 하나도 없캉!', '모두 빼려면 「신청 취소」를 눌러 주세요');
+            if (wasEdit) bkNotify('info', '품목이 하나도 없캉!', '모두 빼려면 「← 내역으로」 돌아가 「신청 취소」를 눌러 주세요');
             else bkNotify('info', '품목을 1개 이상 골라줘캉!');
             return;
         }
@@ -10205,7 +10142,7 @@
         const ok = await bkConfirm(`${playerName} 선수 신청을 취소할까요?`, { sub: `신청한 품목(${names})이 모두 빠져요`, ok: '신청 취소', cancel: '그대로 두기', danger: true });
         if (!ok) return;
         const btn = document.getElementById('btnCancelOrder');
-        btn.disabled = true;
+        if (btn) btn.disabled = true;
         bkNotify('saving', '신청 취소하는 중이캉');
         try {
             const res = await apiGetJson('action=cancelOrder&' + uniOrderParams(opt));
@@ -10218,7 +10155,7 @@
             }
         } catch (err) {
             bkNotify('fail', '앗, 취소가 안 됐캉…', (err && err.message) || '잠시 후 다시 해 주세요');
-        } finally { btn.disabled = false; }
+        } finally { const b2 = document.getElementById('btnCancelOrder'); if (b2) b2.disabled = false; }
     }
 
     // ==========================================================
