@@ -472,10 +472,12 @@
     function setupMediaKeys() {
         if (!('mediaSession' in navigator)) return;
         const on = (k, f) => { try { navigator.mediaSession.setActionHandler(k, f); } catch (e) {} };
+        // v2.113.2: 타석 모드(타순 있음)에선 이어폰 · 차 · 잠금 화면의 ⏭ = 다음 타자(안내 → 등장곡), ⏮ = 바로 전 타자
+        const batKeys = () => view === 'bat' && cfg.lineup.length > 0;
         on('play', () => { if (cur) { clearFade(); play(); } });
-        on('pause', () => { if (audio) audio.pause(); });
-        on('previoustrack', prev);
-        on('nexttrack', () => next(false));
+        on('pause', () => { if (annDone) { annCancel(); walk = false; paintState(); } else if (audio) audio.pause(); });
+        on('previoustrack', () => { if (batKeys()) prevBatter(); else prev(); });
+        on('nexttrack', () => { if (batKeys()) { mode = mode === 'ph' ? '' : mode; nextBatter(); } else next(false); });
         on('seekto', d => { if (d && typeof d.seekTime === 'number') seekTo(d.seekTime); });
     }
 
@@ -532,6 +534,12 @@
         const n = cfg.lineup.length;
         if (!n) return;
         cfg.batIdx = (cfg.batIdx + 1) % n; saveCfg();
+        playWalk(cfg.lineup[cfg.batIdx]);
+    }
+    function prevBatter() {
+        const n = cfg.lineup.length;
+        if (!n) return;
+        cfg.batIdx = cfg.batIdx < 0 ? 0 : (cfg.batIdx - 1 + n) % n; saveCfg();
         playWalk(cfg.lineup[cfg.batIdx]);
     }
     function pinch(pid) {   // 대타: 이번 타석만 다른 선수 곡 (타순은 그대로 · 차례는 한 칸 넘어감)
