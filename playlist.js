@@ -34,8 +34,8 @@
     const SND_FADE_MS = 1200;
     // 📢 장내 아나운서 — 「일번 타자, 유격수, 이름.」을 조각(필재 목소리)으로 이어 튼 뒤 등장곡 · 조각을 바꾸면 ANN_V 를 올린다
     //   조각 목록 announce/list.json (slot: 1~9번 타자 · pos: 포지션 · pinch: 대타 · name: 선수 이름 → 파일) · 쉼은 파일 끝에 들어 있음
-    //   v2.113.0: full: 이름 → {"1"~"9": 「N번 타자, 이름.」, "0": 「대타, 이름.」} 문장 통째 파일(announce/f/) — 있으면 조각 대신 이것 한 파일
-    const ANN_DIR = 'announce/', ANN_V = 2;
+    //   v2.113.0: full: 이름 → {"1"~"15": 「N번 타자, 이름.」, "0": 「대타, 이름.」} 문장 통째 파일(announce/f/) — 있으면 조각 대신 이것 한 파일 · 16~30번은 slot 조각 + 이름 조각(v2.113.1)
+    const ANN_DIR = 'announce/', ANN_V = 3;
     const ANN_POS = [['p', '투수', /^(투수|P)$/i], ['c', '포수', /^(포수|C)$/i], ['1b', '1루수', /^(1루수|일루수|1B)$/i], ['2b', '2루수', /^(2루수|이루수|2B)$/i], ['3b', '3루수', /^(3루수|삼루수|3B)$/i],
         ['ss', '유격수', /^(유격수|SS)$/i], ['lf', '좌익수', /^(좌익수|LF)$/i], ['cf', '중견수', /^(중견수|CF)$/i], ['rf', '우익수', /^(우익수|RF)$/i]];   // 효과음 파일을 바꾸면 ?v= 숫자를 올린다 (기기에 받아 둔 옛 소리 대신 새 소리를 받게)
     const I = {
@@ -307,14 +307,6 @@
 
     // 📢 장내 아나운서 — 조각을 차례로 튼 뒤 등장곡 (조각 사이 쉼은 파일 끝에 들어 있음)
     const annUrl = fn => ANN_DIR + fn + '?v=' + ANN_V;
-    function annPosOf(person) {   // 포지션이 하나로 정해진 선수만 부름 (「투수, 유격수」처럼 여럿이면 안 부름)
-        const ks = [];
-        String(person.pos || '').split(/[,，/·\s]+/).map(x => x.trim()).filter(Boolean).forEach(x => {
-            const m = ANN_POS.find(q => q[2].test(x));
-            if (m && ks.indexOf(m) < 0) ks.push(m);
-        });
-        return ks.length === 1 ? ks[0] : null;
-    }
     const ANN_NUM = ['', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'];
     function annPieces(person, slot) {   // slot: 1~ 타순 · 0 대타 · -1 타순 밖 (조각이 없으면 null → 안내 없이 곡만)
         const m = annMan;
@@ -324,9 +316,7 @@
         const q = [], says = [];
         if (slot === 0) { if (m.pinch) { q.push(m.pinch); says.push('대타'); } }
         else if (slot >= 1 && m.slot && m.slot[slot]) { q.push(m.slot[slot]); says.push(slot + '번 타자'); }
-        const ps = annPosOf(person);
-        if (ps && m.pos && m.pos[ps[0]]) { q.push(m.pos[ps[0]]); says.push(ps[1]); }
-        q.push(m.name[person.name]); says.push(person.name);
+        q.push(m.name[person.name]); says.push(person.name);   // v2.113.1: 포지션은 부르지 않음 (문장 통째와 맞춤)
         return { files: q.map(annUrl), text: says.join(', ') };
     }
     function annStart(a, done) {
