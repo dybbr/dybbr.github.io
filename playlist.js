@@ -31,7 +31,12 @@
         { id: 'fight', em: '💪', nm: '파이팅', src: 'sfx/fighting.mp3?v=1' },
         { id: 'chg', em: '🔄', nm: '공수 교대', mu: 1, max: 150, src: SND_CDN + '20261111144952_iu8ad4_0.mp3' }
     ];
-    const SND_FADE_MS = 1200;   // 효과음 파일을 바꾸면 ?v= 숫자를 올린다 (기기에 받아 둔 옛 소리 대신 새 소리를 받게)
+    const SND_FADE_MS = 1200;
+    // 📢 장내 아나운서 — 「일번 타자, 유격수, 이름.」을 조각(필재 목소리)으로 이어 튼 뒤 등장곡 · 조각을 바꾸면 ANN_V 를 올린다
+    //   조각 목록 announce/list.json (slot: 1~9번 타자 · pos: 포지션 · pinch: 대타 · name: 선수 이름 → 파일) · 쉼은 파일 끝에 들어 있음
+    const ANN_DIR = 'announce/', ANN_V = 1;
+    const ANN_POS = [['p', '투수', /^(투수|P)$/i], ['c', '포수', /^(포수|C)$/i], ['1b', '1루수', /^(1루수|일루수|1B)$/i], ['2b', '2루수', /^(2루수|이루수|2B)$/i], ['3b', '3루수', /^(3루수|삼루수|3B)$/i],
+        ['ss', '유격수', /^(유격수|SS)$/i], ['lf', '좌익수', /^(좌익수|LF)$/i], ['cf', '중견수', /^(중견수|CF)$/i], ['rf', '우익수', /^(우익수|RF)$/i]];   // 효과음 파일을 바꾸면 ?v= 숫자를 올린다 (기기에 받아 둔 옛 소리 대신 새 소리를 받게)
     const I = {
         play: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>',
         pause: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5.5" y="4.5" width="4.5" height="15" rx="1"/><rect x="14" y="4.5" width="4.5" height="15" rx="1"/></svg>',
@@ -52,7 +57,7 @@
     const notify = (text, sub) => { try { if (typeof bkNotify === 'function') bkNotify('info', text, sub || '', { ms: 3500 }); } catch (e) {} };
 
     // ---------------- 이 기기에 저장하는 설정 ----------------
-    const cfg = { shuffle: false, repeat: 'all', hook: true, fadeIn: true, autoSec: 20, lineup: [], walkSong: {}, batIdx: -1, xl: false, sets: [], lyrTip: false };
+    const cfg = { shuffle: false, repeat: 'all', hook: true, fadeIn: true, autoSec: 20, lineup: [], walkSong: {}, batIdx: -1, xl: false, sets: [], lyrTip: false, ann: true };
     try {
         const j = JSON.parse(localStorage.getItem(LS_KEY) || '{}') || {};
         if (typeof j.shuffle === 'boolean') cfg.shuffle = j.shuffle;
@@ -66,6 +71,7 @@
         if (typeof j.batIdx === 'number') cfg.batIdx = j.batIdx;
         if (typeof j.xl === 'boolean') cfg.xl = j.xl;
         if (typeof j.lyrTip === 'boolean') cfg.lyrTip = j.lyrTip;
+        if (typeof j.ann === 'boolean') cfg.ann = j.ann;
         if (Array.isArray(j.sets)) cfg.sets = j.sets.filter(x => x && typeof x.name === 'string' && Array.isArray(x.lineup)).slice(0, 8).map(x => ({ name: x.name.slice(0, 12), lineup: x.lineup.filter(y => typeof y === 'string').slice(0, 30) }));
     } catch (e) {}
     function saveCfg() { try { localStorage.setItem(LS_KEY, JSON.stringify(cfg)); } catch (e) {} }
@@ -82,6 +88,7 @@
     const blobUrl = {};                                         // 미리 받아 둔 곡: 음원 주소 → 기기 안 주소
     const sndEl = {};                                           // 효과음 띠: 버튼마다 소리 하나
     let muOn = '', muFade = 0, muFadeEl = null, volOk = null, sndWarmed = false;   // 켜져 있는 음악 버튼 · 서서히 끄는 중 · 소리 크기를 바꿀 수 있는 기기인지
+    let annMan = null, annQ = [], annDone = null, annTok = 0, annText = '', annWarmed = false, annGuard = 0;   // 장내 아나운서: 조각 목록 · 남은 조각 · 끝나면 할 일 · 안내 글
 
     const personOf = pid => people.find(p => p.pid === pid) || null;
     const who = t => `${t.name} · ${t.g ? t.g + '학년 ' : ''}${t.no ? t.no + '번' : ''}`.trim();
@@ -138,16 +145,17 @@
         audio.id = 'plAudio'; audio.preload = 'none';
         audio.style.display = 'none';
         document.body.appendChild(audio);
-        audio.addEventListener('playing', () => { fails = 0; hideMsg(); paintState(); startLoop(); });
+        audio.addEventListener('playing', () => { if (annDone) { paintState(); return; } fails = 0; hideMsg(); paintState(); startLoop(); });
         audio.addEventListener('pause', () => { paintState(); });
-        audio.addEventListener('ended', () => next(true));
+        audio.addEventListener('ended', () => { if (annDone) annStep(); else next(true); });
         audio.addEventListener('timeupdate', onTime);
-        audio.addEventListener('durationchange', paintTime);
+        audio.addEventListener('durationchange', () => { if (!annDone) paintTime(); });
         audio.addEventListener('loadedmetadata', () => {
+            if (annDone) return;
             if (pendingSeek != null) { const at = pendingSeek; pendingSeek = null; try { if (Math.abs(audio.currentTime - at) > 0.5) audio.currentTime = at; } catch (e) {} }
             paintTime();
         });
-        audio.addEventListener('error', onError);
+        audio.addEventListener('error', () => { if (annDone) annFinish(); else onError(); });
         return audio;
     }
     function setQueue(ids, startId) {
@@ -172,6 +180,7 @@
     function play() {
         if (!cur) return;
         ensureAudio();
+        if (annDone) annCancel();
         if (!attached) attach(pendingSeek || 0);
         if (!fadeInTimer) { try { audio.volume = 1; } catch (e) {} }
         if (muOn) muStop();   // 축하곡 · 공수 교대 음악이 나오던 중이면 서서히 끔
@@ -197,6 +206,7 @@
     function toggle() {
         if (!cur) { playAll(tracks.map(t => t.id), cfg.shuffle); return; }
         ensureAudio();
+        if (annDone) { annCancel(); walk = false; paintState(); return; }   // 안내 중에 멈춤 → 안내만 멈춤 (다시 ▶ 하면 곡부터)
         if (audio.paused || !attached) { clearFade(); play(); } else audio.pause();
     }
     function next(auto) {
@@ -231,12 +241,13 @@
         paintTime();
     }
     function stopAll() {
-        clearFade(); sndStopAll();
+        annCancel(); clearFade(); sndStopAll();
         try { if (audio) { audio.pause(); audio.removeAttribute('src'); audio.load(); } } catch (e) {}
         cur = null; qi = -1; attached = false; walk = false; pendingSeek = null;
         closeBig(); renderNow(); paintState();
     }
     function onTime() {
+        if (annDone) return;
         if (walk) {   // 타석 곡: 실제로 흘러나온 시간을 셈 (건너뛴 만큼은 안 셈 → 후렴 자리로 못 간 기기에서도 20초를 다 들려줌)
             const c = audio.currentTime, d = c - walkLast;
             walkLast = c;
@@ -279,6 +290,7 @@
         }, 50);
     }
     function fadeOut() {
+        if (annDone) { annCancel(); walk = false; paintState(); return; }   // 안내 중이면 바로 멈춤
         if (!audio || audio.paused || fadeTimer) return;
         stopFadeIn();
         if (!canVol()) { try { audio.pause(); } catch (e) {} walk = false; paintVol(1); paintState(); return; }   // 아이폰: 소리 크기를 못 바꾸니 기다리지 않고 바로 멈춤
@@ -290,6 +302,84 @@
             else { try { audio.volume = v0 * k * k; } catch (e) {} paintVol(k); }
         }, 50);
         paintState();
+    }
+
+    // 📢 장내 아나운서 — 조각을 차례로 튼 뒤 등장곡 (조각 사이 쉼은 파일 끝에 들어 있음)
+    const annUrl = fn => ANN_DIR + fn + '?v=' + ANN_V;
+    function annPosOf(person) {   // 포지션이 하나로 정해진 선수만 부름 (「투수, 유격수」처럼 여럿이면 안 부름)
+        const ks = [];
+        String(person.pos || '').split(/[,，/·\s]+/).map(x => x.trim()).filter(Boolean).forEach(x => {
+            const m = ANN_POS.find(q => q[2].test(x));
+            if (m && ks.indexOf(m) < 0) ks.push(m);
+        });
+        return ks.length === 1 ? ks[0] : null;
+    }
+    const ANN_NUM = ['', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'];
+    function annPieces(person, slot) {   // slot: 1~ 타순 · 0 대타 · -1 타순 밖 (조각이 없으면 null → 안내 없이 곡만)
+        const m = annMan;
+        if (!m || !m.name || !m.name[person.name]) return null;
+        const q = [], says = [];
+        if (slot === 0) { if (m.pinch) { q.push(m.pinch); says.push('대타'); } }
+        else if (slot >= 1 && m.slot && m.slot[slot]) { q.push(m.slot[slot]); says.push(slot + '번 타자'); }
+        const ps = annPosOf(person);
+        if (ps && m.pos && m.pos[ps[0]]) { q.push(m.pos[ps[0]]); says.push(ps[1]); }
+        q.push(m.name[person.name]); says.push(person.name);
+        return { files: q.map(annUrl), text: says.join(', ') };
+    }
+    function annStart(a, done) {
+        ensureAudio();
+        annCancel();
+        clearFade();
+        annQ = a.files.slice(); annDone = done; annText = a.text; annTok++;
+        const tok = annTok;
+        annGuard = setTimeout(() => { if (tok === annTok && annDone) annFinish(); }, 12000);   // 무슨 일이 있어도 12초 뒤엔 곡으로
+        annStep();
+    }
+    function annStep() {
+        if (!annDone) return;
+        if (!annQ.length) { annFinish(); return; }
+        const u = annQ.shift(), tok = annTok;
+        try { audio.volume = 1; } catch (e) {}
+        audio.src = blobUrl[u] || u;
+        const pr = audio.play();
+        if (pr && pr.catch) pr.catch(e => { if (tok === annTok && annDone && (!e || e.name !== 'AbortError')) annFinish(); });
+        paintState();
+    }
+    function annFinish() {   // 안내 끝 → 등장곡
+        const d = annDone;
+        annCancel(true);
+        if (d) d();
+    }
+    function annCancel(keepAudio) {
+        if (annGuard) { clearTimeout(annGuard); annGuard = 0; }
+        if (!annDone) return;
+        annDone = null; annQ = []; annText = ''; annTok++;
+        if (!keepAudio) { try { audio.pause(); } catch (e) {} }
+        try { audio.removeAttribute('src'); audio.load(); } catch (e) {}
+        attached = false;
+    }
+    async function annPrep() {   // 타석 모드를 열면: 조각 목록을 받고, 켜져 있으면 조각을 기기에 받아 둠 (누르면 바로 · 신호가 약해도)
+        if (!annMan) {
+            try { const r = await fetch(ANN_DIR + 'list.json?v=' + ANN_V); if (r.ok) annMan = await r.json(); } catch (e) {}
+            if (annMan) renderBat();
+        }
+        if (!annMan || !cfg.ann || annWarmed || !('caches' in window)) return;
+        annWarmed = true;
+        const want = [].concat(Object.values(annMan.slot || {}), Object.values(annMan.pos || {}), annMan.pinch ? [annMan.pinch] : [],
+            people.map(p => annMan.name && annMan.name[p.name]).filter(Boolean));
+        try {
+            const c = await caches.open(CACHE_NAME);
+            for (const fn of [...new Set(want)]) {
+                const u = annUrl(fn);
+                if (blobUrl[u]) continue;
+                try {
+                    const abs = new URL(u, location.href).href;
+                    let r = await c.match(abs);
+                    if (!r) { r = await fetch(abs); if (!r.ok) throw new Error('HTTP ' + r.status); await c.put(abs, r.clone()); }
+                    blobUrl[u] = URL.createObjectURL(await r.blob());
+                } catch (e) { annWarmed = false; }   // 못 받은 조각은 다음에 다시
+            }
+        } catch (e) { annWarmed = false; }
     }
 
     // 📣 효과음 띠 — 짧은 소리는 등장곡 위에 겹쳐 나오고, 음악(노란 버튼)은 등장곡을 서서히 끄고 나옴
@@ -429,13 +519,17 @@
         pinchOn = !!asPinch;
         const t = walkTrack(person);
         const at = cfg.hook ? hookTime(t) : 0;
-        setQueue(tracks.map(x => x.id), t.id);
-        load(t, true, at);
-        if (cfg.fadeIn) fadeIn();
-        walk = true; walkHeard = 0; walkLast = at;
         const li = asPinch ? -1 : cfg.lineup.indexOf(pid);
         if (li >= 0 && li !== cfg.batIdx) { cfg.batIdx = li; saveCfg(); }
-        renderBat();
+        setQueue(tracks.map(x => x.id), t.id);
+        const ann = cfg.ann ? annPieces(person, asPinch ? 0 : li + 1) : null;
+        const go = () => { walk = true; walkHeard = 0; walkLast = at; load(t, true, at); if (cfg.fadeIn) fadeIn(); renderBat(); };
+        if (ann) {   // 📢 장내 아나운서 먼저 → 끝나면 등장곡 (같은 재생기로 틀어서 아이폰에서도 곡이 이어 나옴)
+            load(t, false, at);
+            walk = true;
+            annStart(ann, go);
+            renderBat();
+        } else go();
     }
     function nextBatter() {
         const n = cfg.lineup.length;
@@ -499,7 +593,7 @@
                 } catch (e) { console.warn('축하곡 미리 받기 실패:', m.nm, e); }
             }
             const keep = new Set(list.map(t => t.src).concat(SND.map(m => m.mu ? m.src : sndUrl(m))));
-            (await c.keys()).forEach(req => { if (!keep.has(req.url)) c.delete(req); });
+            (await c.keys()).forEach(req => { if (!keep.has(req.url) && req.url.indexOf('/' + ANN_DIR) < 0) c.delete(req); });
         } catch (e) { bad = list.length - done; }
         preBusy = false;
         preText = bad ? `${done}곡 받아 둠 · ${bad}곡은 못 받았어요 (인터넷 확인 후 다시)` : `${done}곡 받아 둠 ✓ 인터넷이 느려도 바로 나와요`;
@@ -774,7 +868,7 @@
         const inBat = view === 'bat' && (!t || t === 'music');
         root.classList.toggle('pl-lu-on', mode === 'lineup' && inBat);
         const sndOn = inBat && mode !== 'lineup' && people.length > 0;   // 📣 효과음 띠: 타석 모드에서만 (타순 정하는 동안은 타순 띠가 그 자리)
-        if (sndOn && !root.classList.contains('pl-snd-on')) sndWarm();
+        if (sndOn && !root.classList.contains('pl-snd-on')) { sndWarm(); annPrep(); }
         root.classList.toggle('pl-snd-on', sndOn);
         if (!inBat && muOn) muStop();   // 타석 모드를 벗어나면 끌 버튼이 안 보이니 음악을 끔
     }
@@ -823,6 +917,13 @@
         luAdded = false;
     }
 
+    function annRow(nxt, ord) {   // 📢 장내 아나운서 켜기/끄기 (v2.112.0 · 시안 ④ B)
+        if (!annMan) return '';
+        const ps = nxt ? annPosOf(nxt) : null;
+        const ex = nxt ? [ord + '번 타자', ps ? ps[1] : '', nxt.name].filter(Boolean).join(', ') : '1번 타자, 유격수, 선수 이름';
+        return `<div class="pl-ann"><span class="tx">📢 장내 아나운서<small>${cfg.ann ? `「${esc(ex)}」 다음에 등장곡` : '꺼 둠 · 등장곡만 바로 나와요'}</small></span>` +
+            `<button type="button" class="pl-sw" data-pl="ann" role="switch" aria-checked="${cfg.ann ? 'true' : 'false'}" aria-label="장내 아나운서 ${cfg.ann ? '끄기' : '켜기'}"></button></div>`;
+    }
     const ob = (o, v, label, on) => `<button type="button" data-pl="opt" data-o="${o}" data-v="${v}" aria-pressed="${on ? 'true' : 'false'}">${label}</button>`;   // 타석 옵션: 둘 중 고르기 버튼
     function renderBat() {
         const box = $('plBat');
@@ -841,11 +942,11 @@
                     return `<button type="button" class="pl-lrow${k >= 0 ? ' dim' : ''}" data-pl="ph-pick" data-pid="${esc(p.pid)}" aria-label="대타 ${esc(p.no)}번 ${esc(p.name)}">${photo(p, 32)}<span class="t"><b>${esc(p.name)}</b><small>${esc(p.no)}번</small></span>${k >= 0 ? `<span class="k">${k + 1}번</span>` : ''}</button>`;
                 }).join('')).join('') + `</div></div>`;
             lineupHtml = `<div class="pl-nbrow"><button type="button" class="pl-nextbat" data-pl="nextbat">${I.play}<span><small>다음 타자 틀기</small><b>${ord}번 타자 ${esc(nxt.name)} <span style="opacity:.8">(${esc(nxt.no)})</span></b></span></button>` +
-                `<button type="button" class="pl-phb${mode === 'ph' ? ' on' : ''}" data-pl="ph-open" aria-label="대타: 이번 타석만 다른 선수 곡 틀기"><span>🔁</span>대타</button></div>` + phPanel +
+                `<button type="button" class="pl-phb${mode === 'ph' ? ' on' : ''}" data-pl="ph-open" aria-label="대타: 이번 타석만 다른 선수 곡 틀기"><span>🔁</span>대타</button></div>` + annRow(nxt, ord) + phPanel +
                 `<ol class="pl-lu">${lu.map((p, i) => `<li><button type="button" data-pl="bat" data-pid="${esc(p.pid)}" class="${i === cfg.batIdx ? 'cur' : ''}" aria-label="${i + 1}번 타자 ${esc(p.name)} 곡 틀기"><i>${i + 1}</i>${esc(p.name)}</button></li>`).join('')}</ol>` +
                 `<div class="pl-pre"><button type="button" class="pl-sbtn" data-pl="preload"${preBusy ? ' disabled' : ''}>⬇&nbsp;타순 곡 미리 받아 두기</button><span id="plPreTxt">${esc(preText)}</span></div>`;
         } else {
-            lineupHtml = `<p class="pl-tip">「타순 정하기」를 누르면 선수 사진 목록에서 1번 타자부터 차례로 고를 수 있어요. 정해 두면 경기 중에는 「다음 타자」 버튼 하나만 누르면 됩니다.</p>`;
+            lineupHtml = annRow(null, 0) + `<p class="pl-tip">「타순 정하기」를 누르면 선수 사진 목록에서 1번 타자부터 차례로 고를 수 있어요. 정해 두면 경기 중에는 「다음 타자」 버튼 하나만 누르면 됩니다.</p>`;
         }
         // 저장해 둔 타순: 누르면 불러옴 · 「＋ 지금 타순 저장」을 누르면 이름을 고르는 판이 열림
         const today = new Date(), dayName = (today.getMonth() + 1) + '/' + today.getDate() + ' 경기';
@@ -912,7 +1013,7 @@
         if (cur) $('plCnt').textContent = (qi + 1) + ' / ' + order.length;
         const bt = $('plBatTx');
         if (bt) {
-            bt.textContent = walk && cur && playing ? `${pinchOn ? '대타 ' : ''}${cur.no}번 ${cur.name} 등장곡 「${cur.title}」` : (mode === 'lineup' ? '타순을 정하는 중입니다' : '등번호를 누르면 바로 나옵니다');
+            bt.textContent = annDone ? `📢 ${annText}` : walk && cur && playing ? `${pinchOn ? '대타 ' : ''}${cur.no}번 ${cur.name} 등장곡 「${cur.title}」` : (mode === 'lineup' ? '타순을 정하는 중입니다' : '등번호를 누르면 바로 나옵니다');
             const fd = $('plFade'); if (fd) fd.disabled = !playing || !!fadeTimer;
             document.querySelectorAll('#plBat .pl-bat').forEach(el => el.classList.toggle('cur', walk && !!cur && el.dataset.pid === cur.pid));
             if (!fadeTimer) paintVol(1);
@@ -1033,6 +1134,7 @@
                 el.parentNode.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b === el ? 'true' : 'false'));
                 break;
             }
+            case 'ann': cfg.ann = !cfg.ann; saveCfg(); if (!cfg.ann) annCancel(); else annPrep(); renderBat(); break;
             case 'nextbat': mode = mode === 'ph' ? '' : mode; nextBatter(); break;
             case 'ph-open': mode = mode === 'ph' ? '' : 'ph'; pickPid = ''; renderBat(); break;
             case 'ph-close': mode = ''; renderBat(); break;
