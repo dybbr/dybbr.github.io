@@ -5,13 +5,14 @@
    ========================================================== */
 :root {
     --pl-tabh: 64px;   /* 아래 탭 막대 높이 (playlist.js 가 실제 높이로 맞춤) */
+    --pl-page: var(--bg-gray, #f4f6fa);   /* 사이트 바탕색 (붙어 있는 타순 칸 뒤) */
     --pl-card: #ffffff; --pl-line: #e2e8f0; --pl-soft: #eef2f7; --pl-fg: #0f172a; --pl-sub: #64748b; --pl-cream: #fff6ea; --pl-creamline: #f6dcb8;
     --pl-red: #c8102e; --pl-red2: #a00d25; --pl-hot: #c8102e; --pl-navy: #0b2240; --pl-navy2: #163868; --pl-gold: #f4b942;
     --pl-g6: #0b2240; --pl-g5: #c8102e; --pl-g4: #0f766e; --pl-g3: #b45309; --pl-g2: #6d28d9; --pl-g1: #475569;
 }
 @media (prefers-color-scheme: dark) {
     .pl-seg button.on { background: #2c3b57; box-shadow: none; }
-    :root { --pl-card: #151e2e; --pl-line: #2a374e; --pl-soft: #1d2940; --pl-fg: #dde3ec; --pl-sub: #97a3b7; --pl-cream: #2b2318; --pl-creamline: #4a3b26; --pl-navy2: #1d4a88; --pl-g6: #1d4a88; --pl-hot: #ff8a9b; }
+    :root { --pl-card: #151e2e; --pl-line: #2a374e; --pl-soft: #1d2940; --pl-fg: #dde3ec; --pl-sub: #97a3b7; --pl-cream: #2b2318; --pl-creamline: #4a3b26; --pl-navy2: #1d4a88; --pl-g6: #1d4a88; --pl-hot: #ff8a9b; --pl-page: #0e1522; }
 }
 
 /* ───── 「음악」 탭 ───── */
@@ -99,6 +100,50 @@ html.pl-playing .pl-row.cur .eq i { animation: plEq .7s ease-in-out infinite alt
 .pl-bat em { position: absolute; top: -7px; left: -7px; min-width: 24px; height: 24px; padding: 0 5px; border-radius: 12px; display: grid; place-items: center; background: var(--pl-gold); color: var(--pl-navy); font-style: normal; font-size: 13px; font-weight: 900; box-shadow: 0 1px 3px rgba(0, 0, 0, .35); }
 .pl-bat.cur { border-color: var(--pl-gold); box-shadow: 0 0 0 3px var(--pl-gold); }
 .pl-bat:active { transform: scale(.96); }
+/* 등번호 버튼판 학년 이름표 */
+.pl-gl { display: flex; align-items: center; gap: 7px; margin: 12px 2px 7px; font-size: 13px; font-weight: 900; color: var(--pl-sub); }
+.pl-gl:first-of-type { margin-top: 2px; }
+.pl-gl i, .pl-gh i { width: 10px; height: 10px; border-radius: 3px; background: var(--gc); }
+
+/* 📋 타순 고르기 화면 (v2.107.0) */
+.pl-lue-top { position: sticky; top: calc(54px + env(safe-area-inset-top, 0px)); z-index: 6; margin: 0 -12px; padding: 10px 12px 8px; background: var(--pl-page); border-bottom: 1px solid var(--pl-line); box-shadow: 0 8px 14px -12px rgba(15, 23, 42, .4); }
+.pl-lue-h { display: flex; align-items: center; gap: 8px; }
+.pl-lue-h b { font-size: 17px; } .pl-lue-h small { flex: 1; font-size: 13px; font-weight: 800; color: var(--pl-sub); }
+.pl-sbtn:disabled { opacity: .4; cursor: default; }
+.pl-lue-tip { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 8px 2px 7px; font-size: 13.5px; font-weight: 700; word-break: keep-all; }
+.pl-lue-tip .hot { color: var(--pl-hot); }
+.pl-lnk { flex: none; border: 0; background: none; padding: 4px 2px; color: var(--pl-sub); font-size: 12.5px; font-weight: 800; text-decoration: underline; cursor: pointer; }
+.pl-lnk:disabled { opacity: .4; cursor: default; }
+.pl-slots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+@media (min-width: 601px) { .pl-slots { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+.pl-slot { display: flex; align-items: center; gap: 6px; min-width: 0; height: 44px; padding: 0 6px 0 5px; border-radius: 10px; border: 1.5px dashed var(--pl-line); background: transparent; color: inherit; cursor: pointer; text-align: left; }
+.pl-slot i { flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: 13px; font-weight: 900; background: var(--pl-soft); color: var(--pl-sub); font-variant-numeric: tabular-nums; }
+.pl-slot span { min-width: 0; font-size: 14px; font-weight: 800; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl-slot span small { display: block; font-size: 11px; font-weight: 700; color: var(--pl-sub); }
+.pl-slot span.e { font-size: 12.5px; color: var(--pl-sub); font-weight: 700; }
+.pl-slot.fill { border-style: solid; background: var(--pl-card); }
+.pl-slot.fill i { background: var(--pl-gold); color: var(--pl-navy); }
+.pl-slot.next { border-style: solid; border-color: var(--pl-red); box-shadow: 0 0 0 2px rgba(200, 16, 46, .2); }
+.pl-slot.next i { background: var(--pl-red); color: #ffffff; }
+.pl-slot.next span.e { color: var(--pl-hot); }
+.pl-slot.add i { background: transparent; border: 1.5px dashed var(--pl-line); }
+.pl-lue-hint { margin: 7px 2px 0; font-size: 12px; font-weight: 700; color: var(--pl-sub); word-break: keep-all; }
+.pl-lue-hint b { color: var(--pl-hot); }
+.pl-lue-chips { margin-top: 12px; }
+.pl-gh { display: flex; align-items: center; gap: 7px; padding: 7px 12px; font-size: 13px; font-weight: 900; background: var(--pl-soft); border-bottom: 1px solid var(--pl-line); }
+.pl-gh span { color: var(--pl-sub); font-weight: 700; }
+.pl-lrow { display: flex; align-items: center; gap: 11px; width: 100%; min-height: 60px; padding: 8px 12px; border: 0; border-bottom: 1px solid var(--pl-line); background: transparent; color: inherit; text-align: left; cursor: pointer; }
+.pl-lrow:last-child { border-bottom: 0; }
+.pl-lrow .t { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.pl-lrow .t b { font-size: 15.5px; } .pl-lrow .t small { font-size: 12.5px; color: var(--pl-sub); }
+.pl-lrow .add { flex: none; font-size: 12.5px; font-weight: 800; color: var(--pl-sub); }
+.pl-lrow .k { flex: none; min-width: 46px; height: 30px; padding: 0 8px; border-radius: 15px; display: grid; place-items: center; background: var(--pl-gold); color: var(--pl-navy); font-size: 14px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.pl-lrow.in { background: var(--pl-cream); }
+.pl-lrow:active { background: var(--pl-soft); }
+.pl-ph { flex: none; display: block; border-radius: 50%; object-fit: cover; background: var(--pl-soft); }
+span.pl-ph { display: grid; place-items: center; font-size: 17px; }
+.pl-lue-done { display: block; width: 100%; height: 50px; margin: 12px 0 4px; border: 0; border-radius: 13px; background: var(--pl-red); color: #ffffff; font-size: 16px; font-weight: 900; cursor: pointer; }
+
 .pl-pick { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--pl-line); }
 .pl-pick button.opt { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 6px; border: 0; border-bottom: 1px solid var(--pl-line); background: transparent; color: inherit; text-align: left; cursor: pointer; font-size: 14.5px; font-weight: 800; }
 .pl-pick button.opt small { font-weight: 700; color: var(--pl-sub); font-size: 12.5px; }
