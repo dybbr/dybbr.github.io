@@ -27,14 +27,15 @@
         { id: 'hit', em: '⚾', nm: '안타!', src: 'sfx/hit.mp3?v=1' },
         { id: 'hr', em: '💥', nm: '홈런!', mu: 1, max: 25, src: SND_CDN + '20261111144949_pbu6ri_0.mp3' },
         { id: 'run', em: '🎉', nm: '득점 축하', mu: 1, max: 20, src: SND_CDN + '20261111144950_o97m30_0.mp3' },
-        { id: 'so', em: '🔥', nm: '삼진 잡았다', src: 'sfx/strikeout.mp3?v=1' },
-        { id: 'fight', em: '💪', nm: '파이팅', src: 'sfx/fighting.mp3?v=1' },
+        { id: 'so', em: '🔥', nm: '삼진 잡았다', src: 'sfx/strikeout.mp3?v=2' },
+        { id: 'fight', em: '💪', nm: '파이팅', src: 'sfx/fighting.mp3?v=2' },
         { id: 'chg', em: '🔄', nm: '공수 교대', mu: 1, max: 150, src: SND_CDN + '20261111144952_iu8ad4_0.mp3' }
     ];
     const SND_FADE_MS = 1200;
     // 📢 장내 아나운서 — 「일번 타자, 유격수, 이름.」을 조각(필재 목소리)으로 이어 튼 뒤 등장곡 · 조각을 바꾸면 ANN_V 를 올린다
     //   조각 목록 announce/list.json (slot: 1~9번 타자 · pos: 포지션 · pinch: 대타 · name: 선수 이름 → 파일) · 쉼은 파일 끝에 들어 있음
-    const ANN_DIR = 'announce/', ANN_V = 1;
+    //   v2.113.0: full: 이름 → {"1"~"9": 「N번 타자, 이름.」, "0": 「대타, 이름.」} 문장 통째 파일(announce/f/) — 있으면 조각 대신 이것 한 파일
+    const ANN_DIR = 'announce/', ANN_V = 2;
     const ANN_POS = [['p', '투수', /^(투수|P)$/i], ['c', '포수', /^(포수|C)$/i], ['1b', '1루수', /^(1루수|일루수|1B)$/i], ['2b', '2루수', /^(2루수|이루수|2B)$/i], ['3b', '3루수', /^(3루수|삼루수|3B)$/i],
         ['ss', '유격수', /^(유격수|SS)$/i], ['lf', '좌익수', /^(좌익수|LF)$/i], ['cf', '중견수', /^(중견수|CF)$/i], ['rf', '우익수', /^(우익수|RF)$/i]];   // 효과음 파일을 바꾸면 ?v= 숫자를 올린다 (기기에 받아 둔 옛 소리 대신 새 소리를 받게)
     const I = {
@@ -318,6 +319,8 @@
     function annPieces(person, slot) {   // slot: 1~ 타순 · 0 대타 · -1 타순 밖 (조각이 없으면 null → 안내 없이 곡만)
         const m = annMan;
         if (!m || !m.name || !m.name[person.name]) return null;
+        const fu = m.full && m.full[person.name] && m.full[person.name][slot];   // v2.113.0: 「N번 타자, 이름.」 문장 통째 녹음이 있으면 그 한 파일
+        if (fu) return { files: [annUrl(fu)], text: (slot === 0 ? '대타' : slot + '번 타자') + ', ' + person.name };
         const q = [], says = [];
         if (slot === 0) { if (m.pinch) { q.push(m.pinch); says.push('대타'); } }
         else if (slot >= 1 && m.slot && m.slot[slot]) { q.push(m.slot[slot]); says.push(slot + '번 타자'); }
@@ -365,8 +368,12 @@
         }
         if (!annMan || !cfg.ann || annWarmed || !('caches' in window)) return;
         annWarmed = true;
-        const want = [].concat(Object.values(annMan.slot || {}), Object.values(annMan.pos || {}), annMan.pinch ? [annMan.pinch] : [],
-            people.map(p => annMan.name && annMan.name[p.name]).filter(Boolean));
+        const want = [];   // 타순에 든 선수는 그 타순 문장 파일만 · 문장 녹음이 없는 선수는 예전 조각
+        cfg.lineup.map(personOf).forEach((p, i) => {
+            if (!p) return;
+            const a = annPieces(p, i + 1);
+            if (a) a.files.forEach(u => want.push(u.slice(ANN_DIR.length).split('?')[0]));
+        });
         try {
             const c = await caches.open(CACHE_NAME);
             for (const fn of [...new Set(want)]) {
@@ -559,7 +566,7 @@
         const st = cfg.sets[i];
         if (!st || sameLu(st.lineup)) return;
         if (cfg.lineup.length && !cfg.sets.some(x => sameLu(x.lineup)) && !window.confirm('지금 타순은 저장되지 않았어요.\n「' + st.name + '」 타순으로 바꿀까요?')) return;
-        cfg.lineup = st.lineup.slice(); cfg.batIdx = -1; preText = ''; saveCfg();
+        cfg.lineup = st.lineup.slice(); cfg.batIdx = -1; preText = ''; saveCfg(); annWarmed = false; annPrep();
         hydrate();
         notify('「' + st.name + '」 타순을 불러왔어요', st.lineup.map(personOf).filter(Boolean).length + '명');
     }
@@ -593,7 +600,7 @@
                 } catch (e) { console.warn('축하곡 미리 받기 실패:', m.nm, e); }
             }
             const keep = new Set(list.map(t => t.src).concat(SND.map(m => m.mu ? m.src : sndUrl(m))));
-            (await c.keys()).forEach(req => { if (!keep.has(req.url) && req.url.indexOf('/' + ANN_DIR) < 0) c.delete(req); });
+            (await c.keys()).forEach(req => { if (!keep.has(req.url) && (req.url.indexOf('/' + ANN_DIR) < 0 || !req.url.endsWith('?v=' + ANN_V))) c.delete(req); });   // 안내 파일은 지금 판(ANN_V)만 남김
         } catch (e) { bad = list.length - done; }
         preBusy = false;
         preText = bad ? `${done}곡 받아 둠 · ${bad}곡은 못 받았어요 (인터넷 확인 후 다시)` : `${done}곡 받아 둠 ✓ 인터넷이 느려도 바로 나와요`;
@@ -919,8 +926,8 @@
 
     function annRow(nxt, ord) {   // 📢 장내 아나운서 켜기/끄기 (v2.112.0 · 시안 ④ B)
         if (!annMan) return '';
-        const ps = nxt ? annPosOf(nxt) : null;
-        const ex = nxt ? [ord + '번 타자', ps ? ps[1] : '', nxt.name].filter(Boolean).join(', ') : '1번 타자, 유격수, 선수 이름';
+        const a = nxt ? annPieces(nxt, ord) : null;
+        const ex = a ? a.text : nxt ? ord + '번 타자, ' + nxt.name : '1번 타자, 선수 이름';
         return `<div class="pl-ann"><span class="tx">📢 장내 아나운서<small>${cfg.ann ? `「${esc(ex)}」 다음에 등장곡` : '꺼 둠 · 등장곡만 바로 나와요'}</small></span>` +
             `<button type="button" class="pl-sw" data-pl="ann" role="switch" aria-checked="${cfg.ann ? 'true' : 'false'}" aria-label="장내 아나운서 ${cfg.ann ? '끄기' : '켜기'}"></button></div>`;
     }
@@ -1147,7 +1154,7 @@
             case 'set-load': setLoad(+d.i); renderBat(); break;
             case 'preload': preload(); break;
             case 'lu-edit': luOpen(); mode = 'lineup'; pickPid = ''; renderBat(); batTop(); break;
-            case 'lu-done': if (luSnap.join('|') === cfg.lineup.join('|')) { cfg.batIdx = luSnapIdx; saveCfg(); } mode = ''; luFix = -1; hydrate(); renderBat(); batTop(); break;
+            case 'lu-done': if (luSnap.join('|') === cfg.lineup.join('|')) { cfg.batIdx = luSnapIdx; saveCfg(); } else { annWarmed = false; annPrep(); } mode = ''; luFix = -1; hydrate(); renderBat(); batTop(); break;
             case 'lu-cancel': cfg.lineup = luSnap.slice(); cfg.batIdx = luSnapIdx; preText = ''; saveCfg(); mode = ''; luFix = -1; hydrate(); renderBat(); batTop(); break;   // 열기 전 타순으로 되돌리고 닫음
             case 'lu-clear': luEdit = []; luFix = -1; luSave(); renderBat(); break;
             case 'lu-chip': luChip(+d.i); renderBat(); break;
