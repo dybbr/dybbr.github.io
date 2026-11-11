@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.107.0 · b261111";
+        const APP_VERSION = "v2.107.1 · b261111";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -7921,6 +7921,18 @@
         }, 1000);
     }
 
+    // ⌨️ v2.107.1: 잠금화면이 떠 있으면 비번 칸에 바로 커서 — PC처럼 마우스를 쓰는 기기만
+    //   휴대폰 · 태블릿(손가락 · S펜)은 커서를 넣으면 화면 키보드가 튀어나와 잠금창을 가리므로 그대로 (칸을 누르면 그때 키보드)
+    function lockAutoFocus() {
+        try {
+            if (!window.matchMedia || !window.matchMedia('(pointer: fine)').matches) return;
+            const ov = document.getElementById('lockOverlay'), inp = document.getElementById('lockPasswordInput');
+            if (!ov || !inp || getComputedStyle(ov).display === 'none') return;
+            const a = document.activeElement;
+            if (a && a !== inp && ov.contains(a) && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)) return;   // 최초 등록 칸에 입력 중이면 건드리지 않음
+            inp.focus({ preventScroll: true });
+        } catch (e) {}
+    }
     // quiet: 앱이 닫히는 중 (v2.48.0) — 알림 · 입력칸 포커스 없이, 서버에는 sendBeacon 으로
     function lockScreenNow(why, quiet) {
         why = why || '로그아웃';
@@ -7951,6 +7963,7 @@
             const pwInput = document.getElementById('lockPasswordInput');
             pwInput.value = '';
             if (!quiet && why !== '자동 잠금') setTimeout(() => pwInput.focus(), 50);   // 자동 잠금이면 키보드를 바로 띄우지 않음
+            else if (!quiet) setTimeout(lockAutoFocus, 50);   // ⌨️ v2.107.1: PC(마우스)는 자동 잠금이어도 비번 칸에 바로 커서 (화면 키보드가 없으니)
         }
         if (!quiet) {
             if (why === '자동 잠금') bkNotify('sleep', '10분 동안 안 써서 잠갔캉 💤', '다시 로그인해 주세요', { ms: 6000 });
@@ -11045,6 +11058,8 @@
     loadGoogleSheetData();
     if (!getToken() || !isAuthValid()) warmServer();   // 🔥 v2.67.0: 로그인 화면이면 서버를 미리 데워 둠
     try { document.getElementById('lockPasswordInput').addEventListener('focus', warmServer); } catch (e) {}   // 잠금화면을 오래 켜 뒀다가 비번 칸을 누를 때도
+    lockAutoFocus(); setTimeout(lockAutoFocus, 300);   // ⌨️ v2.107.1: 처음 열었을 때 (PC) 비번 칸에 커서 — 첫 화면 그림이 걷힌 뒤 한 번 더
+    window.addEventListener('focus', () => setTimeout(lockAutoFocus, 0));   // 다른 창 · 탭에 갔다가 돌아와도
 </script>
 </body>
 </html>
