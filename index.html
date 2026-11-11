@@ -1348,6 +1348,55 @@
 
         /* v2.41.18: 유니폼 신청 창 윗부분 — 설명 한 줄, 「대상 선수 선택」 옆에 고르기 칸, 학년·키·몸무게 한 줄 */
         .uni-guide { font-size: 12px; margin: 0 0 10px; line-height: 1.4; }
+        /* 👕 v2.108.0: 내 신청 내역 · 수정 · 취소 · 📣 응원복 */
+        .uni-mine { border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; font-size: 12px; line-height: 1.45; word-break: keep-all; }
+        .uni-mine[hidden], .uni-diff[hidden], #uniFormWrap[hidden], .btn-order-cancel[hidden] { display: none !important; }
+        .uni-mine.load { background: #f1f5f9; color: #64748b; }
+        .uni-mine.none { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+        .uni-mine.has { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
+        .uni-mine.warn { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+        .uni-mine b { font-weight: 800; }
+        .uni-mine-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+        .uni-mine-date { font-size: 11px; opacity: .8; white-space: nowrap; }
+        .uni-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+        .uni-chip { background: #fff; border: 1px solid #a7f3d0; border-radius: 999px; padding: 2px 8px; font-size: 11px; font-weight: 700; color: #065f46; white-space: nowrap; }
+        .uni-mine-help { margin-top: 6px; font-size: 11px; opacity: .85; }
+        .btn-order-cancel { margin-right: auto; background: #fff; color: #b91c1c; border: 1px solid #fecaca; padding: 7px 12px; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .btn-order-cancel:disabled, #btnSubmitOrder:disabled { opacity: .55; cursor: default; }
+        /* B안: 내역 카드 먼저 */
+        .uni-view-table { width: 100%; border-collapse: collapse; margin-top: 8px; background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid #a7f3d0; }
+        .uni-view-table td { padding: 7px 10px; font-size: 13px; border-bottom: 1px solid #d1fae5; color: #1e293b; }
+        .uni-view-table tr:last-child td { border-bottom: none; }
+        .uni-view-table td:first-child { font-weight: 700; }
+        .uni-view-table td:last-child { text-align: right; font-weight: 800; color: #065f46; }
+        .uni-view-btns { display: flex; gap: 8px; margin-top: 10px; }
+        .uni-view-btns button { flex: 1 1 0; padding: 10px 8px; border-radius: 8px; font-size: 14px; font-weight: 800; cursor: pointer; }
+        .uni-view-edit { background: #f59e0b; color: #fff; border: none; }
+        .uni-view-del { background: #fff; color: #b91c1c; border: 1px solid #fecaca; }
+        .uni-back { background: none; border: none; color: inherit; font-weight: 800; font-size: 12px; text-decoration: underline; cursor: pointer; padding: 0; }
+        /* C안: 줄마다 상태 */
+        .uni-tag { flex: 0 0 auto; font-size: 10px; font-weight: 800; border-radius: 4px; padding: 1px 4px; line-height: 1.3; white-space: nowrap; }
+        .uniform-item-row.st-had { background: #ecfdf5; } .st-had .uni-tag { background: #10b981; color: #fff; }
+        .uniform-item-row.st-chg { background: #fffbeb; } .st-chg .uni-tag { background: #f59e0b; color: #fff; }
+        .uniform-item-row.st-new { background: #eff6ff; } .st-new .uni-tag { background: #3b82f6; color: #fff; }
+        .uniform-item-row.st-del { background: #fef2f2; } .st-del .uni-tag { background: #ef4444; color: #fff; }
+        .st-del .uin-t { text-decoration: line-through; opacity: .7; }
+        .uni-diff { word-break: keep-all; margin-top: 8px; border-radius: 8px; padding: 7px 10px; font-size: 12px; line-height: 1.45; background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+        .uni-diff.same { background: #f1f5f9; border-color: #e2e8f0; color: #64748b; }
+        .uni-link-cancel { display: block; margin: 8px 0 0 auto; background: none; border: none; color: #b91c1c; font-size: 12px; font-weight: 700; text-decoration: underline; cursor: pointer; padding: 2px 0; }
+        /* 📣 응원복: 사이즈를 여러 개 (엄마 · 아빠) — 사이즈 · 수량 칸이 다른 줄과 같은 자리에 오게 */
+        #rowCheer { align-items: flex-start; flex-wrap: nowrap; }
+        #rowCheer .uniform-item-name { padding-top: 5px; }
+        #rowCheer .cheer-lines { flex: 1.2 1 94px; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+        .cheer-line { position: relative; display: flex; gap: 8px; align-items: center; }
+        .cheer-line .uniform-item-size { flex: 1 1 0; min-width: 0; }
+        .cheer-add, .cheer-del { flex: 0 0 auto; height: 28px; border-radius: 6px; border: 1px dashed #94a3b8; background: #fff; color: #334155; font-size: 11px; font-weight: 800; cursor: pointer; padding: 0 8px; white-space: nowrap; }
+        .cheer-del { position: absolute; left: -32px; top: 0; border-style: solid; border-color: #fecaca; color: #b91c1c; width: 26px; padding: 0; }
+        .cheer-add:disabled { opacity: .45; cursor: default; }
+        .cheer-line-add { justify-content: flex-end; }
+        @container (max-width: 339px) { #rowCheer .cheer-lines { flex: 1 1 70px; } .cheer-line { gap: 5px; } }
+        @container (max-width: 269px) { #rowCheer { flex-wrap: wrap; } #rowCheer .cheer-lines { flex: 1 1 100%; } .cheer-del { position: static; } }
+
         #uniformModal .uni-player-row { flex-direction: row; align-items: center; gap: 8px; }
         #uniformModal .uni-player-row > label { flex: 0 0 auto; white-space: nowrap; }
         #uniformModal .uni-player-row > select { flex: 1 1 auto; min-width: 0; width: auto; }
@@ -1416,6 +1465,8 @@
         .order-card-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 5px; border-bottom: 1px solid #f1f5f9; margin-bottom: 5px; }
         .order-player-title { font-size: 13px; font-weight: 800; color: var(--kbo-blue); }
         .order-date-text { font-size: 11px; color: #94a3b8; }
+        .order-meta-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .order-edit-btn { flex: 0 0 auto; background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 3px 8px; font-size: 11px; font-weight: 700; color: #334155; cursor: pointer; white-space: nowrap; }
         .order-meta-bar { font-size: 11px; color: #334155; background: #f8fafc; padding: 5px 8px; border-radius: 6px; margin-bottom: 6px; border: 1px solid #f1f5f9; }
         .order-table { width: 100% !important; border-collapse: collapse; font-size: 12px; text-align: center; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; }
         .order-table th { background: #f8fafc; color: #475569; font-weight: 700; padding: 5px 6px; font-size: 11px; }
@@ -2388,6 +2439,20 @@
     .upn-btns { border-top: none; }
     .uniform-item-row { border-bottom: 1px solid #2a374e; }
     .uniform-item-name { color: #dde3ec; }
+    .uni-mine.load { background: #1b2638; color: #97a3b7; }
+    .uni-mine.none { background: #172a4a; border-color: #1e3a6e; color: #a9c4f5; }
+    .uni-mine.has { background: #0f2e27; border-color: #1c5547; color: #8fe3c4; }
+    .uni-mine.warn, .uni-diff { background: #33280f; border-color: #5c4713; color: #f0cf85; }
+    .uni-diff.same { background: #1b2638; border-color: #2a374e; color: #97a3b7; }
+    .uni-chip { background: #151e2e; border-color: #1c5547; color: #8fe3c4; }
+    .btn-order-cancel, .uni-view-del, .cheer-del { background: #2a1519; border-color: #5b2330; color: #f2a3ad; }
+    .uni-link-cancel { color: #f2a3ad; }
+    .uni-view-table { background: #151e2e; border-color: #1c5547; }
+    .uni-view-table td { color: #dde3ec; border-bottom-color: #1c3d35; }
+    .uni-view-table td:last-child { color: #8fe3c4; }
+    .uniform-item-row.st-had { background: #0f2e27; } .uniform-item-row.st-chg { background: #33280f; }
+    .uniform-item-row.st-new { background: #172a4a; } .uniform-item-row.st-del { background: #2a1519; }
+    .cheer-add { background: #1b2638; border-color: #58697e; color: #dde3ec; }
     .order-modal-tabs { border-bottom: 2px solid #2a374e; }
     .order-tab-btn { background: none; border: none; color: #97a3b7; border-bottom: 2px solid transparent; }
     .order-tab-btn.active { color: #dde3ec; border-bottom-color: #2e486b; }
@@ -2395,6 +2460,7 @@
     .order-card-header { border-bottom: 1px solid #2a374e; }
     .order-player-title { color: #dde3ec; }
     .order-date-text { color: #6f7b91; }
+    .order-edit-btn { background: #151e2e; border-color: #58697e; color: #dde3ec; }
     .order-meta-bar { color: #bcc6d4; background: #1b2638; border: 1px solid #2a374e; }
     .order-table { border: 1px solid #2a374e; }
     .order-table th { background: #1b2638; color: #bcc6d4; }
@@ -3110,6 +3176,7 @@
 <symbol id="ck-shorts" viewBox="0 0 24 24"><g stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"><path fill="#4f74b8" d="M5 5h14l1.8 12.2h-6.6L12 11.2 9.8 17.2H3.2Z"/><path fill="none" d="M4.9 7.8h14.2"/></g></symbol>
 <symbol id="ck-wind" viewBox="0 0 24 24"><g stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"><path fill="#4fc3a1" d="M8 4.2 4.5 5.6 2.4 18.6 5.2 19.2 6.8 11.2V20.6h10.4V11.2l1.6 8 2.8-.6L19.5 5.6 16 4.2Z"/><path fill="#2f9c7f" d="M7.8 4.6C7.6 1.8 16.4 1.8 16.2 4.6L12 8.6Z"/><path fill="none" d="M12 8.6V20.6M3.1 14.3l3.3-.8M20.9 14.3l-3.3-.8"/></g></symbol>
 <symbol id="ck-pull" viewBox="0 0 24 24"><g stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"><path fill="#ef6b6b" d="M8.4 4 4.6 5.5 2.4 18.6 5.2 19.2 6.8 11V20.5h10.4V11l1.6 8.2 2.8-.6L19.4 5.5 15.6 4Z"/><path fill="#d94b4b" d="M9 2.4h6V4.7L12 6 9 4.7Z"/><path fill="none" d="M12 6v5M8.6 15h6.8l.8 3.6H7.8Z"/><circle cx="12" cy="11.6" r=".9" fill="currentColor" stroke="none"/></g></symbol>
+<symbol id="ck-cheer" viewBox="0 0 24 24"><g stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"><path fill="#f36a6a" d="M8.2 3.5 4.3 5.4 2 9.6 5.1 11.2 6.6 9.7V20.5h10.8V9.7l1.5 1.5L22 9.6l-2.3-4.2-3.9-1.9C15.1 5 13.7 5.9 12 5.9S8.9 5 8.2 3.5Z"/><path fill="#fff" stroke-width="1.1" d="m12 9.6 1.1 2.2 2.4.3-1.8 1.7.5 2.4L12 15l-2.2 1.2.5-2.4-1.8-1.7 2.4-.3Z"/></g></symbol>
 <symbol id="ck-jumper" viewBox="0 0 24 24"><g stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"><path fill="#6f7fe0" d="M8.2 4.4 4.2 5.8C3 6.3 2.4 7.2 2.2 8.6L1.6 18.4 5.2 19.1 6.4 12.4V20.2c0 .7.5 1.1 1.2 1.1h8.8c.7 0 1.2-.4 1.2-1.1V12.4l1.2 6.7 3.6-.7-.6-9.8c-.2-1.4-.8-2.3-2-2.8L15.8 4.4Z"/><path fill="#5463c8" d="M8.6 2.2h6.8V5.2L12 6.4 8.6 5.2Z"/><path fill="none" d="M12 6.4V21.3M6.4 10.2h11.2M6.4 14h11.2M6.4 17.7h11.2M2 12.6l4-.6M22 12.6l-4-.6"/></g></symbol>
 <symbol id="ck-cap" viewBox="0 0 24 24"><g stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"><path fill="#e4483f" d="M3 15.6C3 9.6 6.9 5.6 11.6 5.6S20 9.4 20 15.2Z"/><path fill="#c7342c" d="M13.6 15.4H22.6C22.6 17.1 21.2 18.2 19.2 18.2H13.6Z"/><path fill="none" d="M3 15.6h10.6M11.6 5.6c-1.9 2.4-2.6 6-2.3 10"/><circle cx="11.6" cy="5" r=".95" fill="currentColor" stroke="none"/></g></symbol>
 <symbol id="ck-jersey" viewBox="0 0 24 24"><g stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"><path style="fill:var(--ck-fill,#f1e9d4)" d="M8.2 3.5 4.3 5.4 2 9.6 5.1 11.2 6.6 9.7V20.5h10.8V9.7l1.5 1.5L22 9.6l-2.3-4.2-3.9-1.9L12 8.6Z"/><path fill="none" style="stroke:var(--ck-trim,#d11f2f)" d="M8.4 3.9 12 8.3l3.6-4.4"/><path fill="none" d="M12 8.6V20.5"/><circle cx="13.3" cy="11.3" r=".75" fill="currentColor" stroke="none"/><circle cx="13.3" cy="14.6" r=".75" fill="currentColor" stroke="none"/><circle cx="13.3" cy="17.9" r=".75" fill="currentColor" stroke="none"/></g></symbol>
@@ -3853,6 +3920,8 @@
                 <label for="ordPlayerSelect">대상 선수 선택 *</label>
                 <select id="ordPlayerSelect" style="font-weight: 800; color: var(--kbo-blue);" onchange="handleUniformPlayerChange(this.value)"></select>
             </div>
+            <div id="uniMine" class="uni-mine" hidden></div>   <!-- 👕 v2.108.0: 이미 신청한 내역 · 수정 · 취소 -->
+            <div id="uniFormWrap">
             <div class="uni-body-row" style="background: #f8fafc; border: 1px solid var(--card-border);">
                 <label class="ub-g">학년<input type="text" id="ordPlayerGrade" placeholder="-" readonly tabindex="-1"></label>
                 <label>키<input type="text" id="ordPlayerHeight" inputmode="decimal" placeholder="153"><span class="u">cm</span></label>
@@ -3937,12 +4006,19 @@
                         </select>
                         <select class="uniform-item-qty" disabled><option value="1벌">1벌</option><option value="2벌">2벌</option><option value="3벌">3벌</option></select>
                     </div>
+                    <div class="uniform-item-row uni-cheer" id="rowCheer">
+                        <label class="uniform-item-name"><input type="checkbox" id="chkCheer" onchange="toggleCheerInputs(this)"> <svg class="ck-ic" aria-hidden="true"><use href="#ck-cheer"/></svg> <span class="uin-t">응원복<small>학부모</small></span></label>
+                        <div class="cheer-lines" id="cheerLines"></div>
+                    </div>
                 </div>
+                <div id="uniDiff" class="uni-diff" hidden></div>
+            </div>
             </div>
         </div>
 
         <div class="modal-btns">
-            <button class="btn-cancel" onclick="closeModal('uniformModal')">취소</button>
+            <button class="btn-order-cancel" id="btnCancelOrder" hidden onclick="cancelUniformOrder()">신청 취소</button>
+            <button class="btn-cancel" id="btnCloseOrder" onclick="closeModal('uniformModal')">닫기</button>
             <button class="btn-save" id="btnSubmitOrder" style="background: #f59e0b;" onclick="submitUniformOrder()">신청서 제출</button>
         </div>
     </div>
@@ -9509,7 +9585,7 @@
     // ==========================================================
     // 유니폼 주문 현황 / 발주 집계
     // ==========================================================
-    const ITEM_ORDER = ['모자', '유니폼상의', '바지', '여름훈련티', '겨울훈련티', '바람막이', '풀오버', '겨울점퍼'];
+    const ITEM_ORDER = ['모자', '유니폼상의', '바지', '여름훈련티', '겨울훈련티', '바람막이', '풀오버', '겨울점퍼', '응원복'];   // v2.108.0: 📣 응원복 (학부모)
 
     // "95 (2벌)" → {size:'95', qty:2}, "95" → {size:'95', qty:1}, "프리 (2개)" → {size:'프리', qty:2}
     function parseOrderCell(val) {
@@ -9537,6 +9613,7 @@
                 const val = items[k];
                 if (!val || val === '-') continue;
                 if (k === '바지(허리)' || k === '바지(기장)') continue;
+                if (k === '응원복') { splitMulti(val).map(parseOrderCell).forEach(p => add(k, p.size, p.qty)); continue; }   // 「100 (1벌), 90 (1벌)」 → 사이즈마다 따로
                 const p = parseOrderCell(val);
                 add(k, p.size, p.qty);
             }
@@ -9599,6 +9676,7 @@
                                 const idxPull = findIdx('풀오버');
                                 const idxJump = findIdx('겨울점퍼');
                                 const idxDate = findIdx('신청날짜');
+                                const idxCheer = findIdx('응원복'), idxBy = findIdx('신청자');   // v2.108.0 (서버 v2.41.0 이 만든 칸 — 없으면 건너뜀)
 
                                 loadedOrdersData = results.data.slice(1).map(row => {
                                     const getCell = (idx, fallback) => {
@@ -9622,6 +9700,7 @@
                                     const pull = getCell(idxPull, 13);
                                     const jump = getCell(idxJump, 14);
                                     const reqDate = getCell(idxDate, 15);
+                                    const cheer = idxCheer !== -1 ? getCell(idxCheer) : '', by = idxBy !== -1 ? getCell(idxBy) : '';
 
                                     const items = {};
                                     let hasAnyOrder = false;
@@ -9635,6 +9714,7 @@
                                     if (wind && wind !== '-' && wind !== '0') { items['바람막이'] = wind; hasAnyOrder = true; }
                                     if (pull && pull !== '-' && pull !== '0') { items['풀오버'] = pull; hasAnyOrder = true; }
                                     if (jump && jump !== '-' && jump !== '0') { items['겨울점퍼'] = jump; hasAnyOrder = true; }
+                                    if (cheer && cheer !== '-' && cheer !== '0') { items['응원복'] = cheer; hasAnyOrder = true; }
 
                                     return {
                                         playerNo: pNo || '-',
@@ -9643,6 +9723,7 @@
                                         height: (h && h !== '0') ? h + 'cm' : '-',
                                         weight: (w && w !== '0') ? w + 'kg' : '-',
                                         date: reqDate || '-',
+                                        by: by,
                                         items: items,
                                         hasOrder: hasAnyOrder      // 신청날짜와 무관하게 품목이 있으면 신청함
                                     };
@@ -9689,7 +9770,7 @@
                             <span class="order-player-title">#${idx + 1}. ${pNo}${escapeHtml(o.playerName)} (${escapeHtml(o.playerGrade)})</span>
                             <span class="order-date-text">${escapeHtml(o.date)}</span>
                         </div>
-                        <div class="order-meta-bar"><span>📏 키: ${escapeHtml(o.height)} / 몸무게: ${escapeHtml(o.weight)}</span></div>
+                        <div class="order-meta-bar"><span>📏 키: ${escapeHtml(o.height)} / 몸무게: ${escapeHtml(o.weight)}${o.by ? ' · 신청: ' + escapeHtml(o.by) : ''}</span><button type="button" class="order-edit-btn" onclick="editOrderFromSummary(${idx})">✏️ 수정 · 취소</button></div>
                         <table class="order-table">
                             <thead><tr><th style="text-align:left; padding-left:10px;">신청 품목</th><th style="text-align:right; padding-right:10px;">사이즈/옵션</th></tr></thead>
                             <tbody>
@@ -9723,6 +9804,14 @@
         }
     }
 
+    // ✏️ v2.108.0: 대표님 · 개발자가 집계 화면에서 바로 그 선수 신청 창을 열어 고치거나 취소 (마감 뒤에도 가능)
+    function editOrderFromSummary(idx) {
+        const o = loadedOrdersData.filter(x => x.hasOrder)[idx];
+        if (!o) return;
+        closeModal('ordersModal');
+        openUniformModal(parseInt(o.playerNo, 10) || 0, o.playerName);
+    }
+
     function copyOrderSummaryText() {
         const built = buildOrderSummary();
         let text = "[대연초 야구부 유니폼 발주 집계 내역]\n";
@@ -9737,15 +9826,133 @@
     }
 
     // ==========================================================
-    // 유니폼 주문 신청
+    // 유니폼 주문 신청 · 수정 · 취소 (v2.108.0)
+    //   - 선수를 고르면 서버에서 「내 신청 내역」을 불러와 체크해 둠 → 고쳐서 제출하면 화면 그대로 바뀜(체크를 풀면 그 품목은 빠짐)
+    //   - 제출 · 취소는 서버 답을 읽고 안내 (예전엔 답을 못 읽어 실패해도 「완료」로 보였음 · 서버 v2.41.0)
     // ==========================================================
-    function openUniformModal() {
+    const UNI_VARIANT = (function () { try { return (new URLSearchParams(location.search).get('uv') || 'A').toUpperCase(); } catch (e) { return 'A'; } })();   // 시안 비교용 (A · B · C)
+    const UNI_ITEM_LABEL = { '모자': '모자', '유니폼상의': '유니폼 상의', '바지': '바지', '여름훈련티': '여름훈련티', '겨울훈련티': '겨울훈련티', '바람막이': '바람막이', '풀오버': '풀오버', '겨울점퍼': '겨울점퍼', '응원복': '응원복' };
+    const CHEER_SIZES = ['85', '90', '95', '100', '105', '110', '115', '120'];
+    const CHEER_MAX_LINES = 4;
+    let uniState = { key: '', loading: false, found: false, hasOrder: false, items: {}, date: '', status: '', legacy: false, editing: false };
+    let uniLoadSeq = 0;
+
+    function uniSelectedOpt() {
+        const select = document.getElementById('ordPlayerSelect');
+        const opt = select.options[select.selectedIndex];
+        return (opt && opt.value) ? opt : null;
+    }
+
+    // 「95 (2벌)」「프리」「100 (1벌), 90 (1벌)」 → 화면 표시용 한 줄 (바지는 허리 + 기장을 합침)
+    function uniDisplayItems(items) {
+        const out = [];
+        ITEM_ORDER.forEach(k => {
+            if (k === '바지') {
+                const w = items['바지 (허리)'], l = items['바지 (기장)'];
+                if (!w && !l) return;
+                const lp = l ? parseOrderCell(l) : { size: '기본', qty: 1 };
+                out.push({ name: '바지', val: `${w ? String(w).replace(/인치$/, '') + '인치' : '허리 ?'} · 기장 ${lp.size} (${lp.qty}벌)` });
+            } else if (items[k]) {
+                if (k === '응원복') out.push({ name: '응원복', val: splitMulti(items[k]).map(parseOrderCell).map(p => `${p.size} (${p.qty}벌)`).join(', ') });
+                else { const p = parseOrderCell(items[k]); out.push({ name: UNI_ITEM_LABEL[k] || k, val: `${p.size} (${p.qty}${itemUnit(k)})` }); }
+            }
+        });
+        return out;
+    }
+    function splitMulti(v) { return String(v || '').split(/\s*[,/]\s*/).map(x => x.trim()).filter(Boolean); }
+
+    function setSelectValue(sel, val) {
+        if (!sel) return;
+        val = String(val);
+        if (!Array.from(sel.options).some(o => o.value === val)) { const o = document.createElement('option'); o.value = val; o.textContent = val; sel.appendChild(o); }
+        sel.value = val;
+    }
+
+    // 📣 응원복 줄 (사이즈 + 수량) — 엄마 · 아빠 사이즈가 다를 수 있어 여러 줄
+    function cheerLineHtml(size, qty, first) {
+        const sizes = CHEER_SIZES.includes(String(size)) ? CHEER_SIZES : CHEER_SIZES.concat([String(size)]);
+        return `<div class="cheer-line"><select class="uniform-item-size cheer-size" onchange="uniOnFormChange()">${sizes.map(s => `<option value="${escapeHtml(s)}"${String(s) === String(size) ? ' selected' : ''}>${escapeHtml(s)}</option>`).join('')}</select>`
+            + `<select class="uniform-item-qty cheer-qty" onchange="uniOnFormChange()">${[1, 2, 3].map(n => `<option value="${n}벌"${n === qty ? ' selected' : ''}>${n}벌</option>`).join('')}</select>`
+            + (first ? '' : `<button type="button" class="cheer-del" title="이 사이즈 빼기" onclick="cheerRemoveLine(this)">✕</button>`) + `</div>`;
+    }
+    function renderCheerLines(list) {
+        const box = document.getElementById('cheerLines');
+        if (!box) return;
+        const lines = (list && list.length) ? list.slice(0, CHEER_MAX_LINES) : [{ size: '100', qty: 1 }];
+        box.innerHTML = lines.map((l, i) => cheerLineHtml(l.size, l.qty, i === 0)).join('')
+            + `<div class="cheer-line cheer-line-add"><button type="button" class="cheer-add" onclick="cheerAddLine()">＋ 다른 사이즈 추가</button></div>`;
+        toggleCheerInputs(document.getElementById('chkCheer'), true);
+    }
+    function cheerAddLine() {
+        const box = document.getElementById('cheerLines');
+        if (box.querySelectorAll('.cheer-size').length >= CHEER_MAX_LINES) return;
+        box.querySelector('.cheer-line-add').insertAdjacentHTML('beforebegin', cheerLineHtml('100', 1, false));
+        toggleCheerInputs(document.getElementById('chkCheer'), true);
+        uniOnFormChange();
+    }
+    function cheerRemoveLine(btn) { btn.closest('.cheer-line').remove(); toggleCheerInputs(document.getElementById('chkCheer'), true); uniOnFormChange(); }
+    function toggleCheerInputs(chk, quiet) {
+        const box = document.getElementById('cheerLines');
+        if (!box || !chk) return;
+        box.querySelectorAll('select, .cheer-del').forEach(el => { el.disabled = !chk.checked; });
+        const add = box.querySelector('.cheer-add');
+        if (add) add.disabled = !chk.checked || box.querySelectorAll('.cheer-size').length >= CHEER_MAX_LINES;
+        if (!quiet) uniOnFormChange();
+    }
+
+    // 화면(체크 · 사이즈 · 수량) → 서버에 보낼 품목 (체크한 것만)
+    function uniCollectItems() {
+        const items = {};
+        document.querySelectorAll('.uniform-item-row[data-name]').forEach(row => {
+            const chk = row.querySelector('.chk-item'), name = row.getAttribute('data-name');
+            if (!(chk && chk.checked && name)) return;
+            const size = row.querySelector('.uniform-item-size').value, qty = row.querySelector('.uniform-item-qty').value;
+            items[name] = (name === '모자') ? (qty === '1개' ? '프리' : `프리 (${qty})`) : `${size} (${qty})`;
+        });
+        const chkPants = document.getElementById('chkPants');
+        if (chkPants && chkPants.checked) {
+            items['바지 (허리)'] = document.getElementById('pantsWaist').value;
+            items['바지 (기장)'] = `${document.getElementById('pantsLength').value} (${document.getElementById('pantsQty').value})`;
+        }
+        const chkCheer = document.getElementById('chkCheer');
+        if (chkCheer && chkCheer.checked) {
+            const parts = [];
+            document.querySelectorAll('#cheerLines .cheer-line').forEach(l => { const s = l.querySelector('.cheer-size'), q = l.querySelector('.cheer-qty'); if (s && q) parts.push(`${s.value} (${q.value})`); });
+            if (parts.length) items['응원복'] = parts.join(', ');
+        }
+        return items;
+    }
+
+    // 서버 내역 → 화면에 체크 (없으면 전부 비움)
+    function uniApplyItems(items) {
+        items = items || {};
+        document.querySelectorAll('.uniform-item-row[data-name]').forEach(row => {
+            const chk = row.querySelector('.chk-item'), name = row.getAttribute('data-name'), v = items[name];
+            chk.checked = !!v;
+            if (v) {
+                const p = parseOrderCell(v);
+                setSelectValue(row.querySelector('.uniform-item-size'), name === '모자' ? '프리' : p.size);
+                setSelectValue(row.querySelector('.uniform-item-qty'), p.qty + itemUnit(name));
+            }
+            toggleRowInputs(chk, true);
+        });
+        const w = items['바지 (허리)'], l = items['바지 (기장)'], chkPants = document.getElementById('chkPants');
+        chkPants.checked = !!(w || l);
+        if (w) setSelectValue(document.getElementById('pantsWaist'), String(w).replace(/[^0-9.]/g, ''));
+        if (l) { const lp = parseOrderCell(l); setSelectValue(document.getElementById('pantsLength'), lp.size); setSelectValue(document.getElementById('pantsQty'), lp.qty + '벌'); }
+        togglePantsInputs(chkPants, true);
+        const chkCheer = document.getElementById('chkCheer');
+        chkCheer.checked = !!items['응원복'];
+        renderCheerLines(items['응원복'] ? splitMulti(items['응원복']).map(parseOrderCell) : null);
+    }
+
+    function openUniformModal(preNo, preName) {
         if (isAnonymousGuest()) {
             bkNotify('info', '학부모 인증 후 신청할 수 있캉!', '휴대폰 번호로 로그인해 주세요');
             return;
         }
         if (!isUniformActive && !isSuperOrDev()) {
-            bkNotify('info', '지금은 유니폼 접수 기간이 아니캉!');
+            bkNotify('info', '지금은 유니폼 접수 기간이 아니캉!', '바꿀 게 있으면 대표님께 말씀해 주세요');
             return;
         }
         const select = document.getElementById('ordPlayerSelect');
@@ -9771,124 +9978,247 @@
             select.appendChild(opt);
         });
 
-        // 로그인한 보호자의 자녀가 1명이면 자동 선택 (배번 우선, 동명이인 방지)
-        const activeUser = getActiveUser();
-        if (activeUser && activeUser.name) {
-            const children = (activeUser.children && activeUser.children.length)
-                ? activeUser.children
-                : [{ name: activeUser.name, no: activeUser.no || 0 }];
-            if (children.length === 1) {
-                const child = children[0];
-                for (let i = 0; i < select.options.length; i++) {
-                    const o = select.options[i];
-                    const sameNo = child.no > 0 && parseInt(o.dataset.no, 10) === child.no;
-                    const sameName = !(child.no > 0) && o.dataset.name === child.name;
-                    if (sameNo || sameName) {
-                        select.selectedIndex = i;
-                        handleUniformPlayerChange(o.value);
-                        break;
-                    }
-                }
+        uniLoadSeq++;
+        uniState = { key: '', loading: false, found: false, hasOrder: false, items: {}, date: '', status: '', legacy: false, editing: false };
+        document.getElementById('ordPlayerGrade').value = '';
+        document.getElementById('ordPlayerHeight').value = '';
+        document.getElementById('ordPlayerWeight').value = '';
+        uniApplyItems({});
+        uniRender();
+
+        // 관리자가 주문 집계에서 「수정 · 취소」를 누르면 그 선수, 아니면 자녀가 1명일 때 자동 선택 (배번 우선, 동명이인 방지)
+        let want = null;
+        if (preName || preNo) want = { no: parseInt(preNo, 10) || 0, name: preName || '' };
+        else {
+            const activeUser = getActiveUser();
+            if (activeUser && activeUser.name) {
+                const children = (activeUser.children && activeUser.children.length) ? activeUser.children : [{ name: activeUser.name, no: activeUser.no || 0 }];
+                if (children.length === 1) want = children[0];
             }
         }
-
-        document.querySelectorAll('.chk-item').forEach(c => { c.checked = false; toggleRowInputs(c); });
-        const chkPants = document.getElementById('chkPants');
-        if (chkPants) { chkPants.checked = false; togglePantsInputs(chkPants); }
+        if (want) {
+            for (let i = 0; i < select.options.length; i++) {
+                const o = select.options[i];
+                const sameNo = want.no > 0 && parseInt(o.dataset.no, 10) === want.no;
+                const sameName = !(want.no > 0) && o.dataset.name === want.name;
+                if (sameNo || sameName) { select.selectedIndex = i; handleUniformPlayerChange(o.value); break; }
+            }
+        }
         document.getElementById('uniformModal').style.display = 'flex';
     }
 
     function handleUniformPlayerChange(playerName) {
-        const select = document.getElementById('ordPlayerSelect');
-        const opt = select.options[select.selectedIndex];
-        if (!opt || !opt.value) return;
+        const opt = uniSelectedOpt();
+        if (!opt) {
+            uniLoadSeq++;
+            uniState = { key: '', loading: false, found: false, hasOrder: false, items: {}, date: '', status: '', legacy: false, editing: false };
+            uniApplyItems({}); uniRender();
+            return;
+        }
         document.getElementById('ordPlayerGrade').value = (opt.dataset.grade || '') + '학년';
         document.getElementById('ordPlayerHeight').value = opt.dataset.h || '';
         document.getElementById('ordPlayerWeight').value = opt.dataset.w || '';
+        uniLoadMine(opt);
     }
 
-    function toggleRowInputs(chk) {
+    // 📋 그 선수의 신청 내역을 서버에서 불러옴 (창을 열 때 · 선수를 바꿀 때 1번)
+    async function uniLoadMine(opt) {
+        const seq = ++uniLoadSeq;
+        const no = parseInt(opt.dataset.no, 10) || 0, name = opt.dataset.name || opt.value;
+        uniState = { key: no + '|' + name, loading: true, found: false, hasOrder: false, items: {}, date: '', status: '', legacy: false, editing: false };
+        uniApplyItems({}); uniRender();
+        let res = null;
+        try {
+            res = await apiGetJson('action=myOrder&playerNo=' + encodeURIComponent(no > 0 ? no : '') + '&playerName=' + encodeURIComponent(name) + '&playerGrade=' + encodeURIComponent(opt.dataset.grade || ''));
+        } catch (e) { res = { result: 'error', message: (e && e.message) || '서버 연결 오류' }; }
+        if (seq !== uniLoadSeq) return;   // 그 사이 다른 선수를 골랐으면 버림
+        uniState.loading = false;
+        if (res && res.result === 'success') {
+            uniState.found = !!res.found; uniState.hasOrder = !!res.hasOrder; uniState.items = res.items || {};
+            uniState.date = res.date || ''; uniState.status = res.status || '';
+            if (typeof res.uniformActive === 'boolean' && res.uniformActive !== isUniformActive) { isUniformActive = res.uniformActive; try { updateUniformButtonVisibility(); } catch (e) {} }
+            if (res.height && !document.getElementById('ordPlayerHeight').value) document.getElementById('ordPlayerHeight').value = String(res.height).replace(/[^0-9.]/g, '');
+            if (res.weight && !document.getElementById('ordPlayerWeight').value) document.getElementById('ordPlayerWeight').value = String(res.weight).replace(/[^0-9.]/g, '');
+        } else if (res && res.result === 'error') {
+            uniState.error = res.message || '신청 내역을 불러오지 못했어요';
+        } else {
+            uniState.legacy = true;   // 서버가 아직 예전 버전 — 내역 없이 새 신청만 (예전 방식으로 보냄)
+        }
+        uniApplyItems(uniState.items);
+        uniRender();
+    }
+
+    function uniChanges() {   // 처음 불러온 내역과 지금 화면의 차이
+        const before = uniDisplayItems(uniState.items || {}), now = uniDisplayItems(uniCollectItems());
+        const b = {}, n = {}; before.forEach(x => { b[x.name] = x.val; }); now.forEach(x => { n[x.name] = x.val; });
+        const add = [], del = [], chg = [];
+        Object.keys(n).forEach(k => { if (!(k in b)) add.push(k); else if (b[k] !== n[k]) chg.push(k); });
+        Object.keys(b).forEach(k => { if (!(k in n)) del.push(k); });
+        return { add, del, chg, any: add.length + del.length + chg.length > 0, count: now.length, b, n };
+    }
+    function uniRowOf(name) { return name === '바지' ? document.getElementById('rowPants') : name === '응원복' ? document.getElementById('rowCheer') : document.querySelector('.uniform-item-row[data-name="' + ({ '유니폼 상의': '유니폼상의' }[name] || name) + '"]'); }
+
+    function uniOnFormChange() { uniRender(true); }
+
+    // 🖼️ 내 신청 영역 · 버튼 · 줄 표시를 지금 상태에 맞게
+    function uniRender(formOnly) {
+        const mine = document.getElementById('uniMine'), wrap = document.getElementById('uniFormWrap'), diff = document.getElementById('uniDiff');
+        const btnSubmit = document.getElementById('btnSubmitOrder'), btnCancel = document.getElementById('btnCancelOrder');
+        const opt = uniSelectedOpt(), st = uniState, has = !!(opt && st.hasOrder && !st.loading);
+        const canWrite = isUniformActive || isSuperOrDev();
+        const list = has ? uniDisplayItems(st.items) : [];
+        const dateTxt = has ? escapeHtml(st.date || '') : '';
+        const ch = has ? uniChanges() : null;
+        const viewMode = UNI_VARIANT === 'B' && has && !st.editing;
+
+        wrap.hidden = viewMode;
+        btnSubmit.hidden = viewMode;
+        btnSubmit.style.display = viewMode ? 'none' : '';
+        btnSubmit.disabled = !!st.loading || !opt;
+        btnSubmit.textContent = has ? '수정 제출' : '신청서 제출';
+        btnCancel.hidden = !(has && canWrite && UNI_VARIANT === 'A');
+
+        // 줄마다 상태 표시 (C안)
+        document.querySelectorAll('#uniformModal .uni-tag').forEach(t => t.remove());
+        document.querySelectorAll('#uniformModal .uniform-item-row').forEach(r => r.classList.remove('st-had', 'st-chg', 'st-new', 'st-del'));
+        if (UNI_VARIANT === 'C' && has) {
+            const mark = (name, cls, text) => { const row = uniRowOf(name); if (!row) return; row.classList.add(cls); const lab = row.querySelector('.uniform-item-name'); const t = document.createElement('span'); t.className = 'uni-tag'; t.textContent = text; lab.appendChild(t); };
+            Object.keys(ch.b).forEach(k => { if (ch.del.includes(k)) mark(k, 'st-del', '빼기'); else if (ch.chg.includes(k)) mark(k, 'st-chg', '변경'); else mark(k, 'st-had', '신청됨'); });
+            ch.add.forEach(k => mark(k, 'st-new', '추가'));
+        }
+        // 바뀌는 내용 한 줄 (C안)
+        if (UNI_VARIANT === 'C' && has) {
+            diff.hidden = false;
+            diff.className = 'uni-diff' + (ch.any ? '' : ' same');
+            const parts = [];
+            if (ch.add.length) parts.push('추가: ' + ch.add.join(' · '));
+            if (ch.chg.length) parts.push('변경: ' + ch.chg.join(' · '));
+            if (ch.del.length) parts.push('빼기: ' + ch.del.join(' · '));
+            diff.innerHTML = (ch.any ? '<b>바뀌는 내용</b> — ' + escapeHtml(parts.join(' / ')) : '아직 바꾼 내용이 없어요. 체크 · 사이즈를 고치면 여기에 보여요.')
+                + (canWrite ? '<button type="button" class="uni-link-cancel" onclick="cancelUniformOrder()">이 선수 신청 전체 취소</button>' : '');
+        } else { diff.hidden = true; diff.innerHTML = ''; }
+        if (formOnly) return;
+
+        // 내 신청 영역
+        if (!opt) { mine.hidden = true; mine.innerHTML = ''; return; }
+        mine.hidden = false;
+        if (st.loading) { mine.className = 'uni-mine load'; mine.textContent = '신청 내역을 확인하는 중이에요…'; return; }
+        if (st.error) { mine.className = 'uni-mine warn'; mine.innerHTML = '<b>신청 내역을 불러오지 못했어요.</b> ' + escapeHtml(st.error) + '<div class="uni-mine-help">잠시 후 선수를 다시 골라 주세요.</div>'; btnSubmit.disabled = true; return; }
+        if (st.legacy) { mine.hidden = true; mine.innerHTML = ''; return; }
+        if (!has) { mine.className = 'uni-mine none'; mine.innerHTML = '아직 신청한 내역이 없어요. 필요한 품목을 체크해 주세요.'; return; }
+        mine.className = 'uni-mine has';
+        const top = `<div class="uni-mine-top"><b>✅ 이미 신청한 내역이 있어요</b><span class="uni-mine-date">${dateTxt}</span></div>`;
+        if (UNI_VARIANT === 'B') {
+            if (viewMode) {
+                mine.innerHTML = top + `<table class="uni-view-table"><tbody>${list.map(x => `<tr><td>${escapeHtml(x.name)}</td><td>${escapeHtml(x.val)}</td></tr>`).join('')}</tbody></table>`
+                    + (canWrite ? `<div class="uni-view-btns"><button type="button" class="uni-view-edit" onclick="uniStartEdit()">✏️ 수정하기</button><button type="button" class="uni-view-del" onclick="cancelUniformOrder()">신청 취소</button></div>` : '')
+                    + `<div class="uni-mine-help">${canWrite ? '접수 기간 동안은 언제든 고치거나 취소할 수 있어요.' : '접수가 마감됐어요. 바꿀 게 있으면 대표님께 말씀해 주세요.'}</div>`;
+            } else {
+                mine.innerHTML = `<div class="uni-mine-top"><b>✏️ 신청 내역을 고치는 중</b><button type="button" class="uni-back" onclick="uniStopEdit()">← 내역으로</button></div><div class="uni-mine-help">체크를 풀면 그 품목은 빠져요. 다 고쳤으면 「수정 제출」을 눌러 주세요.</div>`;
+            }
+        } else if (UNI_VARIANT === 'C') {
+            mine.innerHTML = top + `<div class="uni-mine-help">초록색 줄이 신청한 품목이에요. 체크를 풀면 빠지고, 사이즈를 바꾸면 변경돼요.</div>`;
+        } else {
+            mine.innerHTML = top + `<div class="uni-chips">${list.map(x => `<span class="uni-chip">${escapeHtml(x.name)} ${escapeHtml(x.val)}</span>`).join('')}</div>`
+                + `<div class="uni-mine-help">아래에서 고친 뒤 「수정 제출」을 누르면 화면 그대로 바뀌어요. 체크를 풀면 그 품목은 빠져요.</div>`;
+        }
+    }
+    document.addEventListener('change', e => { if (e.target && e.target.closest && e.target.closest('#uniformModal .uni-items') && e.target.tagName === 'SELECT') uniOnFormChange(); });
+    function uniStartEdit() { uniState.editing = true; uniRender(); }
+    function uniStopEdit() { uniState.editing = false; uniApplyItems(uniState.items); uniRender(); }
+
+    function toggleRowInputs(chk, quiet) {
         const row = chk.closest('.uniform-item-row');
         row.querySelector('.uniform-item-size').disabled = !chk.checked;
         row.querySelector('.uniform-item-qty').disabled = !chk.checked;
+        if (quiet !== true) uniOnFormChange();
     }
 
-    function togglePantsInputs(chk) {
+    function togglePantsInputs(chk, quiet) {
         document.getElementById('pantsWaist').disabled = !chk.checked;
         document.getElementById('pantsLength').disabled = !chk.checked;
         document.getElementById('pantsQty').disabled = !chk.checked;
+        if (quiet !== true) uniOnFormChange();
+    }
+
+    function uniOrderParams(opt) {
+        const no = parseInt(opt.dataset.no, 10) || 0;
+        return 'playerNo=' + encodeURIComponent(no > 0 ? no : '') + '&playerName=' + encodeURIComponent(opt.dataset.name || opt.value) + '&playerGrade=' + encodeURIComponent(opt.dataset.grade || '');
+    }
+    function uniAfterReject(res) {   // 마감 · 로그인 풀림 등 서버가 거절했을 때
+        if (res && res.closed) { isUniformActive = false; try { localStorage.setItem('daeyeon_uniform_active', 'false'); updateUniformButtonVisibility(); } catch (e) {} if (!isSuperOrDev()) closeModal('uniformModal'); }
     }
 
     async function submitUniformOrder() {
-        const select = document.getElementById('ordPlayerSelect');
-        const opt = select.options[select.selectedIndex];
-        if (!opt || !opt.value) { bkNotify('info', '대상 선수를 골라줘캉!'); return; }
+        const opt = uniSelectedOpt();
+        if (!opt) { bkNotify('info', '대상 선수를 골라줘캉!'); return; }
+        if (uniState.loading) return;
 
         const playerName = opt.dataset.name || opt.value;
-        const playerNo = parseInt(opt.dataset.no, 10) || 0;
-        const playerGrade = opt.dataset.grade || '';
         const height = document.getElementById('ordPlayerHeight').value.trim();
         const weight = document.getElementById('ordPlayerWeight').value.trim();
-        const activeUser = getActiveUser();
+        const items = uniCollectItems();
+        const wasEdit = !!uniState.hasOrder;
 
-        const itemsMap = { "모자": "-", "바지 (허리)": "-", "바지 (기장)": "-", "유니폼상의": "-", "여름훈련티": "-", "겨울훈련티": "-", "바람막이": "-", "풀오버": "-", "겨울점퍼": "-" };
-        let checkedCount = 0;
-
-        document.querySelectorAll('.uniform-item-row[data-name]').forEach(row => {
-            const chk = row.querySelector('.chk-item');
-            const name = row.getAttribute('data-name');
-            if (chk && chk.checked && name) {
-                const size = row.querySelector('.uniform-item-size').value;
-                const qty = row.querySelector('.uniform-item-qty').value;
-                itemsMap[name] = (name === "모자") ? (qty === "1개" ? "프리" : `프리 (${qty})`) : `${size} (${qty})`;
-                checkedCount++;
-            }
-        });
-
-        const chkPants = document.getElementById('chkPants');
-        if (chkPants && chkPants.checked) {
-            itemsMap["바지 (허리)"] = document.getElementById('pantsWaist').value;
-            itemsMap["바지 (기장)"] = `${document.getElementById('pantsLength').value} (${document.getElementById('pantsQty').value})`;
-            checkedCount++;
+        if (Object.keys(items).length === 0) {
+            if (wasEdit) bkNotify('info', '품목이 하나도 없캉!', '모두 빼려면 「신청 취소」를 눌러 주세요');
+            else bkNotify('info', '품목을 1개 이상 골라줘캉!');
+            return;
         }
-
-        if (checkedCount === 0) { bkNotify('info', '품목을 1개 이상 골라줘캉!'); return; }
+        if (wasEdit && !uniChanges().any) { bkNotify('info', '바꾼 내용이 없캉!', '고칠 품목을 체크하거나 사이즈를 바꿔 주세요'); return; }
 
         const submitBtn = document.getElementById('btnSubmitOrder');
         submitBtn.disabled = true;
-        submitBtn.textContent = '접수 상태 확인 중...';
-
+        submitBtn.textContent = '접수 중...';
+        bkNotify('saving', wasEdit ? '수정한 신청서 보내는 중이캉' : '신청서 보내는 중이캉');
         try {
-            // 제출 직전에 서버의 접수 상태를 다시 확인 (마감 후 열려 있던 화면 대비)
-            await fetchSettings();
-            updateUniformButtonVisibility();
-            if (!isUniformActive && !isSuperOrDev()) {
-                closeModal('uniformModal');
-                bkNotify('info', '유니폼 접수가 마감됐캉…', '다음 접수 기간을 기다려 주세요');
-                return;
+            let res;
+            if (uniState.legacy) {   // 서버가 예전 버전일 때만: 예전 방식(답을 못 읽음)
+                const legacyItems = { '모자': '-', '바지 (허리)': '-', '바지 (기장)': '-', '유니폼상의': '-', '여름훈련티': '-', '겨울훈련티': '-', '바람막이': '-', '풀오버': '-', '겨울점퍼': '-' };
+                Object.keys(items).forEach(k => { legacyItems[k] = items[k]; });
+                await postApi({ action: 'submitOrder', playerNo: parseInt(opt.dataset.no, 10) || '-', playerName: playerName, playerGrade: opt.dataset.grade ? opt.dataset.grade + '학년' : '-', height: height || '-', weight: weight || '-', items: legacyItems, asAdmin: isSuperOrDev() });
+                res = { result: 'success' };
+            } else {
+                res = await apiGetJson('action=submitOrder&replace=1&' + uniOrderParams(opt) + '&height=' + encodeURIComponent(height) + '&weight=' + encodeURIComponent(weight) + '&items=' + encodeURIComponent(JSON.stringify(items)));
             }
-
-            submitBtn.textContent = '구글 시트로 접수 중...';
-            bkNotify('saving', '신청서 보내는 중이캉');
-            await postApi({
-                action: "submitOrder",
-                playerNo: playerNo > 0 ? playerNo : '-',
-                playerName: playerName,
-                playerGrade: playerGrade ? playerGrade + '학년' : '-',
-                height: height || '-',
-                weight: weight || '-',
-                items: itemsMap,
-                asAdmin: isSuperOrDev(),
-                applicant: activeUser ? `${activeUser.name} (${activeUser.role} · ${activeUser.phone})` : '웹 접속자'
-            });
-            closeModal('uniformModal');
-            bkNotify('done', `${playerName} 선수 유니폼 신청 완료캉! ✓`, '접수 내역은 대표님·총무님이 확인해요', { img: 'uniform' });
+            if (res && res.result === 'success') {
+                closeModal('uniformModal');
+                bkNotify('done', `${playerName} 선수 유니폼 ${wasEdit ? '수정' : '신청'} 완료캉! ✓`, '접수 기간 동안은 다시 열어 고치거나 취소할 수 있어요', { img: 'uniform' });
+            } else {
+                bkNotify('fail', wasEdit ? '앗, 수정이 안 됐캉…' : '앗, 신청이 안 됐캉…', (res && res.message) || '서버에서 답이 없어요. 잠시 후 다시 해 주세요');
+                uniAfterReject(res);
+            }
         } catch (err) {
-            bkNotify('fail', '앗, 신청이 안 됐캉…', err.message);
+            bkNotify('fail', '앗, 신청이 안 됐캉…', (err && err.message) || '잠시 후 다시 해 주세요');
         } finally {
             submitBtn.disabled = false;
-            submitBtn.textContent = '신청서 제출';
+            submitBtn.textContent = uniState.hasOrder ? '수정 제출' : '신청서 제출';
         }
+    }
+
+    // ❌ 신청 취소 — 줄은 남기고 신청 품목만 비움 (접수 기간에는 보호자가 직접, 마감 뒤에는 대표님만 · 서버가 확인)
+    async function cancelUniformOrder() {
+        const opt = uniSelectedOpt();
+        if (!opt || !uniState.hasOrder || uniState.loading) return;
+        const playerName = opt.dataset.name || opt.value;
+        const names = uniDisplayItems(uniState.items).map(x => x.name).join(' · ');
+        const ok = await bkConfirm(`${playerName} 선수 신청을 취소할까요?`, { sub: `신청한 품목(${names})이 모두 빠져요`, ok: '신청 취소', cancel: '그대로 두기', danger: true });
+        if (!ok) return;
+        const btn = document.getElementById('btnCancelOrder');
+        btn.disabled = true;
+        bkNotify('saving', '신청 취소하는 중이캉');
+        try {
+            const res = await apiGetJson('action=cancelOrder&' + uniOrderParams(opt));
+            if (res && res.result === 'success') {
+                closeModal('uniformModal');
+                bkNotify('done', `${playerName} 선수 유니폼 신청 취소했캉 ✓`, '접수 기간 동안은 다시 신청할 수 있어요', { img: 'uniform' });
+            } else {
+                bkNotify('fail', '앗, 취소가 안 됐캉…', (res && res.message) || '서버에서 답이 없어요. 잠시 후 다시 해 주세요');
+                uniAfterReject(res);
+            }
+        } catch (err) {
+            bkNotify('fail', '앗, 취소가 안 됐캉…', (err && err.message) || '잠시 후 다시 해 주세요');
+        } finally { btn.disabled = false; }
     }
 
     // ==========================================================

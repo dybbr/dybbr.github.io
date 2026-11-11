@@ -1,12 +1,12 @@
 // ==========================================================
-// ⚾ 대연초 야구부 관리 시스템 통합 백엔드 API (v2.40.0)
+// ⚾ 대연초 야구부 관리 시스템 통합 백엔드 API (v2.41.0)
 // ==========================================================
 // ★ API_KEY 는 코드에 적지 않고 「프로젝트 설정 → 스크립트 속성」의 API_KEY 에 넣어 둡니다 (v2.36.0~).
 //   값은 index.html / player.html 의 API_KEY 와 "같은 값"이어야 합니다. 속성이 비어 있으면 모든 요청을 거절합니다.
 var API_KEY = PropertiesService.getScriptProperties().getProperty("API_KEY") || null;
 
-var ALLOWED_POST_ACTIONS = ["login", "logout", "uploadPhoto", "deletePhoto", "submitOrder", "registerContact", "setUniformActive", "setJerseyColors", "changeAdminPw", "updatePlayerInfo", "saveEvents", "deleteEvent", "saveNotice", "deleteNotice", "saveVenue", "deleteVenue"];   // v2.14.0: 실시간 접속 알림(presence) 없앰 · v2.15.0: 보안 활동 로그(logActivity) 없앰 · v2.20.0: 공지 읽음(viewNotice) 없앰
-var ALLOWED_ORDER_ITEMS = ["모자", "바지 (허리)", "바지 (기장)", "유니폼상의", "여름훈련티", "겨울훈련티", "바람막이", "풀오버", "겨울점퍼"];
+var ALLOWED_POST_ACTIONS = ["login", "logout", "uploadPhoto", "deletePhoto", "submitOrder", "cancelOrder", "registerContact", "setUniformActive", "setJerseyColors", "changeAdminPw", "updatePlayerInfo", "saveEvents", "deleteEvent", "saveNotice", "deleteNotice", "saveVenue", "deleteVenue"];   // v2.14.0: 실시간 접속 알림(presence) 없앰 · v2.15.0: 보안 활동 로그(logActivity) 없앰 · v2.20.0: 공지 읽음(viewNotice) 없앰
+var ALLOWED_ORDER_ITEMS = ["모자", "바지 (허리)", "바지 (기장)", "유니폼상의", "여름훈련티", "겨울훈련티", "바람막이", "풀오버", "겨울점퍼", "응원복"];   // v2.41.0: 📣 응원복 (학부모 응원용)
 
 // ★ 1. 드라이브 권한 및 폴더 생성 테스트 함수
 function testDriveAuth() {
@@ -788,9 +788,8 @@ function doPost(e) {
       if (role === "parent") {
         if (contactPending(ss, session.phone, _no, _nm)) return json({ result: "error", pending: true, message: "대표님 · 총무님이 등록을 확인한 뒤에 사진 · 정보를 고칠 수 있어요." });
       }
-    } else if (a === "submitOrder") {
-      if (!session) return json({ result: "error", message: "인증이 필요합니다." });
-      if (!(role === "super" || role === "dev")) data.asAdmin = false;   // 관리자만 마감 후/대리 접수 가능
+    } else if (a === "submitOrder" || a === "cancelOrder") {
+      if (!session) return json({ result: "error", message: "인증이 필요합니다." });   // 권한 · 자녀 범위 · 마감은 handleSubmitOrder / handleCancelOrder 가 세션으로 직접 검사 (v2.41.0)
     } else if (a === "changeAdminPw") {
       if (!canChangePwRole(role)) return json({ result: "error", message: "권한이 없습니다." });
     } else if (a === "registerContact") {
@@ -807,7 +806,8 @@ function doPost(e) {
       case "deleteVenue":       return handleDeleteVenue(ss, data);
       case "saveNotice":        return handleSaveNotice(ss, data);
       case "deleteNotice":      return handleDeleteNotice(ss, data);
-      case "submitOrder":       return handleSubmitOrder(ss, data);
+      case "submitOrder":       return handleSubmitOrder(ss, data, session);
+      case "cancelOrder":       return handleCancelOrder(ss, data, session);
       case "registerContact":   return handleRegisterContact(ss, data);
       case "setUniformActive":
         setUniformActive(data.active === true || data.active === "true");
@@ -958,86 +958,207 @@ function handleUpdatePlayerInfo(ss, data) {
   return json({ result: "success" });
 }
 
-// [4] 유니폼 주문 접수 (동명이인은 배번 우선, 배번이 없으면 이름+학년)
-function handleSubmitOrder(ss, data) {
-  if (!getUniformActive() && data.asAdmin !== true) {
-    return json({ result: "error", message: "현재는 유니폼 접수 기간이 아닙니다." });
-  }
+// [4] 👕 유니폼 주문 접수 · 수정 · 취소 (v2.41.0)
+//   - 선수 1명 = 시트 1줄. 동명이인은 배번 우선, 배번이 없으면 이름+학년으로 줄을 찾음
+//   - v2.41.0: 앱이 답을 읽을 수 있게 GET 으로도 받음(myOrder · submitOrder · cancelOrder) — 예전 POST 는 실패해도 「완료」로 보였음
+//   - v2.41.0: 「화면 그대로 바꾸기」(replace) — 체크를 푼 품목은 칸을 비움 (예전엔 건너뛰어 품목을 뺄 수 없었음)
+//   - v2.41.0: 보호자는 내 자녀만 · 접수 기간에만 (마감 뒤 수정 · 취소는 대표님 · 개발자만)
+//   - v2.41.0: 시트 맨 오른쪽에 「응원복」 · 「신청자」 · 「상태」 칸이 없으면 머리줄만 만들어 씀 (기존 칸 · 값은 그대로)
+var ORDER_EXTRA_COLS = ["응원복", "신청자", "상태"];
 
-  var ordSheet = getUniformSheet(ss);
-  if (!ordSheet) return json({ result: "error", message: "유니폼 시트를 찾을 수 없습니다." });
-
-  var values = ordSheet.getDataRange().getValues();
+function orderSheetInfo(ss) {
+  var sh = getUniformSheet(ss);
+  if (!sh) return null;
+  var values = sh.getDataRange().getValues();
   var headers = values[0].map(function (h) { return String(h).trim(); });
+  return {
+    sheet: sh, values: values, headers: headers,
+    nameIdx: findColIdx(headers, ["선수이름", "이름", "성명"]),
+    noIdx: findColIdx(headers, ["배번", "등번호", "번호"]),
+    gradeIdx: findColIdx(headers, ["학년", "구분"]),
+    hIdx: findColIdx(headers, ["키", "신장"]),
+    wIdx: findColIdx(headers, ["몸무게", "체중"]),
+    dateIdx: findColIdx(headers, ["신청날짜", "접수일자"]),
+    byIdx: findColIdx(headers, ["신청자"]),
+    stIdx: findColIdx(headers, ["상태"])
+  };
+}
 
-  var nameIdx = findColIdx(headers, ["선수이름", "이름", "성명"]);
-  var noIdx = findColIdx(headers, ["배번", "등번호", "번호"]);
-  var gradeIdx = findColIdx(headers, ["학년", "구분"]);
-  var hIdx = findColIdx(headers, ["키", "신장"]);
-  var wIdx = findColIdx(headers, ["몸무게", "체중"]);
-  var dateIdx = findColIdx(headers, ["신청날짜", "접수일자"]);
+// 쓰기 전에만 부름: 없는 칸(응원복 · 신청자 · 상태)의 머리줄을 맨 오른쪽에 만듦
+function ensureOrderCols(info) {
+  var made = false;
+  ORDER_EXTRA_COLS.forEach(function (name) {
+    if (findColIdx(info.headers, name) !== -1) return;
+    var col = info.headers.length + 1;
+    info.sheet.getRange(1, col).setValue(name);
+    info.headers.push(name);
+    made = true;
+  });
+  if (made) {
+    info.byIdx = findColIdx(info.headers, ["신청자"]);
+    info.stIdx = findColIdx(info.headers, ["상태"]);
+  }
+}
 
+function findOrderRow(info, reqNo, reqName, reqGrade) {
+  var v = info.values;
+  for (var i = 1; i < v.length; i++) {
+    var rName = info.nameIdx !== -1 ? String(v[i][info.nameIdx] || '').trim() : '';
+    var rNo = info.noIdx !== -1 ? (parseInt(v[i][info.noIdx], 10) || 0) : 0;
+    var rGrade = info.gradeIdx !== -1 ? String(v[i][info.gradeIdx] || '').replace(/[^0-9]/g, '') : '';
+    if (reqNo > 0 && rNo > 0) { if (reqNo === rNo) return i; }
+    else if (rName === reqName) { if (!reqGrade || !rGrade || reqGrade === rGrade) return i; }
+  }
+  return -1;
+}
+
+function orderItemsOfRow(info, row) {
+  var items = {}, has = false;
+  ALLOWED_ORDER_ITEMS.forEach(function (k) {
+    var c = findColIdx(info.headers, k);
+    var val = (c !== -1 && row) ? String(row[c] == null ? '' : row[c]).trim() : '';
+    if (val && val !== '-' && val !== '0') { items[k] = val; has = true; }
+  });
+  return { items: items, has: has };
+}
+
+// 보호자 · 관리자 확인 — 통과하면 null, 막히면 이유
+function orderDeny(ss, session, no, name, write) {
+  if (!session || session.role === "guest") return "학부모 인증 후 이용할 수 있어요.";
+  var admin = session.role === "super" || session.role === "dev";
+  if (admin) return null;
+  if (session.role === "parent") {
+    if (!scopeHasPlayer(session, no, name)) return "본인 자녀만 신청할 수 있어요.";
+    if (write) {
+      var sc = (session.scope || []).filter(function (c) { return (no > 0 && c.no > 0) ? Number(c.no) === no : String(c.name) === name; })[0];
+      // 로그인할 때 노란 칸(확인 전)이었던 자녀만 지금 시트를 다시 봄 → 그 사이 확인됐으면 통과 (대부분은 시트를 더 읽지 않음)
+      if (sc && sc.pending && contactPending(ss, session.phone, no, name)) return "대표님 · 총무님이 등록을 확인한 뒤에 신청할 수 있어요.";
+    }
+    return null;
+  }
+  return null;   // 코치진 · 총무님 등은 예전처럼 신청 가능 (마감 뒤는 아래에서 막음)
+}
+
+function orderApplicant(session) {
+  if (!session) return "";
+  if (session.role === "parent") return cleanText(String(session.name || "") + (session.rel ? " " + session.rel : ""), 40);
+  return roleName(session.role);
+}
+
+function orderSnapshot(info, rowIdx) {
+  var row = rowIdx > 0 ? info.values[rowIdx] : null;
+  var it = orderItemsOfRow(info, row);
+  var cell = function (idx) { return (row && idx !== -1) ? String(row[idx] == null ? '' : row[idx]).trim() : ''; };
+  var date = cell(info.dateIdx);
+  if (date && Object.prototype.toString.call(row[info.dateIdx]) === "[object Date]") date = Utilities.formatDate(row[info.dateIdx], "Asia/Seoul", "yyyy. MM. dd. HH:mm");
+  return { found: rowIdx > 0, items: it.items, hasOrder: it.has, date: date, status: cell(info.stIdx),
+           height: cell(info.hIdx), weight: cell(info.wIdx) };
+}
+
+// 📋 내 신청 내역 (읽기만)
+function handleMyOrder(ss, session, p) {
+  var reqNo = parseInt(p.playerNo, 10) || 0, reqName = cleanText(p.playerName, 30);
+  var deny = orderDeny(ss, session, reqNo, reqName, false);
+  if (deny) return json({ result: "error", message: deny });
+  var info = orderSheetInfo(ss);
+  if (!info) return json({ result: "error", message: "유니폼 시트를 찾을 수 없습니다." });
+  var r = findOrderRow(info, reqNo, reqName, String(p.playerGrade || '').replace(/[^0-9]/g, ''));
+  var out = orderSnapshot(info, r);
+  out.result = "success"; out.uniformActive = getUniformActive();
+  return json(out);
+}
+
+// ✍️ 신청 · 수정 (data.replace 가 true 면 체크 안 한 품목은 칸을 비움)
+function handleSubmitOrder(ss, data, session) {
+  var admin = !!session && (session.role === "super" || session.role === "dev");
+  if (!getUniformActive() && !admin) {
+    return json({ result: "error", closed: true, message: "현재는 유니폼 접수 기간이 아닙니다. 바꿀 게 있으면 대표님께 말씀해 주세요." });
+  }
   var reqNo = parseInt(data.playerNo, 10) || 0;
   var reqName = cleanText(data.playerName, 30);
   var reqGrade = String(data.playerGrade || '').replace(/[^0-9]/g, '');
+  if (!reqName) return json({ result: "error", message: "선수 이름이 없습니다." });
+  var deny = orderDeny(ss, session, reqNo, reqName, true);
+  if (deny) return json({ result: "error", message: deny });
+
+  var info = orderSheetInfo(ss);
+  if (!info) return json({ result: "error", message: "유니폼 시트를 찾을 수 없습니다." });
+  ensureOrderCols(info);
+
   var height = digitsOnly(data.height, 5);
   var weight = digitsOnly(data.weight, 5);
-  if (!reqName) return json({ result: "error", message: "선수 이름이 없습니다." });
+  var replace = data.replace === true || data.replace === "true" || data.replace === "1";
 
-  var targetRow = -1;
-  for (var i = 1; i < values.length; i++) {
-    var rName = nameIdx !== -1 ? String(values[i][nameIdx] || '').trim() : '';
-    var rNo = noIdx !== -1 ? (parseInt(values[i][noIdx], 10) || 0) : 0;
-    var rGrade = gradeIdx !== -1 ? String(values[i][gradeIdx] || '').replace(/[^0-9]/g, '') : '';
-
-    var isTarget = false;
-    if (reqNo > 0 && rNo > 0) {
-      if (reqNo === rNo) isTarget = true;
-    } else if (rName === reqName) {
-      if (!reqGrade || !rGrade || reqGrade === rGrade) isTarget = true;
-    }
-    if (isTarget) { targetRow = i + 1; break; }
-  }
-
-  // 허용된 품목만 통과
+  // 허용된 품목만 통과 (응원복은 여러 사이즈를 「100 (1벌), 90 (1벌)」처럼 한 칸에)
   var rawItems = data.items || {};
-  var items = {};
+  if (typeof rawItems === "string") { try { rawItems = JSON.parse(rawItems); } catch (eI) { rawItems = {}; } }
+  var items = {}, count = 0;
   for (var k in rawItems) {
     if (ALLOWED_ORDER_ITEMS.indexOf(k) === -1) continue;
-    var v = cleanText(rawItems[k], 40);
-    if (v && v !== "-") items[k] = v;
+    var v = cleanText(rawItems[k], k === "응원복" ? 80 : 40);
+    if (v && v !== "-") { items[k] = v; count++; }
   }
+  if (replace && count === 0) return json({ result: "error", message: "품목을 1개 이상 골라 주세요. 모두 빼려면 「신청 취소」를 눌러 주세요." });
 
   var dateStr = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy. MM. dd. HH:mm");
+  var rowIdx = findOrderRow(info, reqNo, reqName, reqGrade);
+  var before = rowIdx > 0 ? orderItemsOfRow(info, info.values[rowIdx]) : { has: false };
+  var statusStr = (before.has ? "수정 " : "신청 ") + dateStr;
+  var by = orderApplicant(session) || cleanText(data.applicant, 40);
 
-  if (targetRow !== -1) {
-    if (height && hIdx !== -1) ordSheet.getRange(targetRow, hIdx + 1).setValue(height);
-    if (weight && wIdx !== -1) ordSheet.getRange(targetRow, wIdx + 1).setValue(weight);
-    for (var key in items) {
-      var colIdx = findColIdx(headers, key);
-      if (colIdx !== -1) ordSheet.getRange(targetRow, colIdx + 1).setValue(items[key]);
-    }
-    if (dateIdx !== -1) ordSheet.getRange(targetRow, dateIdx + 1).setValue(dateStr);
+  if (rowIdx > 0) {
+    var sr = rowIdx + 1, sh = info.sheet;
+    if (height && info.hIdx !== -1) sh.getRange(sr, info.hIdx + 1).setValue(height);
+    if (weight && info.wIdx !== -1) sh.getRange(sr, info.wIdx + 1).setValue(weight);
+    ALLOWED_ORDER_ITEMS.forEach(function (key) {
+      var c = findColIdx(info.headers, key);
+      if (c === -1) return;
+      if (items[key]) sh.getRange(sr, c + 1).setValue(items[key]);
+      else if (replace) sh.getRange(sr, c + 1).setValue("");
+    });
+    if (info.dateIdx !== -1) sh.getRange(sr, info.dateIdx + 1).setValue(dateStr);
+    if (info.byIdx !== -1) sh.getRange(sr, info.byIdx + 1).setValue(by);
+    if (info.stIdx !== -1) sh.getRange(sr, info.stIdx + 1).setValue(statusStr);
   } else {
-    var newRow = new Array(headers.length);
-    for (var c = 0; c < headers.length; c++) newRow[c] = "-";
-
-    var seqIdx = findColIdx(headers, ["순번", "No"]);
-    if (seqIdx !== -1) newRow[seqIdx] = values.length;
-    if (noIdx !== -1) newRow[noIdx] = reqNo > 0 ? reqNo : "-";
-    if (nameIdx !== -1) newRow[nameIdx] = reqName;
-    if (gradeIdx !== -1) newRow[gradeIdx] = reqGrade || "-";
-    if (hIdx !== -1) newRow[hIdx] = height || "-";
-    if (wIdx !== -1) newRow[wIdx] = weight || "-";
-    for (var key2 in items) {
-      var ci = findColIdx(headers, key2);
-      if (ci !== -1) newRow[ci] = items[key2];
-    }
-    if (dateIdx !== -1) newRow[dateIdx] = dateStr;
-    ordSheet.appendRow(newRow);
+    var newRow = new Array(info.headers.length);
+    for (var c2 = 0; c2 < info.headers.length; c2++) newRow[c2] = "";
+    var seqIdx = findColIdx(info.headers, ["순번", "No"]);
+    if (seqIdx !== -1) newRow[seqIdx] = info.values.length;
+    if (info.noIdx !== -1) newRow[info.noIdx] = reqNo > 0 ? reqNo : "-";
+    if (info.nameIdx !== -1) newRow[info.nameIdx] = reqName;
+    if (info.gradeIdx !== -1) newRow[info.gradeIdx] = reqGrade || "-";
+    if (info.hIdx !== -1) newRow[info.hIdx] = height || "";
+    if (info.wIdx !== -1) newRow[info.wIdx] = weight || "";
+    for (var key2 in items) { var ci = findColIdx(info.headers, key2); if (ci !== -1) newRow[ci] = items[key2]; }
+    if (info.dateIdx !== -1) newRow[info.dateIdx] = dateStr;
+    if (info.byIdx !== -1) newRow[info.byIdx] = by;
+    if (info.stIdx !== -1) newRow[info.stIdx] = statusStr;
+    info.sheet.appendRow(newRow);
   }
 
-  return json({ result: "success" });
+  return json({ result: "success", edited: before.has, items: items, date: dateStr, status: statusStr, uniformActive: getUniformActive() });
+}
+
+// ❌ 신청 취소 — 줄은 지우지 않고 품목 칸만 비움 + 상태 「취소 (날짜)」 (키 · 몸무게는 그대로)
+function handleCancelOrder(ss, data, session) {
+  var admin = !!session && (session.role === "super" || session.role === "dev");
+  if (!getUniformActive() && !admin) {
+    return json({ result: "error", closed: true, message: "접수가 마감돼서 취소는 대표님께 말씀해 주세요." });
+  }
+  var reqNo = parseInt(data.playerNo, 10) || 0, reqName = cleanText(data.playerName, 30);
+  var deny = orderDeny(ss, session, reqNo, reqName, true);
+  if (deny) return json({ result: "error", message: deny });
+  var info = orderSheetInfo(ss);
+  if (!info) return json({ result: "error", message: "유니폼 시트를 찾을 수 없습니다." });
+  var rowIdx = findOrderRow(info, reqNo, reqName, String(data.playerGrade || '').replace(/[^0-9]/g, ''));
+  if (rowIdx < 1 || !orderItemsOfRow(info, info.values[rowIdx]).has) return json({ result: "error", message: "취소할 신청이 없어요." });
+  ensureOrderCols(info);
+  var sr = rowIdx + 1, sh = info.sheet;
+  ALLOWED_ORDER_ITEMS.forEach(function (key) { var c = findColIdx(info.headers, key); if (c !== -1) sh.getRange(sr, c + 1).setValue(""); });
+  var dateStr = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy. MM. dd. HH:mm");
+  if (info.byIdx !== -1) sh.getRange(sr, info.byIdx + 1).setValue(orderApplicant(session));
+  if (info.stIdx !== -1) sh.getRange(sr, info.stIdx + 1).setValue("취소 " + dateStr);
+  return json({ result: "success", cancelled: true, status: "취소 " + dateStr, uniformActive: getUniformActive() });
 }
 
 // [5] 최초 등록 → 학부모 비상연락망 시트에 저장
@@ -1266,6 +1387,15 @@ function doGet(e) {
     if (p.action === "getSettings") {
       if (!session) return json({ error: "auth", uniformActive: false });
       return json({ uniformActive: getUniformActive(), jerseyColors: getJerseyColors() });
+    }
+
+    // [0-0] 👕 v2.41.0: 유니폼 내 신청 조회 · 신청/수정 · 취소 — 앱이 답을 읽도록 GET 으로 받음 (쓰기는 잠금)
+    if (p.action === "myOrder") return handleMyOrder(ss, session, p);
+    if (p.action === "submitOrder" || p.action === "cancelOrder") {
+      if (!session) return json({ result: "error", auth: true, message: "로그인이 풀렸어요. 다시 로그인한 뒤 신청해 주세요." });
+      var oLock = LockService.getScriptLock();
+      if (!oLock.tryLock(20000)) return json({ result: "error", message: "서버가 바쁩니다. 잠시 후 다시 시도해 주세요." });
+      try { return p.action === "cancelOrder" ? handleCancelOrder(ss, p, session) : handleSubmitOrder(ss, p, session); } finally { oLock.releaseLock(); }
     }
 
     // [0-1] 관리자 비밀번호 변경 (로그인한 관리자만. 현재 비번도 서버에서 재확인)
