@@ -15,6 +15,8 @@
     const LS_KEY = 'daeyeon_pl', SS_KEY = 'daeyeon_pl_now', CACHE_NAME = 'daeyeon-walkup-v1';
     const LEAD = 0.15;        // 가사 줄을 눈으로 따라 읽기 좋게 조금 먼저 바꿈 (초) — 선수 상세와 같음
     const WALK_SEC = 20;      // 타석 곡: 이만큼 지나면 자동으로 서서히 끔 (켜 둔 경우)
+    const HOLD_MAX = 3 * 60 * 60 * 1000;   // 타석 모드 화면에서 자동 잠금을 미루는 시간 (켠 뒤 최대 3시간)
+    const AWAY_MAX = 10 * 60 * 1000;       // 화면을 끄거나 다른 앱에 이보다 오래 가 있었으면 미루지 않음
     const FADE_MS = 1600;     // 서서히 끄기 길이
     const I = {
         play: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>',
@@ -368,6 +370,19 @@
         try { navigator.wakeLock.request('screen').then(w => { wake = w; w.addEventListener('release', () => { wake = null; }); }).catch(() => {}); } catch (e) {}
     }
     function wakeOff() { try { if (wake) wake.release(); } catch (e) {} wake = null; }
+    // ⚾ 자동 잠금 미루기: 타석 모드 화면이 보이는 동안만 · 켠 뒤 최대 3시간 (index.html 의 잠금 검사가 물어봄)
+    //   · 화면을 끄거나 다른 앱에 10분 넘게 가 있었으면 미루지 않음 (돌아온 순간 원래 규칙대로)
+    let holdFrom = 0, awaySince = 0;
+    const lockIfDue = () => setTimeout(() => { try { if (typeof window.dyLockIfDue === 'function') window.dyLockIfDue(); } catch (e) {} }, 0);
+    function holdSync() {   // 타석 모드에 들어오고 나갈 때마다
+        const on = batShown();
+        if (on && !holdFrom) holdFrom = Date.now();
+        if (!on && holdFrom) { holdFrom = 0; lockIfDue(); }   // 나가는 순간: 미뤄 둔 잠금이 있으면 바로
+    }
+    window.plHold = function () {
+        if (!holdFrom || !batShown() || Date.now() - holdFrom >= HOLD_MAX) return false;
+        return !(awaySince && Date.now() - awaySince > AWAY_MAX);
+    };
     const batShown = () => { let tab = ''; try { tab = currentMainTab; } catch (e) {} return tab === 'music' && view === 'bat' && root.classList.contains('is-authenticated'); };
 
     // ---------------- 가사 (큰 글씨 세 줄 · 전체 가사) ----------------
@@ -516,7 +531,15 @@
         if (tabs && 'ResizeObserver' in window) { try { new ResizeObserver(measure).observe(tabs); } catch (e) {} }
         window.addEventListener('resize', measure);
         window.addEventListener('pagehide', remember);
-        document.addEventListener('visibilitychange', () => { if (document.hidden) remember(); else { measure(); if (batShown()) wakeOn(); paintTime(); } });
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) { remember(); awaySince = Date.now(); }
+            else {
+                const long = awaySince && Date.now() - awaySince > AWAY_MAX;
+                awaySince = 0;
+                if (long && holdFrom) { holdFrom = 0; lockIfDue(); setTimeout(holdSync, 50); }   // 오래 비웠다 돌아옴: 미뤄 둔 잠금부터 확인하고, 안 잠겼으면 다시 미루기 시작
+                measure(); if (batShown()) wakeOn(); paintTime();
+            }
+        });
         setupMediaKeys();
     }
     function measure() {   // 아래 탭 막대 높이 → 띠 · 큰 플레이어가 그 바로 위에 붙음
@@ -735,6 +758,7 @@
         document.querySelectorAll('#musicSection .pl-seg button').forEach(b => b.classList.toggle('on', b.dataset.v === view));
         $('plList').hidden = view !== 'list'; $('plBat').hidden = view !== 'bat';
         if (view === 'bat') { renderBat(); hydrate(); wakeOn(); } else wakeOff();
+        holdSync();
     }
 
     // ---------------- index.html 과 맞닿는 곳 ----------------
@@ -746,13 +770,14 @@
             measure();
             if (tab === 'music') { sync(); if (view === 'bat') { hydrate(); wakeOn(); } }
             else wakeOff();
+            holdSync();
         } catch (e) { console.warn('플레이리스트 탭 처리 실패:', e); }
     };
     window.plLayers = function () { return (bigOpen ? 1 : 0) + (lyrOpen ? 1 : 0); };            // 뒤로 가기로 닫을 수 있는 것 개수
     window.plBack = function () { if (lyrOpen) { setLyr(false); return true; } if (bigOpen) { closeBig(); return true; } return false; };
     window.plOnLock = function (why) {   // 잠금 · 로그아웃: 큰 플레이어는 닫음 · 「자동 잠금」이면 듣던 노래는 그대로 (직접 로그아웃하면 멈춤)
         try {
-            closeBig(); wakeOff();
+            closeBig(); wakeOff(); holdFrom = 0;
             if (why !== '자동 잠금') { stopAll(); try { sessionStorage.removeItem(SS_KEY); } catch (e) {} }   // 로그아웃 · 앱 종료: 듣던 곡도 비움 (다음에 다른 분이 로그인해도 안 남게)
         } catch (e) {}
     };

@@ -7889,6 +7889,7 @@
 
             const diff = parseInt(authExpire, 10) - Date.now();
             if (diff <= 0) {
+                if (plHoldOn()) { countdownEl.textContent = '타석 모드'; return; }   // ⚾ v2.106.0: 타석 모드 화면에서는 잠금을 미룸 (다른 화면으로 나가면 바로 잠금 · 최대 3시간)
                 localStorage.removeItem('daeyeon_auth_expire');
                 clearAdminRoleStorage();
                 clearToken();
@@ -7969,8 +7970,19 @@
         if (idleWarned) { idleWarned = false; force = true; try { bkNoteHide(); } catch (e) {} }
         if (force || idleLast - idleSaved > 10000) { idleSaved = idleLast; try { localStorage.setItem(IDLE_KEY, String(idleLast)); } catch (e) {} }   // 기기 저장은 10초에 한 번까지만
     }
+    // ⚾ v2.106.0: 타석 모드(음악 탭) 화면이 켜져 있는 동안은 자동 잠금을 미룸 — 경기 중 타석마다 다시 로그인하지 않게
+    //   · 타석 모드 화면에서만 · 켠 지 최대 3시간까지 (playlist.js 의 plHold) · 다른 탭 / 「전체 곡」으로 나가면 그 순간 원래 규칙대로 (window.dyLockIfDue)
+    function plHoldOn() { try { return !!(window.plHold && window.plHold()); } catch (e) { return false; } }
+    window.dyLockIfDue = function () {   // 타석 모드에서 나올 때 부름: 미뤄 둔 잠금이 있으면 바로 잠금
+        try {
+            if (!getToken()) return;
+            if (!isAuthValid()) { lockScreenNow('자동 잠금'); bkNotify('sleep', '시간이 다 돼서 잠갔캉 💤', '다시 로그인해 주세요', { ms: 6000 }); return; }   // 로그인 시간이 이미 다 됨
+            idleCheck();
+        } catch (e) {}
+    };
     function idleCheck() {
         if (!idleLoggedIn()) { idleWarned = false; return; }
+        if (plHoldOn()) { idleWarned = false; return; }
         if (idleLast && idleLast - idleStored() > 1000) { idleSaved = idleLast; try { localStorage.setItem(IDLE_KEY, String(idleLast)); } catch (e) {} }   // 5초마다 저장본도 맞춤
         const idle = Date.now() - Math.max(idleLast, idleStored());
         if (idle >= IDLE_LOCK_MS) { idleWarned = false; lockScreenNow('자동 잠금'); return; }
@@ -7982,7 +7994,7 @@
     function idleStartupCheck() {   // 앱을 열 때: 마지막으로 쓴 지 10분이 넘었으면 바로 잠금
         if (!idleLoggedIn()) return;
         const v = idleStored();
-        if (v && Date.now() - v >= IDLE_LOCK_MS) { lockScreenNow('자동 잠금'); return; }
+        if (v && Date.now() - v >= IDLE_LOCK_MS && !plHoldOn()) { lockScreenNow('자동 잠금'); return; }
         markActive(true);
     }
     ['pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll'].forEach(ev => window.addEventListener(ev, () => markActive(), { passive: true, capture: true }));
