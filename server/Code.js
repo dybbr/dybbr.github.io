@@ -1,5 +1,5 @@
 // ==========================================================
-// ⚾ 대연초 야구부 관리 시스템 통합 백엔드 API (v2.41.0)
+// ⚾ 대연초 야구부 관리 시스템 통합 백엔드 API (v2.42.0)
 // ==========================================================
 // ★ API_KEY 는 코드에 적지 않고 「프로젝트 설정 → 스크립트 속성」의 API_KEY 에 넣어 둡니다 (v2.36.0~).
 //   값은 index.html / player.html 의 API_KEY 와 "같은 값"이어야 합니다. 속성이 비어 있으면 모든 요청을 거절합니다.
@@ -256,8 +256,15 @@ function prefetchData(keys) {
     });
   } catch (e) { _dataMemo = null; }
 }
+var _refreshed = null;   // 🔥 v2.42.0: 「늘 데워 두기」(keepWarm)가 도는 동안만 — 보관본을 안 보고 시트에서 새로 읽어 여기에 모음 (다 읽은 뒤 한꺼번에 보관)
 function cachedData(key, producer) {
   var v;
+  if (_refreshed) {
+    if (Object.prototype.hasOwnProperty.call(_refreshed, key)) return _refreshed[key];
+    v = producer();
+    _refreshed[key] = v;
+    return v;
+  }
   if (_dataMemo && Object.prototype.hasOwnProperty.call(_dataMemo, key)) v = _dataMemo[key];   // 미리 꺼내 둔 것 (null = 없음 확인됨)
   else v = cacheGetBig(key);
   if (v !== null && v !== undefined) return v;
@@ -266,21 +273,59 @@ function cachedData(key, producer) {
   if (_dataMemo) _dataMemo[key] = v;
   return v;
 }
+// v2.42.0: 비울 때마다 「D_EP」(비운 번호)를 바꿈 → keepWarm 이 읽는 사이에 누가 고쳤으면 옛 내용을 보관하지 않게
+//          집행부 번호(C_OFFICERS)를 비우면 로그인용 연락처 색인(C_CONTACTS)도 같이 (둘 다 비상연락망 시트에서 나옴)
 function dropDataCache(keys) {
   if (!keys || !keys.length) return;
+  if (keys.indexOf("C_OFFICERS") !== -1 && keys.indexOf("C_CONTACTS") === -1) keys = keys.concat(["C_CONTACTS"]);
   if (_dataMemo) keys.forEach(function (k) { delete _dataMemo[k]; });
-  try { sessionCache().removeAll(keys.map(function (k) { return k + "_n"; })); } catch (e) {}
+  if (_refreshed) keys.forEach(function (k) { delete _refreshed[k]; });
+  try { var c = sessionCache(); c.removeAll(keys.map(function (k) { return k + "_n"; })); c.put("D_EP", String(Date.now()) + "." + Math.floor(Math.random() * 1e6), 21600); } catch (e) {}
+}
+
+// 🔥 v2.42.0: 늘 데워 두기 — 시간 예약(10분마다)이 부름. 명단 · 일정 · 공지 · 당번 · 연락처 색인을 시트에서 새로 읽어 25분짜리 보관본으로 바꿔 둠
+//   → 「10분 동안 아무도 안 들어온 뒤 첫 사람」도 시트 읽기(4~6초)를 기다리지 않음. 보관본을 지우지 않고 덮어쓰므로 그 사이 들어온 요청은 옛 보관본을 그대로 씀
+//   · 읽는 사이에 앱 저장 · 시트 직접 수정으로 보관본이 비워졌으면(D_EP 가 바뀜) 이번 것은 버림 (다음 요청이 새로 읽음)
+//   · 새벽 1~5시는 쉼 (예약 실행 시간 아끼기) · 예약이 없으면 지금까지와 똑같이 동작 (10분 보관)
+//   · 켜기: 스크립트 편집기 「트리거」에서 keepWarm 을 시간 기반 · 10분마다로 추가 (끄기: 그 트리거 삭제)
+//     ※ 코드에서 예약을 만들지 않음 — ScriptApp 을 쓰면 새 권한 승인이 필요해져, 승인 전까지 운영 웹앱 전체가 멈출 수 있어서
+var KEEP_WARM_TTL = 1500;   // 25분 (예약은 10분마다 → 한두 번 걸러도 안 식음)
+var KEEP_WARM_KEYS = ["C_ROSTER", "C_GRADS", "C_OFFICERS", "C_CONTACTS", "C_EVENTS", "C_VENUES", "C_NOTICES", "C_DUTY"];
+function keepWarm() {
+  var hour = Number(Utilities.formatDate(new Date(), "Asia/Seoul", "H"));
+  if (hour >= 1 && hour < 6) return { result: "skip" };
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), c = sessionCache(), ep0 = "";
+  try { ep0 = c.get("D_EP") || ""; } catch (e0) {}
+  _dataMemo = null; _refreshed = {};
+  var got;
+  try {
+    try { readRosterRaw(ss); } catch (e1) {}
+    try { readGradRaw(ss); } catch (e2) {}
+    try { readOfficers(ss); } catch (e3) {}
+    try { readContactIndex(ss); } catch (e4) {}
+    try { readEvents(ss); } catch (e5) {}
+    try { readVenues(ss); } catch (e6) {}
+    try { readNotices(ss); } catch (e7) {}
+    try { readDuty(ss); } catch (e8) {}
+    got = _refreshed;
+  } finally { _refreshed = null; }
+  var ep1 = "";
+  try { ep1 = c.get("D_EP") || ""; } catch (e9) {}
+  if (ep0 !== ep1) return { result: "changed" };   // 읽는 사이에 바뀜 → 이번 것은 버림
+  var n = 0;
+  KEEP_WARM_KEYS.forEach(function (k) { if (got && got[k] !== null && got[k] !== undefined) { cachePutBig(k, got[k], KEEP_WARM_TTL); n++; } });
+  return { result: "success", warmed: n };
 }
 
 // 🔥 v2.16.0: 로그인 화면에서 앱이 미리 부름 — 비번을 치는 동안 명단 · 일정 · 공지를 시트에서 읽어 보관만 함 (데이터는 안 돌려줌 · 이미 있으면 바로 끝)
 //   v2.17.0: 6칸을 한 번에 읽으면 7초 넘게 걸려서(로그인이 그보다 빠르면 소용없음) 앱이 세 묶음(part)으로 나눠 동시에 부름 → 2~3초
 //            읽는 동안은 「W_칸이름」 표시를 남겨, 그 사이 들어온 명단 요청이 같은 시트를 또 읽지 않고 기다렸다 씀 (waitForWarm)
-var WARM_PARTS = { roster: ["C_ROSTER", "C_GRADS", "C_OFFICERS"], sched: ["C_EVENTS", "C_VENUES", "C_DUTY"], notice: ["C_NOTICES"] };
+var WARM_PARTS = { roster: ["C_ROSTER", "C_GRADS", "C_OFFICERS", "C_CONTACTS"], sched: ["C_EVENTS", "C_VENUES", "C_DUTY"], notice: ["C_NOTICES"] };
 
 // 🔎 v2.19.0: 로그인 화면에서 먼저 하나만 물어봄 — 「어느 묶음이 비어 있나」만 캐시에서 한 번에 확인하고 바로 답함 (시트는 안 읽음)
 //   앱은 비어 있는 묶음만 나눠서 미리 읽게 함 → 보관본이 다 있으면(사람이 많을 때 대부분) 요청 3개 → 1개
 //   다른 사람이 이미 읽는 중인 묶음(W_ 표시)은 비어 있어도 빼서, 같은 시트를 여럿이 동시에 읽지 않게 함
-var WARM_CHECK = { roster: ["C_ROSTER", "C_GRADS", "C_OFFICERS"], sched: ["C_EVENTS", "C_VENUES", "C_DUTY"], notice: ["C_NOTICES"] };
+var WARM_CHECK = { roster: ["C_ROSTER", "C_GRADS", "C_OFFICERS", "C_CONTACTS"], sched: ["C_EVENTS", "C_VENUES", "C_DUTY"], notice: ["C_NOTICES"] };
 function warmCheck() {
   var keys = [];
   Object.keys(WARM_CHECK).forEach(function (p) { keys = keys.concat(WARM_CHECK[p]); });
@@ -307,6 +352,7 @@ function warmData(ss, part) {
     if (has("C_VENUES")) { try { readVenues(ss); } catch (e4) {} }
     if (has("C_NOTICES")) { try { readNotices(ss); } catch (e5) {} }
     if (has("C_OFFICERS")) { try { readOfficers(ss); } catch (e7) {} }
+    if (has("C_CONTACTS")) { try { readContactIndex(ss); } catch (e9) {} }   // 🔑 v2.42.0: 보호자 로그인용 연락처 색인
     if (has("C_DUTY")) { try { readDuty(ss); } catch (e8) {} }   // 🧹 v2.31.0
   } finally { try { c.removeAll(Object.keys(flags)); } catch (e6) {} }
   return { result: "success", warmed: miss.length };
@@ -616,35 +662,47 @@ function handleLoginInner(ss, data) {
   return json({ result: "error", message: "등록된 휴대폰 번호 또는 비밀번호가 아닙니다." });
 }
 
-// 휴대폰 뒷자리로 비상연락망에서 학부모(및 형제자매) 찾기
-function matchParents(ss, digits) {
-  var cSheet = getContactSheet(ss);
-  if (!cSheet) return null;
-  var v = cSheet.getDataRange().getValues();
-  var H = v[0].map(function (h) { return String(h).trim(); });
-  var noCol = findColIdx(H, ["배번", "등번호", "번호"]);
-  var nameCol = findColIdx(H, ["선수이름", "이름", "선수명"]);
-  var cols = [[findColIdx(H, ["아버님", "아버지"]), "아버님"], [findColIdx(H, ["어머님", "어머니"]), "어머님"],
-              [findColIdx(H, ["기타연락처", "기타", "추가연락처"]), "기타"], [findColIdx(H, ["학생연락처", "선수연락처"]), "학생"]];
-  var matches = [];
-  for (var i = 1; i < v.length; i++) {
-    for (var j = 0; j < cols.length; j++) {
-      var col = cols[j][0]; if (col === -1) continue;
-      var d = String(v[i][col] || "").replace(/[^0-9]/g, "");
-      if (d && d.length >= 8 && d.slice(-digits.length) === digits) {
-        matches.push({ no: noCol !== -1 ? (parseInt(v[i][noCol], 10) || 0) : 0, name: nameCol !== -1 ? String(v[i][nameCol] || "").trim() : "", role: cols[j][1], phone: d, r: i, c: col });
-        break;
+// 🔑 v2.42.0: 보호자 로그인용 연락처 색인 — 비상연락망 시트를 로그인할 때마다 통째로 두 번(값 · 배경색) 읽던 것을 보관본으로
+//   한 줄 = [시트 줄, 배번, 선수이름, 관계, 번호(숫자만), 노란 칸이면 1] · 시트 순서 그대로 (줄 → 아버님 · 어머님 · 기타 · 학생 순)
+//   비상연락망을 앱(최초 등록 · 새 학년도) · 시트에서 고치면 바로 비움 (dropDataCache: C_OFFICERS 와 같이)
+//   배경색만 지운 것(관리자 확인)은 신호가 안 와서 최대 10분 뒤에 반영 — 그 사이에도 사진 · 정보 수정은 contactPending 이 시트를 직접 보고 판단
+function readContactIndex(ss) {
+  return cachedData("C_CONTACTS", function () {
+    var cSheet = getContactSheet(ss);
+    if (!cSheet) return [];
+    var rg = cSheet.getDataRange(), v = rg.getValues(), bg = null;
+    try { bg = rg.getBackgrounds(); } catch (eBg) {}
+    var H = v[0].map(function (h) { return String(h).trim(); });
+    var noCol = findColIdx(H, ["배번", "등번호", "번호"]);
+    var nameCol = findColIdx(H, ["선수이름", "이름", "선수명"]);
+    var cols = [[findColIdx(H, ["아버님", "아버지"]), "아버님"], [findColIdx(H, ["어머님", "어머니"]), "어머님"],
+                [findColIdx(H, ["기타연락처", "기타", "추가연락처"]), "기타"], [findColIdx(H, ["학생연락처", "선수연락처"]), "학생"]];
+    var out = [];
+    for (var i = 1; i < v.length; i++) {
+      for (var j = 0; j < cols.length; j++) {
+        var col = cols[j][0]; if (col === -1) continue;
+        var d = String(v[i][col] || "").replace(/[^0-9]/g, "");
+        if (d && d.length >= 8) out.push([i, noCol !== -1 ? (parseInt(v[i][noCol], 10) || 0) : 0, nameCol !== -1 ? String(v[i][nameCol] || "").trim() : "", cols[j][1], d, (bg && isPendingBg(bg[i] && bg[i][col])) ? 1 : 0]);
       }
     }
+    return out;
+  });
+}
+// 휴대폰 뒷자리로 비상연락망에서 학부모(및 형제자매) 찾기 — 한 줄에서는 먼저 맞는 칸 하나만 (v2.42.0: 색인에서 찾음 · 결과는 예전과 같음)
+function matchParents(ss, digits) {
+  var idx = readContactIndex(ss) || [];
+  var matches = [], lastRow = -1;
+  for (var k = 0; k < idx.length; k++) {
+    var e = idx[k];
+    if (e[0] === lastRow) continue;
+    if (e[4].slice(-digits.length) === digits) { matches.push({ no: e[1], name: e[2], role: e[3], phone: e[4], pending: !!e[5] }); lastRow = e[0]; }
   }
   if (!matches.length) return null;
   var primary = matches[0];
   var sibs = matches.filter(function (m) { return m.phone === primary.phone; });
   // 🔒 v2.40.0: 웹으로 처음 등록해 아직 노란 칸(관리자 확인 전)인 자녀는 pending — 보기는 되지만 사진 · 정보 수정은 막음
-  var bg = null;
-  try { bg = cSheet.getDataRange().getBackgrounds(); } catch (eBg) {}
   return { name: sibs.map(function (s) { return s.name; }).join("·"), role: primary.role, phone: primary.phone,
-           scope: sibs.map(function (s) { var o = { no: s.no, name: s.name }; if (bg && isPendingBg(bg[s.r] && bg[s.r][s.c])) o.pending = true; return o; }) };
+           scope: sibs.map(function (s) { var o = { no: s.no, name: s.name }; if (s.pending) o.pending = true; return o; }) };
 }
 
 // 🟨 v2.40.0: 최초 등록 미확인 표시 = 노란 배경(#fef9c3, handleRegisterContact 가 칠함) — 관리자가 배경색을 지우면 확인된 것
