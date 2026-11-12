@@ -1732,7 +1732,7 @@
     function rdList(s) {
         return ck(s.data ? 'ok' : 'w', '두뇌 자료', s.data ? `v${DATA_VER}${s.terms ? ' · 야구 용어 ' + s.terms + '개' : ''} · 약 180KB 받음` : '아직 안 받음 · 「⬇ 다시 받기」를 눌러 주세요')
             + ck(s.eng ? 'ok' : s.bkOn ? 'w' : 'no', '「부캉아」 엔진', s.eng ? `약 ${ENG_MB}MB 받음 · 이 기기에 저장됨` : s.bkOn ? `「부캉아」가 켜져 있는데 아직 안 받음 (약 ${ENG_MB}MB)` : `안 받음 · 「부캉아」로 부를 때만 필요해요 (약 ${ENG_MB}MB)`)
-            + ck(s.voices ? (s.tts ? 'w' : 'ok') : 'w', '한국어 목소리', s.voices ? `휴대폰 목소리 「${s.voice}」 · ${voiceNow()[1]}${s.tts ? ' · 마지막 읽기 실패(' + s.tts + ')' : s.heard ? ' · 소리 확인함' : ''}` : '휴대폰에 한국어 읽기 목소리가 없어요 · 아래 「🔊 소리 시험」으로 확인')
+            + ck((s.voices || s.heard === 1) ? (s.tts ? 'w' : 'ok') : 'w', '한국어 목소리', !s.voices && s.heard === 1 ? '휴대폰 기본 목소리 · 소리 확인함' : s.voices ? `휴대폰 목소리 「${s.voice}」 · ${voiceNow()[1]}${s.tts ? ' · 마지막 읽기 실패(' + s.tts + ')' : s.heard ? ' · 소리 확인함' : ''}` : '휴대폰에 한국어 읽기 목소리가 없어요 · 아래 「🔊 소리 시험」으로 확인')
             + ck(s.mic === 'granted' ? 'ok' : s.mic === 'denied' ? 'w' : s.mic === 'none' ? 'no' : 'no', '마이크', s.mic === 'granted' ? '허락됨' : s.mic === 'denied' ? '막혀 있어요 · 주소창 왼쪽 자물쇠 → 마이크 허용' : s.mic === 'none' ? '이 기기에서는 말로 묻기를 못 써요' : '처음 말로 물을 때 허락을 물어요');
     }
     function readyCard() {
