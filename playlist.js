@@ -58,7 +58,7 @@
     const notify = (text, sub) => { try { if (typeof bkNotify === 'function') bkNotify('info', text, sub || '', { ms: 3500 }); } catch (e) {} };
 
     // ---------------- 이 기기에 저장하는 설정 ----------------
-    const cfg = { shuffle: false, repeat: 'all', hook: true, fadeIn: true, autoSec: 20, lineup: [], walkSong: {}, batIdx: -1, xl: false, sets: [], lyrTip: false, ann: true };
+    const cfg = { shuffle: false, repeat: 'all', hook: true, fadeIn: true, autoSec: 20, lineup: [], walkSong: {}, batIdx: -1, xl: false, sets: [], lyrTip: false, ann: true, bk: false };
     try {
         const j = JSON.parse(localStorage.getItem(LS_KEY) || '{}') || {};
         if (typeof j.shuffle === 'boolean') cfg.shuffle = j.shuffle;
@@ -73,6 +73,7 @@
         if (typeof j.xl === 'boolean') cfg.xl = j.xl;
         if (typeof j.lyrTip === 'boolean') cfg.lyrTip = j.lyrTip;
         if (typeof j.ann === 'boolean') cfg.ann = j.ann;
+        if (typeof j.bk === 'boolean') cfg.bk = j.bk;
         if (Array.isArray(j.sets)) cfg.sets = j.sets.filter(x => x && typeof x.name === 'string' && Array.isArray(x.lineup)).slice(0, 8).map(x => ({ name: x.name.slice(0, 12), lineup: x.lineup.filter(y => typeof y === 'string').slice(0, 30) }));
     } catch (e) {}
     function saveCfg() { try { localStorage.setItem(LS_KEY, JSON.stringify(cfg)); } catch (e) {} }
@@ -481,6 +482,188 @@
         on('seekto', d => { if (d && typeof d.seekTime === 'number') seekTo(d.seekTime); });
     }
 
+    // 🎙 말로 하기 (v2.114.0 · 시안 A: 위 안내 바) — 버튼을 누르고 말하면 크롬 음성 인식이 글자로 바꿔 주고, 정해 둔 말(선수 이름 · 다음 · 홈런 …)을 찾아 실행 · 무료, 서버 안 씀
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let rec = null, micOn = false, micVol = -1, micTimer = 0;
+    const MIC_SFX = [['clap', /박수/], ['cheer', /함성|환호|소리질러/], ['hit', /안타/], ['hr', /홈런/], ['run', /득점/], ['so', /삼진/], ['fight', /파이팅|화이팅|화이또/], ['chg', /공수교대|교대/]];
+    const micNorm = s => String(s || '').replace(/[\s.,!?~·'"「」]/g, '');
+    function korNum(s) {   // 「이십삼」 → 23 (1~99)
+        const D = '일이삼사오육칠팔구';
+        const m = /^([일이삼사오육칠팔구]?)(십?)([일이삼사오육칠팔구]?)$/.exec(s || '');
+        if (!m || !(m[1] || m[2] || m[3])) return 0;
+        const t = m[2] ? (m[1] ? D.indexOf(m[1]) + 1 : 1) : 0, o = m[3] ? D.indexOf(m[3]) + 1 : 0;
+        if (!m[2] && m[1]) return D.indexOf(m[1]) + 1;
+        return t * 10 + o;
+    }
+    function micNum(t, re) { const m = re.exec(t); if (!m) return 0; return /^\d+$/.test(m[1]) ? +m[1] : korNum(m[1]); }
+    function micPeople(t) {   // 말 속의 선수 이름 (성 빼고 이름만 · 「~이」 붙여도) — 가장 길게 맞은 선수들
+        let best = [], bl = 0;
+        people.forEach(p => {
+            const nm = micNorm(p.name), parts = String(p.name).trim().split(/\s+/), keys = [nm];
+            if (parts.length > 1) keys.push(micNorm(parts[parts.length - 1]));
+            else if (nm.length >= 3) keys.push(nm.slice(1));
+            keys.forEach(k => {
+                if (k.length < 2 || t.indexOf(k) < 0) return;
+                if (k.length > bl) { bl = k.length; best = [p]; } else if (k.length === bl && best.indexOf(p) < 0) best.push(p);
+            });
+        });
+        if (best.length > 1) { const inLu = best.filter(p => cfg.lineup.indexOf(p.pid) >= 0); if (inLu.length === 1) best = inLu; }
+        return best;
+    }
+    function micParse(raw) {   // 들은 말 → 할 일 (못 찾으면 null)
+        const t = micNorm(raw);
+        if (!t) return null;
+        const ps = micPeople(t);
+        const NUM = '(\\d+|[일이삼사오육칠팔구십]+)';
+        if (ps.length > 1) {
+            const no = micNum(t, new RegExp(NUM + '번(?!타자)'));
+            const one = no ? ps.filter(p => +p.no === no) : [];
+            if (one.length !== 1) return { say: '누구인지 헷갈려요: ' + ps.map(p => p.name + '(' + p.no + ')').join(', ') + ' — 등번호도 같이 말해 주세요' };
+            ps.splice(0, ps.length, one[0]);
+        }
+        if (ps.length === 1) {
+            const p = ps[0];
+            if (/대타/.test(t)) return { say: '대타 ' + p.name, run: () => pinch(p.pid) };
+            return { say: p.name + ' 등장곡', run: () => playWalk(p.pid) };
+        }
+        const slot = micNum(t, new RegExp(NUM + '번타자'));
+        if (slot) {
+            const pid = cfg.lineup[slot - 1];
+            return pid ? { say: slot + '번 타자 ' + personOf(pid).name, run: () => playWalk(pid) } : { say: slot + '번 타자가 타순에 없어요' };
+        }
+        const no = micNum(t, new RegExp(NUM + '번'));
+        if (no) {
+            const p = people.find(x => +x.no === no);
+            return p ? { say: no + '번 ' + p.name + ' 등장곡', run: () => playWalk(p.pid) } : { say: no + '번 선수를 못 찾았어요' };
+        }
+        for (const [id, re] of MIC_SFX) if (re.test(t)) { const m = SND.find(x => x.id === id); return { say: m.em + ' ' + m.nm, run: () => sndPlay(id) }; }
+        if (/서서히|천천히|페이드|줄여/.test(t)) return { say: '서서히 끄기', run: () => { if (muOn) muStop(); else fadeOut(); } };
+        if (/멈춰|멈춤|정지|그만|스톱|스탑|꺼|조용/.test(t)) return { say: '멈춤', run: () => { if (muOn) muStop(true); if (annDone) { annCancel(); walk = false; paintState(); } else if (audio) audio.pause(); } };
+        if (/다음/.test(t)) return cfg.lineup.length ? { say: '다음 타자', run: () => { mode = mode === 'ph' ? '' : mode; nextBatter(); } } : { say: '다음 곡', run: () => next(false) };
+        if (/이전|아까|앞타자|전타자|뒤로/.test(t)) return cfg.lineup.length ? { say: '바로 전 타자', run: prevBatter } : { say: '이전 곡', run: prev };
+        if (/틀어|재생|시작|켜/.test(t) && cur) return { say: '재생', run: () => { clearFade(); play(); } };
+        return null;
+    }
+    function micPaint(state, heard, said) {   // 듣는 판: listen 듣는 중 · done 실행함 · fail 못 알아들음
+        const pan = $('plMicPan');
+        if (!pan) return;
+        document.querySelectorAll('[data-pl="mic"]').forEach(b => { b.classList.toggle('rec', state === 'listen'); b.setAttribute('aria-pressed', state === 'listen' ? 'true' : 'false'); });
+        if (!state) { pan.hidden = true; return; }
+        pan.hidden = false;
+        pan.className = 'pl-micpan ' + state;
+        pan.innerHTML = `<div class="pl-micdot" aria-hidden="true">🎙</div><div class="tx"><b>${state === 'listen' ? '듣고 있어요…' : state === 'done' ? esc(said) : '잘 못 알아들었어요'}</b>` +
+            `<small>${heard ? '「' + esc(heard) + '」' : (state === 'listen' ? '예) 다음 타자 · 선수 이름 · 3번 타자 · 홈런 · 서서히 꺼' : '')}</small>` +
+            (state === 'fail' ? `<small class="ex">${said ? esc(said) : '예) 다음 타자 · 선수 이름 · 7번 · 홈런 · 박수 · 멈춰'}</small>` : '') +
+            `</div><button type="button" class="pl-sbtn" data-pl="mic-x">${state === 'listen' ? '취소' : '닫기'}</button>`;
+    }
+    function micDuck(on) {   // 듣는 동안 노래 소리를 줄임 (아이폰은 못 줄임)
+        if (!audio || !canVol()) return;
+        try {
+            if (on) { if (!audio.paused && !fadeTimer) { micVol = audio.volume; audio.volume = Math.min(audio.volume, 0.25); } }
+            else if (micVol >= 0) { if (!fadeTimer) audio.volume = micVol; micVol = -1; }
+        } catch (e) {}
+    }
+    function micStop(state, heard, said) {
+        micOn = false;
+        if (rec) { try { rec.onresult = rec.onerror = rec.onend = null; rec.abort(); } catch (e) {} rec = null; }
+        micDuck(false);
+        clearTimeout(micTimer);
+        micPaint(state, heard, said);
+        if (state) micTimer = setTimeout(() => micPaint(''), state === 'done' ? 2200 : 4500);
+        bkKick(800);
+    }
+    function micToggle() {
+        if (micOn) { micStop(''); return; }
+        if (!SpeechRec) { notify('이 기기에서는 「말로 하기」를 쓸 수 없어요', '안드로이드 크롬이나 앱에서 써 주세요'); return; }
+        clearTimeout(micTimer);
+        bkStop();   // 「부캉아」 듣기를 잠깐 멈추고 버튼으로 한 번 듣기
+        let r;
+        try { r = new SpeechRec(); } catch (e) { notify('음성 인식을 시작하지 못했어요'); return; }
+        rec = r; micOn = true;
+        r.lang = 'ko-KR'; r.interimResults = true; r.maxAlternatives = 5; r.continuous = false;
+        let heard = '';
+        r.onresult = ev => {
+            const res = ev.results[ev.results.length - 1];
+            heard = (res[0] && res[0].transcript || '').trim();
+            if (!res.isFinal) { micPaint('listen', heard); return; }
+            let hit = null;
+            for (let i = 0; i < res.length && !hit; i++) hit = micParse(res[i].transcript);
+            if (hit && hit.run) { micStop('done', heard, hit.say); try { hit.run(); } catch (e) {} }
+            else micStop('fail', heard, hit ? hit.say : '');
+        };
+        r.onerror = ev => {
+            const c = ev && ev.error;
+            micStop('fail', '', c === 'not-allowed' || c === 'service-not-allowed' ? '마이크 사용을 허락해 주세요 (주소창 왼쪽 자물쇠 → 마이크)' : c === 'no-speech' ? '말소리가 안 들렸어요. 버튼을 누르고 바로 말해 주세요' : c === 'network' ? '인터넷 연결을 확인해 주세요' : '');
+        };
+        r.onend = () => { if (micOn) micStop(heard ? 'fail' : '', heard); };
+        micDuck(true);
+        micPaint('listen');
+        try { r.start(); } catch (e) { micStop('fail', '', '음성 인식을 시작하지 못했어요'); }
+    }
+
+    // 🦉 「부캉아」 부르기 (시험) — 타석 모드 화면이 켜져 있는 동안 마이크를 계속 열어 두고, 「부캉아」가 들리면 그 뒤 말을 실행
+    //   · 받아쓰기가 「북항아」「부강아」처럼 적어도 받아 줌 · 「부캉아」만 말하면 7초 동안 다음 말을 기다림
+    //   · 화면을 끄거나 다른 앱 · 다른 탭으로 가면 멈춤 (웹은 화면이 꺼지면 마이크를 못 씀)
+    const BK_RE = /(부캉|북항|부강|부광|부캥|북캉|북앙|부깡|푸캉|부칸|북한)(이|아|야|하|가|님|씨)?/;
+    let bkRec = null, bkTimer = 0, bkArmed = 0, bkArmT = 0, bkFails = 0, bkStarted = 0;
+    const bkWant = () => !!(cfg.bk && SpeechRec && batShown() && !document.hidden && !micOn);
+    function bkKick(ms) { clearTimeout(bkTimer); if (cfg.bk) bkTimer = setTimeout(bkSync, ms || 0); }
+    function bkSync() { if (bkWant()) bkStart(); else if (!micOn) bkStop(); }
+    function bkStop() {
+        clearTimeout(bkTimer); clearTimeout(bkArmT); bkArmed = 0;
+        if (bkRec) { try { bkRec.onresult = bkRec.onerror = bkRec.onend = null; bkRec.abort(); } catch (e) {} bkRec = null; }
+    }
+    function bkDisarm() { clearTimeout(bkArmT); bkArmed = 0; micDuck(false); }
+    function bkArm() {   // 「부캉아」만 들림 → 7초 동안 다음 말 기다림
+        bkArmed = Date.now() + 7000; clearTimeout(bkArmT);
+        clearTimeout(micTimer); micDuck(true); micPaint('listen');
+        bkArmT = setTimeout(() => { bkArmed = 0; micDuck(false); micPaint(''); }, 7000);
+    }
+    function bkCmd(tx) {   // 들은 말에서 「부캉아」 앞부분을 떼고 남은 말 (부캉아가 없으면 null)
+        const n = micNorm(tx), m = BK_RE.exec(n);
+        if (m) return n.slice(m.index + m[0].length);
+        return bkArmed > Date.now() ? n : null;
+    }
+    function bkStart() {
+        if (bkRec) return;
+        let r;
+        try { r = new SpeechRec(); } catch (e) { return; }
+        bkRec = r; bkStarted = Date.now();
+        r.lang = 'ko-KR'; r.continuous = true; r.interimResults = true; r.maxAlternatives = 3;
+        r.onresult = ev => {
+            for (let i = ev.resultIndex; i < ev.results.length; i++) {
+                const res = ev.results[i], tx = (res[0] && res[0].transcript || '').trim();
+                let cmd = null;
+                for (let j = 0; j < res.length && cmd === null; j++) cmd = bkCmd(res[j].transcript);
+                if (cmd === null) continue;
+                bkFails = 0;
+                if (!res.isFinal) { clearTimeout(micTimer); micDuck(true); micPaint('listen', tx); continue; }
+                if (!cmd) { bkArm(); continue; }
+                let hit = null;
+                for (let j = 0; j < res.length && !hit; j++) { const c = bkCmd(res[j].transcript); if (c) hit = micParse(c); }
+                bkDisarm();
+                clearTimeout(micTimer);
+                if (hit && hit.run) { micPaint('done', tx, hit.say); try { hit.run(); } catch (e) {} }
+                else micPaint('fail', tx, hit ? hit.say : '');
+                micTimer = setTimeout(() => micPaint(''), hit && hit.run ? 2200 : 4500);
+            }
+        };
+        r.onerror = ev => {
+            const c = ev && ev.error;
+            if (c === 'not-allowed' || c === 'service-not-allowed') {
+                cfg.bk = false; saveCfg(); bkStop(); renderBat();
+                notify('「부캉아」 부르기를 껐어요', '마이크 사용을 허락해 주세요 (주소창 왼쪽 자물쇠 → 마이크)');
+            }
+        };
+        r.onend = () => {   // 말이 한동안 없으면 크롬이 스스로 끊음 → 다시 켬 (빨리 끊기기를 되풀이하면 점점 천천히)
+            bkRec = null;
+            if (bkArmed) bkDisarm();
+            bkFails = Date.now() - bkStarted < 3000 ? bkFails + 1 : 0;
+            if (cfg.bk) bkKick(bkFails > 3 ? Math.min(30000, 2000 * bkFails) : 300);
+        };
+        try { r.start(); } catch (e) { bkRec = null; bkKick(3000); }
+    }
+
     // 다른 화면(선수 상세)에 다녀와도 듣던 곡 · 자리를 기억 (돌아오면 ▶ 한 번으로 이어 듣기)
     function remember() {
         try {
@@ -639,6 +822,7 @@
         const on = batShown();
         if (on && !holdFrom) holdFrom = Date.now();
         if (!on && holdFrom) { holdFrom = 0; lockIfDue(); }   // 나가는 순간: 미뤄 둔 잠금이 있으면 바로
+        bkKick(0);
     }
     window.plHold = function () {
         if (!holdFrom || !batShown() || Date.now() - holdFrom >= HOLD_MAX) return false;
@@ -750,6 +934,12 @@
         snd.addEventListener('click', onClick);
         document.body.appendChild(snd);
 
+        const mic = document.createElement('div');   // 🎙 듣는 판
+        mic.id = 'plMicPan'; mic.className = 'pl-micpan'; mic.hidden = true;
+        mic.setAttribute('role', 'status'); mic.setAttribute('aria-live', 'polite');
+        mic.addEventListener('click', onClick);
+        document.body.appendChild(mic);
+
         const big = document.createElement('div');
         big.id = 'plBig'; big.className = 'pl-big'; big.hidden = true;
         big.setAttribute('role', 'dialog'); big.setAttribute('aria-label', '주제곡 플레이어');
@@ -801,12 +991,12 @@
         window.addEventListener('resize', measure);
         window.addEventListener('pagehide', remember);
         document.addEventListener('visibilitychange', () => {
-            if (document.hidden) { remember(); awaySince = Date.now(); }
+            if (document.hidden) { remember(); awaySince = Date.now(); bkStop(); }
             else {
                 const long = awaySince && Date.now() - awaySince > AWAY_MAX;
                 awaySince = 0;
                 if (long && holdFrom) { holdFrom = 0; lockIfDue(); setTimeout(holdSync, 50); }   // 오래 비웠다 돌아옴: 미뤄 둔 잠금부터 확인하고, 안 잠겼으면 다시 미루기 시작
-                measure(); if (batShown()) wakeOn(); paintTime();
+                measure(); if (batShown()) wakeOn(); paintTime(); bkKick(300);
             }
         });
         setupMediaKeys();
@@ -923,11 +1113,16 @@
     }
 
     function annRow(nxt, ord) {   // 📢 장내 아나운서 켜기/끄기 (v2.112.0 · 시안 ④ B)
-        if (!annMan) return '';
+        if (!annMan) return bkRow();
         const a = nxt ? annPieces(nxt, ord) : null;
         const ex = a ? a.text : nxt ? ord + '번 타자, ' + nxt.name : '1번 타자, 선수 이름';
         return `<div class="pl-ann"><span class="tx">📢 장내 아나운서<small>${cfg.ann ? `「${esc(ex)}」 다음에 등장곡` : '꺼 둠 · 등장곡만 바로 나와요'}</small></span>` +
-            `<button type="button" class="pl-sw" data-pl="ann" role="switch" aria-checked="${cfg.ann ? 'true' : 'false'}" aria-label="장내 아나운서 ${cfg.ann ? '끄기' : '켜기'}"></button></div>`;
+            `<button type="button" class="pl-sw" data-pl="ann" role="switch" aria-checked="${cfg.ann ? 'true' : 'false'}" aria-label="장내 아나운서 ${cfg.ann ? '끄기' : '켜기'}"></button></div>` + bkRow();
+    }
+    function bkRow() {   // 🦉 「부캉아」 부르기 켜기/끄기 (시험)
+        if (!SpeechRec) return '';
+        return `<div class="pl-ann pl-bk"><span class="tx">🦉 「부캉아」로 부르기 <em>시험</em><small>${cfg.bk ? '「부캉아, 다음 타자」처럼 말하면 바로 실행 · 화면이 켜져 있을 때만' : '꺼 둠 · 켜면 마이크를 계속 열어 둬요'}</small></span>` +
+            `<button type="button" class="pl-sw" data-pl="bk" role="switch" aria-checked="${cfg.bk ? 'true' : 'false'}" aria-label="부캉아로 부르기 ${cfg.bk ? '끄기' : '켜기'}"></button></div>`;
     }
     const ob = (o, v, label, on) => `<button type="button" data-pl="opt" data-o="${o}" data-v="${v}" aria-pressed="${on ? 'true' : 'false'}">${label}</button>`;   // 타석 옵션: 둘 중 고르기 버튼
     function renderBat() {
@@ -947,7 +1142,7 @@
                     return `<button type="button" class="pl-lrow${k >= 0 ? ' dim' : ''}" data-pl="ph-pick" data-pid="${esc(p.pid)}" aria-label="대타 ${esc(p.no)}번 ${esc(p.name)}">${photo(p, 32)}<span class="t"><b>${esc(p.name)}</b><small>${esc(p.no)}번</small></span>${k >= 0 ? `<span class="k">${k + 1}번</span>` : ''}</button>`;
                 }).join('')).join('') + `</div></div>`;
             lineupHtml = `<div class="pl-nbrow"><button type="button" class="pl-nextbat" data-pl="nextbat">${I.play}<span><small>다음 타자 틀기</small><b>${ord}번 타자 ${esc(nxt.name)} <span style="opacity:.8">(${esc(nxt.no)})</span></b></span></button>` +
-                `<button type="button" class="pl-phb${mode === 'ph' ? ' on' : ''}" data-pl="ph-open" aria-label="대타: 이번 타석만 다른 선수 곡 틀기"><span>🔁</span>대타</button></div>` + annRow(nxt, ord) + phPanel +
+                `<button type="button" class="pl-phb${mode === 'ph' ? ' on' : ''}" data-pl="ph-open" aria-label="대타: 이번 타석만 다른 선수 곡 틀기"><span>🔁</span>대타</button>` + `</div>` + annRow(nxt, ord) + phPanel +
                 `<ol class="pl-lu">${lu.map((p, i) => `<li><button type="button" data-pl="bat" data-pid="${esc(p.pid)}" class="${i === cfg.batIdx ? 'cur' : ''}" aria-label="${i + 1}번 타자 ${esc(p.name)} 곡 틀기"><i>${i + 1}</i>${esc(p.name)}</button></li>`).join('')}</ol>` +
                 `<div class="pl-pre"><button type="button" class="pl-sbtn" data-pl="preload"${preBusy ? ' disabled' : ''}>⬇&nbsp;타순 곡 미리 받아 두기</button><span id="plPreTxt">${esc(preText)}</span></div>`;
         } else {
@@ -963,7 +1158,7 @@
                 `<button type="button" class="pl-sbtn" data-pl="set-close">닫기</button></div>`);
         const pick = pickPid ? personOf(pickPid) : null;
         box.innerHTML = `
-            <div class="pl-batnow"><span class="tx" id="plBatTx"></span><span class="pl-vol" id="plVol" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><button type="button" class="pl-fade" data-pl="fade" id="plFade">🔉 서서히 끄기</button></div>
+            <div class="pl-batnow"><span class="tx" id="plBatTx"></span><span class="pl-vol" id="plVol" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>${SpeechRec ? '<button type="button" class="pl-mic" data-pl="mic" aria-pressed="false" aria-label="말로 하기">🎙 말로</button>' : ''}<button type="button" class="pl-fade" data-pl="fade" id="plFade">🔉 서서히 끄기</button></div>
             <div class="pl-opts">
                 <div class="pl-og"><span>시작 위치</span><div class="pl-sg">${ob('hook', 0, '처음부터', !cfg.hook)}${ob('hook', 1, '후렴부터', cfg.hook)}</div></div>
                 <div class="pl-og"><span>시작할 때</span><div class="pl-sg">${ob('fadeIn', 0, '바로', !cfg.fadeIn)}${ob('fadeIn', 1, '서서히 커지게', cfg.fadeIn)}</div></div>
@@ -1130,6 +1325,8 @@
             case 'dl': download(); break;
             case 'fade': fadeOut(); break;
             case 'snd': sndPlay(d.s); break;
+            case 'mic': micToggle(); break;
+            case 'mic-x': if (micOn) micStop(''); else { clearTimeout(micTimer); micPaint(''); } break;
             case 'opt': {
                 const v = +d.v;
                 if (d.o === 'hook' || d.o === 'fadeIn') cfg[d.o] = v === 1;
@@ -1139,6 +1336,7 @@
                 el.parentNode.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b === el ? 'true' : 'false'));
                 break;
             }
+            case 'bk': cfg.bk = !cfg.bk; saveCfg(); bkStop(); if (cfg.bk) { bkKick(0); notify('「부캉아」 부르기를 켰어요', '「부캉아, 다음 타자」 · 「부캉아, 홈런」처럼 말해 보세요'); } else { bkDisarm(); micPaint(''); } renderBat(); break;
             case 'ann': cfg.ann = !cfg.ann; saveCfg(); if (!cfg.ann) annCancel(); else annPrep(); renderBat(); break;
             case 'nextbat': mode = mode === 'ph' ? '' : mode; nextBatter(); break;
             case 'ph-open': mode = mode === 'ph' ? '' : 'ph'; pickPid = ''; renderBat(); break;
@@ -1197,7 +1395,7 @@
     window.plBack = function () { if (lyrOpen) { setLyr(false); return true; } if (bigOpen) { closeBig(); return true; } return false; };
     window.plOnLock = function (why) {   // 잠금 · 로그아웃: 큰 플레이어는 닫음 · 「자동 잠금」이면 듣던 노래는 그대로 (직접 로그아웃하면 멈춤)
         try {
-            closeBig(); wakeOff(); holdFrom = 0;
+            closeBig(); wakeOff(); holdFrom = 0; bkStop();
             if (why !== '자동 잠금') { stopAll(); try { sessionStorage.removeItem(SS_KEY); } catch (e) {} }   // 로그아웃 · 앱 종료: 듣던 곡도 비움 (다음에 다른 분이 로그인해도 안 남게)
         } catch (e) {}
     };

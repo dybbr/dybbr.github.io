@@ -362,3 +362,24 @@ html.pl-lu-on .ui-zoom-ctrl { display: none !important; }   /* 타순 정하기:
     .pl-lyr.xl p { font-size: 35px; margin-bottom: 24px; }
     .pl-song .tx b { font-size: 22px; }
 }
+
+/* 🎙 말로 하기 (v2.114.0) — A 위 줄 · B 다음 타자 옆 · C 효과음 띠 맨 앞 */
+.pl-mic { flex: none; height: 40px; padding: 0 12px; border-radius: 10px; border: 0; background: var(--pl-gold); color: #0b2240; font: inherit; font-size: 13.5px; font-weight: 900; cursor: pointer; white-space: nowrap; }
+.pl-mic.rec { background: var(--pl-red); border-color: var(--pl-red); color: #ffffff; animation: plMicRec 1s ease-in-out infinite; }
+@keyframes plMicRec { 50% { box-shadow: 0 0 0 6px rgba(200, 16, 46, .25); } }
+.pl-micpan { position: fixed; left: 12px; right: 12px; bottom: calc(var(--pl-tabh) + 62px); z-index: 960; max-width: 560px; margin: 0 auto; display: flex; align-items: center; gap: 12px; padding: 12px 12px 12px 14px; border-radius: 16px; background: var(--pl-card); color: var(--pl-fg); border: 2px solid var(--pl-navy2); box-shadow: 0 12px 30px -10px rgba(0, 0, 0, .5); }
+html.pl-on .pl-micpan { bottom: calc(var(--pl-tabh) + 62px + var(--pl-minih, 80px)); }
+.pl-micpan[hidden] { display: none; }
+body:has(.pl-micpan:not([hidden])) .ui-zoom-ctrl { visibility: hidden; }
+.pl-micpan.listen { border-color: var(--pl-red); }
+.pl-micpan.done { border-color: #16a34a; }
+.pl-micdot { flex: none; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; background: var(--pl-soft); font-size: 22px; }
+.pl-micpan.listen .pl-micdot { background: var(--pl-red); animation: plMicRec 1s ease-in-out infinite; }
+.pl-micpan .tx { flex: 1; min-width: 0; }
+.pl-micpan .tx b { display: block; font-size: 16px; line-height: 1.3; word-break: keep-all; }
+.pl-micpan .tx small { display: block; margin-top: 2px; font-size: 13px; color: var(--pl-sub); word-break: keep-all; }
+.pl-micpan .tx small.ex { color: var(--pl-hot); }
+@media (prefers-reduced-motion: reduce) { .pl-mic.rec, .pl-micpan.listen .pl-micdot { animation: none; } }
+/* 🦉 「부캉아」 부르기 (시험) */
+.pl-ann.pl-bk { margin-top: 8px; }
+.pl-ann .tx em { font-style: normal; display: inline-block; margin-left: 4px; padding: 0 6px; border-radius: 6px; background: var(--pl-red); color: #fff; font-size: 11px; line-height: 18px; vertical-align: 2px; }
