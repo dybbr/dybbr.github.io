@@ -1055,8 +1055,8 @@
             <div class="pl-msg" id="plMsg" hidden></div>
             <div class="pl-osheet" id="plOSheet" data-pl="off-x" hidden><div class="pl-osheet-in" role="dialog" aria-labelledby="plOSheetT">
                 <b id="plOSheetT"></b>
-                <button type="button" data-pl="off-me"><span>📱 내 휴대폰에서만 빼기</span><small>다른 분들은 그대로 들어요</small></button>
-                <button type="button" data-pl="off-all" class="all"><span>🔒 모든 분 목록에서 숨기기</span><small id="plOSheetW"></small></button>
+                <button type="button" data-pl="off-me"><span>📱 내 휴대폰에서만 빼기</span><small>다른 학부모님은 그대로 들어요</small></button>
+                <button type="button" data-pl="off-all" class="all"><span>🔒 모든 학부모 목록에서 숨기기</span><small id="plOSheetW"></small></button>
                 <button type="button" data-pl="off-x" class="x">취소</button>
             </div></div>`;
         big.addEventListener('click', onClick);
@@ -1131,7 +1131,7 @@
         sig = ''; sync();
         if (wasCur) next(false);
         if (filter === 'off' && !offCount()) { filter = 'all'; renderList(); }
-        notify(on ? '「' + t.title + '」을 모든 분 목록에서 숨겼어요' : '「' + t.title + '」을 다시 모든 분께 공개했어요', on ? person.name + ' 보호자와 운영진에게만 보여요 · 「빠진 곡」에서 다시 공개' : '다른 분들은 앱을 다시 열면 보여요');
+        notify(on ? '「' + t.title + '」을 모든 학부모 목록에서 숨겼어요' : '「' + t.title + '」을 다시 모든 학부모께 공개했어요', on ? person.name + ' 보호자와 운영진에게만 보여요 · 「빠진 곡」에서 다시 공개' : '다른 학부모님은 앱을 다시 열면 보여요');
         hidFlush(person, st);
     }
     function hidFlush(person, st) {
@@ -1186,7 +1186,7 @@
         const html = ids.map((id, i) => {
             const t = byId.get(id);
             const row = `<button type="button" class="pl-row${cur && cur.id === id ? ' cur' : ''}" data-pl="row" data-id="${esc(id)}"><span class="n">${i + 1}</span>${cover(t)}` +
-                `<span class="t"><b>${esc(t.title)}</b><small>${t.hidAll ? '<i class="pl-htag">🔒 모두에게 숨김</i>' : ''}${esc(t.name)}${t.beat ? ' · ' + esc(t.beat) : ''}</small></span><span class="d">${esc(t.len)}</span><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span></button>`;
+                `<span class="t"><b>${esc(t.title)}</b><small>${t.hidAll ? '<i class="pl-htag">🔒 모든 학부모에게 숨김</i>' : ''}${esc(t.name)}${t.beat ? ' · ' + esc(t.beat) : ''}</small></span><span class="d">${esc(t.len)}</span><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span></button>`;
             if (t.hidAll) return `<div class="pl-rw off">${row}<button type="button" class="pl-ox back hid" data-pl="unhide" data-id="${esc(id)}" aria-label="${esc(t.title)} 다시 공개">🔓 다시 공개</button></div>`;
             return isOff(id) ? `<div class="pl-rw off">${row}<button type="button" class="pl-ox back" data-pl="off" data-id="${esc(id)}" aria-label="${esc(t.title)} 다시 넣기">↩ 다시 넣기</button></div>` : row;   // 「빠진 곡」 칩에서만 보임
         }).join('');

@@ -1574,10 +1574,10 @@
     //   명단 화면 저장본도 같이 고쳐 「오래됨」으로 → 음악 탭으로 돌아가면 서버에서 새로 받음
     const shSend = { busy: false, again: false, saved: null };
     function cheerTagHtml(v, off) {
-        return v.hidAll ? '<span class="cpl-off cpl-hid" title="모든 분 목록에서 숨긴 곡 · 보호자와 운영진에게만 보임">🔒 숨김</span>'
+        return v.hidAll ? '<span class="cpl-off cpl-hid" title="모든 학부모 목록에서 숨긴 곡 · 보호자와 운영진에게만 보임">🔒 숨김</span>'
             : off.has(v.key) ? '<span class="cpl-off" title="음악 탭에서 뺀 곡 · 이어 듣기에서 건너뜀">빠짐</span>' : '';
     }
-    function cheerShBarText(n) { return n ? n + '곡을 모든 분 목록에서 숨겼어요' : '마음에 안 드는 곡은 모든 분 목록에서 숨길 수 있어요'; }
+    function cheerShBarText(n) { return n ? n + '곡을 모든 학부모 목록에서 숨겼어요' : '마음에 안 드는 곡은 모든 학부모 목록에서 숨길 수 있어요'; }
     function paintSongHide(p) {   // 숨김 표시만 다시 그림 (지금 듣는 곡 · 재생 위치는 그대로)
         const box = document.getElementById('cheerBox'); if (!box || !box._vers) return;
         const hid = window.cheerHiddenKeys(p), off = cheerOffKeys(p);
@@ -1603,8 +1603,8 @@
         p.hideSongs = keys.slice();
         paintSongHide(p);
         const v = (document.getElementById('cheerBox') || {})._vers, t = v && v.find(x => x.key === k), nm = t ? '「' + t.label + '」' : '이 곡';
-        if (keys.indexOf(k) >= 0) bkNotify('done', nm + '을 모든 분 목록에서 숨겼어요', p.name + ' 보호자와 운영진에게만 보여요 · 다른 분들은 앱을 다시 열면 바뀌어요');
-        else bkNotify('done', nm + '을 다시 모든 분께 공개했어요', '다른 분들은 앱을 다시 열면 보여요');
+        if (keys.indexOf(k) >= 0) bkNotify('done', nm + '을 모든 학부모 목록에서 숨겼어요', p.name + ' 보호자와 운영진에게만 보여요 · 다른 학부모님은 앱을 다시 열면 바뀌어요');
+        else bkNotify('done', nm + '을 다시 모든 학부모께 공개했어요', '다른 학부모님은 앱을 다시 열면 보여요');
         flushHiddenSongs(p);
     }
     function flushHiddenSongs(p) {
