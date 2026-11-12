@@ -62,3 +62,45 @@ html.bka-open,html.bka-open body{overflow:hidden!important;overscroll-behavior:n
 .bka-chips{overscroll-behavior:contain;touch-action:pan-x}
 .bka-body{touch-action:pan-y}
 @media (prefers-reduced-motion:reduce){.bka-mic.rec{animation:none}}
+/* v2.122.0: 여러 일 한 번에 — 사이 구분 */
+.bka-step{align-self:center;font-size:12.5px;font-weight:700;color:#64748b;background:#eef2f7;border-radius:999px;padding:3px 10px;margin:2px 0}
+/* v2.122.0: 📱 휴대폰 말풍선 부캉이 (시안 A) — 왼쪽 아래 부캉이 + 대답 말풍선, 「대화 기록 ›」 → 큰 창 */
+.bka-fab,.bka-bub{--bka-b:calc(var(--bka-gap,0px) + 10px)}
+.bka-fab{position:fixed;left:10px;bottom:var(--bka-b);z-index:99991;width:66px;height:66px;border-radius:50%;background:#fff;border:3px solid #f5b301;box-shadow:0 8px 20px rgba(0,0,0,.25);display:grid;place-items:center;padding:0;cursor:pointer;touch-action:manipulation}
+.bka-fab .bka-bk{width:50px;height:50px}
+.bka-fab.on{border-color:#16a34a;animation:bkaPulse 1.1s ease-in-out infinite;box-shadow:0 0 0 6px rgba(22,163,74,.25),0 8px 20px rgba(0,0,0,.25)}
+.bka-fab[hidden],.bka-bub[hidden]{display:none!important}
+.bka-bub{position:fixed;left:12px;right:12px;bottom:calc(var(--bka-b) + 78px);z-index:99991;background:#fff;color:#0f172a;border-radius:18px 18px 18px 6px;padding:12px 14px 10px;box-shadow:0 12px 30px rgba(0,0,0,.28);border:2px solid #f5b301;font-size:15px;line-height:1.45;max-width:520px;overscroll-behavior:contain}
+.bka-bub:after{content:'';position:absolute;left:28px;bottom:-11px;width:18px;height:18px;background:#fff;border-right:2px solid #f5b301;border-bottom:2px solid #f5b301;transform:rotate(45deg)}
+.bka-bx{position:absolute;top:8px;right:8px;border:0;background:#eef2f7;border-radius:8px;width:30px;height:30px;font-weight:900;color:#475569;cursor:pointer;font-size:14px}
+.bka-bq{font-size:13px;color:#64748b;font-weight:700;margin:0 36px 4px 0;word-break:keep-all;overflow-wrap:anywhere}
+.bka-bq:empty{display:none}
+.bka-bq.live{color:#16a34a}
+.bka-bc{max-height:calc(100vh - var(--bka-b) - 210px);max-height:calc(100dvh - var(--bka-b) - 210px);overflow:auto;padding-right:2px;word-break:keep-all;overflow-wrap:anywhere;overscroll-behavior:contain}
+.bka-bq:empty+.bka-bc{padding-right:34px}
+.bka-bc .h{font-size:17px;font-weight:900;color:#0b2240}
+.bka-bc .h em{font-style:normal;color:#c8102e;font-size:13.5px;margin-left:6px}
+.bka-bc .l{font-size:14px;color:#334155;margin-top:2px}
+.bka-bc .bka-no{width:44px;height:44px;font-size:20px;border-radius:11px}
+.bka-bc .bka-items{margin-top:8px;gap:5px}
+.bka-bc .bka-items button{padding:7px 10px}
+.bka-bc .bka-bt{margin-top:8px}
+.bka-bc .bka-bt button{min-height:36px;font-size:13.5px;padding:0 11px}
+.bka-bpart.sep{border-top:1px dashed #e2e8f0;margin-top:8px;padding-top:8px}
+.bka-bmore{display:block;width:100%;margin-top:6px;border:0;background:none;color:#0b2240;font:inherit;font-size:13px;font-weight:800;text-align:left;padding:4px 0;cursor:pointer}
+.bka-bchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.bka-bchips button{border:0;background:#eef2f7;border-radius:999px;padding:8px 12px;font:inherit;font-weight:700;font-size:14px;color:#0b2240;cursor:pointer}
+.bka-blisten{display:flex;flex-direction:column;gap:2px}
+.bka-blisten b{font-size:17px;color:#16a34a;display:flex;align-items:center}
+.bka-blisten small{color:#64748b;font-size:13px}
+.bka-wave{display:inline-flex;gap:3px;align-items:flex-end;height:16px;margin-left:8px;vertical-align:middle}
+.bka-wave i{width:4px;height:6px;border-radius:2px;background:#16a34a;animation:bkaWave .9s ease-in-out infinite}
+.bka-wave i:nth-child(2){animation-delay:.15s}.bka-wave i:nth-child(3){animation-delay:.3s}.bka-wave i:nth-child(4){animation-delay:.45s}.bka-wave i:nth-child(5){animation-delay:.6s}
+@keyframes bkaWave{50%{height:16px}}
+.bka-bf{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px;padding-top:6px;border-top:1px solid #eef2f7}
+.bka-bf button{border:0;background:none;font:inherit;font-size:13px;font-weight:800;color:#64748b;padding:6px 2px;cursor:pointer}
+.bka-bf .bka-bst.on{color:#16a34a}
+.bka-bf .bka-bst[hidden]{display:none}
+.bka-bf .bka-blog{color:#0b2240;margin-left:auto}
+html.bka-bub-on #uiZoomCtrl{display:none!important}
+@media (prefers-reduced-motion:reduce){.bka-fab.on,.bka-wave i{animation:none}}
