@@ -487,6 +487,8 @@
         .cpl-t small { font-size: 11px; font-weight: 700; color: #9a3412; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .cpl-len { flex: 0 0 auto; font-size: 12px; font-weight: 800; color: var(--text-sub); font-variant-numeric: tabular-nums; }
         .cpl-item.on .cpl-pick { background: #ffedd5; }
+        .cpl-item.off .cpl-t, .cpl-item.off .cpl-no { opacity: .5; }   /* 🚫 v2.118.0: 음악 탭에서 뺀 곡 */
+        .cpl-off { flex: 0 0 auto; font-size: 11px; font-weight: 800; line-height: 18px; padding: 0 6px; border-radius: 6px; background: #94a3b8; color: #ffffff; }
         .cpl-item.on .cpl-no, .cpl-item.on .cpl-t b, .cpl-item.on .cpl-len { color: var(--kbo-red); }
         .cheer-lyrics { background: #ffffff; border: 1px solid #fde2c4; border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 10px; max-height: 46vh; overflow-y: auto; overscroll-behavior: contain; }
         .cheer-lyrics[hidden] { display: none; }
@@ -1553,14 +1555,21 @@
                 ${b.lines.map(l => `<div class="cl-line${/^\(.*\)$/.test(l) ? ' chant' : ''}" data-i="${li++}"><span class="cl-txt">${escapeHtml(l)}</span></div>`).join('')}
             </div>`).join('');
     }
+    // 🚫 v2.118.0: 음악 탭에서 「이 곡 빼기」 한 곡 (이 기기 localStorage daeyeon_pl.off · 곡 id 「배번/이름/키」 — playlist.js 와 같음)
+    function cheerOffKeys(p) {
+        const pre = (p.no || 0) + '/' + p.name + '/', out = new Set();
+        try { const j = JSON.parse(localStorage.getItem('daeyeon_pl') || '{}') || {}; (Array.isArray(j.off) ? j.off : []).forEach(id => { if (typeof id === 'string' && id.indexOf(pre) === 0) out.add(id.slice(pre.length)); }); } catch (e) {}
+        return out;
+    }
     function cheerSongHtml(p) {
-        const vers = cheerVersionsFor(p);
+        const vers = cheerVersionsFor(p), off = cheerOffKeys(p);
         if (!vers.length) return '';
         const multi = vers.length > 1;
         const list = multi ? `<ol class="cpl-list" aria-label="${escapeHtml(p.name)} 주제곡 목록">${vers.map((v, i) => `
-                    <li class="cpl-item" data-i="${i}"><button type="button" class="cpl-pick" data-i="${i}">
+                    <li class="cpl-item${off.has(v.key) ? ' off' : ''}" data-i="${i}"><button type="button" class="cpl-pick" data-i="${i}">
                         <span class="cpl-no">${i + 1}</span>
                         <span class="cpl-t"><b>${escapeHtml(v.label)}</b>${v.beat ? `<small>${escapeHtml(v.beat)}</small>` : ''}</span>
+                        ${off.has(v.key) ? '<span class="cpl-off" title="음악 탭에서 뺀 곡 · 이어 듣기에서 건너뜀">빠짐</span>' : ''}
                         <span class="cpl-len" data-len="${escapeHtml(v.len || '')}">${escapeHtml(v.len || '')}</span>
                     </button></li>`).join('')}
                 </ol>` : '';
@@ -1696,9 +1705,12 @@
         }));
         audio.addEventListener('playing', function () { box.classList.remove('loading'); box.classList.add('playing'); btn.setAttribute('aria-label', '주제곡 멈춤'); markList(); });
         audio.addEventListener('pause', function () { box.classList.remove('playing', 'loading'); btn.setAttribute('aria-label', '주제곡 듣기'); markList(); });
-        // 한 곡이 끝나면 다음 곡을 이어서 (마지막 곡이면 처음 위치로 돌아가 멈춤)
+        // 한 곡이 끝나면 다음 곡을 이어서 (마지막 곡이면 처음 위치로 돌아가 멈춤) · 🚫 v2.118.0: 음악 탭에서 뺀 곡은 건너뜀
         audio.addEventListener('ended', function () {
-            if (box._idx < vers.length - 1) select(box._idx + 1, true);
+            const off = cheerOffKeys(p);
+            let j = box._idx + 1;
+            while (j < vers.length && off.has(vers[j].key)) j++;
+            if (j < vers.length) select(j, true);
             else { audio.currentTime = 0; showTime(); }
         });
         audio.addEventListener('timeupdate', showTime);
@@ -1710,7 +1722,8 @@
         // 💿 v2.105.0: 새 기능 알림(첫 화면)에서 곡을 눌러 왔으면(?song=m0) 그 곡을 골라 두고 주제곡 칸으로 내려 줌 (재생은 ▶ 를 눌러야 — 휴대폰이 자동 재생을 막음)
         const want = new URLSearchParams(window.location.search).get('song');
         const wi = want ? vers.findIndex(v => v.key === want) : -1;
-        select(wi >= 0 ? wi : 0, false);
+        const offK = cheerOffKeys(p), first = vers.findIndex(v => !offK.has(v.key));   // 🚫 처음 올려 둘 곡: 뺀 곡이 아닌 첫 곡
+        select(wi >= 0 ? wi : (first >= 0 ? first : 0), false);
         if (wi >= 0) setTimeout(function () { box.scrollIntoView({ behavior: 'smooth', block: 'start' }); box.classList.add('cpl-flash'); setTimeout(() => box.classList.remove('cpl-flash'), 1800); }, 350);
     }
 

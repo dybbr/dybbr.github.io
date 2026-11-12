@@ -389,3 +389,16 @@ body:has(.pl-micpan:not([hidden])) .ui-zoom-ctrl { visibility: hidden; }
 .pl-mini.pl-swipe::after { content: '끝까지 밀면 꺼져요'; position: absolute; left: 50%; top: -36px; transform: translateX(-50%); white-space: nowrap; padding: 5px 14px; border-radius: 999px; background: var(--pl-card); color: var(--pl-fg); font-size: 13px; font-weight: 800; box-shadow: 0 4px 14px rgba(0, 0, 0, .25); pointer-events: none; }
 .pl-mini.arm { background: var(--pl-red); }
 .pl-mini.arm::after { content: '놓으면 꺼져요'; color: var(--pl-red); }
+
+/* 🚫 v2.118.0: 곡 빼기 · 다시 넣기 (시안 C) — 「빠진 곡」 칩 목록 · 큰 플레이어 「이 곡 빼기」 */
+.pl-rw { display: flex; align-items: center; border-bottom: 1px solid var(--pl-line); }
+.pl-rw:last-child { border-bottom: 0; }
+.pl-rw .pl-row { flex: 1; min-width: 0; border-bottom: 0; }
+.pl-rw.off .pl-row { opacity: .5; }
+.pl-rw.off .pl-row .t b { text-decoration: line-through; text-decoration-thickness: 1.5px; }
+.pl-ox { flex: none; height: 32px; margin-right: 10px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--pl-navy); background: var(--pl-navy); color: #ffffff; font-size: 12.5px; font-weight: 800; white-space: nowrap; cursor: pointer; }
+@media (prefers-color-scheme: dark) { .pl-ox { background: var(--pl-gold); border-color: var(--pl-gold); color: #0b2240; } }
+.pl-chips button.offc { border-style: dashed; }
+.pl-chips button.offc.on { background: var(--pl-sub); border-color: var(--pl-sub); border-style: solid; }
+.pl-sbtns { flex: none; display: flex; flex-direction: column; gap: 6px; }
+.pl-offb.on { background: #ffffff; color: var(--pl-navy); border-color: #ffffff; }

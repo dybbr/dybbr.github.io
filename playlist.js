@@ -58,7 +58,7 @@
     const notify = (text, sub) => { try { if (typeof bkNotify === 'function') bkNotify('info', text, sub || '', { ms: 3500 }); } catch (e) {} };
 
     // ---------------- 이 기기에 저장하는 설정 ----------------
-    const cfg = { shuffle: false, repeat: 'all', hook: true, fadeIn: true, autoSec: 20, lineup: [], walkSong: {}, batIdx: -1, xl: false, sets: [], lyrTip: false, ann: true, bk: false };
+    const cfg = { shuffle: false, repeat: 'all', hook: true, fadeIn: true, autoSec: 20, lineup: [], walkSong: {}, batIdx: -1, xl: false, sets: [], lyrTip: false, ann: true, bk: false, off: [] };
     try {
         const j = JSON.parse(localStorage.getItem(LS_KEY) || '{}') || {};
         if (typeof j.shuffle === 'boolean') cfg.shuffle = j.shuffle;
@@ -74,9 +74,18 @@
         if (typeof j.lyrTip === 'boolean') cfg.lyrTip = j.lyrTip;
         if (typeof j.ann === 'boolean') cfg.ann = j.ann;
         if (typeof j.bk === 'boolean') cfg.bk = j.bk;
+        if (Array.isArray(j.off)) cfg.off = j.off.filter(x => typeof x === 'string').slice(0, 600);
         if (Array.isArray(j.sets)) cfg.sets = j.sets.filter(x => x && typeof x.name === 'string' && Array.isArray(x.lineup)).slice(0, 8).map(x => ({ name: x.name.slice(0, 12), lineup: x.lineup.filter(y => typeof y === 'string').slice(0, 30) }));
     } catch (e) {}
     function saveCfg() { try { localStorage.setItem(LS_KEY, JSON.stringify(cfg)); } catch (e) {} }
+    // 🚫 v2.118.0: 마음에 안 드는 곡 빼기 · 다시 넣기 (시안 C, 하코 선택) — 큰 플레이어 「이 곡 빼기」 · 칩 「빠진 곡」에서 다시 넣기 · 이 기기에만 저장(cfg.off: 곡 id 「배번/이름/키」 · 서버 · 시트 안 씀)
+    //   뺀 곡은 전체 재생 · 셔플 · 다음 곡 · 이전 곡 · 이어폰 · 차량 버튼에서 건너뜀 · 목록에서 직접 누른 곡과 타석 등장곡으로 고른 곡은 그대로 틂
+    const offSet = new Set(cfg.off);
+    const isOff = id => offSet.has(id);
+    function setOff(ids, on) {
+        ids.forEach(id => { if (on) offSet.add(id); else offSet.delete(id); });
+        cfg.off = Array.from(offSet); saveCfg();
+    }
 
     // ---------------- 상태 ----------------
     let people = [], tracks = [], byId = new Map(), sig = '';   // 명단에 보이는 선수와 곡
@@ -162,7 +171,7 @@
         return audio;
     }
     function setQueue(ids, startId) {
-        base = ids.slice();
+        base = ids.filter(i => !isOff(i) || i === startId);   // 뺀 곡은 빼고 (직접 누른 곡은 넣음)
         order = cfg.shuffle ? [startId].concat(shuffled(base.filter(i => i !== startId))) : base.slice();
         qi = order.indexOf(startId);
     }
@@ -199,7 +208,9 @@
         load(t, true);
     }
     function playAll(ids, shuffle) {
-        if (!ids || !ids.length) return;
+        if (!ids) return;
+        ids = ids.filter(i => !isOff(i));
+        if (!ids.length) { notify('들을 곡이 없어요', '모두 뺀 곡이에요 · 다시 넣으면 들을 수 있어요'); return; }
         cfg.shuffle = !!shuffle; saveCfg();
         const first = shuffle ? ids[Math.floor(Math.random() * ids.length)] : ids[0];
         walk = false;
@@ -217,9 +228,15 @@
         if (auto && walk) { walk = false; paintState(); return; }                      // 타석 곡은 끝나면 그대로 멈춤
         if (auto && cfg.repeat === 'one') { try { audio.currentTime = 0; } catch (e) {} play(); return; }
         walk = false;
-        if (qi < order.length - 1) qi++;
+        let j = qi + 1;
+        while (j < order.length && isOff(order[j])) j++;   // 뺀 곡은 건너뜀
+        if (j < order.length) qi = j;
         else if (auto && cfg.repeat === 'off') { try { audio.currentTime = 0; } catch (e) {} paintState(); paintTime(); return; }   // 마지막 곡이 끝남
-        else { if (cfg.shuffle) order = shuffled(base); qi = 0; }
+        else {
+            base = base.filter(i => !isOff(i));
+            if (!base.length) { if (audio) { try { audio.pause(); audio.currentTime = 0; } catch (e) {} } paintState(); paintTime(); if (!auto) notify('다음에 들을 곡이 없어요', '모두 뺀 곡이에요'); return; }
+            order = cfg.shuffle ? shuffled(base) : base.slice(); qi = 0;
+        }
         const t = byId.get(order[qi]);
         if (t) load(t, true);
     }
@@ -227,7 +244,9 @@
         if (!cur) return;
         walk = false;
         if (attached && audio.currentTime > 3) { try { audio.currentTime = 0; } catch (e) {} if (audio.paused) play(); return; }
-        qi = (qi - 1 + order.length) % order.length;
+        let j = qi;
+        for (let k = 0; k < order.length; k++) { j = (j - 1 + order.length) % order.length; if (!isOff(order[j])) break; }   // 뺀 곡은 건너뜀
+        qi = j;
         const t = byId.get(order[qi]);
         if (t) load(t, true);
     }
@@ -739,7 +758,7 @@
     }
 
     // ---------------- ⚾ 타석 ----------------
-    function walkTrack(person) { const k = cfg.walkSong[person.pid]; return person.tracks.find(t => t.key === k) || person.tracks[0]; }
+    function walkTrack(person) { const k = cfg.walkSong[person.pid]; return person.tracks.find(t => t.key === k) || person.tracks.find(t => !isOff(t.id)) || person.tracks[0]; }   // 따로 고른 곡이 없으면 빼지 않은 첫 곡
     function hookTime(t) {   // 후렴이 시작하는 자리 (가사 시간표에서 찾음 · 없으면 처음부터)
         try {
             const tm = window.cheerLineTimes(t);
@@ -1010,7 +1029,7 @@
                 <button type="button" class="pl-fs" data-pl="xl" id="plXl" hidden>가 크게</button>
             </div>
             <div class="pl-main" id="plMain">
-                <div class="pl-song"><span id="plBigCv"></span><span class="tx"><b id="plBigT"></b><small id="plBigW"></small><em id="plBigG"></em></span><button type="button" class="pl-dl" data-pl="dl" id="plDl">⬇ MP3 저장</button></div>
+                <div class="pl-song"><span id="plBigCv"></span><span class="tx"><b id="plBigT"></b><small id="plBigW"></small><em id="plBigG"></em></span><span class="pl-sbtns"><button type="button" class="pl-dl" data-pl="dl" id="plDl">⬇ MP3 저장</button><button type="button" class="pl-dl pl-offb" data-pl="offcur" id="plOffB" hidden>🚫 이 곡 빼기</button></span></div>
                 <button type="button" class="pl-k3" data-pl="lyrics" id="plK3" aria-label="가사 전체 보기"></button>
             </div>
             <div class="pl-lyr${cfg.xl ? ' xl' : ''}" id="plLyr" hidden></div>
@@ -1066,25 +1085,53 @@
         root.style.setProperty('--pl-tabh', h + 'px');
         const m = $('plMini'); if (m && !m.hidden && m.offsetHeight) root.style.setProperty('--pl-minih', m.offsetHeight + 'px');   // 띠 높이 → 타순 띠가 그 위에 붙음
     }
-    function listIds() {
-        return tracks.filter(t => filter === 'all' ? true : filter === 'mine' ? (personOf(t.pid) || {}).mine : String(t.g) === String(filter)).map(t => t.id);
+    function inFilter(t) { return filter === 'all' || filter === 'off' ? true : filter === 'mine' ? (personOf(t.pid) || {}).mine : String(t.g) === String(filter); }
+    function listIds() {   // 지금 보이는 목록 (전체 재생 · 셔플 재생 · 줄 누르기에 씀)
+        if (filter === 'off') return tracks.filter(t => isOff(t.id)).map(t => t.id);
+        const ids = tracks.filter(inFilter).map(t => t.id);
+        return ids.filter(i => !isOff(i));   // 뺀 곡은 목록에서 숨김 (「빠진 곡」 칩에 모임)
+    }
+    function offToggle(ids, on) {   // 곡 빼기 · 다시 넣기
+        ids = ids.filter(id => byId.has(id));
+        if (!ids.length) return;
+        if (on == null) on = !isOff(ids[0]);
+        setOff(ids, on);
+        if (on && cur && ids.indexOf(cur.id) >= 0 && !walk && attached && audio && !audio.paused) next(false);   // 듣던 곡을 빼면 바로 다음 곡으로
+        if (filter === 'off' && !offSet.size) filter = 'all';
+        renderList(); renderNow(); paintOff();
+        const t = byId.get(ids[0]), nm = ids.length > 1 ? ids.length + '곡' : '「' + t.title + '」';
+        if (on) notify(nm + '을 뺐어요', '전체 재생 · 셔플에서 안 나와요 · 「빠진 곡」에서 다시 넣을 수 있어요');
+        else notify(nm + '을 다시 넣었어요');
+    }
+    function offCount() { let n = 0; tracks.forEach(t => { if (isOff(t.id)) n++; }); return n; }
+    function paintOff() {   // 큰 플레이어 「이 곡 빼기」 버튼 (타석 등장곡일 때는 숨김)
+        const b = $('plOffB'); if (!b) return;
+        b.hidden = !cur || walk;
+        const off = !!cur && isOff(cur.id);
+        b.classList.toggle('on', off);
+        b.textContent = off ? '↩ 다시 넣기' : '🚫 이 곡 빼기';
     }
     function renderList() {
         const cnt = $('plCount');
         if (!cnt) return;
-        const total = tracks.reduce((a, t) => a + lenSec(t.len), 0), m = Math.round(total / 60);
-        cnt.textContent = tracks.length ? `${tracks.length}곡 · 선수 ${people.length}명` + (m ? ` · 약 ${m >= 60 ? Math.floor(m / 60) + '시간 ' + (m % 60) + '분' : m + '분'}` : '') : '';
+        const nOff = offCount(), live = tracks.filter(t => !isOff(t.id));
+        const total = live.reduce((a, t) => a + lenSec(t.len), 0), m = Math.round(total / 60);
+        cnt.textContent = tracks.length ? `${live.length}곡 · 선수 ${people.length}명` + (m ? ` · 약 ${m >= 60 ? Math.floor(m / 60) + '시간 ' + (m % 60) + '분' : m + '분'}` : '') + (nOff ? ` · ${nOff}곡 뺌` : '') : '';
         const grades = Array.from(new Set(people.map(p => p.g))).filter(Boolean).sort((a, b) => b - a);
         const chips = [['all', '전체']];
         if (people.some(p => p.mine)) chips.push(['mine', '우리 아이']);
         grades.forEach(g => chips.push([String(g), g + '학년']));
-        $('plChips').innerHTML = chips.map(c => `<button type="button" data-pl="chip" data-f="${c[0]}" class="${String(filter) === c[0] ? 'on' : ''}">${c[1]}</button>`).join('');
+        if (nOff) chips.push(['off', '🚫 빠진 곡 ' + nOff]);
+        $('plChips').innerHTML = chips.map(c => `<button type="button" data-pl="chip" data-f="${c[0]}" class="${String(filter) === c[0] ? 'on' : ''}${c[0] === 'off' ? ' offc' : ''}">${c[1]}</button>`).join('');
         const ids = listIds();
-        $('plRows').innerHTML = ids.length ? ids.map((id, i) => {
+        const html = ids.map((id, i) => {
             const t = byId.get(id);
-            return `<button type="button" class="pl-row${cur && cur.id === id ? ' cur' : ''}" data-pl="row" data-id="${esc(id)}"><span class="n">${i + 1}</span>${cover(t)}` +
+            const row = `<button type="button" class="pl-row${cur && cur.id === id ? ' cur' : ''}" data-pl="row" data-id="${esc(id)}"><span class="n">${i + 1}</span>${cover(t)}` +
                 `<span class="t"><b>${esc(t.title)}</b><small>${esc(t.name)}${t.beat ? ' · ' + esc(t.beat) : ''}</small></span><span class="d">${esc(t.len)}</span><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span></button>`;
-        }).join('') : `<div class="pl-empty">${tracks.length ? '이 학년에는 아직 곡이 없어요' : '주제곡을 불러오는 중이에요.<br>잠시 뒤에도 안 보이면 인터넷 연결을 확인해 주세요.'}</div>`;
+            return isOff(id) ? `<div class="pl-rw off">${row}<button type="button" class="pl-ox back" data-pl="off" data-id="${esc(id)}" aria-label="${esc(t.title)} 다시 넣기">↩ 다시 넣기</button></div>` : row;   // 「빠진 곡」 칩에서만 보임
+        }).join('');
+        const nHid = filter !== 'off' ? tracks.filter(t => inFilter(t) && isOff(t.id)).length : 0;
+        $('plRows').innerHTML = html ? html : `<div class="pl-empty">${tracks.length ? (nHid ? '이 목록의 곡을 모두 뺐어요<br>「🚫 빠진 곡」에서 다시 넣을 수 있어요' : '이 학년에는 아직 곡이 없어요') : '주제곡을 불러오는 중이에요.<br>잠시 뒤에도 안 보이면 인터넷 연결을 확인해 주세요.'}</div>`;
     }
     // ---------------- 📋 타순 고르기 ----------------
     const LU_MAX = 30;
@@ -1255,6 +1302,7 @@
             $('plDurT').textContent = cur.len || '';
         }
         document.querySelectorAll('#plRows .pl-row').forEach(el => el.classList.toggle('cur', !!cur && el.dataset.id === cur.id));
+        paintOff();
     }
     function paintVol(k) {
         const v = $('plVol');
@@ -1266,6 +1314,7 @@
         if (!built) return;
         const playing = !!(audio && !audio.paused && cur);
         root.classList.toggle('pl-playing', playing);
+        paintOff();
         ['plMiniPlay', 'plBigPlay'].forEach(id => { const b = $(id); if (b) { b.innerHTML = playing ? I.pause : I.play; b.setAttribute('aria-label', playing ? '멈춤' : '재생'); } });
         const sh = $('plShuf'); sh.classList.toggle('on', cfg.shuffle); sh.querySelector('em').textContent = cfg.shuffle ? '셔플' : '순서대로';
         const rp = $('plRep'); rp.classList.toggle('on', cfg.repeat !== 'off'); rp.innerHTML = (cfg.repeat === 'one' ? I.repeat1 : I.repeat) + `<em>${REPEAT_LABEL[cfg.repeat]}</em>`;
@@ -1382,6 +1431,8 @@
             case 'coach-ok': coachDone(); break;
             case 'xl': cfg.xl = !cfg.xl; saveCfg(); $('plLyr').classList.toggle('xl', cfg.xl); $('plXl').textContent = cfg.xl ? '가 작게' : '가 크게'; kIdx = -2; paintLyrics(true); break;
             case 'dl': download(); break;
+            case 'off': offToggle([d.id]); break;
+            case 'offcur': if (cur) offToggle([cur.id]); break;
             case 'fade': fadeOut(); break;
             case 'snd': sndPlay(d.s); break;
             case 'mic': micToggle(); break;
