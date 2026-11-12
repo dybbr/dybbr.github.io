@@ -104,3 +104,25 @@ html.bka-open,html.bka-open body{overflow:hidden!important;overscroll-behavior:n
 .bka-bf .bka-blog{color:#0b2240;margin-left:auto}
 html.bka-bub-on #uiZoomCtrl{display:none!important}
 @media (prefers-reduced-motion:reduce){.bka-fab.on,.bka-wave i{animation:none}}
+
+/* 📦 v2.127.0: 부캉이 준비 상태 (B 배지 + C 처음 준비하기) */
+.bka-rd{display:inline-flex;align-items:center;gap:4px;margin-top:3px;font:inherit;font-size:12px;font-weight:900;color:#166534;background:#dcfce7;border:1px solid #86efac;border-radius:999px;padding:2px 9px;cursor:pointer;line-height:1.4;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bka-rd.w{color:#92400e;background:#fef3c7;border-color:#fcd34d}
+.bka-rd[hidden]{display:none}
+.bka-tt{min-width:0}
+.bka-tt small{display:block}
+.bka-bub .bka-rd{margin:4px 0 2px}
+.bka-fab{overflow:visible}
+.bka-dot{position:absolute;right:-5px;top:-5px;width:22px;height:22px;border-radius:50%;background:#16a34a;color:#fff;font-weight:900;font-size:13px;display:grid;place-items:center;border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.25);pointer-events:none}
+.bka-dot.w{background:#f59e0b}
+.bka-cks{margin-top:8px;border:1.5px solid #e2e8f0;border-radius:14px;padding:6px 12px;background:#f8fafc}
+.bka-ck{display:flex;gap:9px;align-items:flex-start;padding:7px 0;border-top:1px dashed #e2e8f0;font-weight:800;font-size:14px;color:#0f172a}
+.bka-ck:first-child{border-top:0}
+.bka-ck .ic{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:900;color:#fff;background:#16a34a}
+.bka-ck.w .ic{background:#f59e0b}.bka-ck.no .ic{background:#cbd5e1;color:#475569}.bka-ck.run .ic{background:#f5b301;color:#0b2240}
+.bka-ck .tx{flex:1;min-width:0}
+.bka-ck small{display:block;font-weight:600;color:#64748b;font-size:12.5px;word-break:keep-all;overflow-wrap:anywhere}
+.bka-ck.w small{color:#b45309}
+.bka-bar{display:block;height:9px;border-radius:999px;background:#e2e8f0;overflow:hidden;margin-top:5px}.bka-bar i{display:block;height:100%;background:linear-gradient(90deg,#f5b301,#f59e0b);border-radius:inherit}
+.bka-done{margin-top:8px;text-align:center;font-weight:900;color:#166534;background:#dcfce7;border-radius:12px;padding:9px}
+.bka-done[hidden]{display:none}
