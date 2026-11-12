@@ -28,7 +28,7 @@
         }
     </script>
     <!-- 🎵 선수별 주제곡 (v2.92.0) — 곡 목록은 cheer-songs.json (그 파일만 고치면 됨) · cheer-songs.js 를 고칠 때만 아래 ?v= 숫자 올리기 -->
-    <script src="cheer-songs.js?v=2.103.0"></script>
+    <script src="cheer-songs.js?v=2.121.0"></script>
 
     <!-- 브라우저 캐시 원천 방지 메타태그 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -488,6 +488,23 @@
         .cpl-len { flex: 0 0 auto; font-size: 12px; font-weight: 800; color: var(--text-sub); font-variant-numeric: tabular-nums; }
         .cpl-item.on .cpl-pick { background: #ffedd5; }
         .cpl-item.off .cpl-t, .cpl-item.off .cpl-no { opacity: .5; }   /* 🚫 v2.118.0: 음악 탭에서 뺀 곡 */
+        /* 🔒 v2.120.0: 우리 아이 곡 모든 분 목록에서 숨기기 (B안 — 보호자 · 운영진만 「공개 설정」) */
+        .cpl-item.hidall .cpl-t, .cpl-item.hidall .cpl-no { opacity: .55; }
+        .cpl-off.cpl-hid { background: #0b2240; }
+        .cpl-item { display: flex; align-items: center; }
+        .cpl-item .cpl-pick { flex: 1; min-width: 0; }
+        .cpl-sh { display: none; flex: none; height: 32px; margin-right: 12px; padding: 0 10px; border-radius: 999px; border: 1.5px solid #16a34a; background: #f0fdf4; color: #15803d; font: inherit; font-size: 12.5px; font-weight: 800; white-space: nowrap; cursor: pointer; }
+        .cpl-sh.on { border-color: #0b2240; background: #0b2240; color: #ffffff; }
+        .cpl-sh:disabled { opacity: .6; cursor: default; }
+        .cpl-shedit .cpl-sh { display: block; }
+        .cpl-shedit .cpl-item .cpl-len, .cpl-shedit .cpl-item .cpl-off { display: none; }
+        .cpl-shbar { display: flex; align-items: center; gap: 10px; margin: 0 10px 10px; padding: 10px 10px 10px 12px; border-radius: 12px; background: #fff7ed; border: 1px dashed #fdba74; }
+        .cpl-shbar .tx { flex: 1; min-width: 0; display: grid; }
+        .cpl-shbar b { font-size: 13.5px; color: var(--text-title); }
+        .cpl-shbar small { font-size: 12px; color: var(--text-sub); }
+        .cpl-shgo { flex: none; height: 34px; padding: 0 14px; border-radius: 9px; border: 0; background: #0b2240; color: #ffffff; font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
+        .cpl-shgo.done { display: none; background: #c8102e; }
+        .cpl-shedit .cpl-shgo { display: none; } .cpl-shedit .cpl-shgo.done { display: block; }
         .cpl-off { flex: 0 0 auto; font-size: 11px; font-weight: 800; line-height: 18px; padding: 0 6px; border-radius: 6px; background: #94a3b8; color: #ffffff; }
         .cpl-item.on .cpl-no, .cpl-item.on .cpl-t b, .cpl-item.on .cpl-len { color: var(--kbo-red); }
         .cheer-lyrics { background: #ffffff; border: 1px solid #fde2c4; border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 10px; max-height: 46vh; overflow-y: auto; overscroll-behavior: contain; }
@@ -1337,6 +1354,7 @@
                     hideBirth: !!row.hideBirth,
                     hideHeight: !!row.hideHeight,
                     hideWeight: !!row.hideWeight,
+                    hideSongs: Array.isArray(row.hideSongs) ? row.hideSongs : [],
                     photoLink: String(row.photoLink || '').trim()
                 };
             }).filter(Boolean);
@@ -1541,10 +1559,67 @@
     // 🎵 주제곡 플레이리스트 (v2.103.0, C안) — 위에 큰 플레이어(‹ › 로 앞뒤 곡 · 1 / N), 아래 번호 목록(제목 · 장르 · 길이)
     //   한 곡이 끝나면 다음 곡을 이어서 틀어 줌 (마지막 곡이 끝나면 멈춤) · 목록에서 곡을 누르면 그 곡부터 재생
     //   오디오 칸은 하나만 쓰고 주소만 바꿈 → 휴대폰에서도 다음 곡이 끊기지 않고 이어짐 · 숏 · 롱이라는 글자는 안 보임 (곡 제목으로)
-    function cheerVersionsFor(p) {
+    // 🔒 숨긴 곡: 그 선수 보호자 · 코치진 · 총무 · 대표 · 개발자에게만 보임(「모두에게 숨김」 표시) · 다른 분에게는 목록에서 빠짐
+    function canManageSongs(p) { return isParentOfPlayer(p) || canViewPhoto; }
+    function cheerVersionsFor(p, all) {
         const song = (typeof window.cheerSongFor === 'function') ? window.cheerSongFor(p) : null;
         if (!song || !song.src) return [];
-        return (typeof window.cheerVersions === 'function') ? window.cheerVersions(song) : [{ key: 's', label: song.title || '주제곡', title: song.title || '', src: song.src, lyrics: song.lyrics, times: song.times, len: song.len || '', beat: song.beat, vocal: song.vocal }];
+        const vers = (typeof window.cheerVersions === 'function') ? window.cheerVersions(song) : [{ key: 's', label: song.title || '주제곡', title: song.title || '', src: song.src, lyrics: song.lyrics, times: song.times, len: song.len || '', beat: song.beat, vocal: song.vocal }];
+        const hid = window.cheerHiddenKeys ? window.cheerHiddenKeys(p) : new Set();
+        vers.forEach(v => { v.hidAll = hid.has(v.key); });
+        return all || canManageSongs(p) ? vers : vers.filter(v => !v.hidAll);
+    }
+    // 🔒 v2.120.0: 숨김 저장 — 화면은 바로 바꾸고(재생은 그대로) 서버(setHiddenSongs, v2.43.0)에 곡 키 전체를 보냄
+    //   여러 번 빨리 눌러도 한 번에 하나씩 차례로 보냄(마지막 상태가 남게) · 못 보내면 마지막으로 저장된 상태로 되돌림
+    //   명단 화면 저장본도 같이 고쳐 「오래됨」으로 → 음악 탭으로 돌아가면 서버에서 새로 받음
+    const shSend = { busy: false, again: false, saved: null };
+    function cheerTagHtml(v, off) {
+        return v.hidAll ? '<span class="cpl-off cpl-hid" title="모든 분 목록에서 숨긴 곡 · 보호자와 운영진에게만 보임">🔒 숨김</span>'
+            : off.has(v.key) ? '<span class="cpl-off" title="음악 탭에서 뺀 곡 · 이어 듣기에서 건너뜀">빠짐</span>' : '';
+    }
+    function cheerShBarText(n) { return n ? n + '곡을 모든 분 목록에서 숨겼어요' : '마음에 안 드는 곡은 모든 분 목록에서 숨길 수 있어요'; }
+    function paintSongHide(p) {   // 숨김 표시만 다시 그림 (지금 듣는 곡 · 재생 위치는 그대로)
+        const box = document.getElementById('cheerBox'); if (!box || !box._vers) return;
+        const hid = window.cheerHiddenKeys(p), off = cheerOffKeys(p);
+        let n = 0;
+        box._vers.forEach((v, i) => {
+            v.hidAll = hid.has(v.key); if (v.hidAll) n++;
+            const li = box.querySelector('.cpl-item[data-i="' + i + '"]'); if (!li) return;
+            li.classList.toggle('hidall', v.hidAll);
+            const tag = li.querySelector('.cpl-off'); if (tag) tag.remove();
+            const len = li.querySelector('.cpl-len'), h = cheerTagHtml(v, off); if (len && h) len.insertAdjacentHTML('beforebegin', h);
+            const sb = li.querySelector('.cpl-sh'); if (sb) { sb.classList.toggle('on', v.hidAll); sb.setAttribute('aria-pressed', v.hidAll ? 'true' : 'false'); sb.textContent = v.hidAll ? '🔒 숨김' : '👀 공개'; }
+        });
+        const sm = box.querySelector('.cpl-shbar small'); if (sm) sm.textContent = cheerShBarText(n);
+    }
+    function snapSetHidden(p, keys) {
+        const s = snapLoad(); if (!s) return;
+        const q = s.data.players.find(x => String(x.name || '').trim() === p.name && (parseInt(x.no, 10) || 0) === (p.no || 0));
+        if (q) q.hideSongs = keys.slice();
+        snapMarkStale(s.data.players);
+    }
+    function saveHiddenSongs(p, keys, k) {
+        if (shSend.saved === null) shSend.saved = Array.from(window.cheerHiddenKeys(p));
+        p.hideSongs = keys.slice();
+        paintSongHide(p);
+        const v = (document.getElementById('cheerBox') || {})._vers, t = v && v.find(x => x.key === k), nm = t ? '「' + t.label + '」' : '이 곡';
+        if (keys.indexOf(k) >= 0) bkNotify('done', nm + '을 모든 분 목록에서 숨겼어요', p.name + ' 보호자와 운영진에게만 보여요 · 다른 분들은 앱을 다시 열면 바뀌어요');
+        else bkNotify('done', nm + '을 다시 모든 분께 공개했어요', '다른 분들은 앱을 다시 열면 보여요');
+        flushHiddenSongs(p);
+    }
+    function flushHiddenSongs(p) {
+        if (shSend.busy) { shSend.again = true; return; }
+        shSend.busy = true;
+        const keys = Array.from(window.cheerHiddenKeys(p));
+        postApi({ action: 'setHiddenSongs', playerNo: p.no || 0, playerName: p.name, keys: keys })
+            .then(() => { shSend.saved = keys; snapSetHidden(p, keys); })
+            .catch(err => {
+                console.error('곡 숨김 저장 에러:', err);
+                shSend.again = false;
+                p.hideSongs = shSend.saved.slice(); paintSongHide(p);
+                bkNotify('fail', null, '저장하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.');
+            })
+            .then(() => { shSend.busy = false; if (shSend.again) { shSend.again = false; flushHiddenSongs(p); } });
     }
     function cheerLyricsHtml(song) {
         const blocks = (typeof window.cheerLyricBlocks === 'function') ? window.cheerLyricBlocks(song) : [];
@@ -1564,15 +1639,18 @@
     function cheerSongHtml(p) {
         const vers = cheerVersionsFor(p), off = cheerOffKeys(p);
         if (!vers.length) return '';
+        const shB = canManageSongs(p);   // 🔒 v2.120.0 B안: 보호자 · 운영진은 목록에서 곡마다 공개 · 숨김
         const multi = vers.length > 1;
         const list = multi ? `<ol class="cpl-list" aria-label="${escapeHtml(p.name)} 주제곡 목록">${vers.map((v, i) => `
-                    <li class="cpl-item${off.has(v.key) ? ' off' : ''}" data-i="${i}"><button type="button" class="cpl-pick" data-i="${i}">
+                    <li class="cpl-item${off.has(v.key) ? ' off' : ''}${v.hidAll ? ' hidall' : ''}" data-i="${i}"><button type="button" class="cpl-pick" data-i="${i}">
                         <span class="cpl-no">${i + 1}</span>
                         <span class="cpl-t"><b>${escapeHtml(v.label)}</b>${v.beat ? `<small>${escapeHtml(v.beat)}</small>` : ''}</span>
-                        ${off.has(v.key) ? '<span class="cpl-off" title="음악 탭에서 뺀 곡 · 이어 듣기에서 건너뜀">빠짐</span>' : ''}
+                        ${cheerTagHtml(v, off)}
                         <span class="cpl-len" data-len="${escapeHtml(v.len || '')}">${escapeHtml(v.len || '')}</span>
-                    </button></li>`).join('')}
+                    </button>${shB ? `<button type="button" class="cpl-sh${v.hidAll ? ' on' : ''}" data-k="${escapeHtml(v.key)}" aria-pressed="${v.hidAll ? 'true' : 'false'}">${v.hidAll ? '🔒 숨김' : '👀 공개'}</button>` : ''}</li>`).join('')}
                 </ol>` : '';
+        const nHid = vers.filter(v => v.hidAll).length;
+        const shBar = shB ? `<div class="cpl-shbar"><span class="tx"><b>🔒 우리 아이 곡 공개 설정</b><small>${cheerShBarText(nHid)}</small></span><button type="button" class="cpl-shgo" id="cheerShEdit">설정</button><button type="button" class="cpl-shgo done" id="cheerShDone">완료</button></div>` : '';
         return `
             <div class="cheer-box cpl" id="cheerBox" data-who="${escapeHtml(cheerWho(p))}" data-ver="${vers[0].key}">
                 <div class="cpl-top">
@@ -1594,7 +1672,7 @@
                     <div class="cheer-msg" id="cheerMsg" hidden></div>
                 </div>
                 <div class="cheer-lyrics" id="cheerLyrics" hidden></div>
-                ${list}
+                ${list}${shBar}
                 <audio id="cheerAudio" preload="none"></audio>
             </div>`;
     }
@@ -1698,6 +1776,14 @@
         btn.addEventListener('click', function () { if (audio.paused) play(); else audio.pause(); });
         if (prev) prev.addEventListener('click', () => select(box._idx - 1, !audio.paused));
         if (next) next.addEventListener('click', () => select(box._idx + 1, !audio.paused));
+        const shEdit = document.getElementById('cheerShEdit'), shDone = document.getElementById('cheerShDone');
+        if (shEdit) shEdit.addEventListener('click', () => box.classList.add('cpl-shedit'));
+        if (shDone) shDone.addEventListener('click', () => box.classList.remove('cpl-shedit'));
+        box.querySelectorAll('.cpl-sh').forEach(b => b.addEventListener('click', function () {
+            const k = this.dataset.k, keys = Array.from(window.cheerHiddenKeys(p));
+            const i = keys.indexOf(k); if (i >= 0) keys.splice(i, 1); else keys.push(k);
+            saveHiddenSongs(p, keys, k);
+        }));
         items.forEach(li => li.querySelector('.cpl-pick').addEventListener('click', function () {
             const i = Number(this.dataset.i);
             if (i === box._idx) { if (audio.paused) play(); else audio.pause(); return; }
@@ -1709,7 +1795,7 @@
         audio.addEventListener('ended', function () {
             const off = cheerOffKeys(p);
             let j = box._idx + 1;
-            while (j < vers.length && off.has(vers[j].key)) j++;
+            while (j < vers.length && (off.has(vers[j].key) || vers[j].hidAll)) j++;   // 🔒 모두에게 숨긴 곡도 건너뜀
             if (j < vers.length) select(j, true);
             else { audio.currentTime = 0; showTime(); }
         });
@@ -1722,7 +1808,7 @@
         // 💿 v2.105.0: 새 기능 알림(첫 화면)에서 곡을 눌러 왔으면(?song=m0) 그 곡을 골라 두고 주제곡 칸으로 내려 줌 (재생은 ▶ 를 눌러야 — 휴대폰이 자동 재생을 막음)
         const want = new URLSearchParams(window.location.search).get('song');
         const wi = want ? vers.findIndex(v => v.key === want) : -1;
-        const offK = cheerOffKeys(p), first = vers.findIndex(v => !offK.has(v.key));   // 🚫 처음 올려 둘 곡: 뺀 곡이 아닌 첫 곡
+        const offK = cheerOffKeys(p), first = vers.findIndex(v => !offK.has(v.key) && !v.hidAll);   // 🚫 처음 올려 둘 곡: 뺀 곡이 아닌 첫 곡
         select(wi >= 0 ? wi : (first >= 0 ? first : 0), false);
         if (wi >= 0) setTimeout(function () { box.scrollIntoView({ behavior: 'smooth', block: 'start' }); box.classList.add('cpl-flash'); setTimeout(() => box.classList.remove('cpl-flash'), 1800); }, 350);
     }

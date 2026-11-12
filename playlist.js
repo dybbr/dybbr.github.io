@@ -81,7 +81,8 @@
     // 🚫 v2.118.0: 마음에 안 드는 곡 빼기 · 다시 넣기 (시안 C, 하코 선택) — 큰 플레이어 「이 곡 빼기」 · 칩 「빠진 곡」에서 다시 넣기 · 이 기기에만 저장(cfg.off: 곡 id 「배번/이름/키」 · 서버 · 시트 안 씀)
     //   뺀 곡은 전체 재생 · 셔플 · 다음 곡 · 이전 곡 · 이어폰 · 차량 버튼에서 건너뜀 · 목록에서 직접 누른 곡과 타석 등장곡으로 고른 곡은 그대로 틂
     const offSet = new Set(cfg.off);
-    const isOff = id => offSet.has(id);
+    let hidSet = new Set();   // 🔒 보호자가 모든 분 목록에서 숨긴 곡 (보호자 · 운영진 화면에만 남아 있음)
+    const isOff = id => offSet.has(id) || hidSet.has(id);
     function setOff(ids, on) {
         ids.forEach(id => { if (on) offSet.add(id); else offSet.delete(id); });
         cfg.off = Array.from(offSet); saveCfg();
@@ -119,22 +120,25 @@
             if (!song) return;
             const vers = window.cheerVersions(song);
             if (!vers.length) return;
+            const hid = window.cheerHiddenKeys ? window.cheerHiddenKeys(p) : new Set();   // 🔒 보호자가 모든 분 목록에서 숨긴 곡
             const g = parseInt(String(p.grade || '').replace(/[^0-9]/g, ''), 10) || parseInt(song.grade, 10) || 0;
             const pid = (p.no || 0) + '/' + p.name;
             let mine = false;
             try { mine = !!isParentOfPlayer(p); } catch (e) {}
-            const person = { pid: pid, no: p.no || 0, name: p.name, g: g, mine: mine, pos: p.pos && p.pos !== '-' ? String(p.pos) : '', src: p, tracks: [] };
-            vers.forEach(v => person.tracks.push({
-                id: pid + '/' + v.key, pid: pid, no: person.no, name: p.name, g: g, key: v.key,
+            const manage = mine || canSeeHidden();   // 숨긴 곡을 보고 되돌릴 수 있는 분: 그 선수 보호자 · 코치진 · 총무 · 대표 · 개발자
+            const person = { pid: pid, no: p.no || 0, name: p.name, g: g, mine: mine, manage: manage, pos: p.pos && p.pos !== '-' ? String(p.pos) : '', src: p, tracks: [] };
+            vers.forEach(v => (manage || !hid.has(v.key)) && person.tracks.push({
+                id: pid + '/' + v.key, pid: pid, no: person.no, name: p.name, g: g, key: v.key, hidAll: hid.has(v.key),
                 title: v.title || v.label || (p.name + ' 주제곡'), src: v.src, len: v.len || '', beat: v.beat || '', vocal: v.vocal || '', lyrics: v.lyrics, times: v.times
             }));
-            ppl.push(person);
+            if (person.tracks.length) ppl.push(person);
         });
         ppl.sort((a, b) => (b.g - a.g) || (a.no - b.no) || a.name.localeCompare(b.name));
-        const s = ppl.map(p => p.pid + (p.mine ? '*' : '') + '~' + p.pos + '~' + (p.src.photoLink || '') + (p.src.hidePhoto ? 'h' : '') + ':' + p.tracks.map(t => t.key + '~' + t.title + '~' + t.src.slice(-14)).join(',')).join('|');
+        const s = ppl.map(p => p.pid + (p.mine ? '*' : '') + '~' + p.pos + '~' + (p.src.photoLink || '') + (p.src.hidePhoto ? 'h' : '') + ':' + p.tracks.map(t => t.key + (t.hidAll ? '#' : '') + '~' + t.title + '~' + t.src.slice(-14)).join(',')).join('|');
         if (s === sig) return;
         sig = s; people = ppl; tracks = []; byId = new Map();
         ppl.forEach(p => p.tracks.forEach(t => { tracks.push(t); byId.set(t.id, t); }));
+        hidSet = new Set(tracks.filter(t => t.hidAll).map(t => t.id));
         base = base.filter(id => byId.has(id)); order = order.filter(id => byId.has(id));
         if (cur) {
             if (byId.has(cur.id)) { cur = byId.get(cur.id); qi = order.indexOf(cur.id); if (qi < 0) { setQueue(tracks.map(t => t.id), cur.id); } }
@@ -763,7 +767,7 @@
     }
 
     // ---------------- ⚾ 타석 ----------------
-    function walkTrack(person) { const k = cfg.walkSong[person.pid]; return person.tracks.find(t => t.key === k) || person.tracks.find(t => !isOff(t.id)) || person.tracks[0]; }   // 따로 고른 곡이 없으면 빼지 않은 첫 곡
+    function walkTrack(person) { const k = cfg.walkSong[person.pid]; return person.tracks.find(t => t.key === k && !t.hidAll) || person.tracks.find(t => !isOff(t.id)) || person.tracks[0]; }   // 따로 고른 곡이 없으면 빼지 않은 첫 곡 · 🔒 고른 곡을 모두에게 숨겼으면 숨기지 않은 첫 곡
     function hookTime(t) {   // 후렴이 시작하는 자리 (가사 시간표에서 찾음 · 없으면 처음부터)
         try {
             const tm = window.cheerLineTimes(t);
@@ -1048,7 +1052,13 @@
                 <button type="button" class="sk" data-pl="next" aria-label="다음 곡">${I.next}</button>
                 <button type="button" class="md" data-pl="repeat" id="plRep" aria-label="반복"></button>
             </div>
-            <div class="pl-msg" id="plMsg" hidden></div>`;
+            <div class="pl-msg" id="plMsg" hidden></div>
+            <div class="pl-osheet" id="plOSheet" data-pl="off-x" hidden><div class="pl-osheet-in" role="dialog" aria-labelledby="plOSheetT">
+                <b id="plOSheetT"></b>
+                <button type="button" data-pl="off-me"><span>📱 내 휴대폰에서만 빼기</span><small>다른 분들은 그대로 들어요</small></button>
+                <button type="button" data-pl="off-all" class="all"><span>🔒 모든 분 목록에서 숨기기</span><small id="plOSheetW"></small></button>
+                <button type="button" data-pl="off-x" class="x">취소</button>
+            </div></div>`;
         big.addEventListener('click', onClick);
         document.body.appendChild(big);
         const seek = $('plSeek');
@@ -1108,13 +1118,57 @@
         if (on) notify(nm + '을 뺐어요', '전체 재생 · 셔플에서 안 나와요 · 「빠진 곡」에서 다시 넣을 수 있어요');
         else notify(nm + '을 다시 넣었어요');
     }
+    // 🔒 v2.120.0: 우리 아이 곡 모든 분 목록에서 숨기기 · 다시 공개 (C안) — 화면은 바로 바꾸고 서버(setHiddenSongs, v2.43.0)에 그 선수 곡 키 전체를 보냄
+    //   한 선수에 한 번에 하나씩 차례로 보냄(마지막 상태가 남게) · 못 보내면 마지막으로 저장된 상태로 되돌림 · 기기 저장본(명단)도 같이 고침
+    const hidSend = {};
+    function setHidAll(t, on) {
+        const person = personOf(t.pid); if (!person || !person.manage) return;
+        const st = hidSend[person.pid] || (hidSend[person.pid] = { busy: false, again: false, saved: Array.from(window.cheerHiddenKeys(person.src)) });
+        const keys = Array.from(window.cheerHiddenKeys(person.src)), i = keys.indexOf(t.key);
+        if (on && i < 0) keys.push(t.key); if (!on && i >= 0) keys.splice(i, 1);
+        person.src.hideSongs = keys;
+        const wasCur = on && cur && cur.id === t.id && !walk && attached && audio && !audio.paused;
+        sig = ''; sync();
+        if (wasCur) next(false);
+        if (filter === 'off' && !offCount()) { filter = 'all'; renderList(); }
+        notify(on ? '「' + t.title + '」을 모든 분 목록에서 숨겼어요' : '「' + t.title + '」을 다시 모든 분께 공개했어요', on ? person.name + ' 보호자와 운영진에게만 보여요 · 「빠진 곡」에서 다시 공개' : '다른 분들은 앱을 다시 열면 보여요');
+        hidFlush(person, st);
+    }
+    function hidFlush(person, st) {
+        if (st.busy) { st.again = true; return; }
+        if (typeof postApi !== 'function') return;
+        st.busy = true;
+        const src = person.src, keys = Array.from(window.cheerHiddenKeys(src));
+        postApi({ action: 'setHiddenSongs', playerNo: person.no, playerName: person.name, keys: keys })
+            .then(() => {
+                st.saved = keys;
+                try {   // 기기 저장본(명단)도 고치고 명단 번호를 지워 다음엔 서버에서 새로 받게
+                    const s = typeof snapLoad === 'function' ? snapLoad() : null;
+                    const q = s && s.data.players.find(x => String(x.name || '').trim() === person.name && (parseInt(x.no, 10) || 0) === person.no);
+                    if (q) { q.hideSongs = keys.slice(); snapPatch({ players: s.data.players }, 'roster', ''); }
+                } catch (e) {}
+            })
+            .catch(err => {
+                console.warn('곡 숨김 저장 실패:', err);
+                st.again = false;
+                src.hideSongs = st.saved.slice(); sig = ''; sync();
+                notify('저장하지 못했어요', '인터넷 연결을 확인하고 다시 눌러 주세요');
+            })
+            .then(() => { st.busy = false; if (st.again) { st.again = false; hidFlush(personOf(person.pid) || person, st); } });
+    }
+    function offAsk(open) {   // 🔒 v2.120.0 C안: 우리 아이 곡(운영진은 모든 곡)이면 「내 휴대폰에서만 / 모든 분께」 고르기
+        const sh = $('plOSheet'); if (!sh) return;
+        if (open) { const person = personOf(cur.pid); $('plOSheetT').textContent = '「' + cur.title + '」을 어떻게 뺄까요?'; $('plOSheetW').textContent = person.name + ' 보호자와 운영진만 할 수 있어요 · 「빠진 곡」에서 다시 공개'; }
+        sh.hidden = !open;
+    }
     function offCount() { let n = 0; tracks.forEach(t => { if (isOff(t.id)) n++; }); return n; }
     function paintOff() {   // 큰 플레이어 「이 곡 빼기」 버튼 (타석 등장곡일 때는 숨김)
         const b = $('plOffB'); if (!b) return;
         b.hidden = !cur || walk;
         const off = !!cur && isOff(cur.id);
         b.classList.toggle('on', off);
-        b.textContent = off ? '↩ 다시 넣기' : '🚫 이 곡 빼기';
+        b.textContent = cur && cur.hidAll ? '🔓 다시 공개' : off ? '↩ 다시 넣기' : '🚫 이 곡 빼기';
+        const sh = $('plOSheet'); if (sh && !sh.hidden && (!cur || walk)) sh.hidden = true;
     }
     function renderList() {
         const cnt = $('plCount');
@@ -1132,7 +1186,8 @@
         const html = ids.map((id, i) => {
             const t = byId.get(id);
             const row = `<button type="button" class="pl-row${cur && cur.id === id ? ' cur' : ''}" data-pl="row" data-id="${esc(id)}"><span class="n">${i + 1}</span>${cover(t)}` +
-                `<span class="t"><b>${esc(t.title)}</b><small>${esc(t.name)}${t.beat ? ' · ' + esc(t.beat) : ''}</small></span><span class="d">${esc(t.len)}</span><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span></button>`;
+                `<span class="t"><b>${esc(t.title)}</b><small>${t.hidAll ? '<i class="pl-htag">🔒 모두에게 숨김</i>' : ''}${esc(t.name)}${t.beat ? ' · ' + esc(t.beat) : ''}</small></span><span class="d">${esc(t.len)}</span><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span></button>`;
+            if (t.hidAll) return `<div class="pl-rw off">${row}<button type="button" class="pl-ox back hid" data-pl="unhide" data-id="${esc(id)}" aria-label="${esc(t.title)} 다시 공개">🔓 다시 공개</button></div>`;
             return isOff(id) ? `<div class="pl-rw off">${row}<button type="button" class="pl-ox back" data-pl="off" data-id="${esc(id)}" aria-label="${esc(t.title)} 다시 넣기">↩ 다시 넣기</button></div>` : row;   // 「빠진 곡」 칩에서만 보임
         }).join('');
         const nHid = filter !== 'off' ? tracks.filter(t => inFilter(t) && isOff(t.id)).length : 0;
@@ -1439,7 +1494,17 @@
             case 'xl': cfg.xl = !cfg.xl; saveCfg(); $('plLyr').classList.toggle('xl', cfg.xl); $('plXl').textContent = cfg.xl ? '가 작게' : '가 크게'; kIdx = -2; paintLyrics(true); break;
             case 'dl': download(); break;
             case 'off': offToggle([d.id]); break;
-            case 'offcur': if (cur) offToggle([cur.id]); break;
+            case 'offcur': {
+                if (!cur) break;
+                if (cur.hidAll) { setHidAll(cur, false); break; }
+                const person = personOf(cur.pid);
+                if (person && person.manage && !isOff(cur.id)) offAsk(true); else offToggle([cur.id]);
+                break;
+            }
+            case 'off-me': offAsk(false); if (cur) offToggle([cur.id], true); break;
+            case 'off-all': offAsk(false); if (cur) setHidAll(cur, true); break;
+            case 'off-x': if (e.target === el || el.tagName === 'BUTTON') offAsk(false); break;
+            case 'unhide': { const t = byId.get(d.id); if (t) setHidAll(t, false); break; }
             case 'fade': fadeOut(); break;
             case 'snd': sndPlay(d.s); break;
             case 'mic': micToggle(); break;

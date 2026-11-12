@@ -83,6 +83,14 @@
         return out;
     }
 
+    // 🔒 v2.120.0: 우리 아이 곡 모든 분 목록에서 숨기기 — 서버(v2.43.0) 명단의 hideSongs: ['m1', 's', …] (선수정보 시트 「숨긴주제곡」 칸) → 곡 키 묶음
+    function cheerHiddenKeys(p) {
+        const h = p && p.hideSongs;
+        const a = Array.isArray(h) ? h : String(h || '').split(/[,\s]+/);
+        return new Set(a.map(x => String(x || '').trim()).filter(Boolean));
+    }
+
+    window.cheerHiddenKeys = cheerHiddenKeys;
     window.loadCheerSongs = loadCheerSongs;
     window.cheerVersions = cheerVersions;
     window.cheerSongFor = cheerSongFor;

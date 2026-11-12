@@ -1,11 +1,11 @@
 // ==========================================================
-// ⚾ 대연초 야구부 관리 시스템 통합 백엔드 API (v2.42.0)
+// ⚾ 대연초 야구부 관리 시스템 통합 백엔드 API (v2.43.0)
 // ==========================================================
 // ★ API_KEY 는 코드에 적지 않고 「프로젝트 설정 → 스크립트 속성」의 API_KEY 에 넣어 둡니다 (v2.36.0~).
 //   값은 index.html / player.html 의 API_KEY 와 "같은 값"이어야 합니다. 속성이 비어 있으면 모든 요청을 거절합니다.
 var API_KEY = PropertiesService.getScriptProperties().getProperty("API_KEY") || null;
 
-var ALLOWED_POST_ACTIONS = ["login", "logout", "uploadPhoto", "deletePhoto", "submitOrder", "cancelOrder", "registerContact", "setUniformActive", "setJerseyColors", "changeAdminPw", "updatePlayerInfo", "saveEvents", "deleteEvent", "saveNotice", "deleteNotice", "saveVenue", "deleteVenue"];   // v2.14.0: 실시간 접속 알림(presence) 없앰 · v2.15.0: 보안 활동 로그(logActivity) 없앰 · v2.20.0: 공지 읽음(viewNotice) 없앰
+var ALLOWED_POST_ACTIONS = ["login", "logout", "uploadPhoto", "deletePhoto", "submitOrder", "cancelOrder", "registerContact", "setUniformActive", "setJerseyColors", "changeAdminPw", "updatePlayerInfo", "setHiddenSongs", "saveEvents", "deleteEvent", "saveNotice", "deleteNotice", "saveVenue", "deleteVenue"];   // v2.14.0: 실시간 접속 알림(presence) 없앰 · v2.15.0: 보안 활동 로그(logActivity) 없앰 · v2.20.0: 공지 읽음(viewNotice) 없앰
 var ALLOWED_ORDER_ITEMS = ["모자", "바지 (허리)", "바지 (기장)", "유니폼상의", "여름훈련티", "겨울훈련티", "바람막이", "풀오버", "겨울점퍼", "응원복"];   // v2.41.0: 📣 응원복 (학부모 응원용)
 
 // ★ 1. 드라이브 권한 및 폴더 생성 테스트 함수
@@ -212,7 +212,7 @@ var DATA_CACHE_TTL = 600;
 var DATA_TTL = {};   // 칸마다 따로 정한 보관 시간 (초) — 없으면 DATA_CACHE_TTL
 var DATA_KEYS = ["C_ROSTER", "C_GRADS", "C_EVENTS", "C_VENUES", "C_NOTICES", "C_OFFICERS", "C_DUTY"];   // v2.28.0: 📞 집행부 번호 (C_OFFICERS) · v2.31.0: 🧹 청소 당번 (C_DUTY)
 var DATA_DROP = {   // (구장 이름을 바꿔 일정 장소까지 바뀌면 handleSaveVenue 가 일정 칸도 따로 비움)
-  uploadPhoto: ["C_ROSTER", "C_GRADS"], deletePhoto: ["C_ROSTER", "C_GRADS"], updatePlayerInfo: ["C_ROSTER", "C_DUTY"], registerContact: ["C_ROSTER", "C_OFFICERS", "C_DUTY"],
+  uploadPhoto: ["C_ROSTER", "C_GRADS"], deletePhoto: ["C_ROSTER", "C_GRADS"], updatePlayerInfo: ["C_ROSTER", "C_DUTY"], setHiddenSongs: ["C_ROSTER"], registerContact: ["C_ROSTER", "C_OFFICERS", "C_DUTY"],
   saveEvents: ["C_EVENTS"], deleteEvent: ["C_EVENTS"], saveVenue: ["C_VENUES"], deleteVenue: ["C_VENUES"],
   saveNotice: ["C_NOTICES"], deleteNotice: ["C_NOTICES"]
 };
@@ -746,7 +746,8 @@ function readRosterRaw(ss) {
       grade: findColIdx(H, ["구분", "학년", "직책"]), pos: findColIdx(H, ["포지션", "역할"]), bt: findColIdx(H, ["투타", "투/타"]),
       birth: findColIdx(H, ["생년월일", "생일"]), height: findColIdx(H, ["키", "신장"]), weight: findColIdx(H, ["몸무게", "체중"]),
       visible: findColIdx(H, ["노출여부"]), photo: findColIdx(H, ["사진공개", "사진노출"]), birthOpen: findColIdx(H, ["생년월일공개", "생일공개"]),
-      heightOpen: findColIdx(H, ["키공개"]), weightOpen: findColIdx(H, ["몸무게공개"]), link: findColIdx(H, ["사진링크", "드라이브사진", "사진URL"])
+      heightOpen: findColIdx(H, ["키공개"]), weightOpen: findColIdx(H, ["몸무게공개"]), link: findColIdx(H, ["사진링크", "드라이브사진", "사진URL"]),
+      songs: findColIdx(H, [SONG_HIDE_COL])   // 🔒 v2.43.0: 보호자가 모든 분 목록에서 숨긴 주제곡 (칸이 없으면 빈 목록)
     };
     var g = function (row, idx, fb) { var t = idx !== -1 ? idx : fb; return (t !== undefined && t < row.length) ? String(row[t] || "").trim() : ""; };
     var off = function (val) { val = String(val || "").toUpperCase().trim(); return val === "OFF" || val === "비공개"; };
@@ -762,7 +763,7 @@ function readRosterRaw(ss) {
                  bt: g(row, c.bt, 5) || "-", birth: birth, height: g(row, c.height, 7), weight: g(row, c.weight, 8),
                  visible: g(row, c.visible, 9).toUpperCase() !== "OFF",
                  hidePhoto: off(g(row, c.photo, 10)), hideBirth: off(g(row, c.birthOpen, 11)), hideHeight: off(g(row, c.heightOpen, 12)), hideWeight: off(g(row, c.weightOpen, 13)),
-                 photoLink: g(row, c.link, 14) });
+                 photoLink: g(row, c.link, 14), hideSongs: c.songs !== -1 ? parseSongKeys(row[c.songs]) : [] });
     }
     return out;
   });
@@ -783,9 +784,37 @@ function buildRosterPayload(ss, session) {
     if (r.hidePhoto && !canPhoto) link = "";   // 비공개 사진 링크는 열람권자만
     out.push({ id: r.id, no: r.no, name: r.name, grade: r.grade, pos: r.pos,
                bt: r.bt, birth: birth, height: height, weight: weight, visible: r.visible,
-               hidePhoto: r.hidePhoto, hideBirth: hB, hideHeight: hH, hideWeight: hW, photoLink: link });
+               hidePhoto: r.hidePhoto, hideBirth: hB, hideHeight: hH, hideWeight: hW, photoLink: link, hideSongs: r.hideSongs || [] });
   }
   return out;
+}
+
+// 🔒 v2.43.0: 주제곡 숨기기 — 「선수정보」 탭 「숨긴주제곡」 칸에 곡 키를 쉼표로 (예: "l,m1")
+//   곡 키: cheer-songs.json 의 m0 · m1 … (추가 곡) · s (숏) · l (롱) — 사이트 cheerVersions 와 같음
+//   숨긴 곡은 사이트가 다른 분 목록 · 재생에서 빼고, 그 선수 보호자 · 운영진에게만 「숨김」으로 보여 줌 (명단 데이터는 모두에게 같이 감)
+var SONG_HIDE_COL = "숨긴주제곡";
+function parseSongKeys(v) {
+  var out = [];
+  String(v || "").split(/[,\s]+/).forEach(function (k) { k = k.trim(); if (/^(m\d{1,2}|s|l)$/.test(k) && out.indexOf(k) < 0) out.push(k); });
+  return out.slice(0, 20);
+}
+function handleSetHiddenSongs(ss, data) {
+  var no = parseInt(data.playerNo, 10) || 0;
+  var name = cleanText(data.playerName, 30);
+  if (!name) return json({ result: "error", message: "선수 이름이 없습니다." });
+  var keys = parseSongKeys(Array.isArray(data.keys) ? data.keys.join(",") : data.keys);
+  var pSheet = getRosterSheet(ss);
+  var pValues = pSheet.getDataRange().getValues();
+  var headers = pValues[0];
+  var rowIdx = findPlayerRow(pValues, findColIdx(headers, ["배번", "등번호", "번호"]), findColIdx(headers, ["이름", "선수이름", "성명"]), no, name);
+  if (rowIdx === -1) return json({ result: "error", message: "명단에 없는 선수입니다." });
+  var col = findColIdx(headers, [SONG_HIDE_COL]);
+  if (col === -1) {   // 칸이 없으면 맨 오른쪽에 머리줄만 만듦 (다른 칸 · 값은 그대로)
+    col = pSheet.getLastColumn();
+    pSheet.getRange(1, col + 1).setValue(SONG_HIDE_COL);
+  }
+  pSheet.getRange(rowIdx + 1, col + 1).setNumberFormat("@").setValue(keys.join(","));
+  return json({ result: "success", hideSongs: keys });
 }
 
 // 명단/연락망 시트에서 선수 행 찾기 (배번 우선, 없으면 이름)
@@ -839,7 +868,9 @@ function doPost(e) {
       if (!(role === "super" || role === "dev")) return json({ result: "error", message: "구장 정보는 대표님만 수정할 수 있습니다." });
     } else if (a === "setUniformActive" || a === "setJerseyColors") {
       if (!(role === "super" || role === "dev")) return json({ result: "error", message: "권한이 없습니다." });
-    } else if (a === "uploadPhoto" || a === "deletePhoto" || a === "updatePlayerInfo") {
+    } else if (a === "setHiddenSongs" && (role === "sub" || role === "general")) {
+      // 🔒 v2.43.0: 코치진 · 총무님은 모든 선수 곡을 숨기고 되돌릴 수 있음 (대표 · 개발자는 아래 scopeHasPlayer 가 허용)
+    } else if (a === "uploadPhoto" || a === "deletePhoto" || a === "updatePlayerInfo" || a === "setHiddenSongs") {
       var _no = parseInt(data.playerNo, 10) || 0, _nm = cleanText(data.playerName, 30);
       if (!scopeHasPlayer(session, _no, _nm)) return json({ result: "error", message: "본인 자녀 정보만 수정할 수 있습니다." });
       // 🔒 v2.40.0: 웹으로 처음 등록하고 아직 대표님 · 총무님 확인 전(비상연락망 노란 칸)이면 수정 막음 — 관리자는 그대로
@@ -858,6 +889,7 @@ function doPost(e) {
       case "uploadPhoto":       return handleUploadPhoto(ss, data);
       case "deletePhoto":       return handleDeletePhoto(ss, data);
       case "updatePlayerInfo":  return handleUpdatePlayerInfo(ss, data);
+      case "setHiddenSongs":    return handleSetHiddenSongs(ss, data);   // 🔒 v2.43.0
       case "saveEvents":        return handleSaveEvents(ss, data);
       case "deleteEvent":       return handleDeleteEvent(ss, data);
       case "saveVenue":         return handleSaveVenue(ss, data);     // v2.6.0: 📍 구장 등록/수정
