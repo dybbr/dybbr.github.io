@@ -630,7 +630,7 @@
         .form-group label { font-size: 12px; font-weight: 700; color: #475569; }
         .form-group input, .form-group select { padding: 7px 10px; border: 1px solid var(--card-border); border-radius: 6px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; }
         .chk-open-row { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left; font-weight: 600; font-size: 13px; color: #1e293b; cursor: pointer; margin-top: 4px; box-sizing: border-box; }
-        .chk-open-row input[type="checkbox"] { flex-shrink: 0; margin: 0; }
+        .chk-open-row input[type="checkbox"] { flex-shrink: 0; margin: 0; width: 18px; height: 18px; padding: 0; }   /* v2.118.1: 「.form-group input」의 width 100% 때문에 체크 상자가 줄을 다 차지해 글자가 세로로 서던 것 고침 */
         .chk-open-row span { flex: 1; text-align: left; }
 
         /* 🔍 화면 크기(확대/축소) 조절 버튼 — 지도 +/- 처럼 오른쪽 아래에 떠 있음 (터치 기기에서만 표시) */
