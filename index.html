@@ -274,6 +274,24 @@
         #lockOverlay.kb-open .lock-title { font-size: 16px; margin-bottom: 4px; }
         #lockOverlay.kb-open .lock-desc { font-size: 11.5px; margin-bottom: 10px; line-height: 1.4; }
         #lockOverlay.kb-open #apkDownloadBox { display: none !important; }
+        /* ⌨️ v2.115.0: 잠금창 숫자판 (휴대폰 · 태블릿) */
+        .lock-numpad { display: none; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: -6px 0 14px; }
+        #lockOverlay.pad-on .lock-numpad { display: grid; }
+        .lock-numpad button { height: 52px; border-radius: 12px; border: 1px solid #e2e8f0; background: #f1f5f9; color: #0b2240;
+            font: inherit; font-size: 24px; font-weight: 800; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+            -webkit-user-select: none; user-select: none; transition: background .08s, transform .08s; }
+        .lock-numpad button:active, .lock-numpad button.np-hit { background: #cbd5e1; transform: scale(.95); }
+        .lock-numpad .np-fn { font-size: 14px; background: #fff; color: #475569; }
+        #lockOverlay.pad-on .lock-desc { margin-bottom: 12px; }
+        @media (max-height: 800px) {
+            #lockOverlay.pad-on .lock-card { padding-top: 14px; padding-bottom: 14px; }
+            #lockOverlay.pad-on .lock-icon-badge.bk-lock { width: 58px; height: 61px; margin: -4px auto 2px; }
+            #lockOverlay.pad-on .lock-title { font-size: 18px; margin-bottom: 4px; }
+            #lockOverlay.pad-on .lock-desc { font-size: 12px; line-height: 1.4; margin-bottom: 10px; }
+            #lockOverlay.pad-on .lock-numpad { gap: 6px; margin-bottom: 10px; }
+            #lockOverlay.pad-on .lock-numpad button { height: 46px; }
+            #lockOverlay.pad-on #firstRegToggleBox { margin-top: 10px; padding-top: 8px; }
+        }
         /* 📲 앱 설치 안내 (v2.41.0) — 브라우저마다 설치 방법이 달라서 그 브라우저에 맞는 방법을 한 줄로 */
         .inst-btns { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
         .inst-btn { display: inline-flex; align-items: center; gap: 4px; padding: 8px 14px; border-radius: 8px; background: #f1f5f9; border: 1px solid #cbd5e1;
@@ -3257,6 +3275,13 @@
                    style="text-align: center; font-size: 16px; letter-spacing: 2px; padding: 13px 14px;"
                    placeholder="비밀번호를 입력하세요"
                    onkeydown="if(event.key==='Enter' || event.key===' ' || event.code==='Space') { event.preventDefault(); verifyLockPassword(); }">
+        </div>
+        <!-- ⌨️ v2.115.0: 잠금창 숫자판 — 휴대폰 · 태블릿에서 화면 키보드 대신 바로 누름 (lockUsePad) -->
+        <div id="lockNumPad" class="lock-numpad" aria-label="숫자 입력판">
+            <button type="button" tabindex="-1" data-k="1">1</button><button type="button" tabindex="-1" data-k="2">2</button><button type="button" tabindex="-1" data-k="3">3</button>
+            <button type="button" tabindex="-1" data-k="4">4</button><button type="button" tabindex="-1" data-k="5">5</button><button type="button" tabindex="-1" data-k="6">6</button>
+            <button type="button" tabindex="-1" data-k="7">7</button><button type="button" tabindex="-1" data-k="8">8</button><button type="button" tabindex="-1" data-k="9">9</button>
+            <button type="button" tabindex="-1" data-k="kbd" class="np-fn" aria-label="일반 키보드로 입력">⌨️ 키보드</button><button type="button" tabindex="-1" data-k="0">0</button><button type="button" tabindex="-1" data-k="del" class="np-fn" aria-label="한 글자 지우기">⌫</button>
         </div>
 
         <button id="lockSubmitBtn" class="btn-lock-submit" onclick="verifyLockPassword()">
@@ -7907,6 +7932,7 @@
             input.placeholder = "비밀번호를 입력하세요";
             btn.textContent = "🔐 잠금 해제 (로그인)";
         }
+        lockPadSync();   // ⌨️ v2.115.0: 최초 등록 때는 숫자판을 숨기고 일반 키보드
         input.value = '';
         input.focus();
     }
@@ -7976,15 +8002,58 @@
         }, 1000);
     }
 
-    // ⌨️ v2.107.1: 잠금화면이 떠 있으면 비번 칸에 바로 커서 — PC처럼 마우스를 쓰는 기기만
-    //   휴대폰 · 태블릿(손가락 · S펜)은 커서를 넣으면 화면 키보드가 튀어나와 잠금창을 가리므로 그대로 (칸을 누르면 그때 키보드)
+    // ⌨️ v2.107.1: 잠금화면이 떠 있으면 비번 칸에 바로 커서 (PC)
+    // ⌨️ v2.115.0: 휴대폰 · 태블릿도 바로 입력 — 방식(LOCK_KB_MODE)
+    //   auto: 비번 칸에 커서 → 화면 키보드 자동 (브라우저가 막으면 잠금창 빈 곳을 한 번 누르면 키보드)
+    //   pad : 터치 기기는 잠금창 안 숫자판 (화면 키보드는 안 올라오고 커서만 깜빡) · 「⌨️ 키보드」로 일반 키보드
+    //   mix : 휴대폰은 숫자판, 태블릿은 auto
+    let LOCK_KB_MODE = 'pad';
+    try { const q = new URLSearchParams(location.search).get('lockkb'); if (/^(auto|pad|mix)$/.test(q || '')) LOCK_KB_MODE = q; } catch (e) {}   // 시안 비교용
+    let lockPadKbd = false;   // 「⌨️ 키보드」를 눌러 일반 키보드로 바꿨으면 이번 잠금창에서는 숫자판 숨김
+    function lockIsTouch() { try { return !window.matchMedia('(pointer: fine)').matches; } catch (e) { return false; } }
+    function lockIsPhone() { return Math.min(screen.width || 9999, screen.height || 9999) < 600; }
+    function lockUsePad() {
+        if (!lockIsTouch() || lockPadKbd || (typeof isFirstRegMode !== 'undefined' && isFirstRegMode)) return false;
+        return LOCK_KB_MODE === 'pad' || (LOCK_KB_MODE === 'mix' && lockIsPhone());
+    }
+    function lockPadSync() {
+        const ov = document.getElementById('lockOverlay'), inp = document.getElementById('lockPasswordInput');
+        if (!ov || !inp) return;
+        const on = lockUsePad();
+        ov.classList.toggle('pad-on', on);
+        inp.setAttribute('inputmode', on ? 'none' : 'numeric');
+    }
+    function lockPadKey(k, btn) {
+        const inp = document.getElementById('lockPasswordInput');
+        if (!inp) return;
+        if (k === 'kbd') { lockPadKbd = true; lockPadSync(); inp.blur(); inp.focus(); return; }   // 누른 순간이라 키보드가 올라옴
+        if (k === 'del') inp.value = inp.value.slice(0, -1);
+        else if (inp.value.length < 40) inp.value += k;
+        if (btn) { btn.classList.add('np-hit'); setTimeout(() => btn.classList.remove('np-hit'), 90); }
+        try { if (navigator.vibrate) navigator.vibrate(8); } catch (e) {}
+        if (document.activeElement !== inp) inp.focus({ preventScroll: true });
+    }
+    (function lockPadInit() {
+        const pad = document.getElementById('lockNumPad'), ov = document.getElementById('lockOverlay');
+        if (!pad || !ov) return;
+        pad.addEventListener('pointerdown', e => { if (e.target.closest('button')) e.preventDefault(); });   // 비번 칸 커서를 뺏지 않게
+        pad.addEventListener('click', e => { const b = e.target.closest('button'); if (b) lockPadKey(b.dataset.k, b); });
+        // 잠금창 빈 곳을 누르면 비번 칸으로 (브라우저가 자동 키보드를 막았을 때 한 번 누르면 키보드)
+        ov.addEventListener('click', e => {
+            if (e.target.closest('input, select, textarea, button, a, label, .lock-numpad, #firstRegFields')) return;
+            if (typeof isFirstRegMode !== 'undefined' && isFirstRegMode) return;
+            const inp = document.getElementById('lockPasswordInput');
+            if (inp && document.activeElement !== inp) inp.focus({ preventScroll: true });
+        });
+        lockPadSync();
+    })();
     function lockAutoFocus() {
         try {
-            if (!window.matchMedia || !window.matchMedia('(pointer: fine)').matches) return;
             const ov = document.getElementById('lockOverlay'), inp = document.getElementById('lockPasswordInput');
             if (!ov || !inp || getComputedStyle(ov).display === 'none') return;
             const a = document.activeElement;
             if (a && a !== inp && ov.contains(a) && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)) return;   // 최초 등록 칸에 입력 중이면 건드리지 않음
+            lockPadSync();
             inp.focus({ preventScroll: true });
         } catch (e) {}
     }
@@ -8017,8 +8086,8 @@
             overlay.style.display = 'flex';
             const pwInput = document.getElementById('lockPasswordInput');
             pwInput.value = '';
-            if (!quiet && why !== '자동 잠금') setTimeout(() => pwInput.focus(), 50);   // 자동 잠금이면 키보드를 바로 띄우지 않음
-            else if (!quiet) setTimeout(lockAutoFocus, 50);   // ⌨️ v2.107.1: PC(마우스)는 자동 잠금이어도 비번 칸에 바로 커서 (화면 키보드가 없으니)
+            lockPadKbd = false;
+            if (!quiet) setTimeout(lockAutoFocus, 50);   // ⌨️ v2.115.0: 자동 잠금 · 로그아웃 모두 비번 칸에 바로 커서 (휴대폰 · 태블릿은 숫자판 또는 키보드)
         }
         if (!quiet) {
             if (why === '자동 잠금') bkNotify('sleep', '30분 동안 안 써서 잠갔캉 💤', '다시 로그인해 주세요', { ms: 6000 });
@@ -11382,7 +11451,7 @@
     loadGoogleSheetData();
     if (!getToken() || !isAuthValid()) warmServer();   // 🔥 v2.67.0: 로그인 화면이면 서버를 미리 데워 둠
     try { document.getElementById('lockPasswordInput').addEventListener('focus', warmServer); } catch (e) {}   // 잠금화면을 오래 켜 뒀다가 비번 칸을 누를 때도
-    lockAutoFocus(); setTimeout(lockAutoFocus, 300);   // ⌨️ v2.107.1: 처음 열었을 때 (PC) 비번 칸에 커서 — 첫 화면 그림이 걷힌 뒤 한 번 더
+    lockAutoFocus(); setTimeout(lockAutoFocus, 300);   // ⌨️ v2.107.1 · v2.115.0: 처음 열었을 때 비번 칸에 바로 커서 (모든 기기) — 첫 화면 그림이 걷힌 뒤 한 번 더
     window.addEventListener('focus', () => setTimeout(lockAutoFocus, 0));   // 다른 창 · 탭에 갔다가 돌아와도
 </script>
 </body>
