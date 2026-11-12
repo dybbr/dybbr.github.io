@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.113.2 · b261112";
+        const APP_VERSION = "v2.113.3 · b261112";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -109,7 +109,7 @@
     <script src="cheer-songs.js?v=2.103.0"></script>
     <!-- 🎧 주제곡 플레이리스트 (v2.106.0) — 「음악」 탭 · 아래 작은 플레이어 띠 · 큰 플레이어 · ⚾ 타석 모드 · playlist.js / playlist.css 를 고칠 때만 아래 ?v= 숫자 올리기 -->
     <link rel="stylesheet" href="playlist.css?v=2.112.0">
-    <script src="playlist.js?v=2.112.0"></script>
+    <script src="playlist.js?v=2.113.3"></script>
     <!-- 🦈 부캉이 그림 (v2.98.0: 따로 뺌 — 그림을 바꿀 때만 아래 ?v= 숫자 올리기) -->
     <link rel="stylesheet" href="bk-img.css?v=2.98.0">
 
@@ -4375,7 +4375,7 @@
         if (!res || res.result !== 'success' || !res.token) return false;
         setToken(res.token);
         if (res.ticket) { try { localStorage.setItem('daeyeon_login_ticket', String(res.ticket)); } catch (e) {} }   // 🎫 v2.98.0
-        try { markActive(true); } catch (e) {}   // ⏳ v2.79.0: 로그인한 순간부터 10분 다시 셈
+        try { markActive(true); } catch (e) {}   // ⏳ v2.79.0: 로그인한 순간부터 30분 다시 셈
         localStorage.setItem('daeyeon_auth_expire', String(res.exp || (Date.now() + 60 * 60 * 1000)));
         clearAdminRoleStorage();
         localStorage.removeItem('daeyeon_active_user');
@@ -8021,15 +8021,15 @@
             else if (!quiet) setTimeout(lockAutoFocus, 50);   // ⌨️ v2.107.1: PC(마우스)는 자동 잠금이어도 비번 칸에 바로 커서 (화면 키보드가 없으니)
         }
         if (!quiet) {
-            if (why === '자동 잠금') bkNotify('sleep', '10분 동안 안 써서 잠갔캉 💤', '다시 로그인해 주세요', { ms: 6000 });
+            if (why === '자동 잠금') bkNotify('sleep', '30분 동안 안 써서 잠갔캉 💤', '다시 로그인해 주세요', { ms: 6000 });
             else bkNotify('sleep', '로그아웃했캉 👋', '다시 쓰려면 로그인해 주세요', { ms: 3500 });
         }
     }
-    // ⏳ v2.79.0: 쓰는 동안 자동 연장 — 10분 동안 화면을 안 만지면 잠금 (로그인 최대 시간은 서버가 정함: 일반 30분 · 나머지 5시간)
-    //   누르기 · 스크롤 · 글자 입력이 있으면 「쓰는 중」 → 그때마다 10분이 다시 시작 · 폰 안에서만 재서 서버 요청은 늘지 않음
+    // ⏳ v2.79.0: 쓰는 동안 자동 연장 — 30분(v2.113.3, 예전 10분) 동안 화면을 안 만지면 잠금 (로그인 최대 시간은 서버가 정함: 일반 30분 · 나머지 5시간)
+    //   누르기 · 스크롤 · 글자 입력이 있으면 「쓰는 중」 → 그때마다 30분이 다시 시작 · 폰 안에서만 재서 서버 요청은 늘지 않음
     //   잠기기 30초 전에 알림 · 화면을 끄거나 다른 앱에 갔다 오면 돌아온 순간 계산해서 지났으면 바로 잠금
     //   마지막으로 쓴 시각은 기기에 저장(daeyeon_last_active) → 앱을 닫았다 다시 열어도 · 선수 상세(player.html)에서 쓴 것도 이어서 셈
-    const IDLE_LOCK_MS = 10 * 60 * 1000, IDLE_WARN_MS = 30 * 1000, IDLE_KEY = 'daeyeon_last_active';
+    const IDLE_LOCK_MS = 30 * 60 * 1000, IDLE_WARN_MS = 30 * 1000, IDLE_KEY = 'daeyeon_last_active';
     let idleLast = 0, idleSaved = 0, idleWarned = false;
     function idleLoggedIn() { return !!getToken() && isAuthValid(); }
     function idleStored() { try { return parseInt(localStorage.getItem(IDLE_KEY) || '0', 10) || 0; } catch (e) { return 0; } }
@@ -8059,7 +8059,7 @@
             bkNotify('info', '30초 뒤 잠겨요캉 ⏳', '화면을 누르면 계속 쓸 수 있어요', { ms: IDLE_WARN_MS });
         }
     }
-    function idleStartupCheck() {   // 앱을 열 때: 마지막으로 쓴 지 10분이 넘었으면 바로 잠금
+    function idleStartupCheck() {   // 앱을 열 때: 마지막으로 쓴 지 30분이 넘었으면 바로 잠금
         if (!idleLoggedIn()) return;
         const v = idleStored();
         if (v && Date.now() - v >= IDLE_LOCK_MS && !plHoldOn()) { lockScreenNow('자동 잠금'); return; }
@@ -11373,7 +11373,7 @@
     // 예전 버전이 기기에 저장해 둔 비상연락망 사본 삭제 (이제는 서버에서 권한 확인 후 그때그때만 받음)
     try { localStorage.removeItem('daeyeon_emergency_contacts'); } catch (e) {}
     try { localStorage.removeItem('daeyeon_notice_views'); } catch (e) {}   // v2.71.0: 공지 조회 기록 기능을 없애 기기에 남은 목록도 지움
-    idleStartupCheck();   // ⏳ v2.79.0: 10분 넘게 안 쓰다가 다시 열었으면 바로 잠금 (저장본은 남김 · 다시 로그인하면 번호 확인으로 가볍게)
+    idleStartupCheck();   // ⏳ v2.79.0: 30분 넘게 안 쓰다가 다시 열었으면 바로 잠금 (저장본은 남김 · 다시 로그인하면 번호 확인으로 가볍게)
     if (isAuthValid()) {
         startSessionCountdown();
     }
