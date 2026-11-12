@@ -419,3 +419,65 @@ body:has(.pl-micpan:not([hidden])) .ui-zoom-ctrl { visibility: hidden; }
 .pl-osheet-in button.all { border-color: var(--pl-navy); }
 .pl-osheet-in button.x { text-align: center; font-size: 14.5px; font-weight: 800; color: var(--pl-sub); background: transparent; border: 0; padding: 8px; }
 .pl-osheet[hidden] { display: none !important; }
+
+/* ───── 🔥 인기곡 (v2.124.0 · 시안 B) — 숫자 없이 「🔥 인기」 딱지 · 인기순 칩 · 머리 칸 한 줄 ───── */
+.pl-hot { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 8px 8px 8px 12px; border-radius: 12px; background: rgba(255, 255, 255, .12); }
+.pl-hot[hidden] { display: none; }
+.pl-hot-tx { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; border: 0; background: transparent; color: #ffffff; text-align: left; padding: 0; cursor: pointer; font-size: 13px; }
+.pl-hot-tx .em { font-size: 20px; flex: none; }
+.pl-hot-tx .tx { min-width: 0; display: grid; opacity: .95; }
+.pl-hot-tx b { display: block; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl-hot-go { flex: none; display: flex; align-items: center; gap: 4px; height: 34px; padding: 0 12px; border-radius: 999px; border: 0; background: #ffffff; color: var(--pl-red); font-size: 13.5px; font-weight: 800; cursor: pointer; }
+.pl-hot-go svg { width: 15px; height: 15px; }
+.pl-chips button.hotc { color: var(--pl-hot); border-color: color-mix(in srgb, var(--pl-hot) 40%, var(--pl-line)); }
+.pl-chips button.hotc.on { background: var(--pl-red); border-color: var(--pl-red); color: #ffffff; }
+.pl-pinfo { margin: 0 0 10px; padding: 9px 12px; border-radius: 12px; background: var(--pl-cream); border: 1px solid var(--pl-creamline); font-size: 12.5px; color: var(--pl-sub); }
+.pl-pinfo[hidden] { display: none; }
+.pl-pop { font-style: normal; display: inline-block; margin-right: 5px; padding: 0 6px; border-radius: 5px; background: color-mix(in srgb, var(--pl-hot) 14%, transparent); color: var(--pl-hot); font-size: 11px; font-weight: 800; line-height: 17px; }
+.pl-pop.top { background: var(--pl-red); color: #ffffff; }
+
+/* ───── 📊 운영진 재생 통계 (v2.124.0 · 시안 C) ───── */
+#plStat[hidden] { display: none; }
+.pl-st { display: grid; gap: 12px; }
+.pl-st-per { display: flex; gap: 6px; flex-wrap: wrap; }
+.pl-st-per button { height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--pl-line); background: var(--pl-card); color: var(--pl-sub); font-size: 13.5px; font-weight: 800; cursor: pointer; }
+.pl-st-per button.on { background: var(--pl-navy); border-color: var(--pl-navy); color: #ffffff; }
+.pl-st-per button.dl { margin-left: auto; color: var(--pl-fg); }
+.pl-st-per button:disabled { opacity: .45; cursor: default; }
+.pl-st-tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.pl-st-tiles > div { min-width: 0; background: var(--pl-card); border: 1px solid var(--pl-line); border-radius: 14px; padding: 12px; }
+.pl-st-tiles small { display: block; font-size: 12.5px; color: var(--pl-sub); font-weight: 700; }
+.pl-st-tiles b { display: block; font-size: 22px; font-weight: 900; margin-top: 2px; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl-st-tiles i { display: block; font-style: normal; font-size: 12px; color: #0f766e; font-weight: 800; }
+.pl-st-grid, .pl-st-grid > div { display: grid; gap: 12px; align-items: start; }
+.pl-st-card { min-width: 0; background: var(--pl-card); border: 1px solid var(--pl-line); border-radius: 14px; padding: 14px; }
+.pl-st-card h4 { margin: 0 0 8px; font-size: 15.5px; display: flex; align-items: center; gap: 6px; }
+.pl-st-card h4 small { margin-left: auto; font-size: 12px; color: var(--pl-sub); font-weight: 700; }
+.pl-st-r { display: flex; align-items: center; gap: 9px; padding: 6px 0; }
+.pl-st-r .n { flex: none; width: 20px; text-align: center; font-weight: 900; color: var(--pl-sub); font-size: 13px; font-variant-numeric: tabular-nums; }
+.pl-st-r .pl-cv { width: 34px; height: 34px; font-size: 14px; flex: none; }
+.pl-st-r .t { flex: 1; min-width: 0; display: grid; }
+.pl-st-r .t b { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl-st-r .t b .pl-htag { margin: 0 0 0 5px; }
+.pl-st-r .t small { font-size: 12px; color: var(--pl-sub); font-weight: 600; }
+.pl-st-r .bar { display: block; height: 7px; border-radius: 99px; background: var(--pl-soft); margin-top: 4px; overflow: hidden; }
+.pl-st-r .bar i { display: block; height: 100%; border-radius: 99px; background: var(--pl-red); }
+.pl-st-r .bar.navy i { background: var(--pl-navy2); }
+.pl-st-r .v { flex: none; text-align: right; font-size: 12.5px; color: var(--pl-sub); font-variant-numeric: tabular-nums; line-height: 1.3; display: grid; }
+.pl-st-r .v b { color: var(--pl-fg); font-size: 14px; }
+.pl-st-pp { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+.pl-st-pp .pl-st-r { min-width: 0; }
+.pl-st-hours { display: flex; align-items: flex-end; gap: 3px; height: 110px; padding-top: 6px; }
+.pl-st-hours i { flex: 1; border-radius: 3px 3px 0 0; background: color-mix(in srgb, var(--pl-navy2) 30%, var(--pl-soft)); }
+.pl-st-hours i.pk { background: var(--pl-navy2); }
+.pl-st-hx { display: flex; justify-content: space-between; font-size: 11px; color: var(--pl-sub); margin-top: 4px; }
+.pl-st-more { margin-top: 8px; width: 100%; height: 36px; border-radius: 10px; border: 1px solid var(--pl-line); background: transparent; color: var(--pl-fg); font-weight: 800; font-size: 13.5px; cursor: pointer; }
+.pl-st-none { margin: 4px 0; font-size: 13px; color: var(--pl-sub); }
+.pl-st-empty { padding: 28px 16px; text-align: center; color: var(--pl-sub); font-size: 14px; line-height: 1.6; background: var(--pl-card); border: 1px solid var(--pl-line); border-radius: 14px; }
+.pl-st-empty button, .pl-st-warn button { margin-top: 10px; height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--pl-line); background: var(--pl-card); color: var(--pl-fg); font-weight: 800; cursor: pointer; }
+.pl-st-warn { font-size: 13px; color: var(--pl-hot); }
+.pl-st-warn button { margin: 0 0 0 6px; height: 28px; }
+.pl-st-foot { font-size: 12px; color: var(--pl-sub); line-height: 1.6; padding: 0 4px; }
+@media (min-width: 700px) { .pl-st-tiles { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 1000px) { .pl-st-grid { grid-template-columns: 1.25fr 1fr; } }
+@media (prefers-color-scheme: dark) { .pl-st-tiles i { color: #5fd3c2; } }

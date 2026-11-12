@@ -1,11 +1,11 @@
 // ==========================================================
-// ⚾ 대연초 야구부 관리 시스템 통합 백엔드 API (v2.43.0)
+// ⚾ 대연초 야구부 관리 시스템 통합 백엔드 API (v2.44.0)
 // ==========================================================
 // ★ API_KEY 는 코드에 적지 않고 「프로젝트 설정 → 스크립트 속성」의 API_KEY 에 넣어 둡니다 (v2.36.0~).
 //   값은 index.html / player.html 의 API_KEY 와 "같은 값"이어야 합니다. 속성이 비어 있으면 모든 요청을 거절합니다.
 var API_KEY = PropertiesService.getScriptProperties().getProperty("API_KEY") || null;
 
-var ALLOWED_POST_ACTIONS = ["login", "logout", "uploadPhoto", "deletePhoto", "submitOrder", "cancelOrder", "registerContact", "setUniformActive", "setJerseyColors", "changeAdminPw", "updatePlayerInfo", "setHiddenSongs", "saveEvents", "deleteEvent", "saveNotice", "deleteNotice", "saveVenue", "deleteVenue"];   // v2.14.0: 실시간 접속 알림(presence) 없앰 · v2.15.0: 보안 활동 로그(logActivity) 없앰 · v2.20.0: 공지 읽음(viewNotice) 없앰
+var ALLOWED_POST_ACTIONS = ["login", "logout", "uploadPhoto", "deletePhoto", "submitOrder", "cancelOrder", "registerContact", "setUniformActive", "setJerseyColors", "changeAdminPw", "updatePlayerInfo", "setHiddenSongs", "songPlays", "saveEvents", "deleteEvent", "saveNotice", "deleteNotice", "saveVenue", "deleteVenue"];   // v2.14.0: 실시간 접속 알림(presence) 없앰 · v2.15.0: 보안 활동 로그(logActivity) 없앰 · v2.20.0: 공지 읽음(viewNotice) 없앰
 var ALLOWED_ORDER_ITEMS = ["모자", "바지 (허리)", "바지 (기장)", "유니폼상의", "여름훈련티", "겨울훈련티", "바람막이", "풀오버", "겨울점퍼", "응원복"];   // v2.41.0: 📣 응원복 (학부모 응원용)
 
 // ★ 1. 드라이브 권한 및 폴더 생성 테스트 함수
@@ -290,7 +290,7 @@ function dropDataCache(keys) {
 //   · 켜기: 스크립트 편집기 「트리거」에서 keepWarm 을 시간 기반 · 10분마다로 추가 (끄기: 그 트리거 삭제)
 //     ※ 코드에서 예약을 만들지 않음 — ScriptApp 을 쓰면 새 권한 승인이 필요해져, 승인 전까지 운영 웹앱 전체가 멈출 수 있어서
 var KEEP_WARM_TTL = 1500;   // 25분 (예약은 10분마다 → 한두 번 걸러도 안 식음)
-var KEEP_WARM_KEYS = ["C_ROSTER", "C_GRADS", "C_OFFICERS", "C_CONTACTS", "C_EVENTS", "C_VENUES", "C_NOTICES", "C_DUTY"];
+var KEEP_WARM_KEYS = ["C_ROSTER", "C_GRADS", "C_OFFICERS", "C_CONTACTS", "C_EVENTS", "C_VENUES", "C_NOTICES", "C_DUTY", "C_POP"];
 function keepWarm() {
   var hour = Number(Utilities.formatDate(new Date(), "Asia/Seoul", "H"));
   if (hour >= 1 && hour < 6) return { result: "skip" };
@@ -307,6 +307,7 @@ function keepWarm() {
     try { readVenues(ss); } catch (e6) {}
     try { readNotices(ss); } catch (e7) {}
     try { readDuty(ss); } catch (e8) {}
+    try { songPopList(ss); } catch (e8b) {}   // 📊 v2.44.0: 인기곡
     got = _refreshed;
   } finally { _refreshed = null; }
   var ep1 = "";
@@ -817,6 +818,143 @@ function handleSetHiddenSongs(ss, data) {
   return json({ result: "success", hideSongs: keys });
 }
 
+// ==========================================================
+// 📊 v2.44.0: 주제곡 재생 통계 — 「재생통계」 탭 (날짜 · 곡 · 재생 · 가족 · 타석 · 시간대)
+//   · 사이트가 휴대폰에 「어느 곡을 몇 번」만 모았다가 6시간에 한 번 묶어 보냄 (songPlays) — 이름 · 전화번호 · 기기 번호는 안 받음
+//   · 곡 칸: 「배번/이름/곡키」(사이트 음악 탭과 같음) · 특별 줄: (기기) = 그날 들은 기기 수 · (시간대) = 0~23시 재생 수(쉼표)
+//   · 같은 날 · 같은 곡이 두 줄이 돼도 합쳐서 셈 (아래 꼬리 줄만 고쳐 씀 → 시트를 다 읽지 않음)
+//   · 학부모 화면 인기곡(pop): 최근 7일 「가족 수」 순 · 숨긴 곡 · 숨긴 선수 빼고 · 선수당 2곡 · 30곡 → bootstrap 에 실음 (추가 호출 없음)
+//   · 운영진 통계(songStats): 대표 · 총무 · 코치 · 개발자만 · 기간 7 · 30 · 365일 · 10분 보관
+// ==========================================================
+var PLAY_SHEET = "재생통계";
+var PLAY_HEAD = ["날짜", "곡", "재생", "가족", "타석", "시간대"];
+var PLAY_TAIL = 900;         // 고쳐 쓸 때 읽는 꼬리 줄 수 (최근 3일치)
+var PLAY_POP_TTL = 1500;     // 인기곡 보관 25분
+var PLAY_STAT_TTL = 600;     // 통계 보관 10분
+var PLAY_ID_RE = /^\d{1,3}\/[^\/]{1,20}\/(m\d{1,2}|s|l)$/;
+function playToday(offsetDays) {
+  return Utilities.formatDate(new Date(Date.now() + (offsetDays || 0) * 86400000), "Asia/Seoul", "yyyy-MM-dd");
+}
+function playSheet(ss, create) {
+  var sh = ss.getSheetByName(PLAY_SHEET);
+  if (!sh && create) {
+    sh = ss.insertSheet(PLAY_SHEET);
+    sh.getRange(1, 1, 1, PLAY_HEAD.length).setValues([PLAY_HEAD]).setFontWeight("bold");
+    sh.getRange("A:B").setNumberFormat("@"); sh.getRange("F:F").setNumberFormat("@");
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+function playInt(v, max) { v = parseInt(v, 10); return isNaN(v) || v < 0 ? 0 : Math.min(v, max); }
+function playDay(v) {
+  if (v && typeof v.getFullYear === "function") return Utilities.formatDate(v, "Asia/Seoul", "yyyy-MM-dd");
+  return String(v || "").trim();
+}
+
+// 사이트 → 묶음 받기 (토큰 없이도 받음: 잠금 화면에서 노래만 듣다가 로그인이 끝난 분 것도 세려고) · 값은 모두 상한으로 자름
+function handleSongPlays(ss, data) {
+  if (!rateOk("plays", 600, 3600)) return json({ result: "error", message: "busy" });
+  var days = Array.isArray(data.d) ? data.d.slice(0, 4) : [];
+  var lo = playToday(-3), hi = playToday(1), add = {}, n = 0;
+  var bump = function (day, song, p, f, b, h) {
+    var k = day + "|" + song, o = add[k] || (add[k] = { day: day, song: song, p: 0, f: 0, b: 0, h: null });
+    o.p += p; o.f += f; o.b += b;
+    if (h) { o.h = o.h || []; for (var i = 0; i < 24; i++) o.h[i] = (o.h[i] || 0) + h[i]; }
+  };
+  days.forEach(function (d) {
+    var day = String(d && d.day || "");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || day < lo || day > hi) return;
+    var s = d.s && typeof d.s === "object" ? d.s : {}, ids = Object.keys(s).slice(0, 160), tot = 0;
+    ids.forEach(function (id) {
+      if (!PLAY_ID_RE.test(id)) return;
+      var v = Array.isArray(s[id]) ? s[id] : [];
+      var p = playInt(v[0], 30), f = playInt(v[1], 1), b = playInt(v[2], 20);
+      if (!p && !f && !b) return;
+      bump(day, id, p, f, b, null); tot += p; n++;
+    });
+    if (playInt(d.f, 1)) bump(day, "(기기)", 0, 1, 0, null);
+    if (Array.isArray(d.h) && d.h.length === 24) {
+      var h = d.h.map(function (x) { return playInt(x, 60); });
+      bump(day, "(시간대)", 0, 0, 0, h);
+    }
+  });
+  var keys = Object.keys(add);
+  if (!keys.length) return json({ result: "success", n: 0 });
+  var sh = playSheet(ss, true), last = sh.getLastRow(), start = Math.max(2, last - PLAY_TAIL + 1);
+  var tail = last >= start ? sh.getRange(start, 1, last - start + 1, PLAY_HEAD.length).getValues() : [];
+  var at = {};
+  tail.forEach(function (r, i) { at[playDay(r[0]) + "|" + String(r[1])] = i; });
+  var fresh = [], touched = false;
+  keys.forEach(function (k) {
+    var o = add[k], hs = o.h ? o.h.join(",") : "";
+    if (Object.prototype.hasOwnProperty.call(at, k)) {
+      var r = tail[at[k]];
+      r[2] = playInt(r[2], 1e9) + o.p; r[3] = playInt(r[3], 1e9) + o.f; r[4] = playInt(r[4], 1e9) + o.b;
+      if (o.h) { var old = String(r[5] || "").split(","); r[5] = o.h.map(function (x, i) { return x + playInt(old[i], 1e9); }).join(","); }
+      touched = true;
+    } else fresh.push([o.day, o.song, o.p, o.f, o.b, hs]);
+  });
+  if (touched) sh.getRange(start, 1, tail.length, PLAY_HEAD.length).setValues(tail);
+  if (fresh.length) sh.getRange(last + 1, 1, fresh.length, PLAY_HEAD.length).setNumberFormat("@").setValues(fresh);
+  return json({ result: "success", n: n });
+}
+
+// 기간 안의 줄 읽기 — 7일 이하면 꼬리만, 그 넘으면 시트 전체
+function readPlayRows(ss, days) {
+  var sh = playSheet(ss, false); if (!sh) return [];
+  var last = sh.getLastRow(); if (last < 2) return [];
+  var start = days <= 8 ? Math.max(2, last - 2999) : 2;
+  var cut = playToday(-(days - 1)), out = [];
+  sh.getRange(start, 1, last - start + 1, PLAY_HEAD.length).getValues().forEach(function (r) {
+    var d = playDay(r[0]); if (d >= cut) out.push([d, String(r[1] || ""), playInt(r[2], 1e9), playInt(r[3], 1e9), playInt(r[4], 1e9), String(r[5] || "")]);
+  });
+  return out;
+}
+function playAggregate(rows) {
+  var by = {}, hours = [], dev = {}, plays = 0, bat = 0, dayset = {};
+  for (var i = 0; i < 24; i++) hours.push(0);
+  rows.forEach(function (r) {
+    var d = r[0], id = r[1];
+    if (id === "(기기)") { dev[d] = (dev[d] || 0) + r[3]; return; }
+    if (id === "(시간대)") { r[5].split(",").forEach(function (x, i) { if (i < 24) hours[i] += playInt(x, 1e9); }); return; }
+    var o = by[id] || (by[id] = [id, 0, 0, 0]);
+    o[1] += r[2]; o[2] += r[3]; o[3] += r[4]; plays += r[2]; bat += r[4]; dayset[d] = 1;
+  });
+  var devDays = Object.keys(dev), devSum = devDays.reduce(function (a, d) { return a + dev[d]; }, 0);
+  var songs = Object.keys(by).map(function (k) { return by[k]; }).sort(function (a, b) { return b[1] - a[1] || b[2] - a[2]; });
+  return { plays: plays, bat: bat, hours: hours, songs: songs, days: Object.keys(dayset).length, famAvg: devDays.length ? Math.round(devSum / devDays.length * 10) / 10 : 0, famMax: devDays.reduce(function (a, d) { return Math.max(a, dev[d]); }, 0) };
+}
+// 학부모 화면 인기곡 — 곡 id 순서만 (숫자는 보내지 않음)
+function songPopList(ss) {
+  return cachedData("C_POP", function () {
+    var a = playAggregate(readPlayRows(ss, 7));
+    var hide = {}, live = {};
+    try { readRosterRaw(ss).forEach(function (p) { var pid = (p.no || 0) + "/" + p.name; if (p.visible === false) return; live[pid] = 1; (p.hideSongs || []).forEach(function (k) { hide[pid + "/" + k] = 1; }); }); } catch (e) {}
+    var per = {}, out = [];
+    a.songs.slice().sort(function (x, y) { return y[2] - x[2] || y[1] - x[1]; }).forEach(function (s) {
+      if (out.length >= 30 || s[2] < 1) return;
+      var pid = s[0].replace(/\/[^\/]+$/, "");
+      if (!live[pid] || hide[s[0]] || (per[pid] || 0) >= 2) return;
+      per[pid] = (per[pid] || 0) + 1; out.push(s[0]);
+    });
+    return out;
+  });
+}
+DATA_TTL.C_POP = PLAY_POP_TTL;
+// 운영진 통계 — 지금 기간 + 바로 앞 기간 재생 수(늘었나 줄었나)
+function songStatsData(ss, days) {
+  days = [7, 30, 365].indexOf(days) >= 0 ? days : 30;
+  var key = "C_STAT_" + days;
+  return cachedData(key, function () {
+    var rows = readPlayRows(ss, days * 2), cut = playToday(-(days - 1));
+    var now = [], prev = [];
+    rows.forEach(function (r) { (r[0] >= cut ? now : prev).push(r); });
+    var a = playAggregate(now), b = playAggregate(prev);
+    return { result: "success", days: days, from: cut, to: playToday(0), plays: a.plays, prevPlays: b.plays, bat: a.bat, hours: a.hours, songs: a.songs, dataDays: a.days, famAvg: a.famAvg, famMax: a.famMax, at: Date.now() };
+  });
+}
+DATA_TTL.C_STAT_7 = PLAY_STAT_TTL; DATA_TTL.C_STAT_30 = PLAY_STAT_TTL; DATA_TTL.C_STAT_365 = PLAY_STAT_TTL;
+
 // 명단/연락망 시트에서 선수 행 찾기 (배번 우선, 없으면 이름)
 function findPlayerRow(values, noCol, nameCol, no, name) {
   for (var i = 1; i < values.length; i++) {
@@ -852,6 +990,7 @@ function doPost(e) {
 
     if (data.key !== API_KEY) return json({ result: "error", message: "unauthorized" });
     if (ALLOWED_POST_ACTIONS.indexOf(data.action) === -1) return json({ result: "error", message: "unknown action" });
+    if (data.action === "songPlays") return handleSongPlays(ss, data);   // 📊 v2.44.0: 주제곡 재생 묶음 (토큰 없이도 · 값은 상한으로 자름)
 
     // ---- 로그인/로그아웃: 토큰 발급·폐기 ----
     if (data.action === "login")  return handleLogin(ss, data);
@@ -1548,6 +1687,12 @@ function doGet(e) {
       return json(ro);
     }
 
+    // 📊 v2.44.0: 주제곡 재생 통계 — 대표 · 총무 · 코치 · 개발자만
+    if (p.action === "songStats") {
+      if (!session || !isAdminRole(role)) return json({ result: "error", message: "운영진만 볼 수 있어요." });
+      return json(songStatsData(ss, parseInt(p.days, 10) || 30));
+    }
+
     // [0-2b] 🚀 v2.12.0: 앱을 켤 때 한 번에 — 명단 · 졸업생 · 학년도 + 설정 + 일정 · 구장 + 공지 (요청 4개 → 1개)
     //   일정 · 공지를 못 읽어도 명단은 그대로 보냄 (빠진 것은 사이트가 따로 다시 받음)
     if (p.action === "bootstrap") {
@@ -1563,6 +1708,7 @@ function doGet(e) {
         try { bo.officers = readOfficers(ss); } catch (eB3) {}   // 📞 v2.28.0: 집행부 단축 버튼 (보호자 · 관리자만)
         try { bo.duty = dutyPublic(readDuty(ss)); } catch (eB4) {}   // 🧹 v2.31.0: 부실 청소 당번 (보호자 · 관리자만)
       }
+      try { bo.pop = songPopList(ss); } catch (eB5) {}   // 📊 v2.44.0: 학부모 화면 인기곡 (곡 id 순서만)
       return json(bo);
     }
 

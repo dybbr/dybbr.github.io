@@ -29,6 +29,7 @@
     </script>
     <!-- 🎵 선수별 주제곡 (v2.92.0) — 곡 목록은 cheer-songs.json (그 파일만 고치면 됨) · cheer-songs.js 를 고칠 때만 아래 ?v= 숫자 올리기 -->
     <script src="cheer-songs.js?v=2.121.0"></script>
+    <script src="song-stat.js?v=2.124.0"></script>   <!-- 📊 v2.124.0: 주제곡 재생 세기 (6시간에 한 번 묶어 보냄) -->
 
     <!-- 브라우저 캐시 원천 방지 메타태그 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -1718,6 +1719,8 @@
         const vers = cheerVersionsFor(p);
         if (!vers.length) return;
         const audio = document.getElementById('cheerAudio'), btn = document.getElementById('cheerPlayBtn');
+        // 📊 v2.124.0: 재생 세기 — 30초 넘게 들으면 1회 (음악 탭과 같은 곡 id 「배번/이름/곡키」)
+        if (audio) { audio._statPid = (p.no || 0) + '/' + p.name; try { if (window.songStat) window.songStat.watch(audio, () => { const b = document.getElementById('cheerBox'); return b && b._song && audio._statPid ? { id: audio._statPid + '/' + b._song.key, bat: false } : null; }); } catch (e) {} }
         const seek = document.getElementById('cheerSeek'), time = document.getElementById('cheerTime');
         const lyrBtn = document.getElementById('cheerLyrBtn'), lyr = document.getElementById('cheerLyrics'), msg = document.getElementById('cheerMsg');
         const titleEl = document.getElementById('cheerTitle'), subEl = document.getElementById('cheerSub'), countEl = document.getElementById('cheerCount');

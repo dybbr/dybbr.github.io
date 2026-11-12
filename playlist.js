@@ -172,6 +172,7 @@
             paintTime();
         });
         audio.addEventListener('error', () => { if (annDone) annFinish(); else onError(); });
+        try { if (window.songStat) window.songStat.watch(audio, () => (cur && !annDone && attached) ? { id: cur.id, bat: walk } : null); } catch (e) {}   // 📊 v2.124.0: 재생 세기 (타석 등장곡은 따로)
         return audio;
     }
     function setQueue(ids, startId) {
@@ -997,11 +998,14 @@
             <div id="plList">
                 <div class="pl-hero"><b>대연초 주제곡</b><small id="plCount"></small>
                     <div class="pl-hero-btns"><button type="button" class="main" data-pl="playall">${I.play}전체 재생</button><button type="button" data-pl="shuffleall">${I.shuffle}셔플 재생</button></div>
+                    <div class="pl-hot" id="plHot" hidden></div>
                 </div>
                 <div class="pl-chips" id="plChips"></div>
+                <div class="pl-pinfo" id="plPinfo" hidden>🔥 지난 7일 동안 많은 가족이 들은 순서예요 · 숫자는 보여 주지 않아요</div>
                 <div class="pl-rows" id="plRows"></div>
             </div>
-            <div id="plBat" hidden></div>`;
+            <div id="plBat" hidden></div>
+            <div id="plStat" hidden></div>`;
         sec.addEventListener('click', onClick);
 
         const mini = document.createElement('div');
@@ -1100,9 +1104,27 @@
         root.style.setProperty('--pl-tabh', h + 'px');
         const m = $('plMini'); if (m && !m.hidden && m.offsetHeight) root.style.setProperty('--pl-minih', m.offsetHeight + 'px');   // 띠 높이 → 타순 띠가 그 위에 붙음
     }
-    function inFilter(t) { return filter === 'all' || filter === 'off' ? true : filter === 'mine' ? (personOf(t.pid) || {}).mine : String(t.g) === String(filter); }
+    function inFilter(t) { return filter === 'all' || filter === 'off' ? true : filter === 'hot' ? popRank.has(t.id) : filter === 'mine' ? (personOf(t.pid) || {}).mine : String(t.g) === String(filter); }
+    // 🔥 v2.124.0: 인기곡 (서버 v2.44.0 bootstrap 의 pop = 최근 7일 많은 가족이 들은 곡 id 순서 · 숫자 없음) → 숨긴 곡 · 뺀 곡 · 없는 곡은 빼고 순위
+    let popRaw = [], popIds = [], popRank = new Map();
+    const POP_MIN = 3;   // 이만큼은 모여야 「인기」를 보여 줌 (처음 며칠은 안 보임)
+    function popCalc() {
+        popIds = popRaw.filter(id => byId.has(id) && !byId.get(id).hidAll && !isOff(id));
+        if (popIds.length < POP_MIN) popIds = [];
+        popRank = new Map(popIds.map((id, i) => [id, i]));
+    }
+    function popTag(id) {
+        const r = popRank.get(id);
+        if (r == null || r >= 10) return '';
+        return r < 3 ? `<i class="pl-pop top">🔥 인기 ${r + 1}위</i>` : '<i class="pl-pop">🔥 인기</i>';
+    }
+    window.plPop = function (list) {
+        popRaw = Array.isArray(list) ? list.map(String).slice(0, 40) : [];
+        try { if (built) renderList(); } catch (e) {}
+    };
     function listIds() {   // 지금 보이는 목록 (전체 재생 · 셔플 재생 · 줄 누르기에 씀)
         if (filter === 'off') return tracks.filter(t => isOff(t.id)).map(t => t.id);
+        if (filter === 'hot') return popIds.slice();
         const ids = tracks.filter(inFilter).map(t => t.id);
         return ids.filter(i => !isOff(i));   // 뺀 곡은 목록에서 숨김 (「빠진 곡」 칩에 모임)
     }
@@ -1173,20 +1195,29 @@
     function renderList() {
         const cnt = $('plCount');
         if (!cnt) return;
+        statSeg();
         const nOff = offCount(), live = tracks.filter(t => !isOff(t.id));
         const total = live.reduce((a, t) => a + lenSec(t.len), 0), m = Math.round(total / 60);
         cnt.textContent = tracks.length ? `${live.length}곡 · 선수 ${people.length}명` + (m ? ` · 약 ${m >= 60 ? Math.floor(m / 60) + '시간 ' + (m % 60) + '분' : m + '분'}` : '') + (nOff ? ` · ${nOff}곡 뺌` : '') : '';
         const grades = Array.from(new Set(people.map(p => p.g))).filter(Boolean).sort((a, b) => b - a);
-        const chips = [['all', '전체']];
+        popCalc();
+        if (filter === 'hot' && !popIds.length) filter = 'all';
+        const chips = popIds.length ? [['hot', '🔥 인기순'], ['all', '전체']] : [['all', '전체']];
         if (people.some(p => p.mine)) chips.push(['mine', '우리 아이']);
         grades.forEach(g => chips.push([String(g), g + '학년']));
         if (nOff) chips.push(['off', '🚫 빠진 곡 ' + nOff]);
-        $('plChips').innerHTML = chips.map(c => `<button type="button" data-pl="chip" data-f="${c[0]}" class="${String(filter) === c[0] ? 'on' : ''}${c[0] === 'off' ? ' offc' : ''}">${c[1]}</button>`).join('');
+        $('plChips').innerHTML = chips.map(c => `<button type="button" data-pl="chip" data-f="${c[0]}" class="${String(filter) === c[0] ? 'on' : ''}${c[0] === 'off' ? ' offc' : ''}${c[0] === 'hot' ? ' hotc' : ''}">${c[1]}</button>`).join('');
+        const hot = $('plHot'), top = popIds.length ? byId.get(popIds[0]) : null;
+        if (hot) {
+            hot.hidden = !top;
+            if (top) hot.innerHTML = `<button type="button" class="pl-hot-tx" data-pl="chip" data-f="hot"><span class="em" aria-hidden="true">🔥</span><span class="tx">요즘 가장 많이 듣는 곡<b>${esc(top.title)} · ${esc(top.name)}</b></span></button><button type="button" class="pl-hot-go" data-pl="hotplay">${I.play}듣기</button>`;
+        }
+        const pin = $('plPinfo'); if (pin) pin.hidden = filter !== 'hot';
         const ids = listIds();
         const html = ids.map((id, i) => {
             const t = byId.get(id);
             const row = `<button type="button" class="pl-row${cur && cur.id === id ? ' cur' : ''}" data-pl="row" data-id="${esc(id)}"><span class="n">${i + 1}</span>${cover(t)}` +
-                `<span class="t"><b>${esc(t.title)}</b><small>${t.hidAll ? '<i class="pl-htag">🔒 모든 학부모에게 숨김</i>' : ''}${esc(t.name)}${t.beat ? ' · ' + esc(t.beat) : ''}</small></span><span class="d">${esc(t.len)}</span><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span></button>`;
+                `<span class="t"><b>${esc(t.title)}</b><small>${t.hidAll ? '<i class="pl-htag">🔒 모든 학부모에게 숨김</i>' : ''}${popTag(id)}${esc(t.name)}${t.beat ? ' · ' + esc(t.beat) : ''}</small></span><span class="d">${esc(t.len)}</span><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span></button>`;
             if (t.hidAll) return `<div class="pl-rw off">${row}<button type="button" class="pl-ox back hid" data-pl="unhide" data-id="${esc(id)}" aria-label="${esc(t.title)} 다시 공개">🔓 다시 공개</button></div>`;
             return isOff(id) ? `<div class="pl-rw off">${row}<button type="button" class="pl-ox back" data-pl="off" data-id="${esc(id)}" aria-label="${esc(t.title)} 다시 넣기">↩ 다시 넣기</button></div>` : row;   // 「빠진 곡」 칩에서만 보임
         }).join('');
@@ -1479,6 +1510,11 @@
         switch (d.pl) {
             case 'view': setView(d.v); break;
             case 'chip': filter = d.f; renderList(); break;
+            case 'hotplay': if (popIds.length) playTrack(popIds[0], popIds); break;   // 🔥 v2.124.0: 인기 1위부터 인기순으로 이어 듣기
+            case 'sper': statLoad(+d.d); break;      // 📊 운영진 통계: 기간
+            case 'scsv': statCsv(); break;           // 📊 엑셀(CSV) 내려받기
+            case 'sall': statAll = !statAll; statRender(); break;
+            case 'sretry': statLoad(statDays, true); break;
             case 'row': playTrack(d.id, listIds()); break;
             case 'playall': playAll(listIds(), false); break;
             case 'shuffleall': playAll(listIds(), true); break;
@@ -1550,15 +1586,104 @@
                 break;
         }
     }
+    // ---------------- 📊 운영진 재생 통계 (v2.124.0 · 서버 v2.44.0 songStats) ----------------
+    //   대표 · 총무 · 코치 · 개발자에게만 「📊 통계」 단추 · 화면을 열 때만 서버에 물음(5분 안에 다시 열면 받은 것) · 서버는 10분 보관
+    let statDays = 30, statAll = false, statData = {}, statSeq = 0, statLoading = false, statErr = '';
+    function statSeg() {
+        const seg = document.querySelector('#musicSection .pl-seg'); if (!seg) return;
+        const can = canSeeHidden();
+        let b = seg.querySelector('[data-v="stat"]');
+        if (can && !b) seg.insertAdjacentHTML('beforeend', '<button type="button" data-pl="view" data-v="stat">📊 통계</button>');
+        else if (!can && b) { b.remove(); if (view === 'stat') setView('list'); }
+    }
+    function statLoad(days, force) {
+        statDays = [7, 30, 365].indexOf(days) >= 0 ? days : 30;
+        const c = statData[statDays];
+        if (c && !force && Date.now() - c.got < 5 * 60 * 1000) { statErr = ''; statRender(); return; }
+        if (typeof apiGetJson !== 'function') { statErr = '통계를 불러올 수 없어요.'; statRender(); return; }
+        const seq = ++statSeq, d = statDays;
+        statLoading = true; statErr = ''; statRender();
+        apiGetJson('action=songStats&days=' + d).then(r => {
+            if (seq !== statSeq) return;
+            statLoading = false;
+            if (r && r.result === 'success' && Array.isArray(r.songs)) { r.got = Date.now(); statData[d] = r; }
+            else statErr = (r && r.message) || '통계를 불러오지 못했어요.';
+            statRender();
+        }).catch(() => { if (seq !== statSeq) return; statLoading = false; statErr = '인터넷 연결을 확인하고 다시 눌러 주세요.'; statRender(); });
+    }
+    function statInfo(id) {   // 곡 id → 화면에 쓸 정보 (지금 목록에 없는 곡도 이름은 보여 줌)
+        const t = byId.get(id);
+        if (t) return { title: t.title, name: t.name, g: t.g, no: t.no, pid: t.pid, hid: !!t.hidAll, t: t };
+        const a = String(id).split('/'), pid = a[0] + '/' + a[1], p = personOf(pid);
+        return { title: '(지금 목록에 없는 곡)', name: a[1] || '', g: p ? p.g : 0, no: +a[0] || 0, pid: pid, hid: false, t: null, gone: true };
+    }
+    function hourName(h) { return h === 0 ? '밤 12시' : h < 6 ? '새벽 ' + h + '시' : h < 12 ? '오전 ' + h + '시' : h === 12 ? '낮 12시' : h < 18 ? '오후 ' + (h - 12) + '시' : '저녁 ' + (h - 12) + '시'; }
+    function statRender() {
+        const box = $('plStat'); if (!box || view !== 'stat') return;
+        const r = statData[statDays];
+        const per = [[7, '최근 7일'], [30, '30일'], [365, '1년']].map(x => `<button type="button" data-pl="sper" data-d="${x[0]}" class="${statDays === x[0] ? 'on' : ''}">${x[1]}</button>`).join('');
+        let html = `<div class="pl-st"><div class="pl-st-per">${per}<button type="button" class="dl" data-pl="scsv"${r && r.songs.length ? '' : ' disabled'}>⬇ 엑셀</button></div>`;
+        if (!r) {
+            html += statErr ? `<div class="pl-st-empty">${esc(statErr)}<br><button type="button" data-pl="sretry">다시 불러오기</button></div>` : '<div class="pl-st-empty">통계를 불러오는 중이에요…</div>';
+            box.innerHTML = html + '</div>'; return;
+        }
+        if (statErr) html += `<div class="pl-st-warn">${esc(statErr)} <button type="button" data-pl="sretry">다시</button></div>`;
+        if (!r.songs.length) {
+            box.innerHTML = html + '<div class="pl-st-empty">아직 모인 기록이 없어요.<br>학부모님들이 주제곡을 들으면 6시간 안팎으로 모이기 시작해요.</div>' + statFoot(r) + '</div>';
+            return;
+        }
+        const pct = r.prevPlays > 0 ? Math.round((r.plays - r.prevPlays) / r.prevPlays * 100) : null;
+        const peak = r.hours.reduce((a, v, i) => v > r.hours[a] ? i : a, 0), hMax = Math.max(1, Math.max.apply(null, r.hours));
+        const dayAvg = Math.round(r.plays / Math.max(1, r.dataDays));
+        html += `<div class="pl-st-tiles">
+            <div><small>총 재생</small><b>${r.plays.toLocaleString()}회</b><i>${pct === null ? '앞 기간 기록 없음' : (pct >= 0 ? '▲ ' : '▼ ') + Math.abs(pct) + '% (앞 ' + (statDays === 365 ? '1년' : statDays + '일') + ' 대비)'}</i></div>
+            <div><small>하루 평균 듣는 가족</small><b>${r.famAvg}곳</b><i>가장 많은 날 ${r.famMax}곳</i></div>
+            <div><small>하루 평균 재생</small><b>${dayAvg.toLocaleString()}회</b><i>기록 있는 날 ${r.dataDays}일</i></div>
+            <div><small>가장 많이 듣는 때</small><b>${r.hours[peak] ? hourName(peak) : '-'}</b><i>타석 등장곡 ${r.bat.toLocaleString()}번</i></div></div>`;
+        const top = r.songs.filter(x => x[1] > 0).slice(0, 10), mx = Math.max(1, top.length ? top[0][1] : 1);
+        const topHtml = top.map((x, i) => { const f = statInfo(x[0]); return `<div class="pl-st-r"><span class="n">${i + 1}</span><span class="pl-cv pl-g${f.g || 0}" aria-hidden="true">${esc(f.no || '♪')}</span><div class="t"><b>${esc(f.title)}${f.hid ? '<i class="pl-htag">🔒 숨김</i>' : ''}</b><small>${esc(f.name)}${f.g ? ' · ' + f.g + '학년' : ''}${f.no ? ' ' + f.no + '번' : ''}</small><span class="bar"><i style="width:${Math.max(2, Math.round(x[1] / mx * 100))}%"></i></span></div><span class="v"><b>${x[1].toLocaleString()}회</b>${x[2]}가족</span></div>`; }).join('');
+        const hours = r.hours.map((v, i) => `<i class="${i === peak && v ? 'pk' : ''}" style="height:${Math.max(2, Math.round(v / hMax * 100))}%" title="${hourName(i)} ${v}회"></i>`).join('');
+        const by = {};
+        r.songs.forEach(x => { const f = statInfo(x[0]); const o = by[f.pid] || (by[f.pid] = { name: f.name, g: f.g, plays: 0 }); o.plays += x[1]; });
+        const pl = Object.keys(by).map(k => by[k]).filter(o => o.plays > 0).sort((a, b) => b.plays - a.plays), pmx = Math.max(1, pl.length ? pl[0].plays : 1);
+        const plShow = statAll ? pl : pl.slice(0, 12);
+        const plHtml = plShow.map((o, i) => `<div class="pl-st-r pp"><span class="n">${i + 1}</span><div class="t"><b>${esc(o.name)} <small>${o.g ? o.g + '학년' : ''}</small></b><span class="bar navy"><i style="width:${Math.max(2, Math.round(o.plays / pmx * 100))}%"></i></span></div><span class="v"><b>${o.plays.toLocaleString()}</b></span></div>`).join('');
+        const bat = r.songs.filter(x => x[3] > 0).sort((a, b) => b[3] - a[3]).slice(0, 5);
+        const batHtml = bat.length ? bat.map((x, i) => { const f = statInfo(x[0]); return `<div class="pl-st-r"><span class="n">${i + 1}</span><span class="pl-cv pl-g${f.g || 0}" aria-hidden="true">${esc(f.no || '♪')}</span><div class="t"><b>${esc(f.title)}</b><small>${esc(f.name)}</small></div><span class="v"><b>${x[3]}번</b></span></div>`; }).join('') : '<p class="pl-st-none">이 기간에는 타석 모드에서 튼 곡이 없어요.</p>';
+        html += `<div class="pl-st-grid"><div><div class="pl-st-card"><h4>🔥 많이 들은 곡 TOP 10<small>재생 · 들은 가족</small></h4>${topHtml}</div></div>
+            <div><div class="pl-st-card"><h4>🕗 시간대별 재생<small>${statDays === 365 ? '1년' : statDays + '일'} 합계</small></h4><div class="pl-st-hours">${hours}</div><div class="pl-st-hx"><span>0시</span><span>6시</span><span>12시</span><span>18시</span><span>23시</span></div></div>
+            <div class="pl-st-card"><h4>👦 선수별 합계<small>${statAll ? '전체 ' + pl.length + '명' : '상위 ' + Math.min(12, pl.length) + '명'}</small></h4><div class="pl-st-pp">${plHtml}</div>${pl.length > 12 ? `<button type="button" class="pl-st-more" data-pl="sall">${statAll ? '접기' : '전체 ' + pl.length + '명 보기'}</button>` : ''}</div>
+            <div class="pl-st-card"><h4>⚾ 타석 등장곡으로 쓴 곡<small>따로 셈</small></h4>${batHtml}</div></div></div>`;
+        box.innerHTML = html + statFoot(r) + '</div>';
+    }
+    function statFoot(r) {
+        return `<div class="pl-st-foot">· 운영진(대표 · 총무 · 코치 · 개발자)만 보이는 화면이에요. 학부모 화면에는 숫자 없이 「🔥 인기」만 보여요.<br>· 이름 · 전화번호 · 기기 정보는 모으지 않고 「어느 곡이 몇 번」만 세요. 30초 넘게 들은 것만 1회, 한 집이 하루에 여러 번 들어도 「1가족」이에요.<br>· 휴대폰마다 6시간에 한 번 모아 보내서 숫자는 조금 늦게 바뀌어요.${r && r.from ? ' 기간 ' + esc(r.from) + ' ~ ' + esc(r.to) + '.' : ''}</div>`;
+    }
+    function statCsv() {
+        const r = statData[statDays]; if (!r || !r.songs.length) return;
+        const q = v => { v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+        const rows = [['순위', '선수', '학년', '배번', '곡 제목', '재생', '들은 가족', '타석', '숨김']];
+        r.songs.forEach((x, i) => { const f = statInfo(x[0]); rows.push([i + 1, f.name, f.g || '', f.no || '', f.title, x[1], x[2], x[3], f.hid ? '숨김' : '']); });
+        const text = '﻿' + rows.map(a => a.map(q).join(',')).join('\r\n');
+        try {
+            const url = URL.createObjectURL(new Blob([text], { type: 'text/csv;charset=utf-8' }));
+            const a = document.createElement('a');
+            a.href = url; a.download = '주제곡_재생통계_' + (statDays === 365 ? '1년' : statDays + '일') + '_' + r.to + '.csv';
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 4000);
+        } catch (e) { notify('내려받지 못했어요', '잠시 뒤 다시 눌러 주세요'); }
+    }
     function batTop() {   // 타순 화면을 열고 닫을 때: 타석 모드 맨 위로
         const b = $('plBat'); if (!b) return;
         try { const y = b.getBoundingClientRect().top + window.scrollY - 70; if (window.scrollY > y) window.scrollTo(0, Math.max(0, y)); } catch (e) {}
     }
     function setView(v) {
-        view = v === 'bat' ? 'bat' : 'list';
+        view = v === 'bat' ? 'bat' : v === 'stat' && canSeeHidden() ? 'stat' : 'list';
         mode = ''; pickPid = '';
         document.querySelectorAll('#musicSection .pl-seg button').forEach(b => b.classList.toggle('on', b.dataset.v === view));
         $('plList').hidden = view !== 'list'; $('plBat').hidden = view !== 'bat';
+        const st = $('plStat'); if (st) st.hidden = view !== 'stat';
+        if (view === 'stat') statLoad(statDays);   // 📊 v2.124.0
         if (view === 'bat') { renderBat(); hydrate(); wakeOn(); } else { wakeOff(); luFlag(); }
         holdSync();
     }
