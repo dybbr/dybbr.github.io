@@ -679,6 +679,49 @@
         try { r.start(); } catch (e) { bkRec = null; bkKick(3000); }
     }
 
+    // 👉 아래 재생 띠를 옆으로 끝까지 밀면 사라지면서 꺼짐 (v2.117.0) — 띠 너비의 45% 넘게 밀어야 꺼짐(둔하게) · 덜 밀면 제자리로
+    function miniSwipe(el) {
+        let x0 = 0, y0 = 0, dx = 0, w = 1, pid = null, drag = false, arm = false, ate = false;
+        const CUT = 0.45, START = 16;
+        const reset = anim => {
+            el.style.transition = anim ? 'transform .22s ease, opacity .22s ease' : '';
+            el.style.transform = ''; el.style.opacity = ''; el.classList.remove('pl-swipe', 'arm');
+        };
+        el.addEventListener('pointerdown', e => {
+            if (e.button > 0 || pid !== null) return;
+            pid = e.pointerId; x0 = e.clientX; y0 = e.clientY; dx = 0; drag = false; arm = false;
+            w = Math.max(200, el.offsetWidth || innerWidth); el.style.transition = '';
+        });
+        el.addEventListener('pointermove', e => {
+            if (e.pointerId !== pid) return;
+            const mx = e.clientX - x0, my = e.clientY - y0;
+            if (!drag) {
+                if (Math.abs(my) > START && Math.abs(my) > Math.abs(mx)) { pid = null; return; }   // 위아래로 움직이면 밀기 아님
+                if (Math.abs(mx) < START) return;
+                drag = true; el.classList.add('pl-swipe');
+                try { el.setPointerCapture(pid); } catch (er) {}
+            }
+            dx = mx;
+            const k = Math.min(1, Math.abs(dx) / w);
+            arm = k >= CUT; el.classList.toggle('arm', arm);
+            el.style.transform = 'translateX(' + dx + 'px)'; el.style.opacity = String(Math.max(0.35, 1 - k * 0.9));
+        });
+        const end = e => {
+            if (e.pointerId !== pid) return;
+            pid = null;
+            if (!drag) return;
+            ate = true; setTimeout(() => { ate = false; }, 350);   // 민 다음 손을 뗄 때 버튼이 눌리지 않게
+            if (e.type === 'pointerup' && arm) {
+                el.style.transition = 'transform .2s ease, opacity .2s ease';
+                el.style.transform = 'translateX(' + (dx < 0 ? -1.1 : 1.1) * w + 'px)'; el.style.opacity = '0';
+                setTimeout(() => { stopAll(); remember(); reset(false); notify('노래를 껐어요', '다시 들으려면 곡을 눌러 주세요'); }, 210);
+            } else reset(true);
+        };
+        el.addEventListener('pointerup', end);
+        el.addEventListener('pointercancel', end);
+        el.addEventListener('click', e => { if (ate) { e.stopPropagation(); e.preventDefault(); } }, true);
+    }
+
     // 다른 화면(선수 상세)에 다녀와도 듣던 곡 · 자리를 기억 (돌아오면 ▶ 한 번으로 이어 듣기)
     function remember() {
         try {
@@ -940,6 +983,7 @@
             <button type="button" class="pl-ib" data-pl="toggle" id="plMiniPlay" aria-label="재생">${I.play}</button>
             <button type="button" class="pl-ib" data-pl="next" aria-label="다음 곡">${I.next}</button>`;
         mini.addEventListener('click', onClick);
+        miniSwipe(mini);
         document.body.appendChild(mini);
 
         const snd = document.createElement('div');   // 📣 타석 모드 아래 효과음 띠

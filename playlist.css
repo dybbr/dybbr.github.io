@@ -383,3 +383,9 @@ body:has(.pl-micpan:not([hidden])) .ui-zoom-ctrl { visibility: hidden; }
 /* 🦉 「부캉아」 부르기 (시험) */
 .pl-ann.pl-bk { margin-top: 8px; }
 .pl-ann .tx em { font-style: normal; display: inline-block; margin-left: 4px; padding: 0 6px; border-radius: 6px; background: var(--pl-red); color: #fff; font-size: 11px; line-height: 18px; vertical-align: 2px; }
+/* 👉 재생 띠 옆으로 밀어서 끄기 (v2.117.0) */
+.pl-mini { touch-action: pan-y; }
+.pl-mini.pl-swipe { user-select: none; -webkit-user-select: none; }
+.pl-mini.pl-swipe::after { content: '끝까지 밀면 꺼져요'; position: absolute; left: 50%; top: -36px; transform: translateX(-50%); white-space: nowrap; padding: 5px 14px; border-radius: 999px; background: var(--pl-card); color: var(--pl-fg); font-size: 13px; font-weight: 800; box-shadow: 0 4px 14px rgba(0, 0, 0, .25); pointer-events: none; }
+.pl-mini.arm { background: var(--pl-red); }
+.pl-mini.arm::after { content: '놓으면 꺼져요'; color: var(--pl-red); }
