@@ -149,6 +149,7 @@
         document.body.appendChild(audio);
         audio.addEventListener('playing', () => { if (annDone) { paintState(); return; } fails = 0; hideMsg(); paintState(); startLoop(); });
         audio.addEventListener('pause', () => { paintState(); });
+        audio.addEventListener('play', () => bkKick(0));   // 🦉 소리가 나기 시작하면 「부캉아」 듣기 쉼
         audio.addEventListener('ended', () => { if (annDone) annStep(); else next(true); });
         audio.addEventListener('timeupdate', onTime);
         audio.addEventListener('durationchange', () => { if (!annDone) paintTime(); });
@@ -390,6 +391,7 @@
         if (a) return a;
         a = sndEl[s.id] = new Audio();
         a.preload = 'auto'; a.src = blobUrl[s.src] || s.src;
+        a.addEventListener('play', () => bkKick(0));
         if (s.mu) {
             a.addEventListener('ended', () => { if (muOn === s.id) muStop(true); });
             a.addEventListener('timeupdate', () => { if (muOn === s.id && s.max && a.currentTime >= s.max) muStop(); });
@@ -546,6 +548,7 @@
     }
     function micPaint(state, heard, said) {   // 듣는 판: listen 듣는 중 · done 실행함 · fail 못 알아들음
         const pan = $('plMicPan');
+        if (heard) heard = String(heard).replace(/(부캉|북항|부강|부광|부캥|북캉|북앙|부깡|푸캉|부칸|북한)\s*(이|아|야|하|가|님|씨)?/g, '부캉아');   // 「북항아」로 들려도 화면엔 「부캉아」
         if (!pan) return;
         document.querySelectorAll('[data-pl="mic"]').forEach(b => { b.classList.toggle('rec', state === 'listen'); b.setAttribute('aria-pressed', state === 'listen' ? 'true' : 'false'); });
         if (!state) { pan.hidden = true; return; }
@@ -606,9 +609,22 @@
     //   · 화면을 끄거나 다른 앱 · 다른 탭으로 가면 멈춤 (웹은 화면이 꺼지면 마이크를 못 씀)
     const BK_RE = /(부캉|북항|부강|부광|부캥|북캉|북앙|부깡|푸캉|부칸|북한)(이|아|야|하|가|님|씨)?/;
     let bkRec = null, bkTimer = 0, bkArmed = 0, bkArmT = 0, bkFails = 0, bkStarted = 0;
-    const bkWant = () => !!(cfg.bk && SpeechRec && batShown() && !document.hidden && !micOn);
+    //   · v2.116.2: 노래 · 안내 · 효과음이 나오는 동안은 듣기를 쉼 (계속 듣다 보면 안드로이드가 「띵」을 되풀이) → 소리가 멈추면 다시 들음
+    const bkCan = () => !!(cfg.bk && SpeechRec && batShown() && !document.hidden && !micOn);
+    function bkBusy() {
+        try {
+            if (audio && !audio.paused && !audio.ended) return true;
+            if (muOn) return true;
+            for (const k in sndEl) { const a = sndEl[k]; if (a && !a.paused && !a.ended) return true; }
+        } catch (e) {}
+        return false;
+    }
     function bkKick(ms) { clearTimeout(bkTimer); if (cfg.bk) bkTimer = setTimeout(bkSync, ms || 0); }
-    function bkSync() { if (bkWant()) bkStart(); else if (!micOn) bkStop(); }
+    function bkSync() {
+        if (!bkCan()) { if (!micOn) bkStop(); return; }
+        if (bkBusy()) { bkStop(); bkTimer = setTimeout(bkSync, 1500); return; }   // 소리가 끝날 때까지 마이크는 꺼 두고 1.5초마다 확인
+        bkStart();
+    }
     function bkStop() {
         clearTimeout(bkTimer); clearTimeout(bkArmT); bkArmed = 0;
         if (bkRec) { try { bkRec.onresult = bkRec.onerror = bkRec.onend = null; bkRec.abort(); } catch (e) {} bkRec = null; }
@@ -643,7 +659,7 @@
                 for (let j = 0; j < res.length && !hit; j++) { const c = bkCmd(res[j].transcript); if (c) hit = micParse(c); }
                 bkDisarm();
                 clearTimeout(micTimer);
-                if (hit && hit.run) { micPaint('done', tx, hit.say); try { hit.run(); } catch (e) {} }
+                if (hit && hit.run) { bkStop(); micPaint('done', tx, hit.say); try { hit.run(); } catch (e) {} bkKick(1500); return; }
                 else micPaint('fail', tx, hit ? hit.say : '');
                 micTimer = setTimeout(() => micPaint(''), hit && hit.run ? 2200 : 4500);
             }
@@ -656,10 +672,9 @@
             }
         };
         r.onend = () => {   // 말이 한동안 없으면 크롬이 스스로 끊음 → 다시 켬 (빨리 끊기기를 되풀이하면 점점 천천히)
-            bkRec = null;
-            if (bkArmed) bkDisarm();
+            bkRec = null;   // 「부캉아」만 듣고 끊겨도 7초 기다림은 그대로 (안드로이드는 말 한마디마다 끊김)
             bkFails = Date.now() - bkStarted < 3000 ? bkFails + 1 : 0;
-            if (cfg.bk) bkKick(bkFails > 3 ? Math.min(30000, 2000 * bkFails) : 300);
+            if (cfg.bk) bkKick(bkFails > 3 ? Math.min(30000, 2000 * bkFails) : bkBusy() ? 0 : 300);
         };
         try { r.start(); } catch (e) { bkRec = null; bkKick(3000); }
     }
