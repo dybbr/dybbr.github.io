@@ -1,0 +1,58 @@
+/* 🦉 부캉이 비서 (v2.120.0 · 시안 C) — bukang-ai.js */
+.bka-bk{display:inline-block;background:var(--bk-img) center/contain no-repeat;flex:none}
+/* 각 탭 맨 위 「부캉이에게 물어보세요」 줄 */
+.bka-bar{display:none;align-items:center;gap:8px;margin:8px 12px 10px;padding:6px 6px 6px 8px;border-radius:999px;background:#fff;border:2px solid #f5b301;box-shadow:0 4px 14px rgba(0,0,0,.08)}
+html.is-authenticated .bka-bar{display:flex}
+.bka-bar-q{flex:1;display:flex;align-items:center;gap:10px;min-height:40px;border:0;background:none;padding:0 4px;font:inherit;font-weight:700;font-size:15px;color:#475569;text-align:left;cursor:pointer}
+.bka-bar-q .bka-bk{width:30px;height:30px}
+.bka-bar-mic{width:42px;height:42px;border-radius:50%;border:0;background:#0b2240;color:#fff;font-size:18px;cursor:pointer;flex:none}
+#scheduleSection>.bka-bar,#noticeSection>.bka-bar,#venueSection>.bka-bar{margin:0 0 12px}
+/* 비서 창 */
+.bka-ov{position:fixed;inset:0;z-index:99990;background:rgba(15,23,42,.45)}
+.bka-ov[hidden],.bka-pan[hidden]{display:none!important}
+.bka-pan{position:fixed;z-index:99991;background:#f8fafc;color:#0f172a;display:flex;flex-direction:column;box-shadow:-10px 0 40px rgba(0,0,0,.3);font-size:15px;line-height:1.45}
+.bka-pan.ph{left:0;right:0;bottom:0;top:5%;border-radius:22px 22px 0 0;padding-bottom:env(safe-area-inset-bottom)}
+.bka-pan.side{top:0;bottom:0;right:0;width:420px;max-width:100%}
+.bka-hd{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #e2e8f0;background:#fff;border-radius:inherit;border-bottom-left-radius:0;border-bottom-right-radius:0}
+.bka-hd>.bka-bk{width:40px;height:40px}
+.bka-tt{flex:1;min-width:0}.bka-tt b{font-size:18px;display:block}
+.bka-tt small{display:block;color:#64748b;font-size:12.5px;font-weight:700}
+.bka-tt small.on{color:#16a34a}
+.bka-hb{border:0;background:#eef2f7;border-radius:10px;padding:8px 12px;font:inherit;font-weight:700;color:#0b2240;cursor:pointer}
+.bka-body{flex:1;overflow:auto;padding:14px 14px 6px;display:flex;flex-direction:column;gap:10px;overscroll-behavior:contain}
+.bka-me{align-self:flex-end;background:#0b2240;color:#fff;padding:9px 14px;border-radius:16px 16px 4px 16px;font-weight:700;max-width:80%;word-break:keep-all;overflow-wrap:anywhere}
+.bka-bot{align-self:flex-start;display:flex;gap:8px;max-width:94%}
+.bka-bot>.bka-bk{width:32px;height:32px;margin-top:2px}
+.bka-card{background:#fff;border:1px solid #e2e8f0;border-radius:4px 16px 16px 16px;padding:12px 14px;box-shadow:0 2px 8px rgba(0,0,0,.05);min-width:0;word-break:keep-all;overflow-wrap:anywhere}
+.bka-card .h{font-size:17px;font-weight:900;color:#0b2240}
+.bka-card .h em{font-style:normal;color:#c8102e;font-size:14px;margin-left:6px}
+.bka-card .l{font-size:14.5px;color:#334155;margin-top:3px}
+.bka-pl{display:flex;gap:10px;align-items:center}
+.bka-no{width:48px;height:48px;border-radius:12px;background:#c8102e;color:#fff;display:grid;place-items:center;font-size:22px;font-weight:900;flex:none}
+.bka-items{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.bka-items button{display:block;text-align:left;border:1px solid #e2e8f0;background:#f8fafc;border-radius:10px;padding:8px 10px;font:inherit;color:#0f172a;cursor:pointer}
+.bka-items button b{display:block;font-size:14.5px}
+.bka-items button small{display:block;color:#64748b;font-size:12.5px;margin-top:1px}
+.bka-bt{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.bka-bt button{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:0 12px;border-radius:12px;border:0;font:inherit;font-weight:800;font-size:14px;cursor:pointer}
+.bka-bt .pri{background:#0b2240;color:#fff}.bka-bt .sec{background:#eef2f7;color:#0b2240}
+.bka-set{margin-top:8px;display:flex;flex-direction:column;gap:8px}
+.bka-set .r{display:flex;align-items:center;gap:6px}
+.bka-set .r span{flex:1;font-weight:700;font-size:14.5px}
+.bka-set .r small{display:block;font-weight:500;color:#64748b;font-size:12.5px}
+.bka-set .sw{border:0;border-radius:999px;padding:7px 12px;font:inherit;font-weight:800;font-size:13px;background:#eef2f7;color:#0b2240;cursor:pointer;white-space:nowrap}
+.bka-set .sw.on{background:#16a34a;color:#fff}
+.bka-enr.listen{border-color:#16a34a}.bka-enr.done{border-color:#16a34a;background:#f0fdf4}.bka-enr.fail{border-color:#fca5a5;background:#fef2f2}
+.bka-chips{display:flex;gap:6px;overflow-x:auto;padding:8px 14px;border-top:1px solid #e2e8f0;background:#fff;scrollbar-width:none}
+.bka-chips::-webkit-scrollbar{display:none}
+.bka-chips button{flex:none;padding:8px 12px;border-radius:999px;border:0;background:#eef2f7;font:inherit;font-weight:700;font-size:14px;color:#0b2240;cursor:pointer}
+.bka-in{display:flex;align-items:center;gap:8px;padding:8px 14px 14px;background:#fff;margin:0}
+.bka-mic{width:56px;height:56px;border-radius:50%;border:0;background:#c8102e;color:#fff;font-size:24px;box-shadow:0 6px 16px rgba(200,16,46,.4);flex:none;cursor:pointer}
+.bka-mic[hidden]{display:none}
+.bka-mic.rec{animation:bkaPulse 1.1s ease-in-out infinite;background:#16a34a;box-shadow:0 0 0 6px rgba(22,163,74,.25)}
+@keyframes bkaPulse{50%{box-shadow:0 0 0 12px rgba(22,163,74,.12)}}
+.bka-in input{flex:1;min-width:0;height:46px;border:1.5px solid #cbd5e1;border-radius:999px;padding:0 14px;font:inherit;font-size:15px;background:#f8fafc;color:#0f172a}
+.bka-in input:focus{outline:none;border-color:#0b2240;background:#fff}
+.bka-send{width:46px;height:46px;border-radius:50%;border:0;background:#0b2240;color:#fff;font-size:18px;flex:none;cursor:pointer}
+html.bka-open #uiZoomCtrl{display:none!important}
+@media (prefers-reduced-motion:reduce){.bka-mic.rec{animation:none}}
