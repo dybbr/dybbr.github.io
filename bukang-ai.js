@@ -8,6 +8,7 @@
     'use strict';
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     const LS = 'daeyeon_bka';
+    const VER = '2.126.0';
     const opt = (function () { try { return Object.assign({ say: true }, JSON.parse(localStorage.getItem(LS) || '{}')); } catch (e) { return { say: true }; } })();
     const saveOpt = () => { try { localStorage.setItem(LS, JSON.stringify(opt)); } catch (e) {} };
     const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -611,7 +612,9 @@
     }
     function missAns(s) {
         const k = C(s); logMiss(s);
-        return { h: '잘 못 알아들었어요', l: ['「' + s + '」', '혹시 아래 뜻이었나요? 고르면 다음부터 이 말을 알아들어요', '또는 「' + s + '라고 하면 ○○라고 대답해」로 가르쳐 주세요'],
+        const tell = opt.share !== false && (opt.shareN || 0) < 3;
+        if (tell) { opt.shareN = (opt.shareN || 0) + 1; saveOpt(); }
+        return { h: '잘 못 알아들었어요', l: ['「' + s + '」'].concat(tell ? ['📮 이런 말은 이름 없이 모아 부캉이 공부에 써요 (⚙ 설정에서 끌 수 있어요)'] : [], ['혹시 아래 뜻이었나요? 고르면 다음부터 이 말을 알아들어요', '또는 「' + s + '라고 하면 ○○라고 대답해」로 가르쳐 주세요']),
             items: LEARN_OPTS.map(q => ({ h: '「' + q + '」', s: '', fn: () => { learn(k, q); const a = think(q); a.l = ['배웠어요! 다음부터 「' + s + '」는 「' + q + '」로 알아들을게요'].concat(a.l || []); return a; } })),
             say: '잘 못 알아들었어요. 다시 말해 주세요.', miss: 1 };
     }
@@ -1476,9 +1479,50 @@
         return { h: '🎓 배웠어요!', l: [`「${q}」라고 하면 → 「${a}」`, '이 휴대폰에만 기억해요 · 「가르친 거 보여 줘」'], say: `배웠어요! ${q}라고 하면 ${a}라고 대답할게요.`, btns: [{ t: '▶ 해 보기', fn: () => taught(C(q)) }] };
     }
     function taught(k) { const m = teachAll()[k]; return m ? { h: m.a, l: ['🎓 가르쳐 주신 대답이에요'], say: m.a } : null; }
-    // 못 알아들은 말 적어 두기 (이 휴대폰에만 · 다음 버전에서 모아 보기)
-    const MISSK = 'daeyeon_bka_miss';
-    function logMiss(s) { try { const a = JSON.parse(localStorage.getItem(MISSK) || '[]') || [], k = C(s); if (!k || k.length > 40) return; const f = a.find(x => x.k === k); if (f) f.n++; else a.push({ k, q: s.slice(0, 40), n: 1, v: '2.125.0' }); while (a.length > 60) a.shift(); localStorage.setItem(MISSK, JSON.stringify(a)); } catch (e) {} }
+    // 못 알아들은 말 적어 두기 → 하루에 한 번 묶어서 서버로 (v2.126.0 · 서버 v2.45.0 bkaMiss)
+    //   · 누가 보냈는지는 안 보냄 · 선수 이름은 ○○○ 로 가림 · 긴 숫자나 비밀번호 같은 낱말이 든 말은 안 적음 · ⚙ 설정에서 끌 수 있음
+    //   · 서버가 이 기능을 안다고 알려 준 뒤에만 보냄 (bootstrap 답의 bka → daeyeon_bka_srv)
+    const MISSK = 'daeyeon_bka_miss', MISS_GAP = 20 * 60 * 60 * 1000;
+    function missClean(v) {
+        let q = String(v || '').replace(/\s+/g, ' ').trim().slice(0, 40);
+        if (!q || /\d{3,}/.test(q) || /비밀번호|비번|암호|패스워드|인증번호|로그인코드|계좌/.test(C(q))) return '';
+        try { D.players().forEach(p => { const n = String(p.name || '').trim(); if (n.length >= 2) { q = q.split(n).join('○○○'); if (n.length >= 3) q = q.split(n.slice(1)).join('○○'); } }); } catch (e) {}
+        return C(q).length >= 2 ? q : '';
+    }
+    function missLoad() { try { const a = JSON.parse(localStorage.getItem(MISSK) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+    function logMiss(s) {
+        try {
+            const q = missClean(s), k = C(q); if (!k) return;
+            const a = missLoad(), f = a.find(x => x.k === k);
+            if (f) f.n = Math.min(99, (f.n || 0) + 1); else a.push({ k, q, n: 1, u: 0 });
+            while (a.length > 60) a.shift();
+            localStorage.setItem(MISSK, JSON.stringify(a));
+        } catch (e) {}
+    }
+    function missFlush() {
+        try {
+            if (opt.share === false || navigator.onLine === false) return;
+            if (localStorage.getItem('daeyeon_bka_srv') !== '1') return;   // 서버가 받을 줄 알 때만 (bootstrap 답에서 확인)
+            if (Date.now() - (Number(localStorage.getItem(MISSK + '_t')) || 0) < MISS_GAP) return;
+            const a = missLoad(), d = [];
+            a.forEach(x => { const n = (x.n || 0) - (x.u || 0), q = missClean(x.q); if (n > 0 && q && d.length < 30) d.push({ x, q, n: Math.min(n, 20) }); });
+            if (!d.length) return;
+            let url = '', key = '', tok = '';
+            try { url = GOOGLE_SCRIPT_UNIFORM_API_URL; key = API_KEY; tok = getToken(); } catch (e) { return; }
+            if (!url || !key || !tok) return;
+            const text = JSON.stringify({ key, token: tok, action: 'bkaMiss', v: VER, d: d.map(o => [o.q, o.n]) });
+            let ok = false;
+            try { ok = !!(navigator.sendBeacon && navigator.sendBeacon(url, new Blob([text], { type: 'text/plain;charset=utf-8' }))); } catch (e) {}
+            if (!ok) { try { fetch(url, { method: 'POST', mode: 'no-cors', keepalive: true, headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: text }).catch(() => {}); ok = true; } catch (e) {} }
+            if (!ok) return;
+            d.forEach(o => { o.x.u = o.x.n; });
+            localStorage.setItem(MISSK, JSON.stringify(a));
+            localStorage.setItem(MISSK + '_t', String(Date.now()));
+        } catch (e) {}
+    }
+    // 앱을 내리거나 닫을 때 (하루에 한 번 · 보낼 것이 있을 때만)
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') missFlush(); });
+    window.addEventListener('pagehide', missFlush);
 
     // ----- 야구 용어 사전 -----
     let TIDX = null;
@@ -1872,6 +1916,7 @@
         else if (a === 'set') bot(settings());
         else if (a === 'bk') { const on = !V('bkOn'); V('bkSet', on); bot({ h: on ? '「부캉아」 부르기를 켰어요' : '「부캉아」 부르기를 껐어요', l: on ? ['처음 한 번은 약 14MB를 받아요 (와이파이 추천)', '화면이 켜져 있을 때 어느 탭에서든 들어요'] : [] }); setSt(''); }
         else if (a === 'say') { opt.say = !opt.say; saveOpt(); bot({ h: opt.say ? '말로 물으면 대답을 소리로 읽어 드려요' : '대답을 소리로 읽지 않아요' }); }
+        else if (a === 'share') { opt.share = opt.share === false; saveOpt(); bot({ h: opt.share ? '못 알아들은 말을 부캉이 공부에 보태요' : '못 알아들은 말을 보내지 않아요', l: opt.share ? ['누가 한 말인지는 보내지 않아요 · 선수 이름은 가려요'] : ['이 휴대폰에만 남아요'] }); }
         else if (a === 'voice') bot(voiceTalk('목소리', '목소리'));
         else if (a === 'me') enroll();
         else if (a === 'me-x') { V('bkClearMine'); bot({ h: '내 목소리 등록을 지웠어요' }); }
@@ -1888,7 +1933,8 @@
                 ${V('hasMic') ? `<div class="r"><span>🦉 「부캉아」로 부르기<small>${on ? '켜짐 · 어느 탭에서든 기다려요' : '꺼짐 · 켜면 휴대폰이 「부캉아」를 기다려요'}</small></span><button type="button" class="sw${on ? ' on' : ''}" data-a="bk" role="switch" aria-checked="${on}">${on ? '켜짐' : '꺼짐'}</button></div>` : '<div class="r"><span>이 기기에서는 「부캉아」 부르기를 쓸 수 없어요<small>글자로 물어볼 수 있어요</small></span></div>'}
                 ${on ? `<div class="r"><span>🎤 내 목소리 등록<small>${n ? n + '개 등록됨' : '「부캉아」 3번 녹음 · 더 잘 알아들어요'}</small></span><button type="button" class="sw" data-a="me">${n ? '다시 하기' : '등록'}</button>${n ? '<button type="button" class="sw" data-a="me-x">지우기</button>' : ''}</div>` : ''}
                 <div class="r"><span>🗣 부캉이 목소리<small>${esc(voiceNow()[1])} · ${esc(voiceNow()[4])}</small></span><button type="button" class="sw" data-a="voice">바꾸기</button></div>
-                <div class="r"><span>🔊 대답 읽어 주기<small>말로 물었을 때만 읽어요</small></span><button type="button" class="sw${opt.say ? ' on' : ''}" data-a="say" role="switch" aria-checked="${opt.say}">${opt.say ? '켜짐' : '꺼짐'}</button></div></div>`);
+                <div class="r"><span>🔊 대답 읽어 주기<small>말로 물었을 때만 읽어요</small></span><button type="button" class="sw${opt.say ? ' on' : ''}" data-a="say" role="switch" aria-checked="${opt.say}">${opt.say ? '켜짐' : '꺼짐'}</button></div>
+                <div class="r"><span>📮 못 알아들은 말 보태기<small>이름 없이 모아 부캉이를 더 똑똑하게 해요</small></span><button type="button" class="sw${opt.share !== false ? ' on' : ''}" data-a="share" role="switch" aria-checked="${opt.share !== false}">${opt.share !== false ? '켜짐' : '꺼짐'}</button></div></div>`);
             scrollEnd();
         }, 0);
         return w;

@@ -1,11 +1,11 @@
 // ==========================================================
-// ⚾ 대연초 야구부 관리 시스템 통합 백엔드 API (v2.44.0)
+// ⚾ 대연초 야구부 관리 시스템 통합 백엔드 API (v2.45.0)
 // ==========================================================
 // ★ API_KEY 는 코드에 적지 않고 「프로젝트 설정 → 스크립트 속성」의 API_KEY 에 넣어 둡니다 (v2.36.0~).
 //   값은 index.html / player.html 의 API_KEY 와 "같은 값"이어야 합니다. 속성이 비어 있으면 모든 요청을 거절합니다.
 var API_KEY = PropertiesService.getScriptProperties().getProperty("API_KEY") || null;
 
-var ALLOWED_POST_ACTIONS = ["login", "logout", "uploadPhoto", "deletePhoto", "submitOrder", "cancelOrder", "registerContact", "setUniformActive", "setJerseyColors", "changeAdminPw", "updatePlayerInfo", "setHiddenSongs", "songPlays", "saveEvents", "deleteEvent", "saveNotice", "deleteNotice", "saveVenue", "deleteVenue"];   // v2.14.0: 실시간 접속 알림(presence) 없앰 · v2.15.0: 보안 활동 로그(logActivity) 없앰 · v2.20.0: 공지 읽음(viewNotice) 없앰
+var ALLOWED_POST_ACTIONS = ["login", "logout", "uploadPhoto", "deletePhoto", "submitOrder", "cancelOrder", "registerContact", "setUniformActive", "setJerseyColors", "changeAdminPw", "updatePlayerInfo", "setHiddenSongs", "songPlays", "bkaMiss", "saveEvents", "deleteEvent", "saveNotice", "deleteNotice", "saveVenue", "deleteVenue"];   // v2.14.0: 실시간 접속 알림(presence) 없앰 · v2.15.0: 보안 활동 로그(logActivity) 없앰 · v2.20.0: 공지 읽음(viewNotice) 없앰
 var ALLOWED_ORDER_ITEMS = ["모자", "바지 (허리)", "바지 (기장)", "유니폼상의", "여름훈련티", "겨울훈련티", "바람막이", "풀오버", "겨울점퍼", "응원복"];   // v2.41.0: 📣 응원복 (학부모 응원용)
 
 // ★ 1. 드라이브 권한 및 폴더 생성 테스트 함수
@@ -967,6 +967,68 @@ function findPlayerRow(values, noCol, nameCol, no, name) {
 
 
 // ==========================================================
+// 🦉 v2.45.0: 부캉이가 못 알아들은 말 모으기 — 「부캉이 못 알아들은 말」 탭 (말 · 횟수 · 기기 · 처음 · 마지막 · 앱 버전)
+//   · 사이트가 휴대폰에 적어 두었다가 하루에 한 번 묶어 보냄 (bkaMiss) — 로그인한 사람만 · 누가 보냈는지는 안 적음
+//   · 선수 이름은 사이트가 ○○○ 로 가려서 보냄 · 여기서도 긴 숫자(3자리 넘게) · 비밀번호 같은 낱말이 든 말은 버림
+//   · 한글 · 영문 · 숫자 · 몇 가지 문장 부호만 남김 (수식 · 그림 글자 막기) · 2,000줄까지 (넘으면 새 말은 안 받고 횟수만 더함)
+//   · 모인 말을 보고 부캉이 사전(bukang-data.js)을 늘림 → 모든 사람의 부캉이가 같이 똑똑해짐
+// ==========================================================
+var BKA_SHEET = "부캉이 못 알아들은 말";
+var BKA_HEAD = ["말", "횟수", "기기", "처음", "마지막", "앱 버전"];
+var BKA_MAX = 2000;
+function bkaKey(s) { return String(s || "").replace(/[^0-9A-Za-z가-힣ㄱ-ㅎㅏ-ㅣ○]/g, "").toLowerCase(); }
+function bkaClean(v) {
+  var q = String(v == null ? "" : v).replace(/[^0-9A-Za-z가-힣ㄱ-ㅎㅏ-ㅣ ○.,?!~%+\-]/g, " ").replace(/\s+/g, " ").replace(/^[+\-.,?!~% ]+/, "").trim().slice(0, 40);
+  var k = bkaKey(q);
+  if (k.length < 2 || /\d{3,}/.test(q) || /비밀번호|비번|암호|패스워드|인증번호|로그인코드|계좌/.test(k)) return "";
+  return q;
+}
+function bkaSheet(ss, create) {
+  var sh = ss.getSheetByName(BKA_SHEET);
+  if (!sh && create) {
+    sh = ss.insertSheet(BKA_SHEET);
+    sh.getRange(1, 1, 1, BKA_HEAD.length).setValues([BKA_HEAD]).setFontWeight("bold");
+    sh.getRange("A:A").setNumberFormat("@"); sh.getRange("D:F").setNumberFormat("@");
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+function handleBkaMiss(ss, data, session) {
+  if (!session) return json({ result: "error", message: "login" });
+  if (!rateOk("bkamiss", 300, 3600)) return json({ result: "error", message: "busy" });
+  var rows = Array.isArray(data.d) ? data.d.slice(0, 30) : [], add = {}, keys = [];
+  rows.forEach(function (r) {
+    if (!Array.isArray(r)) return;
+    var q = bkaClean(r[0]); if (!q) return;
+    var k = bkaKey(q), n = playInt(r[1], 20) || 1;
+    if (add[k]) add[k].n += n; else { add[k] = { q: q, n: n }; keys.push(k); }
+  });
+  if (!keys.length) return json({ result: "success", n: 0 });
+  var ver = /^[0-9.]{1,12}$/.test(String(data.v || "")) ? String(data.v) : "";
+  var day = playToday(0);
+  var sh = bkaSheet(ss, true), last = sh.getLastRow();
+  var body = last >= 2 ? sh.getRange(2, 1, last - 1, BKA_HEAD.length).getValues() : [];
+  var at = {};
+  body.forEach(function (r, i) { at[bkaKey(r[0])] = i; });
+  var fresh = [], touched = false, n = 0;
+  keys.forEach(function (k) {
+    var o = add[k];
+    if (Object.prototype.hasOwnProperty.call(at, k)) {
+      var r = body[at[k]];
+      r[1] = playInt(r[1], 1e9) + o.n; r[2] = playInt(r[2], 1e9) + 1; r[3] = playDay(r[3]); r[4] = day; if (ver) r[5] = ver; else r[5] = String(r[5] || "");
+      touched = true; n++;
+    } else if (body.length + fresh.length < BKA_MAX) { fresh.push([o.q, o.n, 1, day, day, ver]); n++; }
+  });
+  if (touched) sh.getRange(2, 1, body.length, BKA_HEAD.length).setValues(body);
+  if (fresh.length) {
+    var rg = sh.getRange(last + 1, 1, fresh.length, BKA_HEAD.length);
+    rg.setNumberFormat("@"); rg.setValues(fresh);
+    sh.getRange(last + 1, 2, fresh.length, 2).setNumberFormat("0");
+  }
+  return json({ result: "success", n: n });
+}
+
+// ==========================================================
 // 🚀 [POST 요청 처리]
 // ==========================================================
 function doPost(e) {
@@ -1000,6 +1062,8 @@ function doPost(e) {
     var session = resolveSession(data.token);
     var role = session ? session.role : null;
     var a = data.action;
+
+    if (a === "bkaMiss") return handleBkaMiss(ss, data, session);   // 🦉 v2.45.0: 부캉이가 못 알아들은 말 묶음 (로그인한 사람만 · 누가 보냈는지는 안 적음)
 
     if (a === "saveEvents" || a === "deleteEvent" || a === "saveNotice" || a === "deleteNotice") {
       if (!canEditScheduleRole(role)) return json({ result: "error", message: "일정/공지를 수정할 권한이 없습니다." });
@@ -1709,6 +1773,7 @@ function doGet(e) {
         try { bo.duty = dutyPublic(readDuty(ss)); } catch (eB4) {}   // 🧹 v2.31.0: 부실 청소 당번 (보호자 · 관리자만)
       }
       try { bo.pop = songPopList(ss); } catch (eB5) {}   // 📊 v2.44.0: 학부모 화면 인기곡 (곡 id 순서만)
+      bo.bka = 1;   // 🦉 v2.45.0: 「못 알아들은 말 받기(bkaMiss)」를 아는 서버라는 표시 → 사이트가 이걸 본 뒤에만 보냄
       return json(bo);
     }
 
