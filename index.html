@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.114.0 · b261112";
+        const APP_VERSION = "v2.115.0 · b261112";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -8007,8 +8007,7 @@
     //   auto: 비번 칸에 커서 → 화면 키보드 자동 (브라우저가 막으면 잠금창 빈 곳을 한 번 누르면 키보드)
     //   pad : 터치 기기는 잠금창 안 숫자판 (화면 키보드는 안 올라오고 커서만 깜빡) · 「⌨️ 키보드」로 일반 키보드
     //   mix : 휴대폰은 숫자판, 태블릿은 auto
-    let LOCK_KB_MODE = 'pad';
-    try { const q = new URLSearchParams(location.search).get('lockkb'); if (/^(auto|pad|mix)$/.test(q || '')) LOCK_KB_MODE = q; } catch (e) {}   // 시안 비교용
+    let LOCK_KB_MODE = 'pad';   // 2026-11-12 하코 선택: B안 화면 속 숫자판
     let lockPadKbd = false;   // 「⌨️ 키보드」를 눌러 일반 키보드로 바꿨으면 이번 잠금창에서는 숫자판 숨김
     function lockIsTouch() { try { return !window.matchMedia('(pointer: fine)').matches; } catch (e) { return false; } }
     function lockIsPhone() { return Math.min(screen.width || 9999, screen.height || 9999) < 600; }
