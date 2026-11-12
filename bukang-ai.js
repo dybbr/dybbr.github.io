@@ -1,4 +1,4 @@
-// 🦉 부캉이 비서 (v2.120.0 시안 C 대화형 창 · v2.122.0 휴대폰 말풍선 + 두뇌 2세대 · v2.123.0 두뇌 3세대: 대화 · 날씨 · 위치 · 놀이 · 목소리)
+// 🦉 부캉이 비서 (v2.120.0 시안 C 대화형 창 · v2.122.0 휴대폰 말풍선 + 두뇌 2세대 · v2.123.0 두뇌 3세대: 대화 · 날씨 · 위치 · 놀이 · 목소리 · v2.125.0 두뇌 4세대: 야구 용어 사전 · 짧은 생활 말 · 직접 가르치기)
 //   · 「부캉아」 부르거나(playlist.js 의 호출어 엔진) 🎙 누르거나 글자로 물으면, 앱에 이미 받아 둔 자료
 //     (일정 · 경기 결과 · 구장 · 선수 · 공지 · 당번 · 주제곡)를 휴대폰 안에서 찾아 답하고 바로 실행
 //   · 서버 · AI 서비스를 부르지 않음 (무료 · 빠름) — 받아쓰기는 휴대폰 기본 음성 인식
@@ -237,7 +237,7 @@
     }
 
     // ---------- 대화 기억 ----------
-    const ctx = { ev: null, venue: null, player: null, notice: null, turn: 0, evTurn: -1, list: null, game: null, lastSay: '' };
+    const ctx = { ev: null, venue: null, player: null, notice: null, turn: 0, evTurn: -1, list: null, game: null, lastSay: '', again: null, ag: null, prevQ: '', curQ: '', term: null, re: 0 };
 
     // ---------- 답 만들기 ----------
     //  답 = { h, dd, l:[줄], no, items:[{h, s, fn}], btns:[{t, fn, pri, close}], say, quiet }
@@ -326,7 +326,7 @@
             btns: [{ t: '📢 공지 열기', pri: 1, close: 1, fn: () => noticeOpen(n) }, { t: '🔊 읽어 줘', fn: () => ({ h: '읽어 드릴게요', say: (n.title || '') + '. ' + body.slice(0, 400), force: 1 }) }],
             say: read ? (n.title || '') + '. ' + body.slice(0, 400) : `${n.title || '공지'}. 공지 열기를 누르면 전체를 볼 수 있어요.`, force: read ? 1 : 0 };
     }
-    const HELP = ['오늘 날씨', '끝말잇기 하자', '올해 경기 분석', '오늘의 운세', '다음 경기 언제야', '이번 주 일정', '토요일에 뭐 있어', '지난 경기 결과', '올해 전적', '다음 경기 어디야, 길찾기', '7번 선수 찾아줘', '6학년 명단', '새 공지 있어', '내 당번 언제야', '전체 주제곡 틀어', '타석 모드 열어', '글씨 크게'];
+    const HELP = ['오늘 날씨', '스트라이크가 뭐야', '야구 용어 사전', '끝말잇기 하자', '수수께끼 내 줘', '올해 경기 분석', '오늘의 운세', '다음 경기 언제야', '이번 주 일정', '토요일에 뭐 있어', '지난 경기 결과', '올해 전적', '다음 경기 어디야, 길찾기', '7번 선수 찾아줘', '6학년 명단', '새 공지 있어', '내 당번 언제야', '전체 주제곡 틀어', '타석 모드 열어', '글씨 크게'];
     function help() {
         return { h: '이런 걸 물어보세요', l: ['말이 조금 달라도 알아들어요. 「부캉아」 부르고 말하거나 🎙 누르거나 아래 칸에 적어도 돼요.'], items: HELP.map(q => ({ h: '「' + q + '」', s: '', ask: q })), say: '일정, 경기 결과, 구장 길찾기, 선수, 공지, 당번, 노래를 물어보세요.' };
     }
@@ -342,7 +342,8 @@
     }
     function think(raw) {
         const s = String(raw || '').replace(BK, ' ').replace(/\s+/g, ' ').trim();
-        ctx.turn++;
+        ctx.turn++; ctx.prevQ = ctx.curQ; ctx.curQ = s; ctx.ag = ctx.again; ctx.again = null;
+        if (!ctx.game) { const tc = teach(s) || taught(C(s)); if (tc) return tc; }   // 직접 가르친 말이 먼저
         if (ctx.game || /기억해|알아둬|외워둬|외워줘|따라해|따라말해/.test(C(s))) return think1(s);   // 놀이 중 · 「기억해 줘, …」는 통째로
         const k = C(s), lm = learned();
         if (k && lm[k]) { const a = think1(lm[k]); if (a && !a.miss) { a.l = ['「' + s + '」 → 배운 대로 「' + lm[k] + '」'].concat(a.l || []); } return a; }
@@ -357,12 +358,14 @@
         if (!t) return { h: '네, 말씀하세요!', l: ['🎙을 누르고 물어보세요'], say: '네, 말씀하세요.' };
         const fresh = ctx.ev && ctx.evTurn === ctx.turn;   // 같은 말 안에서 앞서 찾은 일정 (「…넣고 길도 찾아 줘」)
         if (ctx.game) { const g = gameTurn(s, t); if (g) return g; }   // 놀이 중이면 놀이가 먼저
+        const qk = quick(s, t); if (qk) return qk;                     // 그만 · 중지 · 취소 · 잘 가 · 고마워 · 하나 더 · 그게 아니야
         const p3 = pre3(s, t); if (p3) return p3;                      // 시간 · 날짜 · 계산 · 생일 축하
 
         // 0) 이어 묻기: 그다음 · 그 전 · 더 보여 줘
         if (ctx.list && /더보여|더알려|나머지|계속보여|다음페이지|더있어/.test(t)) {
             const L = ctx.list;
             if (L.kind === 'ev' && L.off < L.all.length) return evList(L.all, L.title, L.sayHead, L.off);
+            if (L.kind === 'term' && DATA) return termList(L.cat, L.off);
             return { h: '더 보여 드릴 게 없어요', say: '이게 전부예요.' };
         }
         if (!ctx.list && /^(더보여|더알려|나머지|계속보여|다음페이지|더있어)/.test(t)) return { h: '더 보여 드릴 게 없어요', l: ['「이번 달 일정」처럼 물어보면 여러 개를 보여 드려요'], say: '더 보여 드릴 게 없어요.' };
@@ -390,6 +393,7 @@
         // 2-2) 오늘 브리핑
         if (/브리핑|요약해|오늘소식|오늘뭐있|오늘무슨일|새소식|오늘어때|오늘알려|하루정리|아침소식|요즘어때/.test(t)) return briefing();
         // 2-3) 세기 · 며칠 남았는지 · 생일
+        if (/몇명/.test(t) && /야구|한팀|수비|시합|이서/.test(t)) { if (!DATA && !ctx.re) return needData(s); const fq = faq4(t); if (fq) return fq; }   // 「야구는 몇 명이 해」는 규칙 질문
         const cnt = counting(s, t);
         if (cnt) return cnt;
         // 2-4) 화면 조작
@@ -414,7 +418,7 @@
         const songW = /노래|주제곡|등장곡|응원가|음악|틀어|들려|재생|플레이/.test(t);
         if (/타석모드|타석화면|등장곡모드/.test(t)) return { h: '⚾ 타석 모드를 열었어요', say: '타석 모드를 열게요.', run: () => { close(); V('goBat'); } };
         if (/서서히|천천히|페이드/.test(t) && /꺼|끄|줄|멈/.test(t)) return V('hasCur') ? { h: '🔉 서서히 끌게요', run: () => V('fade'), quiet: 1 } : { h: '지금 나오는 노래가 없어요' };
-        if (/(멈춰|정지|일시정지|스톱|스탑|조용|그만틀|노래꺼|음악꺼|노래끄|음악끄|소리꺼)/.test(t) && !ps.length) return V('hasCur') ? { h: '⏸ 노래를 멈췄어요', run: () => V('stop'), quiet: 1 } : { h: '지금 나오는 노래가 없어요' };
+        if (/(멈춰|멈추|정지|일시정지|중지|중단|스톱|스탑|조용|그만틀|노래꺼|음악꺼|노래끄|음악끄|소리꺼)/.test(t) && !ps.length) return V('hasCur') ? { h: '⏸ 노래를 멈췄어요', run: () => V('stop'), quiet: 1 } : { h: '지금 나오는 노래가 없어요' };
         if (/다음(곡|노래)|넘겨|스킵/.test(t)) return V('next') ? { h: '⏭ 다음 곡', quiet: 1 } : { h: '지금 나오는 노래가 없어요' };
         if (/이전(곡|노래)|앞(곡|노래)/.test(t)) return V('prev') ? { h: '⏮ 이전 곡', quiet: 1 } : { h: '지금 나오는 노래가 없어요' };
         if (/(전체|모든|전부|다)(주제곡|노래|곡|응원가)|셔플|랜덤|섞어/.test(t) && songW) {
@@ -571,7 +575,7 @@
                 if (gr) list = list.filter(p => (parseInt(String(p.grade).replace(/[^0-9]/g, ''), 10) || 0) === gr);
                 if (POS) { const pk = POS[1].replace('일루', '1루').replace('이루', '2루').replace('삼루', '3루'); list = list.filter(p => String(p.pos || '').indexOf(pk.replace(/수$/, '')) >= 0); }
                 list.sort((a, b) => (+a.no || 999) - (+b.no || 999));
-                return list.length ? playerList(list, `👥 ${gr ? gr + '학년' : ''}${gr && POS ? ' ' : ''}${POS ? POS[1] : ''}`) : { h: '찾는 선수가 없어요', say: '찾는 선수가 없어요.' };
+                return list.length ? playerList(list, `👥 ${gr ? gr + '학년' : ''}${gr && POS ? ' ' : ''}${POS ? POS[1] : ''}`) : ((DATA && !gr && terms4(s, t, true)) || { h: '찾는 선수가 없어요', say: '찾는 선수가 없어요.' });
             }
             if (/명단|선수(들|목록)|전체선수/.test(t)) return { h: '👥 명단을 열었어요', run: () => { close(); showMainTab('roster'); } };
         }
@@ -601,12 +605,13 @@
         if (vIn) return routeCard({ name: vIn.name, v: vIn });
         if (ps.length === 1) return playerCard(ps[0]);
         const mr = memRecall(t, 2); if (mr) return mr;
-        const tm = termTry(s, t); if (tm) return tm;
+        if (!DATA && !ctx.re) return needData(s);                      // 자료(용어 · 대화)를 아직 안 받았으면 받고 다시
+        const t4 = terms4(s, t, true) || faq4(t) || talkAns(t); if (t4) return t4;
         return missAns(s);
     }
     function missAns(s) {
-        const k = C(s);
-        return { h: '잘 못 알아들었어요', l: ['「' + s + '」', '혹시 아래 뜻이었나요? 고르면 다음부터 이 말을 알아들어요'],
+        const k = C(s); logMiss(s);
+        return { h: '잘 못 알아들었어요', l: ['「' + s + '」', '혹시 아래 뜻이었나요? 고르면 다음부터 이 말을 알아들어요', '또는 「' + s + '라고 하면 ○○라고 대답해」로 가르쳐 주세요'],
             items: LEARN_OPTS.map(q => ({ h: '「' + q + '」', s: '', fn: () => { learn(k, q); const a = think(q); a.l = ['배웠어요! 다음부터 「' + s + '」는 「' + q + '」로 알아들을게요'].concat(a.l || []); return a; } })),
             say: '잘 못 알아들었어요. 다시 말해 주세요.', miss: 1 };
     }
@@ -776,7 +781,7 @@
         if (DATA) return Promise.resolve(DATA);
         if (dataP) return dataP;
         dataP = new Promise((res, rej) => {
-            const sc = document.createElement('script'); sc.src = 'bukang-data.js?v=2.123.0';
+            const sc = document.createElement('script'); sc.src = 'bukang-data.js?v=2.125.0';
             sc.onload = () => { DATA = window.BKA_DATA || null; if (DATA) res(DATA); else rej(new Error('nodata')); };
             sc.onerror = () => rej(new Error('load'));
             document.head.appendChild(sc);
@@ -1106,25 +1111,10 @@
     // ----- 일상 대화 -----
     const hash = str => { let h = 7; for (const ch of String(str)) h = (h * 31 + ch.charCodeAt(0)) % 1000003; return h; };
     const userName = () => { try { const u = getActiveUser(); return (u && u.name) || ''; } catch (e) { return ''; } };
-    function fortune() {
-        return withData(() => {
-            const h = hash(ymd(today0()) + '|' + userName()), d = today0();
-            return { h: `🔮 ${d.getMonth() + 1}월 ${d.getDate()}일 오늘의 운세`, l: [DATA.fortune[h % DATA.fortune.length], `🍀 행운의 등번호 ${h % 99 + 1}번 · 행운의 색 ${DATA.colors[h % DATA.colors.length]}`, '재미로만 봐 주세요 😊'], say: DATA.fortune[h % DATA.fortune.length] + ` 행운의 등번호는 ${h % 99 + 1}번이에요.` };
-        });
-    }
     function lotto() {
         const pick = () => shuffle(Array.from({ length: 45 }, (_, i) => i + 1)).slice(0, 6).sort((a, b) => a - b);
         const a = pick(), b = pick();
         return { h: '🎱 ' + a.join(' · '), l: ['하나 더: ' + b.join(' · '), '무작위로 뽑은 번호예요. 재미로만 봐 주세요 😊'], btns: [{ t: '🔄 다시 뽑기', fn: lotto }], say: `부캉이가 뽑은 번호는 ${a.join(', ')}이에요. 재미로만 봐 주세요.` };
-    }
-    function joke() { return withData(() => { const j = rnd(DATA.jokes); return { h: '😄 ' + j[0], l: ['👉 ' + j[1]], btns: [{ t: '😆 하나 더', fn: joke }], say: `${j[0]} ${j[1]}` }; }); }
-    function fact() { return withData(() => { const f = rnd(DATA.facts); return { h: '⚾ 야구 상식', l: [f], btns: [{ t: '하나 더', fn: fact }, { t: '❓ 야구 퀴즈', fn: () => think1('야구 퀴즈') }], say: f }; }); }
-    function cheer() { return withData(() => { const c = rnd(DATA.cheers); return { h: '📣 ' + c, say: c }; }); }
-    function termTry(s, t) {
-        if (!/뭐야|뭔데|뭐예요|뭐에요|뭐지|무슨뜻|무슨말|뜻이|뜻은|뜻알려|설명|이란|란\??$|가뭔|이뭔|알려줘/.test(t)) return null;
-        const find = () => { let best = null, bl = 0; DATA.terms.forEach(x => x[0].split('|').forEach(k => { const c = C(k); if (t.indexOf(c) >= 0 && c.length > bl) { bl = c.length; best = x; } })); return best; };
-        if (DATA) { const x = find(); return x ? { h: '📖 ' + x[1], l: [x[2]], btns: [{ t: '⚾ 다른 야구 상식', fn: fact }], say: `${jo(x[1], '은', '는')} ${x[2]}` } : null; }
-        return { h: '🦉 잠깐만요, 찾아보고 있어요…', wait: () => loadData().then(() => { const x = find(); return x ? { h: '📖 ' + x[1], l: [x[2]], btns: [{ t: '⚾ 다른 야구 상식', fn: fact }], say: `${jo(x[1], '은', '는')} ${x[2]}` } : missAns(s); }) };
     }
     function news() {
         const go = u => () => { try { window.open(u, '_blank', 'noopener'); } catch (e) { location.href = u; } };
@@ -1158,16 +1148,21 @@
         [/기분좋|신나|행복해|기뻐|재밌어|재밌다|즐거워/, ['저도 덩달아 신나요! 🎉', '그 기분 그대로 오늘도 파이팅이에요!']],
         [/심심|놀아줘|놀자|뭐하고놀|게임하자|게임할래|게임뭐|놀이/, () => gameMenu()],
         [/긴장돼|긴장되|떨려|떨린다|무서워|걱정돼|걱정이야/, ['떨리는 건 잘하고 싶어서 그래요. 크게 숨을 세 번 쉬고, 연습한 대로만 하면 돼요. 💪', '괜찮아요. 긴장은 준비가 됐다는 신호예요. 부캉이가 옆에서 응원할게요!']],
-        [/응원해|파이팅|화이팅|힘내라|힘을줘|기운줘|용기/, () => cheer()],
+        [/응원해|응원한마디|응원의말|응원좀|파이팅|화이팅|힘내라|힘을줘|기운줘|용기/, () => cheer()],
         [/(누가|우리가|대연초가)?이길(까|수있)|이겨라|우승할/, ['당연히 대연초죠! 끝까지 응원할게요. 📣', '승부는 해 봐야 알지만, 부캉이 마음속 1등은 언제나 대연초예요!']],
         [/야구좋아|야구가좋|좋아하는(운동|스포츠)/, ['야구가 세상에서 제일 좋아요! 딱 하고 공 맞는 소리가 최고예요. ⚾']],
         [/좋아하는(음식|과자|거|것)|뭐좋아해|뭘좋아해/, ['선수들 응원가랑 홈런 소리를 제일 좋아해요!']],
         [/어디살아|집이어디|어디서왔/, ['대연초 야구부 앱 안에 살아요. 「부캉아」 부르면 바로 나와요!']],
         [/노래해|노래불러/, () => ({ h: '🎵 노래는 선수 주제곡으로 대신할게요!', btns: [{ t: '🎵 전체 주제곡 틀기', pri: 1, fn: () => think1('전체 주제곡 틀어') }], say: '노래는 선수 주제곡으로 대신할게요!' })],
-        [/농담|웃겨|웃긴|개그|재밌는얘기|재미있는얘기|유머|수수께끼/, () => joke()],
+        [/수수께끼|알쏭달쏭/, () => riddle()],
+        [/농담|웃겨|웃긴|개그|재밌는얘기|재미있는얘기|유머|아재개그|넌센스|웃겨줘|웃기는/, () => joke()],
+        [/명언|좋은말|좋은글|한마디해|오늘의한마디|격언|힘이되는말/, () => quote()],
+        [/속담/, () => proverb()],
+        [/밸런스|양자택일/, () => balance()],
         [/운세|오늘운|행운|점봐/, () => fortune()],
         [/뉴스|소식지|신문|헤드라인/, () => news()],
-        [/야구상식|상식알려|야구지식|신기한(거|얘기|이야기)|재밌는사실|야구얘기|야구이야기/, () => fact()],
+        [/신기한(거|얘기|이야기|사실)|재밌는사실|놀라운(사실|이야기|얘기)|토막상식|잡학|(동물|과학|우주|자연)(상식|이야기|얘기)/, () => funfact()],
+        [/야구상식|상식알려|상식하나|야구지식|야구얘기|야구이야기|야구토막/, () => fact()],
         [/^(응|어|네|예|그래|알았어|알겠어|오케이|ㅇㅋ|좋아|굿)$/, ['네! 더 궁금한 게 있으면 말해 주세요.', '좋아요! 또 물어보세요.']],
         [/^(아니|아니야|아냐|됐거든|노)$/, ['알겠어요. 다른 걸 물어봐 주세요.']],
         [/미안|죄송/, ['괜찮아요! 부캉이는 금방 잊어요. 😊']],
@@ -1180,13 +1175,16 @@
         if (/다시말해|뭐라고|못들었|한번더말/.test(t) && ctx.lastSay) return { h: '🔁 다시 말할게요', l: [ctx.lastSay], say: ctx.lastSay, force: 1 };
         const one = oneShot(t); if (one) return one;
         if (/일정|경기|공지|당번|선수|명단|구장|주제곡|캘린더/.test(t) && !/이길|이겨|응원|파이팅|화이팅|뉴스|상식|퀴즈|운세|농담/.test(t)) return null;
-        for (const row of TALK) { if (row[0].test(t)) { if (typeof row[1] === 'function') return row[1](); const x = rnd(row[1]); return { h: x, say: x.replace(/[「」]/g, '') }; } }
+        for (let i = 0; i < TALK.length; i++) { const row = TALK[i]; if (row[0].test(t)) { if (typeof row[1] === 'function') return row[1](); const r2 = talk2(t), x = r2 ? bag('t2_' + r2.i, r2.a) : bag('talk' + i, row[1]); return { h: x, say: sayOf(x) }; } }
         return null;
     }
 
     // ----- 놀이: 끝말잇기 · 숫자 맞히기 · 가위바위보 · 퀴즈 · 초성 · 구구단 -----
     function gameMenu() {
-        return { h: '🎮 뭐 하고 놀까요?', all: 1, items: [['🔤 끝말잇기', '낱말을 이어 말해요', '끝말잇기 하자'], ['🔢 숫자 맞히기', '1부터 100 · 업 다운', '숫자 맞히기 하자'], ['✌️ 가위바위보', '', '가위바위보 하자'], ['⚾ 야구 퀴즈', '5문제', '야구 퀴즈'], ['🌍 수도 퀴즈', '나라별 수도', '수도 퀴즈'], ['💡 상식 퀴즈', '5문제', '상식 퀴즈'], ['🧩 선수 초성 퀴즈', '우리 팀 선수 이름 맞히기', '초성 퀴즈'], ['✖️ 구구단', '5문제', '구구단 게임']].map(x => ({ h: x[0], s: x[1], ask: x[2] })), l: ['「그만」이라고 하면 언제든 끝나요'], say: '끝말잇기, 숫자 맞히기, 가위바위보, 퀴즈가 있어요. 뭐 할까요?' };
+        return { h: '🎮 뭐 하고 놀까요?', all: 1, items: [['🔤 끝말잇기', '낱말을 이어 말해요', '끝말잇기 하자'], ['🔢 숫자 맞히기', '1부터 100 · 업 다운', '숫자 맞히기 하자'], ['✌️ 가위바위보', '', '가위바위보 하자']].map(x => ({ h: x[0], s: x[1], ask: x[2] })).concat([{ h: '❓ 퀴즈', s: '야구 · 용어 · 상식 · OX · 수도 · 영어 · 초성 · 구구단 · 암산', fn: quizMenu }, { h: '🤔 수수께끼', s: '알쏭달쏭 문제', fn: riddle }, { h: '⚖️ 밸런스 게임', s: '둘 중에 하나 고르기', fn: balance }]), l: ['「그만」이라고 하면 언제든 끝나요'], say: '끝말잇기, 숫자 맞히기, 가위바위보, 퀴즈, 수수께끼, 밸런스 게임이 있어요. 뭐 할까요?' };
+    }
+    function quizMenu() {
+        return { h: '❓ 어떤 퀴즈를 할까요?', all: 1, items: Object.keys(QN).map(k => ({ h: QN[k], s: QSUB[k] || '', ask: QASK[k] })), l: ['5문제씩 내요 · 「힌트」 「패스」 「그만」'], say: '야구, 용어, 상식, 오엑스, 수도, 영어, 초성, 구구단, 암산 퀴즈가 있어요.' };
     }
     const hiK = 'daeyeon_bka_hi';
     const hiGet = k => { try { return (JSON.parse(localStorage.getItem(hiK) || '{}') || {})[k] || 0; } catch (e) { return 0; } };
@@ -1265,14 +1263,28 @@
         return { h: `${RPSI[me]} vs ${RPSI[bk]} · ${r === 1 ? '이겼어요! 🎉' : r === 2 ? '부캉이 승! 🦉' : '비겼어요!'}`, l: [`나 ${RPS[me]} · 부캉이 ${RPS[bk]}`, `지금까지 ${g.w}승 ${g.d}무 ${g.l}패 · 또 내려면 가위, 바위, 보!`], items: RPS.map((x, i) => ({ h: RPSI[i] + ' ' + x, ask: x })), all: 1, say: `저는 ${RPS[bk]}! ${r === 1 ? '졌네요. 이기셨어요!' : r === 2 ? '제가 이겼어요!' : '비겼어요!'} 한 번 더?` };
     }
     // 퀴즈 (야구 · 상식 · 수도 · 초성 · 구구단)
-    const QN = { base: '⚾ 야구 퀴즈', gk: '💡 상식 퀴즈', cap: '🌍 수도 퀴즈', cho: '🧩 선수 초성 퀴즈', gugu: '✖️ 구구단' };
-    const QASK = { base: '야구 퀴즈', gk: '상식 퀴즈', cap: '수도 퀴즈', cho: '초성 퀴즈', gugu: '구구단 게임' };
+    const QN = { base: '⚾ 야구 퀴즈', term: '📖 야구 용어 퀴즈', gk: '💡 상식 퀴즈', ox: '⭕ OX 퀴즈', cap: '🌍 수도 퀴즈', eng: '🔤 영어 낱말 퀴즈', cho: '🧩 선수 초성 퀴즈', gugu: '✖️ 구구단', calc: '➕ 암산' };
+    const QASK = { base: '야구 퀴즈', term: '용어 퀴즈', gk: '상식 퀴즈', ox: '오엑스 퀴즈', cap: '수도 퀴즈', eng: '영어 퀴즈', cho: '초성 퀴즈', gugu: '구구단 게임', calc: '암산 게임' };
+    const QSUB = { base: '규칙 · 기록 · 선수', term: '풀이를 듣고 낱말 맞히기', gk: '과학 · 역사 · 동물', ox: '맞으면 O, 틀리면 X', cap: '나라별 수도', eng: '낱말 뜻 맞히기', cho: '우리 팀 선수 이름', gugu: '', calc: '더하기 · 빼기' };
     const choOf = nm => Array.from(nm).map(ch => { const c = ch.charCodeAt(0) - 0xAC00; return c >= 0 && c <= 11171 ? CHO[Math.floor(c / 588)] : ch; }).join('');
     function quizStart(type) {
         const make = () => {
             let qs = [];
-            if (type === 'base' || type === 'gk') qs = shuffle(DATA[type]).slice(0, 5).map(q => { const ans = q.c[q.a], c = q.c.length > 2 ? shuffle(q.c) : q.c; return { q: q.q, c, a: c.indexOf(ans), e: q.e || '' }; });
-            else if (type === 'cap') qs = shuffle(DATA.caps).slice(0, 5).map(x => { const c = shuffle([x[1]].concat(shuffle(DATA.caps.filter(y => y[1] !== x[1])).slice(0, 2).map(y => y[1]))); return { q: `${x[0]}의 수도는 어디일까요?`, c, a: c.indexOf(x[1]) }; });
+            const take = (key, arr, n) => { const out = []; for (let k = 0; k < n * 3 && out.length < n && out.length < arr.length; k++) { const x = bag(key, arr); if (out.indexOf(x) < 0) out.push(x); } return out; };
+            const mk = q => { const ans = q.c[q.a], c = q.c.length > 2 ? shuffle(q.c) : q.c; return { q: q.q, c, a: c.indexOf(ans), e: q.e || '' }; };
+            if (type === 'base' || type === 'gk') qs = take('q_' + type, DATA[type], 5).map(mk);
+            else if (type === 'ox') qs = take('q_ox', DATA.base.concat(DATA.gk).filter(q => q.c.length === 2), 5).map(mk);
+            else if (type === 'term') qs = take('q_term', DATA.terms.filter(x => x[3].length <= 110), 5).map(x => {
+                const name = tTitle(x), c = shuffle([name].concat(shuffle(DATA.terms.filter(y => y[0] === x[0] && y !== x)).slice(0, 2).map(tTitle)));
+                let q = (/^.*?요\./.exec(x[3]) || [x[3]])[0]; [name].concat(name.split(/\s+|·/), x[1].split('|')).filter(k => k && k.length >= 2).sort((a, b) => b.length - a.length).forEach(k => { q = q.split(k).join('○○'); });
+                return { q: '이 야구 용어는? ' + q.replace(/(○○\s*)+/g, '○○ ').replace(/○○ (?=[가-힣])/g, '○○'), c, a: c.indexOf(name) };
+            });
+            else if (type === 'eng') qs = take('q_eng', DATA.eng, 5).map(x => {
+                const rev = Math.random() < 0.35, k = rev ? 0 : 1, c = shuffle([x[k]].concat(shuffle(DATA.eng.filter(y => y[0] !== x[0] && y[1] !== x[1])).slice(0, 2).map(y => y[k])));
+                return rev ? { q: `「${x[1]}」${hasJong(x[1]) ? '은' : '는'} 영어로?`, c, a: c.indexOf(x[0]) } : { q: `영어 낱말 「${x[0]}」의 뜻은?`, c, a: c.indexOf(x[1]) };
+            });
+            else if (type === 'calc') qs = Array.from({ length: 5 }, () => { const plus = Math.random() < 0.5, a = 10 + Math.floor(Math.random() * 80), b = 2 + Math.floor(Math.random() * (plus ? 60 : Math.min(a - 2, 60))); return plus ? { q: `${a} + ${b} = ?`, sayQ: `${a} 더하기 ${jo(String(b), '은', '는')}?`, num: a + b } : { q: `${a} − ${b} = ?`, sayQ: `${a} 빼기 ${jo(String(b), '은', '는')}?`, num: a - b }; });
+            else if (type === 'cap') qs = take('q_cap', DATA.caps, 5).map(x => { const c = shuffle([x[1]].concat(shuffle(DATA.caps.filter(y => y[1] !== x[1])).slice(0, 2).map(y => y[1]))); return { q: `${x[0]}의 수도는 어디일까요?`, c, a: c.indexOf(x[1]) }; });
             else if (type === 'cho') {
                 const ps = D.players().filter(p => { try { return !isStaff(p.grade) && /^[가-힣]{2,4}$/.test(p.name); } catch (e) { return false; } });
                 if (ps.length < 3) return { h: '선수 명단을 아직 못 불러왔어요', say: '선수 명단을 아직 못 불러왔어요.' };
@@ -1282,7 +1294,7 @@
             const a = quizAsk(ctx.game); a.l.unshift('5문제를 낼게요 · 「힌트」 「패스」 「그만」'); a.say = `${QN[type].replace(/^\S+ /, '')} 시작! ` + a.say;
             return a;
         };
-        return (type === 'cho' || type === 'gugu') ? make() : withData(make);
+        return (type === 'cho' || type === 'gugu' || type === 'calc') ? make() : withData(make);
     }
     function quizAsk(g, head) {
         const q = g.qs[g.i], a = { h: (head ? head.h + ' ' : '') + `❓ ${g.i + 1}/${g.qs.length}`, l: (head ? head.l : []).concat([q.q]), all: 1, say: (head ? head.say + ' ' : '') + (q.sayQ || q.q.replace(/[「」·]/g, ' ')) };
@@ -1321,6 +1333,13 @@
         return g.i >= g.qs.length ? quizEnd(g, head) : quizAsk(g, head);
     }
     function gameStart(s, t) {
+        if (/수수께끼/.test(t)) return riddle();
+        if (/밸런스|양자택일|둘중에(하나)?(골라|고르)/.test(t)) return balance();
+        if (/암산|덧셈|뺄셈|더하기빼기|계산(게임|놀이|퀴즈|문제)/.test(t)) return quizStart('calc');
+        if (/^(오엑스|ox|오x)$/i.test(t) || (/오엑스|ox|동그라미엑스/i.test(t) && /퀴즈|문제|게임|놀이|하자/.test(t))) return quizStart('ox');
+        if (/영어/.test(t) && /퀴즈|문제|게임|놀이|낱말|단어/.test(t)) return quizStart('eng');
+        if (/용어/.test(t) && /퀴즈|문제|게임|맞히기|맞추기/.test(t)) return quizStart('term');
+        if (/^(퀴즈|퀴즈하자|퀴즈내줘|퀴즈할래|퀴즈풀자|퀴즈놀이|퀴즈종류|무슨퀴즈|퀴즈뭐있어)$/.test(t)) return quizMenu();
         if (/끝말잇기|끝말있기|끝말이끼|끝말잇끼|끝말이기|끝말놀이|끝말/.test(t)) return wcStart();
         if (/숫자(맞히기|맞추기|게임|놀이)|업다운|업앤다운/.test(t)) return udStart();
         if (/가위바위보|묵찌빠/.test(t)) return rpsStart(t);
@@ -1336,13 +1355,18 @@
         if (/^(이제)?(그만|그만해|그만할래|그만하자|그만둘래|그만할게|끝|끝내|끝내자|게임끝|게임그만|안해|안할래|스톱|종료|나갈래|닫아|닫기)(요|줘)?$/.test(t)) {
             ctx.game = null;
             if (g.type === 'wc') return wcEnd(g, null, '');
+            if (g.type === 'rid') return { h: '🤔 수수께끼를 마칠게요', l: ['정답은 ' + g.a], btns: [{ t: '🎮 다른 놀이', fn: gameMenu }], say: '정답은 ' + g.a + '.' };
+            if (g.type === 'bal') return { h: '⚖️ 밸런스 게임을 마칠게요', btns: [{ t: '🎮 다른 놀이', fn: gameMenu }], say: '네, 그만할게요.' };
             if (g.type === 'quiz') return quizEnd(g);
             if (g.type === 'rps') return { h: `✌️ 가위바위보 끝! ${g.w}승 ${g.d}무 ${g.l}패`, btns: [{ t: '🎮 다른 놀이', fn: gameMenu }], say: `가위바위보 끝! ${g.w}승 ${g.d}무 ${g.l}패였어요.` };
             return { h: `🔢 그만할게요. 정답은 ${g.n}이었어요`, btns: [{ t: '🎮 다른 놀이', fn: gameMenu }], say: `정답은 ${g.n}이었어요.` };
         }
+        if (g.type === 'rid' && /^(정답|답|모르|몰라|포기|패스|힌트|알려줘|답알려|정답알려|뭐야|뭔데)/.test(t)) return ridTurn(g, s, t);
         const other = gameStart(s, t); if (other && !(g.type === 'rps' && /가위바위보/.test(t))) return other;   // 다른 놀이로 바꾸기
         const cmd = /(언제야|어디야|알려줘|보여줘|틀어줘|찾아줘|열어줘|길찾기|브리핑|날씨)/.test(t) || (/\s/.test(s.trim()) && t.length >= 8 && g.type !== 'quiz');
         if (cmd || (g.type !== 'wc' && /일정|경기|공지|당번|명단/.test(t) && g.type !== 'quiz')) { ctx.game = null; return null; }   // 다른 일을 시키면 놀이는 끝
+        if (g.type === 'rid') return ridTurn(g, s, t);
+        if (g.type === 'bal') return balTurn(g, s, t);
         if (g.type === 'wc') return wcTurn(g, s, t);
         if (g.type === 'ud') return udTurn(g, s, t);
         if (g.type === 'rps') return rpsTurn(g, s, t);
@@ -1366,11 +1390,255 @@
         return { h: '🗣 부캉이 목소리 고르기', l: [`지금: ${voiceNow()[1]}`, '누르면 바로 바뀌고 미리 들려 드려요'], all: 1, items: VOICES.map(v => ({ h: v[1] + (v[0] === voiceNow()[0] ? ' ✓' : ''), s: v[4], fn: () => voiceSet(v[0]) })).concat(koVoices().length > 1 ? koVoices().slice(0, 6).map((v, i) => ({ h: `🔈 휴대폰 목소리 ${i + 1}${opt.vuri === v.voiceURI ? ' ✓' : ''}`, s: v.name, fn: () => { opt.vuri = v.voiceURI; saveOpt(); return { h: '휴대폰 목소리를 바꿨어요', l: [v.name], say: '안녕하세요, 부캉이예요! 이 목소리 어때요?', force: 2 }; } })) : []), say: '원하는 목소리를 골라 주세요.' };
     }
 
-    const TERMQ = /스트라이크존|볼넷|포볼|삼진|보크|인필드플라이|낫아웃|병살|더블플레이|도루|번트|스퀴즈|희생플라이|태그업|포스아웃|태그아웃|데드볼|폭투|포일|출루율|타율|평균자책점|방어율|세이브|홀드|완봉|완투|대주자|대타|지명타자|유격수|내야수|외야수|풀카운트|히트앤드런|견제|콜드게임|승부치기|사이클링|퍼펙트|노히트|만루|득점권|더블헤더|불펜|체인지업|슬라이더|커브|직구|선발투수|마무리투수|홈런|안타|실책/;
     function brain3(s, t, fresh) {
-        if (TERMQ.test(t) && /가뭐|이뭐|뭐야|뭔데|뭐예요|뭐에요|무슨뜻|뜻이|뜻은|뜻알려|설명|이란|란$/.test(t) && !/누구|명단|찾아|선수(가|는|들)/.test(t)) { const tm = termTry(s, t); if (tm) return tm; }
-        return voiceTalk(s, t) || memory(s, t) || memRecall(t, 3) || gameStart(s, t) || weather(s, t) || place3(s, t, fresh) || analysis(s, t) || condition(s, t) || chat(s, t);
+        const t4 = terms4(s, t, false); if (t4) return t4;   // 「보크가 뭐야」처럼 뜻을 묻는 말은 용어 사전이 먼저
+        return voiceTalk(s, t) || memory(s, t) || memRecall(t, 3) || gameStart(s, t) || weather(s, t) || place3(s, t, fresh) || analysis(s, t) || condition(s, t) || faq4(t) || chat(s, t);
     }
+
+    // ============================================================
+    // 🧠 두뇌 4세대 (v2.125.0) — 짧은 생활 말 · 야구 용어 사전 · 직접 가르치기 · 같은 말 되풀이 안 하기
+    // ============================================================
+    // 가방: 다 쓸 때까지 한 번씩만 뽑는다 (같은 농담 · 같은 대답이 연달아 안 나오게)
+    const BAG = {};
+    function bag(key, arr) {
+        if (!arr || !arr.length) return undefined;
+        let b = BAG[key];
+        if (!b || !b.length) { b = BAG[key] = shuffle(arr.map((_, i) => i)); if (b.length > 1 && b[b.length - 1] === BAG['~' + key]) b.unshift(b.pop()); }
+        const i = b.pop(); BAG['~' + key] = i; return arr[i];
+    }
+    const sayOf = x => String(x).replace(/[「」]/g, '');
+    const hush = () => { try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch (e) {} };
+    const musicOn = () => { try { return !!V('hasCur'); } catch (e) { return false; } };
+    // 자료가 아직 없으면 받아 온 뒤 같은 말을 다시 생각한다
+    function needData(s) {
+        const again = () => { ctx.re = 1; try { return think1(s); } finally { ctx.re = 0; } };
+        return { h: '🦉 잠깐만요, 찾아보고 있어요…', wait: () => loadData().then(again, again) };
+    }
+
+    // ----- 짧은 생활 말: 그만 · 중지 · 취소 · 잘 가 · 고마워 · 하나 더 · 그게 아니야 -----
+    const STOPW = /^(이제|자|그럼|부캉아|부캉이|좀|그냥)*(그만|그만해|그만하자|그만할래|그만할게|그만해도돼|그만말해|그만얘기해|그만읽어|멈춰|멈춰봐|멈추자|멈춰라|중지|중지해|중단|중단해|정지|정지해|스톱|스탑|취소|취소해|취소할게|됐어|됐다|됐어요|됐습니다|이제됐어|충분해|꺼|꺼줘|꺼라|꺼져|끄자|닫아|닫아줘|닫기|창닫아|창닫기|조용|조용히|조용히해|조용히해줘|쉿|시끄러|시끄러워|말하지마|읽지마|나가|나가기|나갈래|끝|끝내|끝내자|종료|종료해|들어가|들어가봐|가봐|그만둬|관둬|됐고|아니야됐어|아니됐어)(요|줘|라|해|해줘|해요)?$/;
+    const BYEW = /^(그럼|이제|부캉아|부캉이|나)*(안녕히가세요|안녕히계세요|안녕히|잘가|잘가요|잘있어|잘있어요|바이|바이바이|빠이|빠이빠이|굿바이|또봐|또보자|또만나|또올게|다음에봐|다음에보자|다음에또봐|내일봐|내일보자|내일또봐|내일만나|나중에봐|나중에보자|이따봐|이따가봐|갈게|가볼게|먼저갈게|들어갈게|간다|나간다|안녕잘가|안녕내일봐|담에봐)(요|용)?$/;
+    const THXW = /^(정말|진짜|너무|아주|오늘|부캉아|부캉이)*(고마워|고맙다|고맙습니다|고마웠어|땡큐|감사|감사해|감사합니다|수고했어|수고했다|수고많았어|수고하셨습니다|고생했어|고생많았어|애썼어|잘했어|잘했다)(요)?$/;
+    const AGAINW = /^(하나더|하나만더|한개더|한번더|한번만더|또|또해줘|또해|또줘|더해줘|더줘|다른거|다른것|다른걸로|다음거|계속|계속해|다시|다시해줘|하나더해줘|또들려줘|또알려줘|다른거알려줘)(요|줘)?$/;
+    const WRONGW = /^(아니|아니야|아냐|아니아니)*(그게아니|그거아니|그게아닌데|그거아닌데|그거말고|그게아니고|그게아니라|틀렸어|틀렸잖아|틀렸는데|잘못알아들|잘못들었|잘못이해|엉뚱한|동문서답|딴소리|이상한소리|무슨소리|그말이아니|내말은그게|못알아듣네|못알아들었)/;
+    function quick(s, t) {
+        if (STOPW.test(t)) {
+            if (musicOn() && /멈춰|멈추|정지|스톱|스탑|중지|중단|^꺼|^끄|조용|시끄/.test(t)) return { h: '⏸ 노래를 멈췄어요', run: () => V('stop'), quiet: 1 };
+            hush();
+            return { h: bag('stop', ['네, 그만할게요', '알겠어요, 멈출게요', '네, 여기까지 할게요', '넵, 조용히 있을게요']), l: ['언제든 「부캉아」 하고 불러 주세요'], quiet: 1, bye: 1 };
+        }
+        if (BYEW.test(t)) { const x = bag('bye', /내일/.test(t) ? ['네, 내일 또 만나요! 👋', '내일 봐요! 푹 쉬세요.', '내일 또 불러 주세요!'] : ['안녕히 가세요! 또 불러 주세요. 👋', '다음에 또 봐요!', '조심히 가세요! 부캉이는 여기 있을게요.', '또 만나요! 언제든 「부캉아」 하고 불러 주세요.']); return { h: x, say: sayOf(x), bye: 1 }; }
+        if (THXW.test(t)) { const x = bag('thx', ['별말씀을요! 언제든 불러 주세요.', '도움이 됐다니 기뻐요!', '헤헤, 부캉이도 고마워요.', '천만에요! 또 물어보세요. 😊', '칭찬받으니 날개가 들썩여요!']); return { h: x, say: sayOf(x), bye: 1 }; }
+        if (AGAINW.test(t) && ctx.ag) return ctx.ag();
+        if (WRONGW.test(t)) return fixAns();
+        if (/^(안녕|안녕하세요|안녕하십니까|하이|헬로|헬로우|ㅎㅇ|부캉아안녕|안녕부캉아|안녕부캉이|부캉이안녕)(요)?$/.test(t)) {
+            const h = new Date().getHours(), part = h < 5 ? '늦은 밤이에요' : h < 11 ? '좋은 아침이에요' : h < 17 ? '좋은 오후예요' : h < 21 ? '좋은 저녁이에요' : '편안한 밤이에요';
+            const x = bag('hi', ['안녕하세요! 🦉 무엇을 도와 드릴까요?', `안녕하세요, ${part}!`, '반가워요! 오늘은 뭘 알려 드릴까요?', '안녕하세요! 부캉이 여기 있어요.', `${part}! 「오늘 브리핑」이라고 하면 오늘 소식을 알려 드려요.`]);
+            return { h: x, l: ['「다음 경기 언제야」 「오늘 날씨」 「놀자」처럼 말해 보세요'], say: sayOf(x) };
+        }
+        return null;
+    }
+    // 「그게 아니야」: 방금 한 말을 무슨 뜻이었는지 다시 묻고, 고르면 배운다
+    function fixAns() {
+        const q = ctx.prevQ;
+        if (!q) return { h: '앗, 미안해요', l: ['조금만 다르게 다시 말해 주세요'], say: '미안해요. 다시 말해 주세요.' };
+        const a = missAns(q);
+        a.h = '앗, 미안해요. 제가 잘못 알아들었어요'; a.l = ['「' + q + '」', '아래에서 뜻을 고르면 다음부터 그렇게 알아들어요', '또는 「' + q + '라고 하면 ○○라고 대답해」로 가르쳐 주세요'];
+        a.say = '미안해요. 무슨 뜻이었는지 골라 주세요.'; a.miss = 0;
+        return a;
+    }
+
+    // ----- 직접 가르치기: 「○○라고 하면 △△라고 대답해」 (이 휴대폰에만 기억) -----
+    const TEACH = 'daeyeon_bka_teach';
+    const teachAll = () => { try { return JSON.parse(localStorage.getItem(TEACH) || '{}') || {}; } catch (e) { return {}; } };
+    const teachSave = m => { try { localStorage.setItem(TEACH, JSON.stringify(m)); } catch (e) {} };
+    const TEACHRE = /^(.{1,40}?)\s*(?:이라고|라고|하고|라|이라)\s*(?:하면|말하면|물으면|물어보면|그러면|묻거든|하거든)\s*(.{1,120}?)\s*(?:이라고|라고)?\s*(?:대답해\s*줘|대답해|대답하는\s*거야|말해\s*줘|말해|답해\s*줘|답해|해\s*줘|해|하는\s*거야|하면\s*돼)[.!~]*$/;
+    function teach(s) {
+        const t = C(s);
+        if (/(가르친|배운|가르쳐준)(거|것|말|내용)/.test(t) && /잊어|지워|삭제|초기화|없애/.test(t)) { teachSave({}); try { localStorage.removeItem(LEARN); } catch (e) {} return { h: '🧽 가르쳐 주신 말을 모두 잊었어요', say: '가르쳐 주신 말을 모두 잊었어요.' }; }
+        if (/(가르친|배운|가르쳐준)(거|것|말|내용)|뭐배웠|뭘배웠|배운게뭐/.test(t) && /보여|알려|뭐|목록|있어/.test(t)) {
+            const m = teachAll(), ks = Object.keys(m), lm = learned(), lk = Object.keys(lm);
+            if (!ks.length && !lk.length) return { h: '🎓 아직 배운 말이 없어요', l: ['「배고파라고 하면 밥 먹자라고 대답해」처럼 가르쳐 주세요'], say: '아직 배운 말이 없어요.' };
+            return { h: `🎓 배운 말 ${ks.length + lk.length}개`, all: 1, items: ks.slice(-8).reverse().map(k => ({ h: '「' + m[k].q + '」', s: '→ ' + m[k].a })).concat(lk.slice(-4).reverse().map(k => ({ h: '「' + k + '」', s: '→ 「' + lm[k] + '」로 알아들음' }))), l: ['이 휴대폰에만 저장돼요 · 「가르친 거 다 잊어」로 지워요'], say: `${ks.length + lk.length}개를 배웠어요.` };
+        }
+        // 하나만 잊기: 「배고파 잊어」 「배고파는 지워 줘」
+        const fg = /^(.{1,40}?)\s*(?:이라고|라고|이라는|라는|은|는|을|를)?\s*(?:말|거|것)?\s*(?:은|는|을|를)?\s*(?:잊어버려|잊어\s*줘|잊어|지워\s*줘|지워|삭제해\s*줘|삭제해)[.!~]*$/.exec(s.trim());
+        if (fg) {
+            const all = teachAll(), k = C(fg[1].replace(/[「」"']/g, ''));
+            if (all[k]) { const q = all[k].q; delete all[k]; teachSave(all); return { h: '🧽 잊었어요', l: [`「${q}」에 가르쳐 주신 대답을 지웠어요`], say: `${q}에 가르쳐 주신 대답을 잊었어요.` }; }
+        }
+        const m = TEACHRE.exec(s.trim());
+        if (!m) return null;
+        const q = m[1].replace(/^(부캉아|내가|누가|만약|만약에)\s*/, '').replace(/[「」"']/g, '').trim(), a = m[2].replace(/[「」"']/g, '').trim();
+        if (C(q).length < 1 || !a) return null;
+        const all = teachAll(), ks = Object.keys(all); if (ks.length >= 200) delete all[ks[0]];
+        all[C(q)] = { q, a }; teachSave(all);
+        return { h: '🎓 배웠어요!', l: [`「${q}」라고 하면 → 「${a}」`, '이 휴대폰에만 기억해요 · 「가르친 거 보여 줘」'], say: `배웠어요! ${q}라고 하면 ${a}라고 대답할게요.`, btns: [{ t: '▶ 해 보기', fn: () => taught(C(q)) }] };
+    }
+    function taught(k) { const m = teachAll()[k]; return m ? { h: m.a, l: ['🎓 가르쳐 주신 대답이에요'], say: m.a } : null; }
+    // 못 알아들은 말 적어 두기 (이 휴대폰에만 · 다음 버전에서 모아 보기)
+    const MISSK = 'daeyeon_bka_miss';
+    function logMiss(s) { try { const a = JSON.parse(localStorage.getItem(MISSK) || '[]') || [], k = C(s); if (!k || k.length > 40) return; const f = a.find(x => x.k === k); if (f) f.n++; else a.push({ k, q: s.slice(0, 40), n: 1, v: '2.125.0' }); while (a.length > 60) a.shift(); localStorage.setItem(MISSK, JSON.stringify(a)); } catch (e) {} }
+
+    // ----- 야구 용어 사전 -----
+    let TIDX = null;
+    function termIdx() {
+        if (TIDX || !DATA) return TIDX;
+        TIDX = { ex: {}, keys: [] };
+        DATA.terms.forEach(x => x[1].split('|').forEach(k => { if (!TIDX.ex[k]) TIDX.ex[k] = x; TIDX.keys.push([k, x]); }));
+        TIDX.keys.sort((a, b) => b[0].length - a[0].length);
+        return TIDX;
+    }
+    const TDEF = /뭐야|뭐예요|뭐에요|뭐지|뭐죠|뭔데|뭐니|뭐냐|뭘까|뭡니까|무엇|뭔지|뭔가요|무슨뜻|무슨말|무슨의미|뜻|의미|설명|이란\??$|란\??$|어떤거|어떤뜻|차이|다른점|다른게|알아\??$|아니\??$|알고있|아세요|아시나요|궁금/;
+    const TASK = /알려줘|알려줄|알려주|가르쳐|말해줘|얘기해줘/;
+    const tSubj = t => t.toLowerCase().replace(/^(부캉아|부캉이|혹시|그럼|그러면|근데|그런데|그리고|너|넌|야구에서|야구할때|야구용어중에|야구용어|야구의|야구에|용어)+/, '');
+    const tCut = x => x.replace(/(도대체|대체|정확히|좀)?(뭐야|뭐예요|뭐에요|뭐지|뭐죠|뭔데|뭐니|뭐냐|뭘까|뭡니까|무엇|뭔지|뭔가요|무슨|뜻|의미|설명|알려|가르쳐|말해줘|얘기해줘|궁금|어떤|알아\??$|아니\??$|알고있|아세요|아시나요|에대해|이란\??$|란\??$).*$/, '');
+    const tPart = x => x.replace(/(이라는게|라는게|이라는건|라는건|이라는말|라는말|이라는|라는|이라고|라고|에대해서|에대해|이가|이|가|은|는|을|를|도|요)$/, '');
+    function termLook(sub, loose) {
+        const I = termIdx(); if (!I || !sub) return null;
+        const PT = ['이라는게', '라는게', '이라는건', '라는건', '이라는말', '라는말', '이라는', '라는', '이라고', '라고', '에대해서', '에대해', '이가', '이', '가', '은', '는', '을', '를', '도', '요', '이요'];
+        const cand = [sub]; PT.forEach(p => { if (sub.length > p.length && sub.endsWith(p)) cand.push(sub.slice(0, -p.length)); });
+        cand.sort((a, b) => b.length - a.length);
+        for (const c of cand) if (I.ex[c]) return { x: I.ex[c] };
+        const base = tPart(sub) || sub;
+        // 낱말이 안에 들어 있는지 (긴 것부터) — 엄격할 때는 말의 대부분이 그 낱말이어야
+        for (const [k, x] of I.keys) { if (k.length < 2 || base.indexOf(k) < 0) continue; if (loose ? (k.length >= 3 || base.length <= k.length + 2) : k.length * 10 >= base.length * 6) return { x }; }
+        // 비슷한 소리 (자모 기준)
+        if (base.length >= 3 && /^[가-힣]+$/.test(base)) {
+            const bj = jamo(base); let best = null, bd = 99;
+            for (const [k, x] of I.keys) {
+                if (k.length < 3 || Math.abs(k.length - base.length) > 1 || !/^[가-힣]+$/.test(k)) continue;
+                const d = lev(bj, jamo(k)), lim = bj.length >= 12 ? 3 : bj.length >= 8 ? 2 : 1;
+                if (d <= lim && d < bd) { bd = d; best = x; }
+            }
+            if (best) return { x: best, fz: 1 };
+        }
+        if (loose && base.length >= 4) { const f = fuzzyBest(base, DATA.terms, x => x[1].split('|').filter(k => k.length >= 4 && /^[가-힣]+$/.test(k))); if (f && f.length === 1) return { x: f[0].x, fz: 1 }; }
+        return null;
+    }
+    const tTitle = x => x[2].replace(/\s*\(.*?\)/, '');
+    function termCard(x, note) {
+        ctx.term = x; ctx.again = termRandom;
+        const me = tTitle(x), nm = y => tTitle(y);
+        // 🔗 관련 용어: 풀이 글에 나오는 낱말 → 이 낱말이 나오는 풀이 → 같은 분류
+        const rel = [];
+        const add = y => { if (y !== x && rel.length < 3 && !rel.includes(y)) rel.push(y); };
+        shuffle(DATA.terms.filter(y => nm(y).length >= 2 && x[3].includes(nm(y)))).forEach(add);
+        if (me.length >= 2) shuffle(DATA.terms.filter(y => y[3].includes(me))).forEach(add);
+        shuffle(DATA.terms.filter(y => y[0] === x[0])).forEach(add);
+        return { h: '📖 ' + x[2], l: (note ? [note] : []).concat([x[3], DATA.cats[x[0]] || '']), btns: rel.map(r => ({ t: tTitle(r), fn: () => termCard(r) })).concat([{ t: '📚 용어 사전', fn: termMenu }]), say: `${jo(tTitle(x), '은', '는')} ${x[3]}` };
+    }
+    function termRandom() { return withData(() => termCard(bag('term', DATA.terms), '🎲 오늘의 야구 용어')); }
+    function termMenu() {
+        return withData(() => {
+            const cs = Object.keys(DATA.cats);
+            return { h: '📚 야구 용어 사전', l: [`모두 ${DATA.terms.length}개 · 「보크가 뭐야」처럼 물어보세요`], all: 1, items: cs.map(c => ({ h: DATA.cats[c], s: DATA.terms.filter(x => x[0] === c).length + '개', fn: () => termList(c, 0) })), btns: [{ t: '🎲 아무거나 하나', fn: termRandom }, { t: '❓ 용어 퀴즈', fn: () => quizStart('term') }], say: `야구 용어 ${DATA.terms.length}개를 알고 있어요. 궁금한 낱말을 말해 보세요.` };
+        });
+    }
+    function termList(c, off) {
+        const all = DATA.terms.filter(x => x[0] === c), page = all.slice(off, off + 10), more = off + 10 < all.length;
+        ctx.list = more ? { kind: 'term', cat: c, off: off + 10 } : null;
+        return { h: `${DATA.cats[c]} ${all.length}개`, l: [`${off + 1}~${off + page.length}번째${more ? ' · 「더 보여 줘」' : ''}`], all: 1, items: page.map(x => ({ h: tTitle(x), s: x[3].length > 26 ? x[3].slice(0, 26) + '…' : x[3], fn: () => termCard(x) })), btns: (more ? [{ t: '더 보기', fn: () => termList(c, off + 10) }] : []).concat([{ t: '📚 분류 보기', fn: termMenu }]), say: `${DATA.cats[c].replace(/^\S+ /, '')} 용어 ${all.length}개예요.` };
+    }
+    function termCompare(sub) {
+        const parts = sub.replace(/(의|은|는|이|가)?(차이|다른점|다른게|차이점).*$/, '').split(/이랑|랑|하고|과|와|,|vs|대(?=[가-힣])/).map(p => p.trim()).filter(Boolean);
+        if (parts.length < 2) return null;
+        const a = termLook(parts[0], true), b = termLook(parts[1], true);
+        if (!a || !b || a.x === b.x) return null;
+        return { h: `📖 ${tTitle(a.x)} · ${tTitle(b.x)}`, l: [`▪ ${tTitle(a.x)}: ${a.x[3]}`, `▪ ${tTitle(b.x)}: ${b.x[3]}`], btns: [{ t: '📚 용어 사전', fn: termMenu }], say: `${jo(tTitle(a.x), '은', '는')} ${a.x[3]} ${jo(tTitle(b.x), '은', '는')} ${b.x[3]}` };
+    }
+    const CATW = [['R', /규칙|룰/], ['C', /판정|심판|카운트/], ['P', /포지션|사람/], ['B', /타격|타자|방망이/], ['T', /투구|투수|구종|변화구/], ['J', /주루|도루|주자/], ['S', /수비/], ['K', /기록|숫자/], ['G', /구장|장비|경기장|야구장/], ['Y', /유소년|리틀|어린이/], ['E', /훈련|연습/], ['L', /대회|리그|프로/]];
+    // strict = 다른 일보다 먼저 볼 때 (뜻을 묻는 말만) · loose = 아무것도 못 알아들었을 때
+    function terms4(s, t, loose) {
+        if (/야구용어|용어사전|야구사전|용어목록|용어모음|야구낱말|^용어$|용어(알려|보여|가르|뭐있|종류)/.test(t) && !/퀴즈|문제|게임|맞히기|맞추기/.test(t)) {
+            if (!DATA) return needData(s);
+            const cw = CATW.find(c => c[1].test(t.replace(/야구|용어|사전/g, '')));
+            return cw ? termList(cw[0], 0) : /하나|아무|랜덤|오늘/.test(t) ? termRandom() : termMenu();
+        }
+        if (/오늘의용어|용어하나|아무용어|랜덤용어/.test(t)) return termRandom();
+        const def = TDEF.test(t), ask = TASK.test(t);
+        if (!loose && !def) return null;
+        if (!loose && /누구|명단|찾아|몇명|전화|연락처|주소|언제|어디|몇시|며칠/.test(t)) return null;
+        if (!DATA) return ctx.re ? null : needData(s);
+        const sub0 = tSubj(t);
+        if (/차이|다른점|다른게|차이점/.test(sub0)) { const cp = termCompare(sub0); if (cp) return cp; }
+        const sub = (def || ask) ? tCut(sub0) : sub0;
+        const hit = termLook(sub, loose);
+        if (hit) {
+            if (!loose && hit.x[0] === 'P' && !/뭐야|뭐예요|뭐에요|뭐지|뭔데|뭐니|뭐냐|무슨|뜻|의미|설명|이란|란\??$|어떤/.test(t)) return null;   // 「투수 알아?」는 선수 찾기일 수 있음
+            return termCard(hit.x, hit.fz ? `혹시 「${tTitle(hit.x)}」 말씀이세요?` : '');
+        }
+        return null;
+    }
+    function faq4(t) {
+        if (!DATA || !DATA.faq) return null;
+        for (const r of DATA.faq) { if (new RegExp(r[0]).test(t)) return { h: '⚾ ' + r[1], l: [r[2]], btns: [{ t: '📚 용어 사전', fn: termMenu }, { t: '❓ 야구 퀴즈', fn: () => think1('야구 퀴즈') }], say: r[2] }; }
+        return null;
+    }
+
+    // ----- 가짓수 늘린 한마디들: 수수께끼 · 명언 · 속담 · 신기한 이야기 · 밸런스 게임 -----
+    function joke() { ctx.again = joke; return withData(() => { const j = bag('joke', DATA.jokes); return { h: '😄 ' + j[0], l: ['👉 ' + j[1]], btns: [{ t: '😆 하나 더', fn: joke }, { t: '🤔 수수께끼', fn: riddle }], say: `${j[0]} ${j[1]}` }; }); }
+    function fact() { ctx.again = fact; return withData(() => { const f = bag('fact', DATA.facts); return { h: '⚾ 야구 상식', l: [f], btns: [{ t: '하나 더', fn: fact }, { t: '❓ 야구 퀴즈', fn: () => think1('야구 퀴즈') }], say: f }; }); }
+    function cheer() { ctx.again = cheer; return withData(() => { const c = bag('cheer', DATA.cheers); return { h: '📣 ' + c, btns: [{ t: '📣 하나 더', fn: cheer }], say: c }; }); }
+    function funfact() { ctx.again = funfact; return withData(() => { const f = bag('fun', DATA.funfacts); return { h: '🔎 신기한 이야기', l: [f], btns: [{ t: '하나 더', fn: funfact }, { t: '💡 상식 퀴즈', fn: () => think1('상식 퀴즈') }], say: f }; }); }
+    function quote() { ctx.again = quote; return withData(() => { const q = bag('quote', DATA.quotes); return { h: '✨ ' + q[0], l: ['— ' + q[1]], btns: [{ t: '하나 더', fn: quote }], say: `${q[0]} ${q[1].replace(/\(.*?\)/, '')}의 말이에요.` }; }); }
+    function proverb() { ctx.again = proverb; return withData(() => { const p = bag('prov', DATA.proverbs); return { h: '📜 ' + p[0], l: [p[1]], btns: [{ t: '하나 더', fn: proverb }], say: `${p[0]}. ${p[1]}` }; }); }
+    function riddle() {
+        ctx.again = riddle;
+        return withData(() => {
+            const r = bag('rid', DATA.riddles);
+            ctx.game = { type: 'rid', q: r[0], a: r[1], n: 0 };
+            return { h: '🤔 ' + r[0], l: ['답을 말해 보세요 · 「힌트」 「정답」 「그만」'], btns: [{ t: '💡 정답 보기', fn: () => ridEnd(ctx.game && ctx.game.type === 'rid' ? ctx.game : { q: r[0], a: r[1] }, null) }], say: r[0] };
+        });
+    }
+    function ridEnd(g, ok) {
+        ctx.game = null; ctx.again = riddle;
+        return { h: (ok ? '⭕ 정답! ' : '💡 정답은 ') + g.a, l: [g.q], btns: [{ t: '🤔 하나 더', fn: riddle }, { t: '😄 농담', fn: joke }], say: ok ? `정답! ${g.a}!` : `정답은 ${g.a}${hasJong(g.a.replace(/\s*\(.*$/, '')) ? '이에요' : '예요'}.` };
+    }
+    function ridTurn(g, s, t) {
+        const ans = C(g.a.replace(/\(.*?\)/g, ''));
+        if (/^(정답|답|모르겠|몰라|포기|패스|알려줘|답알려|정답알려|뭐야|뭔데)/.test(t)) return ridEnd(g, null);
+        if (/^힌트/.test(t)) { const a0 = g.a.replace(/\s*\(.*$/, ''); return { h: `💡 ${a0.length}글자 · 「${a0[0]}」로 시작해요`, l: [g.q], say: `${a0.length}글자예요.` }; }
+        if (ans && (t.indexOf(ans) >= 0 || (ans.length >= 2 && ans.indexOf(t) >= 0 && t.length >= Math.ceil(ans.length * 0.6)))) return ridEnd(g, true);
+        if (/운세|날씨|일정|경기|공지|당번|놀자|농담|웃긴|상식|용어|퀴즈|뭐야|알려줘|틀어|열어|보여|몇시|며칠/.test(t)) { ctx.game = null; return null; }   // 다른 일을 시키면 수수께끼는 끝
+        g.n++;
+        if (g.n >= 3) return ridEnd(g, null);
+        return { h: bag('ridno', ['땡! 다시 생각해 보세요', '아쉬워요, 한 번 더!', '음, 그건 아니에요']), l: [g.q, '「힌트」 「정답」이라고 해도 돼요'], say: '땡! 다시 생각해 보세요.', miss: 1 };
+    }
+    function balance() {
+        ctx.again = balance;
+        return withData(() => {
+            const b = bag('bal', DATA.balance);
+            ctx.game = { type: 'bal', a: b[0], b: b[1] };
+            return { h: `⚖️ ${b[0]} 🆚 ${b[1]}`, l: ['둘 중에 하나를 골라 주세요'], all: 1, items: [{ h: b[0], ask: b[0] }, { h: b[1], ask: b[1] }], say: `${b[0]}, ${b[1]}! 둘 중에 뭐가 좋아요?` };
+        });
+    }
+    function balTurn(g, s, t) {
+        const a = C(g.a), b = C(g.b);
+        let pick = t.indexOf(a) >= 0 && t.indexOf(b) < 0 ? g.a : t.indexOf(b) >= 0 && t.indexOf(a) < 0 ? g.b : /^(1번|일번|첫|앞|전자|하나)/.test(t) ? g.a : /^(2번|이번|두번|둘째|뒤|후자|둘$)/.test(t) ? g.b : '';
+        ctx.game = null; ctx.again = balance;
+        const btns = [{ t: '⚖️ 하나 더', fn: balance }, { t: '🎮 다른 놀이', fn: gameMenu }];
+        if (!pick) { if (/둘다|다좋|모두|전부/.test(t)) return { h: '😆 욕심쟁이! 둘 다 좋죠', btns, say: '욕심쟁이! 둘 다 좋죠.' }; if (/몰라|모르겠|글쎄|어려워|못고르/.test(t)) return { h: '🤔 어렵죠? 부캉이도 못 고르겠어요', btns, say: '어렵죠? 저도 못 고르겠어요.' }; return null; }   // 다른 말을 하면 놀이를 끝내고 그 말을 듣는다
+        const x = bag('balre', [`오, ${pick}! 저도 같은 생각이에요.`, `${pick} 좋죠! 부캉이도 한 표.`, `역시 ${pick}! 취향이 멋져요.`, `저는 반대였는데, 듣고 보니 ${pick}도 좋네요.`, `${pick}! 이유가 궁금해지는걸요.`]);
+        return { h: '⚖️ ' + x, btns, say: x };
+    }
+    // 오늘의 운세 (여러 조각을 짜 맞춤 · 같은 날 같은 사람에게는 같은 운세)
+    function fortune() {
+        return withData(() => {
+            const d = today0(), h = hash(ymd(d) + '|' + userName()), pick = (a, k) => a[(Math.floor(h / k) + h) % a.length];
+            const main = pick(DATA.fortune, 1), adv = pick(DATA.fadvice, 7), item = pick(DATA.fitem, 13), food = pick(DATA.ffood, 17), pos = pick(DATA.fpos, 19), col = pick(DATA.colors, 23), no = h % 99 + 1, star = '★'.repeat(3 + h % 3) + '☆'.repeat(2 - h % 3);
+            return { h: `🔮 ${d.getMonth() + 1}월 ${d.getDate()}일 오늘의 운세 ${star}`, l: [main, `🍀 행운의 등번호 ${no}번 · 색 ${col} · 포지션 ${pos}`, `🎒 행운의 물건 ${item} · 음식 ${food}`, `💡 ${adv}`, '재미로만 봐 주세요 😊'], btns: [{ t: '🎱 로또 번호', fn: lotto }, { t: '✨ 오늘의 한마디', fn: quote }], say: `${main} 행운의 등번호는 ${no}번, 행운의 색은 ${col}이에요. ${adv}` };
+        });
+    }
+    // 자료에 든 일상 대화 (아무것도 못 알아들었을 때 마지막으로 살펴봄)
+    let TALK2 = null;
+    function talk2(t) {
+        if (!DATA || !DATA.talk) return null;
+        if (!TALK2) TALK2 = DATA.talk.map(r => { try { return [new RegExp(r[0], 'i'), r[1]]; } catch (e) { return null; } }).filter(Boolean);
+        for (let i = 0; i < TALK2.length; i++) if (TALK2[i][0].test(t)) return { i, a: TALK2[i][1] };
+        return null;
+    }
+    function talkAns(t) { const r = talk2(t); if (!r) return null; const x = bag('t2_' + r.i, r.a); return { h: x, say: sayOf(x) }; }
 
     // ---------- 화면 ----------
     let pan = null, ov = null, bodyEl = null, inp = null, micB = null, stEl = null;
@@ -1513,7 +1781,9 @@
         if (inner) return;
         if (mode === 'bub') bubRender(a);
         if (a.say && !a.force) ctx.lastSay = a.say;
-        if (!noSay && a.say && ((opt.say && (viaVoice || a.force)) || a.force === 2)) speak(a.say, afterSay);
+        const byeA = (a.multi || [a]).some(x => x && x.bye);
+        if (!noSay && a.say && ((opt.say && (viaVoice || a.force)) || a.force === 2)) speak(a.say, () => { afterSay(); if (byeA) setTimeout(close, 250); });
+        else if (byeA) setTimeout(close, a.say ? 1600 : 900);
         // 밖에서 받아 오는 답(날씨 · 위치 · 처음 받는 놀이 자료): 「알아보는 중…」을 먼저 보여 주고, 오면 바꿔 그림
         const ws = (a.multi || [a]).filter(x => x && x.wait);
         if (ws.length) {
@@ -1548,7 +1818,7 @@
     function wantFollow(a) {
         if (mode !== 'bub' || !viaVoice || !SR || !a) return false;
         const list = a.multi || [a];
-        if (list.some(x => x && (x.quiet || x.raw || x.pending))) return false;   // 노래 트는 중 · 설정 화면 · 아직 받아 오는 중
+        if (list.some(x => x && (x.quiet || x.raw || x.pending || x.bye))) return false;   // 노래 트는 중 · 설정 화면 · 아직 받아 오는 중
         if (V('playing')) return false;
         return followN < (ctx.game ? 80 : 6);   // 놀이 중에는 계속 주고받기
     }
@@ -1687,7 +1957,7 @@
         if (bq && bq.classList.contains('live')) bq.classList.remove('live');
     }
     function open(full) {
-        build();
+        build(); if (!DATA) loadData().catch(() => {});   // 용어 · 대화 자료를 미리 받아 둠
         const want = (full || !phone()) ? 'pan' : 'bub';
         if (isOpenNow && (mode === want || (mode === 'pan' && !full))) return;
         isOpenNow = true;
