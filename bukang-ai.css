@@ -55,4 +55,10 @@ html.is-authenticated .bka-bar{display:flex}
 .bka-in input:focus{outline:none;border-color:#0b2240;background:#fff}
 .bka-send{width:46px;height:46px;border-radius:50%;border:0;background:#0b2240;color:#fff;font-size:18px;flex:none;cursor:pointer}
 html.bka-open #uiZoomCtrl{display:none!important}
+/* v2.121.1: 창이 열려 있는 동안 뒤 화면은 안 움직임 */
+html.bka-open,html.bka-open body{overflow:hidden!important;overscroll-behavior:none}
+.bka-ov{touch-action:none}
+.bka-hd,.bka-in{touch-action:none}
+.bka-chips{overscroll-behavior:contain;touch-action:pan-x}
+.bka-body{touch-action:pan-y}
 @media (prefers-reduced-motion:reduce){.bka-mic.rec{animation:none}}

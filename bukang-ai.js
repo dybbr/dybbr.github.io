@@ -486,6 +486,18 @@
             <form class="bka-in" autocomplete="off"><button type="button" class="bka-mic" data-a="mic" aria-label="말로 묻기">🎙</button>
               <input id="bkaInp" type="text" enterkeyhint="send" placeholder="여기 적거나 🎙 눌러 물어보세요"><button type="submit" class="bka-send" aria-label="보내기">➤</button></form>`;
         document.body.appendChild(ov); document.body.appendChild(pan);
+        // v2.121.1: 창을 끌 때 뒤 화면이 같이 움직이지 않게 — 창 안에서 실제로 움직일 수 있는 곳(대화 · 추천 버튼 줄)만 끌림
+        let ty = 0, tx = 0;
+        const canScroll = (el, dy, dx) => {
+            for (; el && el !== pan; el = el.parentElement) {
+                if (el.classList.contains('bka-body')) { if (el.scrollHeight > el.clientHeight + 1 && Math.abs(dy) >= Math.abs(dx)) { if (dy > 0 && el.scrollTop <= 0) return false; if (dy < 0 && el.scrollTop + el.clientHeight >= el.scrollHeight - 1) return false; return true; } return false; }
+                if (el.classList.contains('bka-chips')) return Math.abs(dx) > Math.abs(dy) && el.scrollWidth > el.clientWidth + 1;
+            }
+            return false;
+        };
+        const onTs = e => { const t = e.touches[0]; if (t) { ty = t.clientY; tx = t.clientX; } };
+        const onTm = e => { const t = e.touches[0]; if (!t || e.touches.length > 1) return; if (!canScroll(e.target, t.clientY - ty, t.clientX - tx) && e.cancelable) e.preventDefault(); };
+        [ov, pan].forEach(x => { x.addEventListener('touchstart', onTs, { passive: true }); x.addEventListener('touchmove', onTm, { passive: false }); x.addEventListener('wheel', e => { if (!e.target.closest || !e.target.closest('.bka-body')) e.preventDefault(); }, { passive: false }); });
         bodyEl = $('bkaBody'); inp = $('bkaInp'); stEl = $('bkaSt'); micB = pan.querySelector('.bka-mic');
         if (!SR) micB.hidden = true;
         pan.addEventListener('click', onClick);
