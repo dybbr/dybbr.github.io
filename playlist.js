@@ -1715,6 +1715,7 @@
         bkStop: () => bkStop(),
         bkKick: ms => bkKick(ms),
         bkMeN: () => bkMeN(),
+        bkReady: () => bkReady,   // v2.127.0: 「부캉아」 엔진을 이번에 불러 썼는지 (부캉이 준비 상태 표시)
         bkClearMine: () => { try { if (window.BukangKWS) BukangKWS.clearMine(); else localStorage.removeItem(BK_ME); } catch (e) {} try { if (view === 'bat') renderBat(); } catch (e) {} },
         enroll: paint => bkEnroll(paint),
         hasMic: () => !!SpeechRec

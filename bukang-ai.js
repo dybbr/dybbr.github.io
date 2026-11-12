@@ -8,7 +8,7 @@
     'use strict';
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     const LS = 'daeyeon_bka';
-    const VER = '2.126.0';
+    const VER = '2.127.0';
     const opt = (function () { try { return Object.assign({ say: true }, JSON.parse(localStorage.getItem(LS) || '{}')); } catch (e) { return { say: true }; } })();
     const saveOpt = () => { try { localStorage.setItem(LS, JSON.stringify(opt)); } catch (e) {} };
     const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -360,6 +360,10 @@
         const fresh = ctx.ev && ctx.evTurn === ctx.turn;   // 같은 말 안에서 앞서 찾은 일정 (「…넣고 길도 찾아 줘」)
         if (ctx.game) { const g = gameTurn(s, t); if (g) return g; }   // 놀이 중이면 놀이가 먼저
         const qk = quick(s, t); if (qk) return qk;                     // 그만 · 중지 · 취소 · 잘 가 · 고마워 · 하나 더 · 그게 아니야
+        if (/준비하기|처음준비|다시준비/.test(t) && /부캉|준비/.test(t)) return prepCard();
+        if (/소리시험|소리테스트|목소리시험|소리확인|소리가?안나|목소리가?안나|대답소리|말을?안해|대답을?안해|음성대답/.test(t)) return /안나|안해|안들/.test(t) ? noSoundTips() : soundTest();
+        if (/^(상태|준비상태|네상태|너상태|상태어때|상태보여줘|상태알려줘)$/.test(t)) return readyCard();
+        if (/준비상태|부캉이?상태|다운로드|받았어|받았나|버전|엔진/.test(t) && /부캉|준비|다운로드|받았|버전|엔진|두뇌/.test(t) && !/일정|경기|공지|노래|곡|앱업데이트/.test(t)) return readyCard();
         const p3 = pre3(s, t); if (p3) return p3;                      // 시간 · 날짜 · 계산 · 생일 축하
 
         // 0) 이어 묻기: 그다음 · 그 전 · 더 보여 줘
@@ -784,7 +788,7 @@
         if (DATA) return Promise.resolve(DATA);
         if (dataP) return dataP;
         dataP = new Promise((res, rej) => {
-            const sc = document.createElement('script'); sc.src = 'bukang-data.js?v=2.125.0';
+            const sc = document.createElement('script'); sc.src = 'bukang-data.js?v=' + DATA_VER;
             sc.onload = () => { DATA = window.BKA_DATA || null; if (DATA) res(DATA); else rej(new Error('nodata')); };
             sc.onerror = () => rej(new Error('load'));
             document.head.appendChild(sc);
@@ -1684,6 +1688,162 @@
     }
     function talkAns(t) { const r = talk2(t); if (!r) return null; const x = bag('t2_' + r.i, r.a); return { h: x, say: sayOf(x) }; }
 
+    // ---------- 📦 부캉이 준비 상태 (v2.127.0 · 하코 선택 B + C) ----------
+    //   · B: 부캉이 이름 아래 「✓ 준비 완료 · 두뇌 v…」 배지 (휴대폰은 부캉이 얼굴에 ✓ 점) — 누르면 자세히
+    //   · C: 처음 한 번 「부캉이 준비하기」 ① 두뇌 자료 ② 「부캉아」 엔진(선택, 진행 %) ③ 소리 시험 ④ 마이크 허락 → 「✓ 준비 끝 · 버전」
+    //   · 받았는지는 앱 저장본(sw.js 의 caches)을 보고 앎 · 우리 서버는 안 씀
+    const DATA_VER = '2.125.0', READY = 'daeyeon_bka_ready';
+    const ENGINE = [['vendor/ort/ort.wasm.min.js?v=1.22.0', 48327], ['vendor/ort/ort-wasm-simd-threaded.mjs', 20856], ['vendor/ort/ort-wasm-simd-threaded.wasm', 11210254], ['kws/melspectrogram.onnx', 1087958], ['kws/embedding_model.onnx', 1326578], ['kws/templates.json', 57390]];
+    const ENG_MB = (ENGINE.reduce((t, x) => t + x[1], 0) / 1048576).toFixed(1);
+    const rdGet = () => { try { return JSON.parse(localStorage.getItem(READY) || 'null') || {}; } catch (e) { return {}; } };
+    const rdSet = o => { try { localStorage.setItem(READY, JSON.stringify(Object.assign(rdGet(), o))); } catch (e) {} };
+    const appVer = () => { try { return String(APP_VERSION).split('·')[0].trim(); } catch (e) { return ''; } };
+    let rdLast = null;
+    async function inCache(u) {
+        try {
+            if (!window.caches) return null;
+            const href = new URL(u, location.href).href;
+            return !!((await caches.match(href)) || (await caches.match(href, { ignoreSearch: true })));
+        } catch (e) { return null; }
+    }
+    async function micState() { try { return (await navigator.permissions.query({ name: 'microphone' })).state; } catch (e) { return ''; } }
+    async function rdState() {
+        const dataC = await inCache('bukang-data.js?v=' + DATA_VER);
+        const eng = await Promise.all(ENGINE.map(x => inCache(x[0])));
+        const vs = koVoices();
+        const s = {
+            data: !!DATA || !!dataC, terms: DATA && DATA.terms ? DATA.terms.length : 0,
+            eng: eng.every(Boolean) || !!V('bkReady'), engSome: eng.some(Boolean), bkOn: !!V('bkOn'),
+            voices: vs.length, voice: vs.length ? (((opt.vuri && vs.find(v => v.voiceURI === opt.vuri)) || vs.find(v => /google|female|여/i.test(v.name)) || vs[0]).name) : '',
+            mic: SR ? await micState() : 'none', heard: rdGet().heard, tts: ttsLog.err
+        };
+        s.warn = !s.data ? '⬇ 두뇌 자료 받기 전' : s.tts && s.tts !== 'interrupted' ? '! 소리 확인 필요' : s.mic === 'denied' ? '! 마이크 막힘' : s.bkOn && !s.eng ? '! 「부캉아」 엔진 받기 전' : rdGet().heard === 0 ? '! 소리가 안 들렸어요' : !s.voices && rdGet().heard !== 1 ? '! 한국어 목소리 확인' : '';
+        rdLast = s; return s;
+    }
+    function rdBadge() {   // 이름 아래 배지 · 휴대폰 부캉이 점
+        rdState().then(s => {
+            const ok = !s.warn, txt = ok ? `✓ 준비 완료 · 두뇌 v${DATA_VER}` : s.warn;
+            const b = $('bkaRd'); if (b) { b.textContent = txt; b.className = 'bka-rd' + (ok ? '' : ' w'); b.hidden = false; }
+            if (fab) { let d = fab.querySelector('.bka-dot'); if (!d) { d = document.createElement('span'); d.className = 'bka-dot'; d.setAttribute('aria-hidden', 'true'); fab.appendChild(d); } d.textContent = ok ? '✓' : '!'; d.classList.toggle('w', !ok); }
+            const bb = bc && bc.querySelector('.bka-rd'); if (bb) { bb.textContent = txt + (ok ? ' · 앱 ' + appVer() : ''); bb.className = 'bka-rd' + (ok ? '' : ' w'); }
+        }).catch(() => {});
+    }
+    const ck = (st, t, sub, id) => `<div class="bka-ck ${st}"${id ? ` id="${id}"` : ''}><span class="ic">${st === 'ok' ? '✓' : st === 'w' ? '!' : st === 'no' ? '·' : '…'}</span><span class="tx">${esc(t)}<small>${esc(sub)}</small></span></div>`;
+    function rdList(s) {
+        return ck(s.data ? 'ok' : 'w', '두뇌 자료', s.data ? `v${DATA_VER}${s.terms ? ' · 야구 용어 ' + s.terms + '개' : ''} · 약 180KB 받음` : '아직 안 받음 · 「⬇ 다시 받기」를 눌러 주세요')
+            + ck(s.eng ? 'ok' : s.bkOn ? 'w' : 'no', '「부캉아」 엔진', s.eng ? `약 ${ENG_MB}MB 받음 · 이 기기에 저장됨` : s.bkOn ? `「부캉아」가 켜져 있는데 아직 안 받음 (약 ${ENG_MB}MB)` : `안 받음 · 「부캉아」로 부를 때만 필요해요 (약 ${ENG_MB}MB)`)
+            + ck(s.voices ? (s.tts ? 'w' : 'ok') : 'w', '한국어 목소리', s.voices ? `휴대폰 목소리 「${s.voice}」 · ${voiceNow()[1]}${s.tts ? ' · 마지막 읽기 실패(' + s.tts + ')' : s.heard ? ' · 소리 확인함' : ''}` : '휴대폰에 한국어 읽기 목소리가 없어요 · 아래 「🔊 소리 시험」으로 확인')
+            + ck(s.mic === 'granted' ? 'ok' : s.mic === 'denied' ? 'w' : s.mic === 'none' ? 'no' : 'no', '마이크', s.mic === 'granted' ? '허락됨' : s.mic === 'denied' ? '막혀 있어요 · 주소창 왼쪽 자물쇠 → 마이크 허용' : s.mic === 'none' ? '이 기기에서는 말로 묻기를 못 써요' : '처음 말로 물을 때 허락을 물어요');
+    }
+    function readyCard() {
+        if (mode === 'bub') open(true);
+        return { h: '📦 부캉이 준비 상태', l: [`앱 ${appVer()} · 두뇌 v${DATA_VER}`], wait: () => loadData().catch(() => {}).then(rdState).then(s => ({
+            h: '📦 부캉이 준비 상태', dd: appVer(), l: [s.warn ? s.warn.replace(/^[!⬇] /, '확인할 것: ') : '모두 준비됐어요'],
+            html: `<div class="bka-cks">${rdList(s)}</div>`,
+            btns: [{ t: '🔊 소리 시험', pri: 1, fn: soundTest }, { t: '⬇ 다시 받기', fn: reget }, { t: '🦉 처음 준비하기 다시', fn: prepCard }],
+            say: s.warn ? '확인할 것이 있어요. ' + s.warn.replace(/^[!⬇] /, '') : '부캉이는 모두 준비됐어요.'
+        })) };
+    }
+    function soundTest() {
+        speak('안녕하세요, 부캉이예요. 제 목소리가 들리나요?');
+        return { h: '🔊 소리가 들렸나요?', l: ['「안녕하세요, 부캉이예요」가 들려야 해요'], btns: [
+            { t: '👍 들려요', pri: 1, fn: () => { rdSet({ heard: 1 }); rdBadge(); return { h: '좋아요! 소리는 잘 나와요', l: ['말로 물으면 대답을 읽어 드려요'] }; } },
+            { t: '👎 안 들려요', fn: () => { rdSet({ heard: 0 }); rdBadge(); return noSoundTips(); } }] };
+    }
+    function noSoundTips() {
+        const e = ttsLog.err;
+        return { h: '이렇게 해 보세요', l: [
+            '① 휴대폰 옆 소리 버튼으로 「미디어 소리」를 키워요 (벨소리 말고)',
+            '② 아이폰은 옆 무음 스위치 · 무음 모드를 꺼요',
+            '③ 블루투스 이어폰 · 차에 연결돼 있으면 그쪽으로 나가요',
+            '④ 안드로이드: 설정 → 일반 → 텍스트 음성 변환(TTS) → 한국어 음성 데이터 설치',
+            '⑤ 「목소리 바꿔 줘」 → 「휴대폰 원래 목소리」로 바꿔 보기'
+        ].concat(e ? ['기록: 마지막 읽기 실패 「' + e + '」'] : [], koVoices().length ? [] : ['이 휴대폰에서 한국어 목소리를 못 찾았어요 → ④ 를 먼저 해 주세요']),
+            btns: [{ t: '🔊 다시 들어 보기', pri: 1, fn: soundTest }, { t: '🗣 목소리 바꾸기', fn: () => voiceTalk('목소리', '목소리') }] };
+    }
+    // 파일 하나 받기 (진행 % 알림) — 앱 저장본(sw.js)이 지나가면서 저장해 둠
+    async function getFile(u, size, onp) {
+        const r = await fetch(u, { cache: 'reload' });
+        if (!r.ok) throw new Error('받기 실패 ' + r.status);
+        if (!r.body || !r.body.getReader) { await r.arrayBuffer(); onp(size); return; }
+        const rd = r.body.getReader(); let got = 0;
+        for (;;) { const { done, value } = await rd.read(); if (done) break; got += value.length; onp(Math.min(got, size)); }
+    }
+    async function getEngine(onp) {
+        const tot = ENGINE.reduce((t, x) => t + x[1], 0); let base = 0;
+        for (const [u, n] of ENGINE) {
+            if (!(await inCache(u))) await getFile(u, n, g => onp((base + g) / tot));
+            base += n; onp(base / tot);
+        }
+    }
+    function reget() {
+        if (mode === 'bub') open(true);
+        return { h: '⬇ 다시 받는 중…', wait: async () => {
+            try {
+                if (window.caches) { const c = await caches.keys(); for (const k of c) { const ca = await caches.open(k); for (const [u] of ENGINE.concat([['bukang-data.js?v=' + DATA_VER]])) await ca.delete(new URL(u, location.href).href, { ignoreSearch: true }); } }
+                DATA = null; dataP = null; await loadData();
+                const engWas = !!V('bkOn') || rdGet().eng;
+                if (engWas) await getEngine(() => {});
+                rdBadge();
+                return readyCard().wait();
+            } catch (e) { return { h: '다시 받지 못했어요', l: ['인터넷 연결을 확인하고 다시 해 주세요', String(e && e.message || e).slice(0, 60)] }; }
+        } };
+    }
+    // C: 처음 준비하기 (단계 카드가 그 자리에서 바뀜)
+    let prepId = 0;
+    function prepCard() {
+        if (mode === 'bub') open(true);
+        const id = 'bkaPrep' + (++prepId), $p = k => document.getElementById(id + k);
+        const set = (k, st, t, sub) => { const el = $p(k); if (el) el.outerHTML = ck(st, t, sub, id + k); };
+        const btns = html => { const el = $p('b'); if (el) el.innerHTML = html; };
+        const B = (t, fn, cls) => `<button type="button" class="${cls || 'sec'}" data-k="${reg(() => { const r = call(fn); if (r && !r.then) bot(r); })}">${esc(t)}</button>`;
+        let heard = null;
+        const finish = () => {
+            rdSet({ v: appVer(), at: Date.now(), done: 1 });
+            const el = $p('d'); if (el) { el.hidden = false; el.textContent = `✓ 준비 끝! 앱 ${appVer()} · 두뇌 v${DATA_VER}`; }
+            btns(''); rdBadge();
+            if (opt.say) speak('준비 끝! 이제 무엇이든 물어보세요.');
+        };
+        const stepMic = () => {
+            set('4', 'run', '④ 마이크 허락', '말로 물어보려면 필요해요 · 휴대폰이 물어보면 「허용」');
+            if (!SR || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { set('4', 'no', '④ 마이크', '이 기기에서는 말로 묻기를 못 써요 · 글자로 물어보세요'); finish(); return; }
+            btns(B('🎤 허락하기', () => {
+                navigator.mediaDevices.getUserMedia({ audio: true }).then(st => { st.getTracks().forEach(t => t.stop()); set('4', 'ok', '④ 마이크', '허락됨'); if (rdGet().eng && !V('bkOn')) { V('bkSet', true); } finish(); },
+                    () => { set('4', 'w', '④ 마이크', '허락이 안 됐어요 · 주소창 왼쪽 자물쇠 → 마이크 허용'); finish(); });
+            }, 'pri') + B('건너뛰기', () => { set('4', 'no', '④ 마이크', '건너뜀 · 처음 말로 물을 때 다시 물어요'); finish(); }));
+        };
+        const stepSound = () => {
+            set('3', 'run', '③ 소리 시험', '「안녕하세요, 부캉이예요」가 들리면 「들려요」');
+            speak('안녕하세요, 부캉이예요. 제 목소리가 들리나요?');
+            btns(B('👍 들려요', () => { heard = 1; rdSet({ heard: 1 }); set('3', 'ok', '③ 소리 시험', '잘 들려요 · ' + voiceNow()[1]); stepMic(); }, 'pri')
+                + B('👎 안 들려요', () => { heard = 0; rdSet({ heard: 0 }); set('3', 'w', '③ 소리 시험', '안 들림 · 끝나고 「이렇게 해 보세요」를 볼게요'); bot(noSoundTips(), true); stepMic(); })
+                + B('🔊 다시', () => speak('안녕하세요, 부캉이예요. 제 목소리가 들리나요?')));
+        };
+        const stepEng = async () => {
+            const has = (await Promise.all(ENGINE.map(x => inCache(x[0])))).every(Boolean);
+            if (has) { rdSet({ eng: 1 }); set('2', 'ok', '② 「부캉아」 엔진', `약 ${ENG_MB}MB · 이미 받아 있어요`); stepSound(); return; }
+            if (!SR) { set('2', 'no', '② 「부캉아」 엔진', '이 기기에서는 「부캉아」 부르기를 못 써요'); stepSound(); return; }
+            set('2', 'run', '② 「부캉아」 엔진 받기 (선택)', `「부캉아」로 손 안 대고 부르려면 필요해요 · 약 ${ENG_MB}MB · 와이파이 추천`);
+            btns(B(`⬇ 받기 (${ENG_MB}MB)`, async () => {
+                btns('');
+                try {
+                    await getEngine(f => { const p = Math.round(f * 100); set('2', 'run', `② 「부캉아」 엔진 받는 중 · ${p}%`, `약 ${ENG_MB}MB 중 ${(f * ENG_MB).toFixed(1)}MB`); const el = $p('2'); if (el) el.querySelector('.tx').insertAdjacentHTML('beforeend', `<span class="bka-bar"><i style="width:${p}%"></i></span>`); });
+                    rdSet({ eng: 1 }); set('2', 'ok', '② 「부캉아」 엔진', `약 ${ENG_MB}MB 받음 · 이 기기에 저장됨`);
+                } catch (e) { set('2', 'w', '② 「부캉아」 엔진', '받지 못했어요 · 나중에 ⚙ 에서 다시 받을 수 있어요'); }
+                stepSound();
+            }, 'pri') + B('나중에', () => { set('2', 'no', '② 「부캉아」 엔진', '안 받음 · 「부캉아」를 켤 때 받아요'); stepSound(); }));
+        };
+        const start = () => {
+            loadData().then(() => { set('1', 'ok', '① 두뇌 자료', `v${DATA_VER} · 야구 용어 ${DATA.terms.length}개 · 약 180KB 받음`); stepEng(); },
+                () => { set('1', 'w', '① 두뇌 자료', '받지 못했어요 · 인터넷 연결을 확인해 주세요'); btns(B('🔄 다시', start, 'pri') + B('나중에 하기', later)); });
+        };
+        const later = () => { rdSet({ later: Date.now() }); btns(''); const el = $p('d'); if (el) { el.hidden = false; el.textContent = '언제든 「부캉이 준비하기」라고 말하면 다시 해요'; } };
+        setTimeout(start, 50);
+        return { h: '🦉 부캉이 준비하기 (처음 한 번)', l: ['받은 것과 소리 · 마이크를 차례로 확인해요'],
+            html: `<div class="bka-cks">${ck('run', '① 두뇌 자료 받기', '받는 중…', id + '1')}${ck('no', '② 「부캉아」 엔진 (선택)', '「부캉아」로 손 안 대고 부를 때만', id + '2')}${ck('no', '③ 소리 시험', '부캉이 목소리가 들리는지', id + '3')}${ck('no', '④ 마이크 허락', '말로 물어보려면', id + '4')}</div><div class="bka-bt" id="${id}b">${B('나중에 하기', later)}</div><div class="bka-done" id="${id}d" hidden></div>`,
+            say: '처음 한 번, 부캉이 준비를 같이 해요.' };
+    }
+
     // ---------- 화면 ----------
     let pan = null, ov = null, bodyEl = null, inp = null, micB = null, stEl = null;
     let isOpenNow = false, rec = null, listening = false, viaVoice = false, enrolling = false;
@@ -1699,7 +1859,7 @@
         ov = document.createElement('div'); ov.className = 'bka-ov'; ov.hidden = true; ov.addEventListener('click', close);
         pan = document.createElement('div'); pan.className = 'bka-pan'; pan.hidden = true;
         pan.setAttribute('role', 'dialog'); pan.setAttribute('aria-label', '부캉이 비서');
-        pan.innerHTML = `<div class="bka-hd"><i class="bka-bk" aria-hidden="true"></i><div class="bka-tt"><b>부캉이</b><small id="bkaSt"></small></div>
+        pan.innerHTML = `<div class="bka-hd"><i class="bka-bk" aria-hidden="true"></i><div class="bka-tt"><b>부캉이</b><small id="bkaSt"></small><button type="button" id="bkaRd" class="bka-rd" data-a="rd" hidden></button></div>
               <button type="button" class="bka-hb" data-a="set" aria-label="설정">⚙</button><button type="button" class="bka-hb" data-a="x">닫기</button></div>
             <div class="bka-body" id="bkaBody" aria-live="polite"></div>
             <div class="bka-chips">${CHIPS.map((c, i) => `<button type="button" data-chip="${i}">${c[0]}</button>`).join('')}</div>
@@ -1765,7 +1925,7 @@
         bubQ('');
         const qs = CHIPS.filter(c => c[1]).slice(0, 4);
         const bl = bdayLine();
-        bc.innerHTML = `<div class="h">${bl ? esc(bl) : '무엇이든 물어보세요 🦉'}</div><div class="l">${SR ? '부캉이를 누르고 말하거나 아래에서 골라요' : '아래에서 고르거나 글자로 적어요'}</div>
+        bc.innerHTML = `<div class="h">${bl ? esc(bl) : '무엇이든 물어보세요 🦉'}</div><button type="button" class="bka-rd" data-k="${reg(() => bot(readyCard()))}">준비 상태 보는 중…</button><div class="l">${SR ? '부캉이를 누르고 말하거나 아래에서 골라요' : '아래에서 고르거나 글자로 적어요'}</div>
             <div class="bka-bchips">${bl ? `<button type="button" data-k="${reg(() => ask('생일 축하해', false))}">🎉 축하하기</button>` : ''}${qs.map(c => `<button type="button" data-k="${reg(() => ask(c[1], false))}">${esc(c[0])}</button>`).join('')}<button type="button" data-k="${reg(() => { open(true); setTimeout(() => { if (inp) inp.focus(); }, 60); })}">⌨ 글자로 적기</button></div>`;
         bubHas = false;
     }
@@ -1805,6 +1965,8 @@
         const head = a.h ? `<div class="h">${esc(a.h)}${a.dd ? `<em>${esc(a.dd)}</em>` : ''}</div>` : '';
         const ls = cut(L, lim ? lim.l : 0).map(x => `<div class="l">${esc(x)}</div>`).join('');
         let h = a.no != null ? `<div class="bka-pl"><div class="bka-no">${esc(a.no)}</div><div>${head}${ls}</div></div>` : head + ls;
+        if (a.html && !lim) h += a.html;   // v2.127.0: 준비 상태 · 준비하기 체크 목록 (우리가 만든 글만 · esc 거침)
+        else if (a.html) h += '<button type="button" class="bka-bmore" data-b="log">자세히 보기 ›</button>';
         const its = a.items || [], bts = a.btns || [];
         if (lim && a.all && lim.items) lim = Object.assign({}, lim, { items: 12 });
         if (its.length && (!lim || lim.items)) {
@@ -1875,7 +2037,7 @@
                 try { if (speechSynthesis.paused) speechSynthesis.resume(); } catch (e) {}
                 parts.forEach((p, k) => {
                     const u = new SpeechSynthesisUtterance(p);
-                    u.lang = 'ko-KR'; u.pitch = vp[2]; u.rate = vp[3]; if (vo) u.voice = vo;
+                    u.lang = 'ko-KR'; u.pitch = vp[2]; u.rate = vp[3]; if (vo) { try { u.voice = vo; } catch (e) {} }
                     if (k === 0) u.onstart = () => { ttsLog.ok++; ttsLog.err = ''; };
                     u.onerror = e => { const er = (e && e.error) || 'error'; if (er !== 'interrupted' && er !== 'canceled') ttsLog.err = er; if (k === parts.length - 1 || er !== 'interrupted') end(); };
                     if (k === parts.length - 1) u.onend = end;
@@ -1943,6 +2105,7 @@
         if (a === 'x') close();
         else if (a === 'mic') listen();
         else if (a === 'set') bot(settings());
+        else if (a === 'rd') bot(readyCard());
         else if (a === 'bk') { const on = !V('bkOn'); V('bkSet', on); bot({ h: on ? '「부캉아」 부르기를 켰어요' : '「부캉아」 부르기를 껐어요', l: on ? ['처음 한 번은 약 14MB를 받아요 (와이파이 추천)', '화면이 켜져 있을 때 어느 탭에서든 들어요'] : [] }); setSt(''); }
         else if (a === 'say') { opt.say = !opt.say; saveOpt(); bot({ h: opt.say ? '말로 물으면 대답을 소리로 읽어 드려요' : '대답을 소리로 읽지 않아요' }); }
         else if (a === 'share') { opt.share = opt.share === false; saveOpt(); bot({ h: opt.share ? '못 알아들은 말을 부캉이 공부에 보태요' : '못 알아들은 말을 보내지 않아요', l: opt.share ? ['누가 한 말인지는 보내지 않아요 · 선수 이름은 가려요'] : ['이 휴대폰에만 남아요'] }); }
@@ -1963,6 +2126,7 @@
                 ${on ? `<div class="r"><span>🎤 내 목소리 등록<small>${n ? n + '개 등록됨' : '「부캉아」 3번 녹음 · 더 잘 알아들어요'}</small></span><button type="button" class="sw" data-a="me">${n ? '다시 하기' : '등록'}</button>${n ? '<button type="button" class="sw" data-a="me-x">지우기</button>' : ''}</div>` : ''}
                 <div class="r"><span>🗣 부캉이 목소리<small>${esc(voiceNow()[1])} · ${esc(voiceNow()[4])}</small></span><button type="button" class="sw" data-a="voice">바꾸기</button></div>
                 <div class="r"><span>🔊 대답 읽어 주기<small>말로 물었을 때만 읽어요</small></span><button type="button" class="sw${opt.say ? ' on' : ''}" data-a="say" role="switch" aria-checked="${opt.say}">${opt.say ? '켜짐' : '꺼짐'}</button></div>
+                <div class="r"><span>📦 준비 상태<small>앱 ${esc(appVer())} · 두뇌 v${DATA_VER} · 받은 것 · 소리 시험</small></span><button type="button" class="sw" data-a="rd">보기</button></div>
                 <div class="r"><span>📮 못 알아들은 말 보태기<small>이름 없이 모아 부캉이를 더 똑똑하게 해요</small></span><button type="button" class="sw${opt.share !== false ? ' on' : ''}" data-a="share" role="switch" aria-checked="${opt.share !== false}">${opt.share !== false ? '켜짐' : '꺼짐'}</button></div></div>`);
             scrollEnd();
         }, 0);
@@ -2050,7 +2214,11 @@
             document.documentElement.classList.add('bka-bub-on');
         }
         setSt(''); scrollEnd();
+        rdBadge();
+        if (!prepShown && !wakeOpen) { const r = rdGet(); if (!r.done && !r.later && D.authed()) { prepShown = true; setTimeout(() => bot(prepCard(), true), 300); } }
+        wakeOpen = false;
     }
+    let prepShown = false, wakeOpen = false;   // 처음 준비하기는 손으로 열었을 때 한 번만 (「부캉아」로 열면 바로 듣기)
     function close() {
         if (!isOpenNow) return;
         isOpenNow = false; mode = '';
@@ -2090,6 +2258,6 @@
         isOpen: () => isOpenNow,
         busy: () => listening || enrolling || speaking || waitN > 0 || Date.now() < quietTill,   // v2.126.2: 대답을 읽는 중 · 받아 오는 중에도 「부캉아」 마이크를 다시 켜지 않음 (켜면 안드로이드가 소리를 끔)
         mode: () => mode,
-        wake: () => { if (!D.authed()) return; open(); if (!listening) listen(); }
+        wake: () => { if (!D.authed()) return; wakeOpen = true; open(); if (!listening) listen(); }
     };
 })();
