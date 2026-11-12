@@ -1687,6 +1687,7 @@
     // ---------- 화면 ----------
     let pan = null, ov = null, bodyEl = null, inp = null, micB = null, stEl = null;
     let isOpenNow = false, rec = null, listening = false, viaVoice = false, enrolling = false;
+    let waitN = 0, quietTill = 0;   // v2.126.2: 받아 오는 답 수 · 이 시각까지는 「부캉아」 마이크를 쉬게 함
     // v2.122.0 휴대폰 말풍선 (시안 A): mode 'pan' = 큰 창(태블릿 · PC · 대화 기록), 'bub' = 왼쪽 아래 부캉이 + 말풍선
     let mode = '', bub = null, fab = null, bq = null, bc = null, bst = null, bubHas = false;
     let followMode = false, pendFollow = false, followN = 0, speaking = false, folT = 0;
@@ -1833,8 +1834,9 @@
         if (ws.length) {
             const node = a.multi ? null : bodyEl.lastElementChild;
             ws.forEach(x => {
-                const w = x.wait; x.wait = null; x.pending = 1;
+                const w = x.wait; x.wait = null; x.pending = 1; waitN++;
                 Promise.resolve().then(w).catch(e => { console.warn('부캉이 비서:', e); return FAIL(); }).then(r => {
+                    waitN = Math.max(0, waitN - 1); if (!waitN) V('bkKick', 1200);
                     if (node && node.parentNode) node.remove();
                     if (!r || !isOpenNow) return;
                     bot(r); runAll(r); armFollow(r);
@@ -1842,21 +1844,46 @@
             });
         }
     }
+    // 🔊 v2.126.2: 크롬 소리 삼킴 막기 — ① 읽는 중일 때만 멈추고 잠깐 쉰 뒤 말하기 ② 멈춰 있으면 resume ③ 긴 글은 문장으로 나눠 읽기(크롬 15초 끊김)
+    //   · 마지막 결과를 ttsLog 에 남겨 「부캉이 상태」에서 보여 줌 (ok · error 이름 · 목소리)
+    const ttsLog = { n: 0, ok: 0, err: '', at: 0, voice: '' };
+    function chunks(t) {
+        const out = []; let cur = '';
+        (String(t).match(/[^.!?]+[.!?]*\s*/g) || [String(t)]).forEach(p => {   // 문장 끝(. ! ?)에서 나눔 (옛 아이폰 때문에 뒤돌아보기 정규식은 안 씀)
+            if ((cur + ' ' + p).trim().length > 110 && cur) { out.push(cur.trim()); cur = p; } else cur = (cur + ' ' + p).trim();
+        });
+        if (cur) out.push(cur);
+        return out.length ? out : [String(t)];
+    }
+    let spkTok = 0;
     function speak(text, done) {
-        let fin = false; const end = () => { if (fin) return; fin = true; speaking = false; clearTimeout(st); V('duck', false); if (done) done(); };
+        const tok = ++spkTok;
+        let fin = false; const end = () => { if (fin) return; fin = true; if (tok === spkTok) { speaking = false; quietTill = Date.now() + 700; V('bkKick', 900); } clearTimeout(st); V('duck', false); if (done) done(); };
         let st = 0;
         try {
-            if (!window.speechSynthesis) return;
-            speechSynthesis.cancel();
-            const u = new SpeechSynthesisUtterance(String(text).replace(/[\p{Extended_Pictographic}\uFE0F\u200D]/gu, '').replace(/[·→]/g, ', '));
-            const vp = voiceNow();
-            u.lang = 'ko-KR'; u.pitch = vp[2]; u.rate = vp[3];
-            const vs = koVoices();
-            if (vs.length) u.voice = (opt.vuri && vs.find(v => v.voiceURI === opt.vuri)) || vs.find(v => /google|female|여/i.test(v.name)) || vs[0];
-            V('duck', true); u.onend = u.onerror = end;
-            speaking = true; st = setTimeout(end, 2500 + String(text).length * 160);   // onend 가 안 오는 기기 대비
-            speechSynthesis.speak(u);
-        } catch (e) { end(); }
+            if (!window.speechSynthesis) { ttsLog.err = 'no-tts'; return; }
+            const clean = String(text).replace(/[\p{Extended_Pictographic}\uFE0F\u200D]/gu, '').replace(/[·→]/g, ', ');
+            const busy = speechSynthesis.speaking || speechSynthesis.pending;
+            if (busy) speechSynthesis.cancel();
+            const vp = voiceNow(), vs = koVoices();
+            const vo = vs.length ? ((opt.vuri && vs.find(v => v.voiceURI === opt.vuri)) || vs.find(v => /google|female|여/i.test(v.name)) || vs[0]) : null;
+            const parts = chunks(clean);
+            V('duck', true); speaking = true; ttsLog.n++; ttsLog.at = Date.now(); ttsLog.voice = vo ? vo.name : '(기본)';
+            st = setTimeout(end, 2500 + clean.length * 170);   // onend 가 안 오는 기기 대비
+            const go = () => {
+                if (tok !== spkTok) return;
+                try { if (speechSynthesis.paused) speechSynthesis.resume(); } catch (e) {}
+                parts.forEach((p, k) => {
+                    const u = new SpeechSynthesisUtterance(p);
+                    u.lang = 'ko-KR'; u.pitch = vp[2]; u.rate = vp[3]; if (vo) u.voice = vo;
+                    if (k === 0) u.onstart = () => { ttsLog.ok++; ttsLog.err = ''; };
+                    u.onerror = e => { const er = (e && e.error) || 'error'; if (er !== 'interrupted' && er !== 'canceled') ttsLog.err = er; if (k === parts.length - 1 || er !== 'interrupted') end(); };
+                    if (k === parts.length - 1) u.onend = end;
+                    speechSynthesis.speak(u);
+                });
+            };
+            if (busy) setTimeout(go, 120); else go();
+        } catch (e) { ttsLog.err = String(e && e.message || e).slice(0, 40); end(); }
     }
     // 이어서 말하기 (휴대폰 말풍선): 대답을 읽고 나면 몇 초 동안 다시 들음 · 조용하면 쉼
     function wantFollow(a) {
@@ -1880,6 +1907,7 @@
         if (!isOpenNow) open();
         viaVoice = !!voice;
         if (!voice) followN = 0;
+        if (voice) quietTill = Date.now() + 1500;   // 생각하고 말하기 시작할 때까지 「부캉아」 마이크는 쉼
         me(text);
         let a = null;
         try { a = think(text); } catch (e) { console.warn('부캉이 비서 생각 실패:', e); a = { h: '앗, 잠깐 문제가 생겼어요', l: ['다시 말해 주세요'] }; }
@@ -1887,6 +1915,7 @@
         bot(a);
         runAll(a);
         armFollow(a);
+        if (voice && !speaking && !waitN) V('bkKick', 1700);   // 소리 없이 끝난 대답이면 쉼이 끝난 뒤 「부캉아」 다시 기다림
     }
     function runAll(a) {   // 실행할 일들 (여러 일이면 차례로 · 창을 닫는 일은 맨 마지막에만)
         if (!a) return;
@@ -2059,7 +2088,7 @@
     window.BKA = {
         open, close, ask: t => ask(t, false), think,
         isOpen: () => isOpenNow,
-        busy: () => listening || enrolling,
+        busy: () => listening || enrolling || speaking || waitN > 0 || Date.now() < quietTill,   // v2.126.2: 대답을 읽는 중 · 받아 오는 중에도 「부캉아」 마이크를 다시 켜지 않음 (켜면 안드로이드가 소리를 끔)
         mode: () => mode,
         wake: () => { if (!D.authed()) return; open(); if (!listening) listen(); }
     };
