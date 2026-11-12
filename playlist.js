@@ -532,7 +532,7 @@
         return best;
     }
     function micParse(raw) {   // 들은 말 → 할 일 (못 찾으면 null)
-        const t = micNorm(raw);
+        const t = micNorm(raw).replace(new RegExp('^' + BK_RE.source), '');   // 「부캉아, 다음 타자」처럼 붙여 말해도
         if (!t) return null;
         const ps = micPeople(t);
         const NUM = '(\\d+|[일이삼사오육칠팔구십]+)';
@@ -565,17 +565,18 @@
         if (/틀어|재생|시작|켜/.test(t) && cur) return { say: '재생', run: () => { clearFade(); play(); } };
         return null;
     }
-    function micPaint(state, heard, said) {   // 듣는 판: listen 듣는 중 · done 실행함 · fail 못 알아들음
+    function micPaint(state, heard, said, opt) {   // 듣는 판: listen 듣는 중 · done 실행함 · fail 못 알아들음 (opt: 제목 · 아랫글 바꾸기)
         const pan = $('plMicPan');
+        opt = opt || {};
         if (heard) heard = String(heard).replace(/(부캉|북항|부강|부광|부캥|북캉|북앙|부깡|푸캉|부칸|북한)\s*(이|아|야|하|가|님|씨)?/g, '부캉아');   // 「북항아」로 들려도 화면엔 「부캉아」
         if (!pan) return;
-        document.querySelectorAll('[data-pl="mic"]').forEach(b => { b.classList.toggle('rec', state === 'listen'); b.setAttribute('aria-pressed', state === 'listen' ? 'true' : 'false'); });
+        document.querySelectorAll('[data-pl="mic"]').forEach(b => { const on = state === 'listen' && !opt.title; b.classList.toggle('rec', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); });
         if (!state) { pan.hidden = true; return; }
         pan.hidden = false;
         pan.className = 'pl-micpan ' + state;
-        pan.innerHTML = `<div class="pl-micdot" aria-hidden="true">🎙</div><div class="tx"><b>${state === 'listen' ? '듣고 있어요…' : state === 'done' ? esc(said) : '잘 못 알아들었어요'}</b>` +
-            `<small>${heard ? '「' + esc(heard) + '」' : (state === 'listen' ? '예) 다음 타자 · 선수 이름 · 3번 타자 · 홈런 · 서서히 꺼' : '')}</small>` +
-            (state === 'fail' ? `<small class="ex">${said ? esc(said) : '예) 다음 타자 · 선수 이름 · 7번 · 홈런 · 박수 · 멈춰'}</small>` : '') +
+        pan.innerHTML = `<div class="pl-micdot" aria-hidden="true">🎙</div><div class="tx"><b>${opt.title ? esc(opt.title) : state === 'listen' ? '듣고 있어요…' : state === 'done' ? esc(said) : '잘 못 알아들었어요'}</b>` +
+            `<small>${opt.sub != null ? esc(opt.sub) : heard ? '「' + esc(heard) + '」' : (state === 'listen' ? '예) 다음 타자 · 선수 이름 · 3번 타자 · 홈런 · 서서히 꺼' : '')}</small>` +
+            (state === 'fail' && opt.sub == null ? `<small class="ex">${said ? esc(said) : '예) 다음 타자 · 선수 이름 · 7번 · 홈런 · 박수 · 멈춰'}</small>` : '') +
             `</div><button type="button" class="pl-sbtn" data-pl="mic-x">${state === 'listen' ? '취소' : '닫기'}</button>`;
     }
     function micDuck(on) {   // 듣는 동안 노래 소리를 줄임 (아이폰은 못 줄임)
@@ -623,79 +624,76 @@
         try { r.start(); } catch (e) { micStop('fail', '', '음성 인식을 시작하지 못했어요'); }
     }
 
-    // 🦉 「부캉아」 부르기 (시험) — 타석 모드 화면이 켜져 있는 동안 마이크를 계속 열어 두고, 「부캉아」가 들리면 그 뒤 말을 실행
-    //   · 받아쓰기가 「북항아」「부강아」처럼 적어도 받아 줌 · 「부캉아」만 말하면 7초 동안 다음 말을 기다림
-    //   · 화면을 끄거나 다른 앱 · 다른 탭으로 가면 멈춤 (웹은 화면이 꺼지면 마이크를 못 씀)
+    // 🦉 「부캉아」 부르기 (시험) — v2.119.0: 휴대폰 안의 소리 분석기(bukang.js)가 「부캉아」만 기다림 → 띵 소리 없음
+    //   · 「부캉아」가 들리면 마이크를 넘겨주고 「듣고 있어요」 → 명령 한 번 듣기(🎙 버튼과 같음) → 끝나면 다시 「부캉아」 기다림
+    //   · 노래가 나오는 동안에도 기다림 · 화면을 끄거나 다른 앱 · 다른 탭으로 가면 멈춤 (웹은 화면이 꺼지면 마이크를 못 씀)
+    //   · 「내 목소리 등록」: 「부캉아」를 3번 녹음해 이 기기에만 저장 → 내 목소리를 더 잘 알아들음
     const BK_RE = /(부캉|북항|부강|부광|부캥|북캉|북앙|부깡|푸캉|부칸|북한)(이|아|야|하|가|님|씨)?/;
-    let bkRec = null, bkTimer = 0, bkArmed = 0, bkArmT = 0, bkFails = 0, bkStarted = 0;
-    //   · v2.116.2: 노래 · 안내 · 효과음이 나오는 동안은 듣기를 쉼 (계속 듣다 보면 안드로이드가 「띵」을 되풀이) → 소리가 멈추면 다시 들음
-    const bkCan = () => !!(cfg.bk && SpeechRec && batShown() && !document.hidden && !micOn);
-    function bkBusy() {
-        try {
-            if (audio && !audio.paused && !audio.ended) return true;
-            if (muOn) return true;
-            for (const k in sndEl) { const a = sndEl[k]; if (a && !a.paused && !a.ended) return true; }
-        } catch (e) {}
-        return false;
-    }
+    const BK_ME = 'daeyeon_bk_me';
+    let bkTimer = 0, bkOn = false, bkTok = 0, bkLoading = null, bkEnrolling = false, bkReady = false;
+    const bkCan = () => !!(cfg.bk && SpeechRec && batShown() && !document.hidden && !micOn && !bkEnrolling);
+    const bkMeN = () => { try { const j = JSON.parse(localStorage.getItem(BK_ME) || '[]'); return Array.isArray(j) ? j.length : 0; } catch (e) { return 0; } };
     function bkKick(ms) { clearTimeout(bkTimer); if (cfg.bk) bkTimer = setTimeout(bkSync, ms || 0); }
-    function bkSync() {
-        if (!bkCan()) { if (!micOn) bkStop(); return; }
-        if (bkBusy()) { bkStop(); bkTimer = setTimeout(bkSync, 1500); return; }   // 소리가 끝날 때까지 마이크는 꺼 두고 1.5초마다 확인
-        bkStart();
+    function bkSync() { if (bkCan()) bkStart(); else if (!micOn && !bkEnrolling) bkStop(); }
+    function bkLoad() {
+        if (window.BukangKWS) return Promise.resolve();
+        if (!bkLoading) bkLoading = new Promise((res, rej) => {
+            const s = document.createElement('script');
+            s.src = 'bukang.js?v=2.119.0'; s.async = true;
+            s.onload = () => res(); s.onerror = () => { bkLoading = null; rej(new Error('load')); };
+            document.head.appendChild(s);
+        });
+        return bkLoading;
+    }
+    function bkFail(e) {
+        const n = e && e.name;
+        cfg.bk = false; saveCfg(); bkStop(); renderBat();
+        notify('「부캉아」 부르기를 껐어요', n === 'NotAllowedError' || n === 'SecurityError' ? '마이크 사용을 허락해 주세요 (주소창 왼쪽 자물쇠 → 마이크)' : n === 'NotSupported' ? '이 기기에서는 쓸 수 없어요' : '준비하지 못했어요. 인터넷 연결을 확인해 주세요');
+    }
+    async function bkStart() {
+        if (bkOn) return;
+        bkOn = true; const tok = ++bkTok, first = !bkReady;
+        if (first) notify('「부캉아」 준비 중…', '처음 한 번은 약 14MB를 받아요 (와이파이 추천)');
+        try {
+            await bkLoad();
+            if (!BukangKWS.supported()) throw { name: 'NotSupported' };
+            await BukangKWS.start(bkWake);
+            if (tok !== bkTok || !bkCan()) { if (tok === bkTok) bkStop(); return; }
+            if (first) { bkReady = true; notify('「부캉아」를 기다리고 있어요', '「부캉아」 부르고 「듣고 있어요」가 뜨면 명령을 말해 주세요'); }
+        } catch (e) { if (tok === bkTok) { bkOn = false; bkFail(e); } }
     }
     function bkStop() {
-        clearTimeout(bkTimer); clearTimeout(bkArmT); bkArmed = 0;
-        if (bkRec) { try { bkRec.onresult = bkRec.onerror = bkRec.onend = null; bkRec.abort(); } catch (e) {} bkRec = null; }
+        clearTimeout(bkTimer);
+        bkTok++;
+        if (bkOn) { bkOn = false; try { if (window.BukangKWS) BukangKWS.stop(); } catch (e) {} }
     }
-    function bkDisarm() { clearTimeout(bkArmT); bkArmed = 0; micDuck(false); }
-    function bkArm() {   // 「부캉아」만 들림 → 7초 동안 다음 말 기다림
-        bkArmed = Date.now() + 7000; clearTimeout(bkArmT);
-        clearTimeout(micTimer); micDuck(true); micPaint('listen');
-        bkArmT = setTimeout(() => { bkArmed = 0; micDuck(false); micPaint(''); }, 7000);
+    function bkWake() {   // 「부캉아」가 들림 → 마이크를 넘겨주고 명령 한 번 듣기
+        bkStop();
+        if (!micOn) setTimeout(() => { if (!micOn) micToggle(); }, 120);
     }
-    function bkCmd(tx) {   // 들은 말에서 「부캉아」 앞부분을 떼고 남은 말 (부캉아가 없으면 null)
-        const n = micNorm(tx), m = BK_RE.exec(n);
-        if (m) return n.slice(m.index + m[0].length);
-        return bkArmed > Date.now() ? n : null;
-    }
-    function bkStart() {
-        if (bkRec) return;
-        let r;
-        try { r = new SpeechRec(); } catch (e) { return; }
-        bkRec = r; bkStarted = Date.now();
-        r.lang = 'ko-KR'; r.continuous = true; r.interimResults = true; r.maxAlternatives = 3;
-        r.onresult = ev => {
-            for (let i = ev.resultIndex; i < ev.results.length; i++) {
-                const res = ev.results[i], tx = (res[0] && res[0].transcript || '').trim();
-                let cmd = null;
-                for (let j = 0; j < res.length && cmd === null; j++) cmd = bkCmd(res[j].transcript);
-                if (cmd === null) continue;
-                bkFails = 0;
-                if (!res.isFinal) { clearTimeout(micTimer); micDuck(true); micPaint('listen', tx); continue; }
-                if (!cmd) { bkArm(); continue; }
-                let hit = null;
-                for (let j = 0; j < res.length && !hit; j++) { const c = bkCmd(res[j].transcript); if (c) hit = micParse(c); }
-                bkDisarm();
-                clearTimeout(micTimer);
-                if (hit && hit.run) { bkStop(); micPaint('done', tx, hit.say); try { hit.run(); } catch (e) {} bkKick(1500); return; }
-                else micPaint('fail', tx, hit ? hit.say : '');
-                micTimer = setTimeout(() => micPaint(''), hit && hit.run ? 2200 : 4500);
+    async function bkEnroll() {   // 🎤 내 목소리 등록: 「부캉아」 3번 녹음
+        if (bkEnrolling) return;
+        bkEnrolling = true; bkStop(); clearTimeout(micTimer);
+        let ok = 0, tries = 0;
+        try {
+            await bkLoad();
+            if (!BukangKWS.supported()) throw { name: 'NotSupported' };
+            await BukangKWS.init(); bkReady = true;
+            while (ok < 3 && tries < 7) {
+                tries++;
+                micPaint('listen', '', '', { title: `「부캉아」라고 한 번 말해 주세요 (${ok + 1}/3)`, sub: '평소 부르듯이 · 2초 동안 들어요' });
+                const x = await BukangKWS.record(2200);
+                if (await BukangKWS.enroll(x)) ok++;
+                else { micPaint('fail', '', '', { title: '잘 안 들렸어요', sub: '조금 더 크게, 「부캉아」 한 번만 말해 주세요' }); await new Promise(r => setTimeout(r, 1300)); }
             }
-        };
-        r.onerror = ev => {
-            const c = ev && ev.error;
-            if (c === 'not-allowed' || c === 'service-not-allowed') {
-                cfg.bk = false; saveCfg(); bkStop(); renderBat();
-                notify('「부캉아」 부르기를 껐어요', '마이크 사용을 허락해 주세요 (주소창 왼쪽 자물쇠 → 마이크)');
-            }
-        };
-        r.onend = () => {   // 말이 한동안 없으면 크롬이 스스로 끊음 → 다시 켬 (빨리 끊기기를 되풀이하면 점점 천천히)
-            bkRec = null;   // 「부캉아」만 듣고 끊겨도 7초 기다림은 그대로 (안드로이드는 말 한마디마다 끊김)
-            bkFails = Date.now() - bkStarted < 3000 ? bkFails + 1 : 0;
-            if (cfg.bk) bkKick(bkFails > 3 ? Math.min(30000, 2000 * bkFails) : bkBusy() ? 0 : 300);
-        };
-        try { r.start(); } catch (e) { bkRec = null; bkKick(3000); }
+            micPaint(ok ? 'done' : 'fail', '', '', { title: ok ? `내 목소리 ${ok}번 등록했어요` : '등록하지 못했어요', sub: ok ? '이제 「부캉아」를 더 잘 알아들어요' : '조용한 곳에서 다시 해 주세요' });
+        } catch (e) {
+            micPaint('fail', '', '', { title: '등록하지 못했어요', sub: e && (e.name === 'NotAllowedError' || e.name === 'SecurityError') ? '마이크 사용을 허락해 주세요 (주소창 왼쪽 자물쇠 → 마이크)' : '다시 해 주세요' });
+        } finally {
+            bkEnrolling = false;
+            clearTimeout(micTimer); micTimer = setTimeout(() => micPaint(''), 3500);
+            renderBat(); bkKick(600);
+        }
     }
 
     // 👉 아래 재생 띠를 옆으로 끝까지 밀면 사라지면서 꺼짐 (v2.117.0) — 띠 너비의 45% 넘게 밀어야 꺼짐(둔하게) · 덜 밀면 제자리로
@@ -1227,8 +1225,10 @@
     }
     function bkRow() {   // 🦉 「부캉아」 부르기 켜기/끄기 (시험)
         if (!SpeechRec) return '';
-        return `<div class="pl-ann pl-bk"><span class="tx">🦉 「부캉아」로 부르기 <em>시험</em><small>${cfg.bk ? '「부캉아, 다음 타자」처럼 말하면 바로 실행 · 화면이 켜져 있을 때만' : '꺼 둠 · 켜면 마이크를 계속 열어 둬요'}</small></span>` +
-            `<button type="button" class="pl-sw" data-pl="bk" role="switch" aria-checked="${cfg.bk ? 'true' : 'false'}" aria-label="부캉아로 부르기 ${cfg.bk ? '끄기' : '켜기'}"></button></div>`;
+        const n = bkMeN();
+        return `<div class="pl-ann pl-bk"><span class="tx">🦉 「부캉아」로 부르기 <em>시험</em><small>${cfg.bk ? '「부캉아」 → 「듣고 있어요」가 뜨면 명령 · 화면이 켜져 있을 때만' : '꺼 둠 · 켜면 휴대폰이 「부캉아」를 기다려요 (띵 소리 없음)'}</small></span>` +
+            `<button type="button" class="pl-sw" data-pl="bk" role="switch" aria-checked="${cfg.bk ? 'true' : 'false'}" aria-label="부캉아로 부르기 ${cfg.bk ? '끄기' : '켜기'}"></button></div>` +
+            (cfg.bk ? `<div class="pl-bkme"><button type="button" data-pl="bk-me">🎤 내 목소리 등록 <small>${n ? n + '개 등록됨 · 다시 하기' : '「부캉아」 3번 녹음'}</small></button>${n ? '<button type="button" class="x" data-pl="bk-me-x">지우기</button>' : ''}</div>` : '');
     }
     const ob = (o, v, label, on) => `<button type="button" data-pl="opt" data-o="${o}" data-v="${v}" aria-pressed="${on ? 'true' : 'false'}">${label}</button>`;   // 타석 옵션: 둘 중 고르기 버튼
     function renderBat() {
@@ -1446,7 +1446,9 @@
                 el.parentNode.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b === el ? 'true' : 'false'));
                 break;
             }
-            case 'bk': cfg.bk = !cfg.bk; saveCfg(); bkStop(); if (cfg.bk) { bkKick(0); notify('「부캉아」 부르기를 켰어요', '「부캉아, 다음 타자」 · 「부캉아, 홈런」처럼 말해 보세요'); } else { bkDisarm(); micPaint(''); } renderBat(); break;
+            case 'bk': cfg.bk = !cfg.bk; saveCfg(); bkStop(); if (cfg.bk) bkKick(0); else micPaint(''); renderBat(); break;
+            case 'bk-me': bkEnroll(); break;
+            case 'bk-me-x': try { if (window.BukangKWS) BukangKWS.clearMine(); else localStorage.removeItem(BK_ME); } catch (e) {} notify('내 목소리 등록을 지웠어요'); renderBat(); break;
             case 'ann': cfg.ann = !cfg.ann; saveCfg(); if (!cfg.ann) annCancel(); else annPrep(); renderBat(); break;
             case 'nextbat': mode = mode === 'ph' ? '' : mode; nextBatter(); break;
             case 'ph-open': mode = mode === 'ph' ? '' : 'ph'; pickPid = ''; renderBat(); break;

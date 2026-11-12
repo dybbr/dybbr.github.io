@@ -402,3 +402,8 @@ body:has(.pl-micpan:not([hidden])) .ui-zoom-ctrl { visibility: hidden; }
 .pl-chips button.offc.on { background: var(--pl-sub); border-color: var(--pl-sub); border-style: solid; }
 .pl-sbtns { flex: none; display: flex; flex-direction: column; gap: 6px; }
 .pl-offb.on { background: #ffffff; color: var(--pl-navy); border-color: #ffffff; }
+/* 🎤 「부캉아」 내 목소리 등록 (v2.119.0) */
+.pl-bkme { display: flex; gap: 8px; margin: 6px 0 0; }
+.pl-bkme button { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap; min-height: 40px; padding: 6px 12px; border-radius: 10px; border: 1px solid var(--pl-line); background: var(--pl-card); color: var(--pl-fg); font: inherit; font-size: 14px; font-weight: 800; cursor: pointer; }
+.pl-bkme button small { font-size: 12px; font-weight: 700; color: var(--pl-sub); }
+.pl-bkme button.x { flex: none; color: var(--pl-sub); font-weight: 700; }
