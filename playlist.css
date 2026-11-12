@@ -380,9 +380,6 @@ body:has(.pl-micpan:not([hidden])) .ui-zoom-ctrl { visibility: hidden; }
 .pl-micpan .tx small { display: block; margin-top: 2px; font-size: 13px; color: var(--pl-sub); word-break: keep-all; }
 .pl-micpan .tx small.ex { color: var(--pl-hot); }
 @media (prefers-reduced-motion: reduce) { .pl-mic.rec, .pl-micpan.listen .pl-micdot { animation: none; } }
-/* 🦉 「부캉아」 부르기 (시험) */
-.pl-ann.pl-bk { margin-top: 8px; }
-.pl-ann .tx em { font-style: normal; display: inline-block; margin-left: 4px; padding: 0 6px; border-radius: 6px; background: var(--pl-red); color: #fff; font-size: 11px; line-height: 18px; vertical-align: 2px; }
 /* 👉 재생 띠 옆으로 밀어서 끄기 (v2.117.0) */
 .pl-mini { touch-action: pan-y; }
 .pl-mini.pl-swipe { user-select: none; -webkit-user-select: none; }
@@ -402,11 +399,6 @@ body:has(.pl-micpan:not([hidden])) .ui-zoom-ctrl { visibility: hidden; }
 .pl-chips button.offc.on { background: var(--pl-sub); border-color: var(--pl-sub); border-style: solid; }
 .pl-sbtns { flex: none; display: flex; flex-direction: column; gap: 6px; }
 .pl-offb.on { background: #ffffff; color: var(--pl-navy); border-color: #ffffff; }
-/* 🎤 「부캉아」 내 목소리 등록 (v2.119.0) */
-.pl-bkme { display: flex; gap: 8px; margin: 6px 0 0; }
-.pl-bkme button { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap; min-height: 40px; padding: 6px 12px; border-radius: 10px; border: 1px solid var(--pl-line); background: var(--pl-card); color: var(--pl-fg); font: inherit; font-size: 14px; font-weight: 800; cursor: pointer; }
-.pl-bkme button small { font-size: 12px; font-weight: 700; color: var(--pl-sub); }
-.pl-bkme button.x { flex: none; color: var(--pl-sub); font-weight: 700; }
 /* 🔒 시안: 우리 아이 곡 모두에게 숨기기 */
 .pl-htag { font-style: normal; display: inline-block; margin-right: 5px; padding: 0 6px; border-radius: 5px; background: var(--pl-navy); color: #ffffff; font-size: 11px; font-weight: 800; line-height: 17px; }
 .pl-ox.hid { background: #16a34a; border-color: #16a34a; color: #ffffff; }

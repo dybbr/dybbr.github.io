@@ -1310,18 +1310,11 @@
     }
 
     function annRow(nxt, ord) {   // 📢 장내 아나운서 켜기/끄기 (v2.112.0 · 시안 ④ B)
-        if (!annMan) return bkRow();
+        if (!annMan) return '';
         const a = nxt ? annPieces(nxt, ord) : null;
         const ex = a ? a.text : nxt ? ord + '번 타자, ' + nxt.name : '1번 타자, 선수 이름';
         return `<div class="pl-ann"><span class="tx">📢 장내 아나운서<small>${cfg.ann ? `「${esc(ex)}」 다음에 등장곡` : '꺼 둠 · 등장곡만 바로 나와요'}</small></span>` +
-            `<button type="button" class="pl-sw" data-pl="ann" role="switch" aria-checked="${cfg.ann ? 'true' : 'false'}" aria-label="장내 아나운서 ${cfg.ann ? '끄기' : '켜기'}"></button></div>` + bkRow();
-    }
-    function bkRow() {   // 🦉 「부캉아」 부르기 켜기/끄기 (시험)
-        if (!SpeechRec) return '';
-        const n = bkMeN();
-        return `<div class="pl-ann pl-bk"><span class="tx">🦉 「부캉아」로 부르기 <em>시험</em><small>${cfg.bk ? '「부캉아」 → 「듣고 있어요」가 뜨면 명령 · 다른 탭에선 부캉이 비서가 열려요' : '꺼 둠 · 켜면 휴대폰이 「부캉아」를 기다려요 (띵 소리 없음)'}</small></span>` +
-            `<button type="button" class="pl-sw" data-pl="bk" role="switch" aria-checked="${cfg.bk ? 'true' : 'false'}" aria-label="부캉아로 부르기 ${cfg.bk ? '끄기' : '켜기'}"></button></div>` +
-            (cfg.bk ? `<div class="pl-bkme"><button type="button" data-pl="bk-me">🎤 내 목소리 등록 <small>${n ? n + '개 등록됨 · 다시 하기' : '「부캉아」 3번 녹음'}</small></button>${n ? '<button type="button" class="x" data-pl="bk-me-x">지우기</button>' : ''}</div>` : '');
+            `<button type="button" class="pl-sw" data-pl="ann" role="switch" aria-checked="${cfg.ann ? 'true' : 'false'}" aria-label="장내 아나운서 ${cfg.ann ? '끄기' : '켜기'}"></button></div>`;   // v2.126.1: 「부캉아로 부르기(시험)」 줄 · 내 목소리 등록 줄은 뺌 → 부캉이 비서 ⚙ 설정에서 켜고 끔
     }
     const ob = (o, v, label, on) => `<button type="button" data-pl="opt" data-o="${o}" data-v="${v}" aria-pressed="${on ? 'true' : 'false'}">${label}</button>`;   // 타석 옵션: 둘 중 고르기 버튼
     function renderBat() {
