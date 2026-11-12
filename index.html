@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.116.0 · b261112";
+        const APP_VERSION = "v2.116.1 · b261112";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -4245,7 +4245,7 @@
             <div class="wn-head">
                 <span class="wn-kick">DAEYEON BASEBALL · NEW SONGS</span>
                 <div class="wn-num" id="wnNum">74<small>NEW SONGS</small></div>
-                <div class="wn-line" id="wnLine">선수마다 새 주제곡 2곡이 도착했어요</div>
+                <div class="wn-line" id="wnLine">선수마다 새 주제곡이 도착했어요</div>
             </div>
             <div class="wn-marq" aria-hidden="true"><div class="wn-row" id="wnRow1"></div><div class="wn-row r2" id="wnRow2"></div><div class="wn-row r3" id="wnRow3"></div></div>
             <div class="wn-mine" id="wnMine" hidden></div>
@@ -7541,9 +7541,11 @@
     //   · 기기마다 한 번 (닫기 · 곡 누르기 = daeyeon_whatsnew_seen 에 WN_ID 기록) · WN_UNTIL 이 지나면 안 띄움 (새로 오신 분께 옛 소식이 안 뜨게)
     //   · 다음에 새 곡을 또 내면 WN_ID 만 바꾸면 다시 한 번 뜸 (새 곡 판별: more[] 의 key 가 WN_KEY_RE 에 맞는 곡)
     //   · v2.105.2: 태블릿에서 잘리던 포스터를 고치고 다시 알림 → WN_ID 'songs-2026-11' → 'songs-2026-11b' (이미 본 기기도 한 번 더 뜸)
+    //   · v2.116.1: 11-12 새 곡 74곡(키 「학년-배번-3」 · 「-4」)을 알림 → WN_ID 'songs-2026-11c' · 새 곡 = WN_NEW_RE 에 맞는 곡만 셈 (예전 곡 · 김승원 P1~P3 빼고)
     //   · 서버 · 시트 호출 없음 (명단 · cheer-songs.json 은 원래 받던 것)
     // ==========================================================
-    const WN_ID = 'songs-2026-11b', WN_UNTIL = '2026-12-31', WN_SEEN_KEY = 'daeyeon_whatsnew_seen', WN_KEY_RE = /^(\d+-\d+-\d+|P\d+)$/;
+    const WN_NEW_RE = /^\d+-\d+-[34]$/;   // 이번 알림에서 「새 곡」으로 셀 키 (다음에 새 곡을 내면 이것과 WN_ID 를 같이 바꿈)
+    const WN_ID = 'songs-2026-11c', WN_UNTIL = '2026-12-31', WN_SEEN_KEY = 'daeyeon_whatsnew_seen', WN_KEY_RE = /^(\d+-\d+-\d+|P\d+)$/;
     let wnTimer = null;
     function wnSeen() { try { return localStorage.getItem(WN_SEEN_KEY) === WN_ID; } catch (e) { return true; } }
     function wnMark() { try { localStorage.setItem(WN_SEEN_KEY, WN_ID); } catch (e) {} }
@@ -7570,10 +7572,10 @@
             window.loadCheerSongs().then(function () {
                 const kids = players.filter(p => !isStaff(p.grade) && isParentOfPlayer(p));
                 const vis = players.filter(p => !isStaff(p.grade) && p.visible !== false);
-                const isNew = r => /^\d+-\d+-\d+$/.test(String(r.m.key));
+                const isNew = r => WN_NEW_RE.test(String(r.m.key));
                 const fresh = vis.reduce((a, p) => a.concat(wnTracks(p).filter(isNew)), []);   // 이번에 새로 나온 곡 (김승원 시범 곡 P1~P3 은 빼고 셈)
                 if (!fresh.length) return;
-                let mine = []; kids.forEach(p => { mine = mine.concat(wnTracks(p)); });
+                let mine = []; kids.forEach(p => { mine = mine.concat(wnTracks(p).filter(isNew)); });   // v2.116.1: 우리 아이 곡도 이번 새 곡만
                 // 장르 이름표 — 새 곡들의 장르에서 BPM 을 떼고 겹치지 않게 섞어서 세 줄로
                 const gen = Array.from(new Set(fresh.map(r => String(r.m.beat || '').replace(/\s*\d+\s*BPM.*$/i, '').trim()).filter(Boolean)));
                 for (let k = gen.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); const t = gen[k]; gen[k] = gen[j]; gen[j] = t; }
