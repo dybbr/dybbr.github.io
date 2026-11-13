@@ -8,7 +8,7 @@
     'use strict';
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     const LS = 'daeyeon_bka';
-    const VER = '2.128.0';
+    const VER = '2.129.1';
     const opt = (function () { try { return Object.assign({ say: true }, JSON.parse(localStorage.getItem(LS) || '{}')); } catch (e) { return { say: true }; } })();
     const saveOpt = () => { try { localStorage.setItem(LS, JSON.stringify(opt)); } catch (e) {} };
     const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -35,8 +35,8 @@
     const today0 = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
     const nowHM = () => { const d = new Date(); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
     const C = s => String(s || '').replace(/[\s.,!?~·'"「」()（）\-]/g, '');
-    const BK = /(부캉|북항|부강|부광|부캥|북캉|북앙|부깡|푸캉|부칸|북한|보캉|호캉|복학|무캉|뿌캉|부칭)\s*(이는|이가|이도|이야|이랑|이|아|야|하|가|님|씨|는|은|도)?[\s,.!~]*/g;
-    const fixBk = s => String(s || '').replace(/(부캉|북항|부강|부광|부캥|북캉|북앙|부깡|푸캉|부칸|북한|보캉|호캉|복학|무캉|뿌캉|부칭)\s*(이는|이가|이도|이야|이랑|이|아|야|하|가|님|씨|는|은|도)?/g, '부캉아');
+    const BK = /(부캉|북항|부강|부광|부캥|북캉|북앙|부깡|푸캉|부칸|북한|보캉|호캉|복학|무캉|뿌캉|부칭|욱환|우캉|욱캉)\s*(이는|이가|이도|이야|이랑|이|아|야|하|가|님|씨|는|은|도)?[\s,.!~]*/g;
+    const fixBk = s => String(s || '').replace(/(부캉|북항|부강|부광|부캥|북캉|북앙|부깡|푸캉|부칸|북한|보캉|호캉|복학|무캉|뿌캉|부칭|욱환|우캉|욱캉)\s*(이는|이가|이도|이야|이랑|이|아|야|하|가|님|씨|는|은|도)?/g, '부캉아');
     function korNum(s) {   // 「이십삼」 → 23
         const N = '일이삼사오육칠팔구';
         const m = /^([일이삼사오육칠팔구]?)(십?)([일이삼사오육칠팔구]?)$/.exec(s || '');
@@ -177,11 +177,40 @@
                 if (k.length > bl) { bl = k.length; best = [p]; } else if (k.length === bl && best.indexOf(p) < 0) best.push(p);
             });
         });
+        if (best.length && bl === 2) {   // v2.129.1: 성이 다르게 들림 (「김승원」 → 「김승환」 → 오승환 X) — 앞 글자가 다른 성이면 그 성의 비슷한 이름이 먼저
+            const sur = surOf(t, best);
+            if (sur) { const r = surFix(t, sur.c, sur.w); if (r) return r; best.fuzzy = 1; }
+        }
         if (!best.length && /찾|선수|누구|어디|노래|주제곡|등장곡|틀어|들려|번|이야|야$|이$|친구/.test(t)) {   // 비슷한 발음 (「도윤」 ↔ 「도윤이」 「도연」)
             const fz = fuzzyBest(t, D.players(), p => { const nm = C(p.name); return nm.length >= 3 ? [nm, nm.slice(1)] : [nm]; });
-            if (fz.length) { best = fz.map(f => f.x).filter((x, i, a) => a.indexOf(x) === i); best.fuzzy = 1; }
+            if (fz.length) {
+                best = fz.map(f => f.x).filter((x, i, a) => a.indexOf(x) === i);
+                if (best.length > 1) {   // 여럿이면 성까지 가장 닮은 사람 (「김승완」 → 김승원)
+                    const sc = best.map(p => fuzzyDist(t, C(p.name))), m = Math.min.apply(null, sc);
+                    if (sc.filter(x => x === m).length === 1 && m <= 2) best = [best[sc.indexOf(m)]];
+                }
+                best.fuzzy = 1;
+            }
         }
         return best;
+    }
+    // 이름(성 뺀 두 글자) 바로 앞 글자가 명단에 있는 다른 성이면 { c: 그 성, w: 들린 세 글자 }
+    function surOf(t, ps) {
+        const surs = {}; D.players().forEach(p => { const n = C(p.name); if (n.length === 3) surs[n[0]] = 1; });
+        for (const p of ps) {
+            const n = C(p.name); if (n.length !== 3) continue;
+            const i = t.indexOf(n.slice(1)); if (i < 1) continue;
+            const c = t[i - 1]; if (c !== n[0] && surs[c]) return { c, w: c + n.slice(1) };
+        }
+        return null;
+    }
+    function surFix(t, c, w) {
+        const cand = D.players().filter(p => { const n = C(p.name); return n.length === 3 && n[0] === c; })
+            .map(p => ({ p, d: lev(jamo(C(p.name)), jamo(w)) })).filter(x => x.d <= 3).sort((a, b) => a.d - b.d);
+        if (!cand.length || (cand[1] && cand[1].d === cand[0].d)) return null;
+        const r = [cand[0].p]; r.fuzzy = 1; r.heard = w;
+        r.alt = D.players().filter(p => C(p.name).slice(1) === w.slice(1));
+        return r;
     }
     function venueKeys(v) {
         let ns = [];
@@ -455,7 +484,14 @@
 
         if (who.length && songW) {
             if (who.length > 1) return playerList(who, '누구 노래를 틀까요?');
-            return Object.assign(playP(who[0]), { run: null });
+            const pr = Object.assign(playP(who[0]), { run: null });
+            if (who === ps && ps.fuzzy && !ps.heard) pr.l = ['🤔 비슷한 이름으로 찾았어요. 아니면 다시 말해 주세요'].concat(pr.l || []);
+            if (who === ps && ps.heard) {   // v2.129.1: 성으로 고쳐 찾았으면 알려 주고, 원래 들린 이름 선수도 버튼으로
+                const jc = (ps.heard.charCodeAt(ps.heard.length - 1) - 0xAC00) % 28;
+                pr.l = [`🤔 「${ps.heard}」${jc && jc !== 8 ? '으로' : '로'} 들려서 성이 같은 ${who[0].name} 선수로 찾았어요`].concat(pr.l || []);
+                if (ps.alt.length) pr.btns = ps.alt.slice(0, 2).map(p => ({ t: `🎵 아니요, ${p.name} 노래`, fn: () => playP(p) }));
+            }
+            return pr;
         }
         if (songW && /틀|들려|재생|플레이/.test(t) && !/새(노래|곡)/.test(t)) {   // 누구 노래인지 말 안 하면: 우리 아이 한 명 → 그 곡, 아니면 전체
             let u = null; try { u = getActiveUser(); } catch (e) {}
@@ -503,6 +539,12 @@
 
         // 8) 유니폼 접수
         if (/유니폼/.test(t) && /주문|신청|접수|사이즈|치수|구매|살래/.test(t)) return { h: '👕 유니폼 신청 창을 열게요', say: '유니폼 신청 창을 열게요.', run: () => { close(); openUniformModal(); } };
+
+        // 8-1) v2.129.1: 「여기 · 여기 위치 · 이 위치 · 요기」 = 「현재 위치」 (하코: 「여기 위치」를 못 알아들음 → 다음 경기 구장으로 가던 것)
+        if (HERE.test(t) && !/여기까지|여기있|여기봐|여기서멈|여기서그만/.test(t) && !findVenueIn(t.replace(/어디|위치/g, '')) && !/일정|경기|시합|훈련|대회|연습|선수|노래|주제곡|공지|당번|유니폼/.test(t)) {
+            const ht = hereNorm(t), r = weather(s, ht) || place3(s, ht, fresh);
+            if (r) return r;
+        }
 
         // 9) 일정이 필요한 질문들
         const schedW = /일정|스케줄|경기|대회|시합|훈련|연습|행사|휴식|언제|몇시|뭐있|뭐해|뭐하|모여|집합|출발|복장|뭐입|입고|상대|어디서|결과|이겼|졌|몇대몇|스코어|점수|전적|성적|몇승|승률|mvp|수훈/i.test(t);
@@ -707,7 +749,7 @@
         return { h: `☀️ ${d.getMonth() + 1}월 ${d.getDate()}일 ${DOW[d.getDay()]}요일 브리핑`, l: items.length ? [] : ['오늘 · 내일은 조용해요'], items, say: says.join(' ') || '오늘은 특별한 소식이 없어요.' };
     }
     function counting(s, t) {
-        if (/몇명|인원|몇분/.test(t)) {
+        if (/몇명|인원|몇분/.test(t) && !/까지몇분|몇분걸|몇분거리|몇분이면/.test(t)) {
             const all = D.players(), st = p => { try { return isStaff(p.grade); } catch (e) { return false; } };
             if (/코치|감독|스태프/.test(t)) { const n = all.filter(st).length; return { h: `👔 코칭스태프 ${n}명`, say: `코칭스태프는 ${n}명이에요.` }; }
             const gr = numOf(t, new RegExp('([1-6]|[일이삼사오육])학년'));
@@ -1006,11 +1048,13 @@
             });
         }, () => geoFail());
     }
+    // v2.129.1: 「여기」 계열 말을 「현재위치」 한 낱말로 맞춤 (공백 없앤 글 기준)
+    const HERE = /여기|요기|이곳|이근처|이위치|이주소|이장소|현위치|내위치|현재위치|지금위치|있는곳/;
+    const hereNorm = t => t.replace(/지금여기|여기지금/g, '여기').replace(/(여기|요기|이곳|이근처)(에서|서|의|는|가|요)?(위치|주소|좌표|장소)?|이(위치|주소|장소)|현위치|내가있는곳|지금있는곳|내위치|지금위치/g, '현재위치').replace(/(현재위치)+/g, '현재위치');
     function place3(s, t, fresh) {
-        if (/내위치|현재위치|지금위치|여기어디|여기가어디|내가어디|여긴어디|지금어디/.test(t)) return { h: '📍 위치를 찾고 있어요…', wait: whereAmI };
         if (/(가까운|가까이|근처)(에)?(있는)?(구장|야구장|운동장)|(구장|야구장|운동장).*(가까운|가깝)/.test(t))
             return { h: '📍 가까운 구장을 찾고 있어요…', wait: () => geoNow().then(me => venueDists(me).then(ds => ds.length ? { h: '📍 가까운 구장', all: 1, items: ds.slice(0, 6).map(x => ({ h: `${vLabel(x.v.name)} · ${kmTxt(x.km)}`, s: `차로 약 ${carMin(x.km)}분쯤 (어림)`, fn: () => routeCard({ name: x.v.name, v: x.v }) })), say: `가장 가까운 구장은 ${vLabel(ds[0].v.name)}, 약 ${kmTxt(ds[0].km).replace('km', '킬로미터').replace('m', '미터')}예요.` } : { h: '구장 위치를 못 찾았어요' }), () => geoFail()) };
-        if (/얼마나걸|얼마나멀|몇분걸|몇분거리|몇킬로|몇키로|거리가|거리는|멀어|가까워/.test(t)) {
+        if (/얼마나걸|얼마나멀|몇분걸|몇분거리|몇킬로|몇키로|거리가|거리는|멀어|가까워|까지몇분|까지얼마|까지몇시간/.test(t)) {
             let vo = null; const vIn = findVenueIn(t);
             if (vIn) vo = { name: vIn.name, v: vIn };
             else if ((/거기|그곳|그구장/.test(t) || fresh) && ctx.venue) vo = ctx.venue;
@@ -1020,6 +1064,8 @@
             const nm = vLabel(vo.name || vo.v.name);
             return { h: `📍 ${nm}까지 재 보고 있어요…`, wait: () => geoNow().then(me => vPos(vo.v).then(p => { const km = distKm(me, p), c = routeCard(vo); c.h = `📍 ${nm}까지 약 ${kmTxt(km)}`; c.l.unshift(`차로 약 ${carMin(km)}분쯤 (곧은 거리로 어림한 값)`, '정확한 시간은 길찾기 버튼으로 확인해 주세요'); c.say = `${nm}까지 곧은 거리로 약 ${kmTxt(km).replace('km', '킬로미터').replace('m', '미터')}, 차로 ${carMin(km)}분쯤이에요.`; return c; }, () => ({ h: `${nm} 위치를 못 찾았어요` })), () => geoFail()) };
         }
+        // v2.129.1: 「현재 위치에서 가까운 구장」 「여기서 ○○까지 얼마나」는 위에서 먼저 — 그 밖의 「현재 위치 · 여기 어디」는 지금 위치 알려 주기
+        if (/내위치|현재위치|지금위치|여기어디|여기가어디|내가어디|여긴어디|지금어디/.test(t)) return { h: '📍 위치를 찾고 있어요…', wait: whereAmI };
         return null;
     }
 
