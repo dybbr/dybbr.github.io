@@ -1,0 +1,11 @@
+{
+ "bytes": 113980781,
+ "sha256": "9a602f14174fa236a578922bd2403773506a0f8fd5035b881a575344a24eacce",
+ "parts": [
+  "model.onnx.0",
+  "model.onnx.1",
+  "model.onnx.2"
+ ],
+ "vocab": 35592,
+ "source": "model_quantized.onnx"
+}
