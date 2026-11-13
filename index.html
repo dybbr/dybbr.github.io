@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.129.1 · b261113";
+        const APP_VERSION = "v2.132.0 · b261113";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -113,7 +113,7 @@
     <script src="playlist.js?v=2.127.0"></script>
     <!-- 🦉 부캉이 비서 (v2.120.0) — 「부캉아」 · 🎙 · 글자로 묻기 → 일정 · 결과 · 구장 · 선수 · 공지 · 당번 · 노래 (bukang-ai.js / bukang-ai.css 를 고칠 때만 ?v= 올리기) -->
     <link rel="stylesheet" href="bukang-ai.css?v=2.128.0">
-    <script src="bukang-ai.js?v=2.129.1"></script>
+    <script src="bukang-ai.js?v=2.132.0"></script>
     <!-- 🦈 부캉이 그림 (v2.98.0: 따로 뺌 — 그림을 바꿀 때만 아래 ?v= 숫자 올리기) -->
     <link rel="stylesheet" href="bk-img.css?v=2.98.0">
 
@@ -1891,6 +1891,14 @@
         .ev-detail-row { display: flex; gap: 10px; padding: 9px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; color: #1e293b; line-height: 1.5; }
         .ev-detail-row .k { flex-shrink: 0; width: 70px; font-size: 12px; font-weight: 800; color: #64748b; padding-top: 2px; }
         .ev-detail-row .v { flex: 1; white-space: pre-line; word-break: keep-all; }
+        /* 🔘 v2.131.0: 일정 상세 아래 버튼 한 줄 (하코 선택 C안) */
+        #eventDetailBtns.edb { display: block; }
+        .edb-row { display: flex; gap: 6px; }
+        .edb .eb { flex: 1 1 auto; min-width: 0; min-height: 48px; padding: 0 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border: 1px solid #cbd5e1; background: #fff; color: #0b2240; border-radius: 10px; font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
+        .edb .eb.ghost { flex: 0.6 1 auto; background: #f1f5f9; }
+        .edb .eb.pri { background: #0b2240; border-color: #0b2240; color: #fff; }
+        .ed-del-link { display: flex; justify-content: flex-end; margin: 10px 0 2px; }
+        .ed-del-link button { border: 0; background: none; color: #b91c1c; font: inherit; font-size: 12.5px; font-weight: 800; text-decoration: underline; text-underline-offset: 3px; padding: 6px 2px; cursor: pointer; }
         .grade-checks { display: flex; flex-wrap: wrap; gap: 6px; }
         .grade-checks label { display: inline-flex; align-items: center; gap: 4px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 5px 9px; font-size: 12px; font-weight: 700; color: #334155; cursor: pointer; }
         .grade-checks input { width: auto; margin: 0; }
@@ -2677,6 +2685,10 @@
     .ev-place-card .pc-new { color: #fbbf24; }
     .ev-place-card .pc-btn, .pl-btns button, .ps-pick { background: #1b2638; border-color: #2a374e; color: #dde3ec; }
     .pl-btns button.pri { background: #fee500; border-color: #f2d900; color: #191600; }
+    .edb .eb { background: #1b2638; border-color: #2a374e; color: #dde3ec; }
+    .edb .eb.ghost { background: #131c2b; }
+    .edb .eb.pri { background: #2f5f9e; border-color: #2f5f9e; color: #fff; }
+    .ed-del-link button { color: #f19aa6; }
     .pl-route button { background: #151e2e; border-color: #2a374e; color: #bcc6d4; }
     .pl-addr, .ps-rt span, .ps-sec, .ps-msg, .bm-addr { color: #97a3b7; }
     .bm-map { border-color: #2a374e; }
@@ -3002,6 +3014,14 @@
     .gc-team { display: flex; flex-direction: column; align-items: center; gap: 1px; min-width: 0; }
     .gc-team .nm { font-size: 16px; font-weight: 900; display: flex; align-items: center; gap: 5px; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .gc-team .nm i { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+    /* 🛡️ v2.130.0: 공식 로고 A안(팀 마크형) — 우리 팀 = 야구부 엠블럼 · 상대 팀 = 두 글자 동그라미 */
+    .gc-team .lg { height: 50px; width: auto; aspect-ratio: 2426 / 1910; display: block; margin: 0 auto 4px; filter: drop-shadow(0 3px 5px rgba(0,0,0,.35)); }
+    .gc-team .op-lg { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; font-weight: 900; font-size: 15px; color: #fff; border: 3px solid rgba(255,255,255,.85); margin: 2px auto 6px; letter-spacing: -.03em; }
+    .gc-team.dim .lg, .gc-team.dim .op-lg { opacity: .72; }
+    .gc-strip .gs-t.us img { height: 22px; width: auto; aspect-ratio: 2426 / 1910; margin-right: 2px; flex: none; }
+    .sr-title img { height: 24px; width: auto; aspect-ratio: 2426 / 1910; vertical-align: -6px; margin-right: 4px; }
+    .ev-detail-head.lgh { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+    .ev-detail-head.lgh .lgm { height: 48px; width: auto; aspect-ratio: 2426 / 1910; }
     .gc-team .sub { font-size: 11px; color: #b9c6dc; min-height: 15px; }
     .gc-team .sub em { font-style: normal; color: #f5c542; font-weight: 900; }
     .gc-team.dim .nm { color: #c3cde0; }
@@ -3632,7 +3652,7 @@
 <div id="eventDetailModal" class="modal">
     <div class="modal-content" style="max-width: 440px;">
         <div class="modal-scroll-body" id="eventDetailBody"></div>
-        <div class="modal-btns" id="eventDetailBtns" style="justify-content: space-between;"></div>
+        <div class="modal-btns edb" id="eventDetailBtns"></div>
     </div>
 </div>
 
@@ -5674,22 +5694,27 @@
         if (!ev) return;
         const m = typeMeta(ev.type), h = eventHeadline(ev);
         const gc = isResultCard(ev);   // 🏟️ v2.96.0: 결과가 적힌 경기는 맨 위에 점수판
+        const lgHead = isGameEvent(ev) && !gc;   // 🛡️ v2.130.0: 결과 전 경기(대회 · 연습시합)는 제목 오른쪽에 공식 엠블럼
         const row = (k, v) => v ? `<div class="ev-detail-row"><div class="k">${k}</div><div class="v">${escapeHtml(v)}</div></div>` : '';
         document.getElementById('eventDetailBody').innerHTML = `
-            <div class="ev-detail-head" style="--ev:${m.c}">
+            <div class="ev-detail-head${lgHead ? ' lgh' : ''}" style="--ev:${m.c}"><div>
                 <div class="ev-detail-date">${fmtKDate(ev.date)} · ${escapeHtml(timeText(ev))}${ddayLabel(ev.date) ? ' · ' + ddayLabel(ev.date) : ''}</div>
-                <div class="ev-detail-title">${m.i} ${escapeHtml(h.title || ev.type)} ${h.vs ? `<span class="ev-vs">${escapeHtml(h.vs)}</span>` : ''}</div>
-            </div>
+                <div class="ev-detail-title">${ev.type === '대회' ? '' : m.i + ' '}${escapeHtml(h.title || ev.type)} ${h.vs ? `<span class="ev-vs">${escapeHtml(h.vs)}</span>` : ''}</div>
+            </div>${lgHead ? `<img class="lgm" src="${GC_LOGO.whiteS}" alt="대연초 야구부">` : ''}</div>
             ${gc ? gcScoreHtml(ev) + gcMvpHtml(ev) + gcActsHtml(ev) : ''}
             ${row('구분', ev.type)}${gc ? '' : row('결과', (function () { const r = parseResult(ev); return r ? ((r.label === '승' ? '승리' : r.label === '패' ? '패배' : '무승부') + (r.score ? ' ' + r.score : '')) : ''; })())}${placeRowHtml(ev)}${row('대상', targetText(ev))}${row('집합/출발', ev.meet)}${row('복장', ev.dress)}${row('메모', ev.memo)}
             ${canEditSchedule() && ev.updated ? `<div class="form-hint" style="margin-top:8px;">최종 수정: ${escapeHtml(ev.updated)}</div>` : ''}`;
-        const btns = [`<button class="btn-cancel" onclick="closeModal('eventDetailModal')">닫기</button>`];
-        const right = [`<button class="btn-cancel" onclick="icsSaveEvent('${escapeHtml(ev.id)}')">📅 캘린더</button>`, `<button class="btn-cancel" onclick="copyEventText('${escapeHtml(ev.id)}')">📋 복사</button>`];   // v2.95.0: 📅 내 캘린더에 담기
-        if (canEditSchedule()) {
-            right.push(`<button class="btn-cancel" style="color:#b91c1c;border-color:#fecaca;background:#fff5f5;" onclick="deleteEvent('${escapeHtml(ev.id)}')">삭제</button>`);
-            right.push(`<button class="btn-save" onclick="closeModal('eventDetailModal');openEventEditor('${escapeHtml(ev.id)}')">수정</button>`);
+        // 🔘 v2.131.0: 아래 버튼 한 줄 정리 (하코 선택 C안) — 닫기 · 📅 캘린더 · 📋 복사 · ✏️ 수정(운영진 · 맨 오른쪽 파랑)
+        //   삭제는 버튼 줄에서 떼어 본문 맨 아래 빨간 글자 「이 일정 삭제」로 (누르면 확인 창 한 번 더)
+        const eid = escapeHtml(ev.id), ed = canEditSchedule();
+        const bs = [`<button type="button" class="eb ghost" onclick="closeModal('eventDetailModal')">닫기</button>`,
+            `<button type="button" class="eb" onclick="icsSaveEvent('${eid}')">📅 캘린더</button>`,   // v2.95.0: 📅 내 캘린더에 담기
+            `<button type="button" class="eb" onclick="copyEventText('${eid}')">📋 복사</button>`];
+        if (ed) {
+            bs.push(`<button type="button" class="eb pri" onclick="closeModal('eventDetailModal');openEventEditor('${eid}')">✏️ 수정</button>`);
+            document.getElementById('eventDetailBody').insertAdjacentHTML('beforeend', `<div class="ed-del-link"><button type="button" onclick="deleteEvent('${eid}')">🗑️ 이 일정 삭제</button></div>`);
         }
-        document.getElementById('eventDetailBtns').innerHTML = btns.join('') + `<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">${right.join('')}</div>`;
+        document.getElementById('eventDetailBtns').innerHTML = `<div class="edb-row">${bs.join('')}</div>`;
         document.getElementById('eventDetailModal').style.display = 'flex';
         drawDetailMap();   // v2.42.0: 창이 보인 뒤에 지도
         if (gc) setTimeout(() => { gcPosterBlob(ev).catch(() => {}); }, 300);   // 📤 공유를 누르면 바로 공유 창이 뜨게 이미지를 미리 만들어 둠
@@ -5802,7 +5827,7 @@
         const recent = games.slice().reverse();
         const lab = (document.getElementById('calGradeLabel') || {}).textContent || '';
         el.innerHTML = `<div class="sr-top" role="button" tabindex="0" onclick="seasonRecOpen=!seasonRecOpen;document.getElementById('seasonRec').classList.toggle('open',seasonRecOpen)">
-                <span class="sr-title">🏆 ${yr} 시즌${lab && !/^전체/.test(lab) ? `<small>${escapeHtml(lab)}</small>` : ''}</span>
+                <span class="sr-title"><img src="${GC_LOGO.whiteS}" alt="">${yr} 시즌${lab && !/^전체/.test(lab) ? `<small>${escapeHtml(lab)}</small>` : ''}</span>
                 <span class="sr-nums"><span class="sr-w">${w}<small>승</small></span><span class="sr-l">${l}<small>패</small></span>${d ? `<span class="sr-d">${d}<small>무</small></span>` : ''}<span class="sr-d">${pct}<small>승률</small></span></span>
                 <span class="sr-form" aria-label="최근 경기">${recent.slice(0, 5).reverse().map(ev => { const r = parseResult(ev); return `<i class="${r.k}">${r.label}</i>`; }).join('')}</span>
             </div>
@@ -5819,6 +5844,9 @@
     //   - 이미지는 이 기기에서 바로 만듦(캔버스) → 휴대폰 공유 창(카톡 포함)으로 넘기거나 저장
     // ==========================================================
     const GC_HOME = { name: '대연초', region: '부산', color: '#13284d', dot: '#4f8cff' };
+    // 🛡️ v2.130.0: 공식 로고 (배경 뺀 webp) — 점수판 · 결과 띠 · 시즌 기록 · 대회 일정 · 공유 이미지
+    const GC_LOGO = { dark: 'icons/logo/emblem-dark.webp', darkS: 'icons/logo/emblem-dark-s.webp', whiteS: 'icons/logo/emblem-white-s.webp', school: 'icons/logo/school.webp' };
+    function gcBadge(nm) { return nm.replace(/초(등학교)?$/, '').slice(0, 2) || nm.slice(0, 2); }
     const GC_OPP_COLORS = ['#6d3fc0', '#0f7a6a', '#a12d4a', '#2c6e2f', '#b45309', '#1d6fa5', '#7a3e9d', '#0e7490'];
     function gcOpp(ev) {
         const raw = String((ev && ev.opponent) || '').trim();
@@ -5863,16 +5891,17 @@
         const r = parseResult(ev); if (!r) return '';
         const o = gcOpp(ev), c = gcCup(ev), sc = gcScore(ev), tour = gcTour(ev);
         const meta = [c.grp, ev.start || '', ev.place ? venueLabel(ev.place) : ''].filter(Boolean).join(' · ');
-        const team = (nm, dot, sub, dim) => `<div class="gc-team${dim ? ' dim' : ''}"><span class="nm"><i style="background:${dot}"></i>${escapeHtml(nm)}</span><span class="sub">${sub}</span></div>`;
+        const team = (nm, mark, sub, dim) => `<div class="gc-team${dim ? ' dim' : ''}">${mark}<span class="nm">${escapeHtml(nm)}</span><span class="sub">${sub}</span></div>`;
+        const homeMark = `<img class="lg" src="${GC_LOGO.darkS}" alt="대연초 야구부">`, oppMark = `<span class="op-lg" style="background:${o.color}">${escapeHtml(gcBadge(o.name))}</span>`;
         const win = '<em>승</em>';
         return `<div class="gc-sb ${r.k}">
                 <div class="gc-cup">${escapeHtml(c.cup)}${short && c.grp ? ' · ' + c.grp : ''}</div>
                 ${!short && meta ? `<div class="gc-meta">${escapeHtml(meta)}</div>` : ''}
                 <div class="gc-row">
-                    ${team(GC_HOME.name, GC_HOME.dot, r.k === 'win' ? win + ' · ' + GC_HOME.region : GC_HOME.region, r.k === 'lose')}
+                    ${team(GC_HOME.name, homeMark, r.k === 'win' ? win + ' · ' + GC_HOME.region : GC_HOME.region, r.k === 'lose')}
                     ${sc ? `<div class="gc-score"><span class="${r.k === 'lose' ? 'lo' : ''}">${sc[0]}</span><span class="c">:</span><span class="${r.k === 'win' ? 'lo' : ''}">${sc[1]}</span></div>`
                          : `<div class="gc-score word">${r.label === '승' ? '승리' : r.label === '패' ? '패배' : '무승부'}</div>`}
-                    ${team(o.name, o.color, (r.k === 'lose' ? win + (o.region ? ' · ' : '') : '') + escapeHtml(o.region), r.k === 'win')}
+                    ${team(o.name, oppMark, (r.k === 'lose' ? win + (o.region ? ' · ' : '') : '') + escapeHtml(o.region), r.k === 'win')}
                 </div>
                 <div class="gc-band">${escapeHtml(gcBandText(r, ''))}${tour ? `<small>${escapeHtml(tour)}</small>` : ''}</div>
             </div>`;
@@ -5923,7 +5952,7 @@
     function gcStripHtml(ev) {
         const r = parseResult(ev), o = gcOpp(ev), c = gcCup(ev), sc = gcScore(ev);
         return `<button type="button" class="gc-strip ${r.k}" style="--oc:${o.color}" onclick="openEventDetail('${escapeHtml(ev.id)}')">
-                <span class="gs-top"><span class="gs-t us">${GC_HOME.name}</span><span class="gs-s">${sc ? `<b class="${r.k === 'lose' ? 'lo' : ''}">${sc[0]}</b><i>:</i><b class="${r.k === 'win' ? 'lo' : ''}">${sc[1]}</b>` : `<b>${r.label}</b>`}</span><span class="gs-t op">${o.region ? `<small>${escapeHtml(o.region)}</small>` : ''}${escapeHtml(o.name)}</span></span>
+                <span class="gs-top"><span class="gs-t us"><img src="${GC_LOGO.darkS}" alt="">${GC_HOME.name}</span><span class="gs-s">${sc ? `<b class="${r.k === 'lose' ? 'lo' : ''}">${sc[0]}</b><i>:</i><b class="${r.k === 'win' ? 'lo' : ''}">${sc[1]}</b>` : `<b>${r.label}</b>`}</span><span class="gs-t op">${o.region ? `<small>${escapeHtml(o.region)}</small>` : ''}${escapeHtml(o.name)}</span></span>
                 <span class="gs-bot">${escapeHtml(gcBandText(r, c.grp))}<small>${escapeHtml(fmtMD(ev.date))}</small>${(function () { const v = gcMvp(ev); return v ? `<small class="mvp">⭐ ${escapeHtml(v.name)}</small>` : ''; })()}</span>
             </button>`;
     }
@@ -5961,16 +5990,20 @@
             } catch (e) { res(null); }
         });
     }
+    const gcLogoP = {};
+    function gcLogoImg(src) { return gcLogoP[src] || (gcLogoP[src] = new Promise(res => { const im = new Image(); im.onload = () => res(im); im.onerror = () => { delete gcLogoP[src]; res(null); }; im.src = src; })); }
     function gcPosterBlob(ev) {
         const key = gcImgKey(ev);
         if (gcImgCache[key]) return gcImgCache[key].p;
-        const p = gcBkImage(parseResult(ev)).then(bk => new Promise((res, rej) => {
+        // 🛡️ v2.130.0: 우리 팀 자리에 야구부 엠블럼 · 아래 이름표에 교표 (로고를 못 받으면 예전처럼 「대연」 동그라미 · 부캉이)
+        const p = Promise.all([gcLogoImg(GC_LOGO.dark), gcLogoImg(GC_LOGO.school)]).then(([em, sch]) => (sch ? Promise.resolve(null) : gcBkImage(parseResult(ev))).then(bk => new Promise((res, rej) => {
             const W = 1080, H = 1350, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
             const x = cv.getContext('2d'), F = '"Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif';
             const r = parseResult(ev), o = gcOpp(ev), c = gcCup(ev), sc = gcScore(ev), tour = gcTour(ev);
             const font = (w, s) => { x.font = `${w} ${s}px ${F}`; };
             const text = (t, X, Y, col, align) => { x.fillStyle = col; x.textAlign = align || 'center'; x.fillText(t, X, Y); };
             const fit = (t, w, s, maxW) => { font(w, s); while (s > 20 && x.measureText(t).width > maxW) { s -= 2; font(w, s); } return s; };
+            const drawW = (im, cx, cy, w) => { const h = w * im.naturalHeight / im.naturalWidth; x.drawImage(im, cx - w / 2, cy - h / 2, w, h); };
             // 배경: 밤 경기장 남색 + 위쪽 조명 + 빗살
             let g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#13284d'); g.addColorStop(.55, '#0b1a33'); g.addColorStop(1, '#070f1f');
             x.fillStyle = g; x.fillRect(0, 0, W, H);
@@ -5995,23 +6028,28 @@
             if (c.grp) { font(700, 30); text(c.grp, W / 2, y + 62, '#b9c6dc'); }
             // 두 팀 + 점수
             const ty = 560, lose = r.k === 'lose', win = r.k === 'win';
-            const teamDraw = (cx, nm, rg, col, dim) => {
+            const teamDraw = (cx, nm, rg, col, dim, logo) => {
                 x.save(); x.globalAlpha = dim ? .72 : 1;
-                x.shadowColor = 'rgba(0,0,0,.35)'; x.shadowBlur = 30; x.shadowOffsetY = 14;
-                x.beginPath(); x.arc(cx, ty - 40, 82, 0, Math.PI * 2); x.fillStyle = col; x.fill();
-                x.shadowColor = 'transparent'; x.lineWidth = 8; x.strokeStyle = 'rgba(255,255,255,.85)'; x.stroke();
-                const badge = nm.replace(/초(등학교)?$/, '').slice(0, 2) || nm.slice(0, 2);
-                fit(badge, 900, 56, 120); x.textBaseline = 'middle'; text(badge, cx, ty - 38, '#ffffff'); x.textBaseline = 'alphabetic';
+                if (logo) {
+                    x.shadowColor = 'rgba(0,0,0,.4)'; x.shadowBlur = 26; x.shadowOffsetY = 12;
+                    drawW(logo, cx, ty - 40, 262); x.shadowColor = 'transparent';
+                } else {
+                    x.shadowColor = 'rgba(0,0,0,.35)'; x.shadowBlur = 30; x.shadowOffsetY = 14;
+                    x.beginPath(); x.arc(cx, ty - 40, 82, 0, Math.PI * 2); x.fillStyle = col; x.fill();
+                    x.shadowColor = 'transparent'; x.lineWidth = 8; x.strokeStyle = 'rgba(255,255,255,.85)'; x.stroke();
+                    const badge = gcBadge(nm);
+                    fit(badge, 900, 56, 120); x.textBaseline = 'middle'; text(badge, cx, ty - 38, '#ffffff'); x.textBaseline = 'alphabetic';
+                }
                 fit(nm, 900, 70, 300); text(nm, cx, ty + 125, dim ? '#d5deec' : '#ffffff');
                 if (rg) { font(700, 30); text(rg, cx, ty + 175, '#b9c6dc'); }
                 x.restore();
             };
-            teamDraw(200, GC_HOME.name, GC_HOME.region, GC_HOME.color, lose);
-            teamDraw(880, o.name, o.region, o.color, win);
+            teamDraw(200, GC_HOME.name, GC_HOME.region, GC_HOME.color, lose, em);
+            teamDraw(880, o.name, o.region, o.color, win, null);
             x.textBaseline = 'middle';
             if (sc) {
                 let s = 190; const parts = () => { font(900, s); const a = x.measureText(sc[0]).width, b = x.measureText(sc[1]).width; font(900, s * .52); const cw = x.measureText(':').width; return { a, b, cw, t: a + b + cw + s * .24 }; };
-                let m = parts(); while (m.t > 440 && s > 80) { s -= 6; m = parts(); }
+                let m = parts(); while (m.t > (em ? 400 : 440) && s > 80) { s -= 6; m = parts(); }
                 let sx = W / 2 - m.t / 2; const sy = ty + 10;
                 font(900, s); x.textAlign = 'left'; x.fillStyle = lose ? '#7d90b3' : '#ffffff'; x.fillText(sc[0], sx, sy); sx += m.a + s * .12;
                 font(900, s * .52); x.fillStyle = '#7d90b3'; x.fillText(':', sx, sy - s * .05); sx += m.cw + s * .12;
@@ -6039,13 +6077,22 @@
                 fit(mt, 900, 36, 900); text(mt, W / 2, 1092, '#f5c542');
                 if (sub) { fit(sub, 700, 28, 900); text(sub, W / 2, 1136, '#d5deec'); }
             } else if (sub) { fit(sub, 900, 34, 900); text(sub, W / 2, 1095, '#ffffff'); }
-            // 아래: 부캉이 + 팀 이름
-            font(900, 48); const n1 = '대연초등학교 야구부', w1 = x.measureText(n1).width, bkW = bk ? 130 : 0, gx = W / 2 - (bkW + 22 + w1) / 2;
-            if (bk) x.drawImage(bk, gx, 1150, 130, 130 * (bk.naturalHeight / bk.naturalWidth || 1));
-            text(n1, gx + bkW + 22, 1222, '#ffffff', 'left');
-            font(700, 28); text('dybbr.github.io', gx + bkW + 24, 1264, '#9fb0cc', 'left');
+            // 아래: 교표(못 받으면 부캉이) + 팀 이름
+            font(900, 48); const n1 = '대연초등학교 야구부', w1 = x.measureText(n1).width;
+            if (sch) {
+                const lw = 112, gx = W / 2 - (lw + 22 + w1) / 2, mid = 1212;
+                x.beginPath(); x.arc(gx + lw / 2, mid, lw / 2 + 6, 0, Math.PI * 2); x.fillStyle = '#ffffff'; x.fill();
+                drawW(sch, gx + lw / 2, mid, lw);
+                text(n1, gx + lw + 22, mid + 10, '#ffffff', 'left');
+                font(700, 28); text('dybbr.github.io', gx + lw + 24, mid + 52, '#9fb0cc', 'left');
+            } else {
+                const bkW = bk ? 130 : 0, gx = W / 2 - (bkW + 22 + w1) / 2;
+                if (bk) x.drawImage(bk, gx, 1150, 130, 130 * (bk.naturalHeight / bk.naturalWidth || 1));
+                text(n1, gx + bkW + 22, 1222, '#ffffff', 'left');
+                font(700, 28); text('dybbr.github.io', gx + bkW + 24, 1264, '#9fb0cc', 'left');
+            }
             cv.toBlob(b => b ? res(b) : rej(new Error('toBlob')), 'image/png');
-        }));
+        })));
         gcImgCache[key] = { p: p };
         p.then(b => { gcImgCache[key].blob = b; }).catch(() => { delete gcImgCache[key]; });
         return p;
