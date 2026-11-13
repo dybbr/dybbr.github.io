@@ -33,6 +33,14 @@ self.addEventListener('fetch', function (event) {
     if (/\.(mp4|m4v|webm|mov)$/i.test(url.pathname)) return;         // 🎬 v2.100.0: 영상 파일은 그대로 통과 (나눠 받기 · 휴대폰 저장 공간 아끼기)
     if (/\.(mp3|m4a|wav|ogg)$/i.test(url.pathname)) return;           // 📣 v2.111.0: 소리 파일도 그대로 통과 (나눠 받기 요청에 통째 저장본을 주면 아이폰에서 안 나옴 · 효과음은 playlist.js 가 따로 받아 둠)
 
+    // 🧠 v2.128.0: 부캉이 「뜻」 두뇌 큰 파일(sem/<단계>/model.onnx.N · index.bin) — 한 번 받으면 저장본만 씀 (뒤에서 다시 받지 않음)
+    //   주소 뒤 ?v=(파일 지문)이 바뀌면 새 파일로 받음 · 브라우저 기본 저장소에는 두 번 저장하지 않음(no-store) · 저장은 bukang-ai.js
+    if (/\/sem\/[^/]+\/(model\.onnx\.\d+|index\.bin)$/.test(url.pathname)) {
+        event.respondWith(caches.match(req).then(function (hit) {
+            return hit || fetch(req, { cache: 'no-store' });   // 저장은 bukang-ai.js 가 다 받은 뒤에 직접 함
+        }));
+        return;
+    }
     const isNav = req.mode === 'navigate';
     // 화면(페이지)은 주소 뒤 ?… 를 떼고 한 칸에만 저장 (player.html?path=… 마다 따로 쌓이지 않게)
     const key = isNav ? url.origin + url.pathname : req;

@@ -1,0 +1,81 @@
+# 「이렇게도 물어요」 예시 — 한 줄에 「말|대상」 (대상: C:명령 · T:용어 제목 · F:규칙 질문 제목). 고친 뒤 tools/sem-index.py 다시 돌리기
+what is a strike|T:스트라이크
+what is a ball|T:볼
+hit by pitch|T:몸에 맞는 공 (데드볼)
+what is an out|T:아웃
+what does safe mean|T:세이프
+strikeout|T:삼진
+walk base on balls|T:볼넷
+foul ball|T:파울
+home run|T:홈런
+grand slam|T:만루 홈런
+bases loaded|T:만루
+stolen base steal|T:도루
+bunt|T:번트
+sacrifice fly|T:희생 플라이
+double play|T:병살 (더블 플레이)
+error by fielder|T:실책 (에러)
+wild pitch|T:폭투
+balk|T:보크
+pitcher|T:투수
+catcher|T:포수
+first baseman|T:1루수
+shortstop|T:유격수
+outfielder|T:외야수
+designated hitter|T:지명 타자
+pinch hitter|T:대타
+pinch runner|T:대주자
+relief pitcher|T:구원 투수
+closer|T:마무리 투수
+fastball|T:직구 (패스트볼)
+curveball|T:커브
+slider|T:슬라이더
+changeup|T:체인지업
+forkball splitter|T:포크볼
+batting average|T:타율
+ERA earned run average|T:평균자책점
+inning|T:이닝 (회)
+dugout|T:더그아웃
+bullpen|T:불펜
+glove|T:글러브
+bat|T:배트
+helmet|T:헬멧
+umpire|T:심판
+how many players in baseball|F:한 팀은 9명
+how many innings|F:초등 경기는 보통 6회
+how many strikes for an out|F:스트라이크는 3개면 삼진
+what happens when it rains|F:비가 오면
+when is the next game|C:다음 경기 언제야
+where is the game|C:다음 경기 어디야
+what's the weather today|C:오늘 날씨
+will it rain tomorrow|C:내일 날씨
+show me this week's schedule|C:이번 주 일정
+did we win last game|C:지난 경기 결과
+any new notices|C:새 공지 있어
+play the team songs|C:전체 주제곡 틀어
+stop the music|C:노래 꺼
+tell me a joke|C:농담해 줘
+let's play a game|C:놀자
+give me a quiz|C:상식 퀴즈
+baseball quiz|C:야구 퀴즈
+english word quiz|C:영어 퀴즈
+rock paper scissors|C:가위바위보
+what can you do|C:뭐 할 수 있어
+i can't hear you|C:소리가 안 나
+thank you|C:고마워
+stop talking|C:그만
+good night|C:잘 자
+hello|C:안녕
+공 받는 사람|T:포수
+공 던지는 사람|T:투수
+공을 놓쳤어|T:실책 (에러)
+수비 실수|T:실책 (에러)
+주자가 다 찼어|T:만루
+누가 공에 맞았어|T:몸에 맞는 공 (데드볼)
+투수 바꾸기|T:구원 투수
+몰래 뛰기|T:도루
+살짝 대는 타격|T:번트
+뚝 떨어지는 공|T:포크볼
+옆으로 휘는 공|T:슬라이더
+제일 빠른 공|T:직구 (패스트볼)
+설치 잘 됐어|C:부캉이 상태

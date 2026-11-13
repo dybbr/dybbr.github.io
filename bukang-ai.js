@@ -8,7 +8,7 @@
     'use strict';
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     const LS = 'daeyeon_bka';
-    const VER = '2.127.2';
+    const VER = '2.128.0';
     const opt = (function () { try { return Object.assign({ say: true }, JSON.parse(localStorage.getItem(LS) || '{}')); } catch (e) { return { say: true }; } })();
     const saveOpt = () => { try { localStorage.setItem(LS, JSON.stringify(opt)); } catch (e) {} };
     const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -35,8 +35,8 @@
     const today0 = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
     const nowHM = () => { const d = new Date(); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
     const C = s => String(s || '').replace(/[\s.,!?~·'"「」()（）\-]/g, '');
-    const BK = /(부캉|북항|부강|부광|부캥|북캉|북앙|부깡|푸캉|부칸|북한)\s*(이|아|야|하|가|님|씨)?[\s,.!~]*/g;
-    const fixBk = s => String(s || '').replace(/(부캉|북항|부강|부광|부캥|북캉|북앙|부깡|푸캉|부칸|북한)\s*(이|아|야|하|가|님|씨)?/g, '부캉아');
+    const BK = /(부캉|북항|부강|부광|부캥|북캉|북앙|부깡|푸캉|부칸|북한|보캉|호캉|복학|무캉|뿌캉|부칭)\s*(이는|이가|이도|이야|이랑|이|아|야|하|가|님|씨|는|은|도)?[\s,.!~]*/g;
+    const fixBk = s => String(s || '').replace(/(부캉|북항|부강|부광|부캥|북캉|북앙|부깡|푸캉|부칸|북한|보캉|호캉|복학|무캉|뿌캉|부칭)\s*(이는|이가|이도|이야|이랑|이|아|야|하|가|님|씨|는|은|도)?/g, '부캉아');
     function korNum(s) {   // 「이십삼」 → 23
         const N = '일이삼사오육칠팔구';
         const m = /^([일이삼사오육칠팔구]?)(십?)([일이삼사오육칠팔구]?)$/.exec(s || '');
@@ -361,6 +361,10 @@
         if (ctx.game) { const g = gameTurn(s, t); if (g) return g; }   // 놀이 중이면 놀이가 먼저
         const qk = quick(s, t); if (qk) return qk;                     // 그만 · 중지 · 취소 · 잘 가 · 고마워 · 하나 더 · 그게 아니야
         if (/준비하기|처음준비|다시준비/.test(t) && /부캉|준비/.test(t)) return prepCard();
+        if (/(두뇌|두네|너네|뜻두뇌)(고르|골라|바꾸|바꿔|선택|받기|받아|단계|업그레이드|키워)|더똑똑해|똑똑한두뇌|두뇌크기/.test(t) || /^(아기|어린이|어른)부캉이?(로|으로)?(바꿔|해줘|받아|골라|할래)?$/.test(t)) {   // v2.128.0
+            const lv = /아기/.test(t) ? 'small' : /어린이/.test(t) ? 'base' : /어른/.test(t) ? 'large' : ''; return lv ? semGo(lv) : semPick();
+        }
+        if (/^(두뇌끄기|뜻두뇌꺼|뜻두뇌끄기)/.test(t)) return semOff();
         if (/소리시험|소리테스트|목소리시험|소리확인|소리가?안나|목소리가?안나|대답소리|말을?안해|대답을?안해|음성대답/.test(t)) return /안나|안해|안들/.test(t) ? noSoundTips() : soundTest();
         if (/^(상태|준비상태|네상태|너상태|상태어때|상태보여줘|상태알려줘)$/.test(t)) return readyCard();
         if (/준비상태|부캉이?상태|다운로드|받았어|받았나|버전|엔진/.test(t) && /부캉|준비|다운로드|받았|버전|엔진|두뇌/.test(t) && !/일정|경기|공지|노래|곡|앱업데이트/.test(t)) return readyCard();
@@ -386,7 +390,8 @@
 
         // 1) 인사 · 도움말 · 닫기
         if (/^(안녕|하이|헬로|반가워|좋은아침|굿모닝|여보세요)/.test(t)) return { h: '안녕하세요! 🦉', l: ['「오늘 브리핑」 「다음 경기 언제야」처럼 물어보세요'], say: '안녕하세요! 무엇을 도와 드릴까요?' };
-        if (/뭐할수|뭘할수|뭐해줄수|뭘해줄|도움말|사용법|할수있는|할줄|명령어|기능알려/.test(t)) return help();
+        if (/뭐할수|뭘할수|뭐해줄수|뭘해줄|도움말|사용법|할수있는|할줄|명령어|기능알려|뭘잘해|뭐잘해|뭘잘하|뭐잘하|잘하는거|잘하는게/.test(t)) return help();
+        if (t.length <= 9 && /^(안돼|안되|안된|왜안돼|왜안되|작동안|안먹|이상해|고장|먹통|오류)/.test(t)) return { h: '어떤 게 안 되나요? 🦉', l: ['아래에서 골라 주시면 고치는 방법을 알려 드릴게요'], items: [['🔇 소리가 안 나요', '소리가 안 나'], ['📦 다 받았는지 보기', '부캉이 상태'], ['🦉 처음부터 다시 준비하기', '부캉이 준비하기'], ['❓ 할 수 있는 일', '뭐 할 수 있어']].map(x => ({ h: x[0], s: '', ask: x[1] })), say: '어떤 게 안 되나요? 아래에서 골라 주세요.' };
         if (/^(고마워|고맙|땡큐|됐어|닫아|닫기|창닫|그만해|끝$|끝내|잘했어$)/.test(t)) return { h: '언제든 「부캉아」 불러 주세요!', say: '언제든 불러 주세요.', run: () => setTimeout(close, 900) };
 
         // 2) 타석 모드에 있으면 그 명령 먼저 (다음 타자 · 홈런 …)
@@ -611,16 +616,18 @@
         if (ps.length === 1) return playerCard(ps[0]);
         const mr = memRecall(t, 2); if (mr) return mr;
         if (!DATA && !ctx.re) return needData(s);                      // 자료(용어 · 대화)를 아직 안 받았으면 받고 다시
-        const t4 = terms4(s, t, true) || faq4(t) || talkAns(t); if (t4) return t4;
+        const t4 = terms4(s, t, true) || faq4(t) || talkAns(t);
+        const sm = semAns(s, t4); if (sm) return sm;                  // v2.128.0: 🧠 뜻 두뇌 (받았을 때만) — 확신하면 느슨한 짐작(t4)보다 먼저
+        if (t4) return t4;
         return missAns(s);
     }
-    function missAns(s) {
+    function missAns(s, sug) {   // sug: 🧠 뜻 두뇌가 찾은 비슷한 뜻 (확신이 낮을 때)
         const k = C(s); logMiss(s);
         const tell = opt.share !== false && (opt.shareN || 0) < 3;
         if (tell) { opt.shareN = (opt.shareN || 0) + 1; saveOpt(); }
-        return { h: '잘 못 알아들었어요', l: ['「' + s + '」'].concat(tell ? ['📮 이런 말은 이름 없이 모아 부캉이 공부에 써요 (⚙ 설정에서 끌 수 있어요)'] : [], ['혹시 아래 뜻이었나요? 고르면 다음부터 이 말을 알아들어요', '또는 「' + s + '라고 하면 ○○라고 대답해」로 가르쳐 주세요']),
-            items: LEARN_OPTS.map(q => ({ h: '「' + q + '」', s: '', fn: () => { learn(k, q); const a = think(q); a.l = ['배웠어요! 다음부터 「' + s + '」는 「' + q + '」로 알아들을게요'].concat(a.l || []); return a; } })),
-            say: '잘 못 알아들었어요. 다시 말해 주세요.', miss: 1 };
+        return { h: sug && sug.length ? '🧠 혹시 이 뜻이었나요?' : '잘 못 알아들었어요', l: ['「' + s + '」'].concat(tell ? ['📮 이런 말은 이름 없이 모아 부캉이 공부에 써요 (⚙ 설정에서 끌 수 있어요)'] : [], ['혹시 아래 뜻이었나요? 고르면 다음부터 이 말을 알아들어요', '또는 「' + s + '라고 하면 ○○라고 대답해」로 가르쳐 주세요']),
+            items: (sug || []).map(x => ({ h: '🧠 「' + semLabel(x.g) + '」', s: '뜻이 비슷해요', fn: () => { if (x.g[0] !== 'F') learn(k, semQ(x.g)); const a = semAnswer(x.g, s) || think(semQ(x.g)); a.l = ['배웠어요! 다음부터 「' + s + '」는 「' + semLabel(x.g) + '」로 알아들을게요'].concat(a.l || []); return a; } })).concat(LEARN_OPTS.slice(0, sug && sug.length ? 5 : 99).map(q => ({ h: '「' + q + '」', s: '', fn: () => { learn(k, q); const a = think(q); a.l = ['배웠어요! 다음부터 「' + s + '」는 「' + q + '」로 알아들을게요'].concat(a.l || []); return a; } }))),
+            say: sug && sug.length ? `혹시 ${semLabel(sug[0].g)} 말씀이세요? 아래에서 골라 주세요.` : '잘 못 알아들었어요. 다시 말해 주세요.', miss: 1 };
     }
 
     const LEARN_OPTS = ['오늘 브리핑', '다음 경기 언제야', '이번 주 일정', '오늘 날씨', '놀자', '지난 경기 결과', '다음 경기 어디야', '새 공지 있어', '내 당번 언제야', '전체 주제곡 틀어'];
@@ -1179,7 +1186,8 @@
     ];
     function chat(s, t) {
         if (/따라해|따라말해/.test(t)) { const x = s.replace(/.*따라\s*(해|말해)\s*(봐|줘|보세요)?[\s,:]*/, '').trim(); return x ? { h: '🦜 ' + x, say: x, force: 1 } : { h: '따라 할 말을 뒤에 붙여 주세요', l: ['「따라 해 봐, 대연초 파이팅」'], say: '따라 할 말을 말해 주세요.' }; }
-        if (/다시말해|뭐라고|못들었|한번더말/.test(t) && ctx.lastSay) return { h: '🔁 다시 말할게요', l: [ctx.lastSay], say: ctx.lastSay, force: 1 };
+        // v2.128.0: 「뭐라고」는 혼자 말할 때만 다시 말하기 (「공 받는 사람 뭐라고 해」 같은 질문은 빼고)
+        if ((/다시말해|못들었|한번더말/.test(t) || /^(뭐라고|뭐라구|뭐라고요|뭐라고했어|뭐라고했니|뭐라는거야|뭐라고하는거야)$/.test(t)) && ctx.lastSay) return { h: '🔁 다시 말할게요', l: [ctx.lastSay], say: ctx.lastSay, force: 1 };
         const one = oneShot(t); if (one) return one;
         if (/일정|경기|공지|당번|선수|명단|구장|주제곡|캘린더/.test(t) && !/이길|이겨|응원|파이팅|화이팅|뉴스|상식|퀴즈|운세|농담/.test(t)) return null;
         for (let i = 0; i < TALK.length; i++) { const row = TALK[i]; if (row[0].test(t)) { if (typeof row[1] === 'function') return row[1](); const r2 = talk2(t), x = r2 ? bag('t2_' + r2.i, r2.a) : bag('talk' + i, row[1]); return { h: x, say: sayOf(x) }; } }
@@ -1350,7 +1358,7 @@
         if (/끝말잇기|끝말있기|끝말이끼|끝말잇끼|끝말이기|끝말놀이|끝말/.test(t)) return wcStart();
         if (/숫자(맞히기|맞추기|게임|놀이)|업다운|업앤다운/.test(t)) return udStart();
         if (/가위바위보|묵찌빠/.test(t)) return rpsStart(t);
-        if (/구구단/.test(t)) return quizStart('gugu');
+        if (/구구단|곱하기|곱셈/.test(t)) return quizStart('gugu');
         if (/초성/.test(t)) return quizStart('cho');
         if (/수도/.test(t) && /퀴즈|문제|맞히기|맞추기|게임|놀이/.test(t)) return quizStart('cap');
         if (/상식|넌센스/.test(t) && /퀴즈|문제/.test(t)) return quizStart(/야구/.test(t) ? 'base' : 'gk');
@@ -1715,14 +1723,15 @@
             data: !!DATA || !!dataC, terms: DATA && DATA.terms ? DATA.terms.length : 0,
             eng: eng.every(Boolean) || !!V('bkReady'), engSome: eng.some(Boolean), bkOn: !!V('bkOn'),
             voices: vs.length, voice: vs.length ? (((opt.vuri && vs.find(v => v.voiceURI === opt.vuri)) || vs.find(v => /google|female|여/i.test(v.name)) || vs[0]).name) : '',
-            mic: SR ? await micState() : 'none', heard: rdGet().heard, tts: ttsLog.err
+            mic: SR ? await micState() : 'none', heard: rdGet().heard, tts: ttsLog.err,
+            sem: semNow(), semHas: semNow() ? await semHas(semNow()) : false
         };
-        s.warn = !s.data ? '⬇ 두뇌 자료 받기 전' : s.tts && s.tts !== 'interrupted' ? '! 소리 확인 필요' : s.mic === 'denied' ? '! 마이크 막힘' : s.bkOn && !s.eng ? '! 「부캉아」 엔진 받기 전' : rdGet().heard === 0 ? '! 소리가 안 들렸어요' : !s.voices && rdGet().heard !== 1 ? '! 한국어 목소리 확인' : '';
+        s.warn = !s.data ? '⬇ 두뇌 자료 받기 전' : s.tts && s.tts !== 'interrupted' ? '! 소리 확인 필요' : s.mic === 'denied' ? '! 마이크 막힘' : s.bkOn && !s.eng ? '! 「부캉아」 엔진 받기 전' : s.sem && !s.semHas ? '! 두뇌 다시 받기 필요' : rdGet().heard === 0 ? '! 소리가 안 들렸어요' : !s.voices && rdGet().heard !== 1 ? '! 한국어 목소리 확인' : '';
         rdLast = s; return s;
     }
     function rdBadge() {   // 이름 아래 배지 · 휴대폰 부캉이 점
         rdState().then(s => {
-            const ok = !s.warn, txt = ok ? `✓ 준비 완료 · 두뇌 v${DATA_VER}` : s.warn;
+            const ok = !s.warn, txt = ok ? (s.sem ? `✓ 준비 완료 · ${SEM_LV[s.sem].n.replace(' 부캉이', ' 두뇌')}` : `✓ 준비 완료 · 두뇌 v${DATA_VER}`) : s.warn;
             const b = $('bkaRd'); if (b) { b.textContent = txt; b.className = 'bka-rd' + (ok ? '' : ' w'); b.hidden = false; }
             if (fab) { let d = fab.querySelector('.bka-dot'); if (!d) { d = document.createElement('span'); d.className = 'bka-dot'; d.setAttribute('aria-hidden', 'true'); fab.appendChild(d); } d.textContent = ok ? '✓' : '!'; d.classList.toggle('w', !ok); }
             const bb = bc && bc.querySelector('.bka-rd'); if (bb) { bb.textContent = txt + (ok ? ' · 앱 ' + appVer() : ''); bb.className = 'bka-rd' + (ok ? '' : ' w'); }
@@ -1731,6 +1740,7 @@
     const ck = (st, t, sub, id) => `<div class="bka-ck ${st}"${id ? ` id="${id}"` : ''}><span class="ic">${st === 'ok' ? '✓' : st === 'w' ? '!' : st === 'no' ? '·' : '…'}</span><span class="tx">${esc(t)}<small>${esc(sub)}</small></span></div>`;
     function rdList(s) {
         return ck(s.data ? 'ok' : 'w', '두뇌 자료', s.data ? `v${DATA_VER}${s.terms ? ' · 야구 용어 ' + s.terms + '개' : ''} · 약 180KB 받음` : '아직 안 받음 · 「⬇ 다시 받기」를 눌러 주세요')
+            + ck(s.sem ? (s.semHas ? 'ok' : 'w') : 'no', '🧠 뜻 두뇌', s.sem ? `${SEM_LV[s.sem].n} · 약 ${SEM_LV[s.sem].mb}MB ${s.semHas ? '받음 · 이 기기에 저장됨' : '아직 다 안 받음 · ⚙ 「두뇌 고르기」에서 다시'}` : '안 받음 · ⚙ 「🧠 두뇌 고르기」에서 아기 · 어린이 · 어른 중 고르기')
             + ck(s.eng ? 'ok' : s.bkOn ? 'w' : 'no', '「부캉아」 엔진', s.eng ? `약 ${ENG_MB}MB 받음 · 이 기기에 저장됨` : s.bkOn ? `「부캉아」가 켜져 있는데 아직 안 받음 (약 ${ENG_MB}MB)` : `안 받음 · 「부캉아」로 부를 때만 필요해요 (약 ${ENG_MB}MB)`)
             + ck((s.voices || s.heard === 1) ? (s.tts ? 'w' : 'ok') : 'w', '한국어 목소리', !s.voices && s.heard === 1 ? '휴대폰 기본 목소리 · 소리 확인함' : s.voices ? `휴대폰 목소리 「${s.voice}」 · ${voiceNow()[1]}${s.tts ? ' · 마지막 읽기 실패(' + s.tts + ')' : s.heard ? ' · 소리 확인함' : ''}` : '휴대폰에 한국어 읽기 목소리가 없어요 · 아래 「🔊 소리 시험」으로 확인')
             + ck(s.mic === 'granted' ? 'ok' : s.mic === 'denied' ? 'w' : s.mic === 'none' ? 'no' : 'no', '마이크', s.mic === 'granted' ? '허락됨' : s.mic === 'denied' ? '막혀 있어요 · 주소창 왼쪽 자물쇠 → 마이크 허용' : s.mic === 'none' ? '이 기기에서는 말로 묻기를 못 써요' : '처음 말로 물을 때 허락을 물어요');
@@ -1740,7 +1750,7 @@
         return { h: '📦 부캉이 준비 상태', l: [`앱 ${appVer()} · 두뇌 v${DATA_VER}`], wait: () => loadData().catch(() => {}).then(rdState).then(s => ({
             h: '📦 부캉이 준비 상태', dd: appVer(), l: [s.warn ? s.warn.replace(/^[!⬇] /, '확인할 것: ') : '모두 준비됐어요'],
             html: `<div class="bka-cks">${rdList(s)}</div>`,
-            btns: [{ t: '🔊 소리 시험', pri: 1, fn: soundTest }, { t: '⬇ 다시 받기', fn: reget }, { t: '🦉 처음 준비하기 다시', fn: prepCard }],
+            btns: [{ t: '🔊 소리 시험', pri: 1, fn: soundTest }, { t: '🧠 두뇌 고르기', fn: semPick }, { t: '⬇ 다시 받기', fn: reget }, { t: '🦉 처음 준비하기 다시', fn: prepCard }],
             say: s.warn ? '확인할 것이 있어요. ' + s.warn.replace(/^[!⬇] /, '') : '부캉이는 모두 준비됐어요.'
         })) };
     }
@@ -1843,6 +1853,143 @@
             html: `<div class="bka-cks">${ck('run', '① 두뇌 자료 받기', '받는 중…', id + '1')}${ck('no', '② 「부캉아」 엔진 (선택)', '「부캉아」로 손 안 대고 부를 때만', id + '2')}${ck('no', '③ 소리 시험', '부캉이 목소리가 들리는지', id + '3')}${ck('no', '④ 마이크 허락', '말로 물어보려면', id + '4')}</div><div class="bka-bt" id="${id}b">${B('나중에 하기', later)}</div><div class="bka-done" id="${id}d" hidden></div>`,
             say: '처음 한 번, 부캉이 준비를 같이 해요.' };
     }
+
+    // ---------- 🧠 뜻 두뇌 (v2.128.0) ----------
+    // 낱말이 아니라 문장의 「뜻」을 비교하는 작은 AI(multilingual-e5, 한국어 + 영어만 남겨 줄임).
+    // 규칙 두뇌가 못 알아들은 말만 여기로 옴 → 미리 만든 찾아보기 표(sem/index.json · sem/<단계>/index.bin)에서 가장 가까운 뜻을 찾음.
+    // 우리 서버 호출 없음 · 휴대폰 안에서만 계산 · 고른 단계만 받음(⚙ 「🧠 두뇌 고르기」). 표를 다시 만들 땐 tools/sem-index.py
+    const SEM_LV = {
+        small: { n: '🐣 아기 부캉이', mb: 36, hi: 0.95, lo: 0.90, d: 384, sp: '가장 빨라요 · 오래된 휴대폰도 괜찮아요' },
+        base: { n: '🦉 어린이 부캉이', mb: 115, hi: 0.925, lo: 0.875, d: 768, sp: '추천 · 속도와 똑똑함이 알맞아요', rec: 1 },
+        large: { n: '🦅 어른 부캉이', mb: 343, hi: 0.93, lo: 0.88, d: 1024, sp: '가장 크고 똑똑해요 · PC · 새 휴대폰용' }
+    };
+    const SEM_ORT = ENGINE.slice(0, 3);   // 「부캉아」 엔진과 같은 계산 엔진(ORT) 파일 — 이미 받았으면 다시 안 받음
+    const SEM = { lv: '', sess: null, tok: null, rows: null, X: null, sc: null, bg: null, p: null, err: '' };
+    const semNow = () => (opt.sem && SEM_LV[opt.sem]) ? opt.sem : '';
+    const semMan = {};
+    async function semManifest(lv) {
+        if (semMan[lv]) return semMan[lv];
+        const r = await fetch('sem/' + lv + '/manifest.json'); if (!r.ok) throw new Error('목록 ' + r.status);
+        return (semMan[lv] = await r.json());
+    }
+    const semParts = (lv, m) => m.parts.map(p => ['sem/' + lv + '/' + p + '?v=' + m.sha256.slice(0, 8), 0]).concat([['sem/' + lv + '/index.bin?v=' + m.sha256.slice(0, 8), 0]]);
+    async function semHas(lv) {
+        if (SEM.lv === lv && SEM.sess) return true;
+        try { const m = await semManifest(lv); for (const [u] of semParts(lv, m)) if (!(await inCache(u))) return false; return true; } catch (e) { return false; }
+    }
+    async function semBytes(u, onp) {   // 저장본이 있으면 그것, 없으면 받으면서 진행률
+        try { if (window.caches) { const h = await caches.match(new URL(u, location.href).href); if (h) { const b = await h.arrayBuffer(); onp(b.byteLength); return new Uint8Array(b); } } } catch (e) {}
+        const r = await fetch(u); if (!r.ok) throw new Error('받기 실패 ' + r.status);
+        if (!r.body || !r.body.getReader) { const b = new Uint8Array(await r.arrayBuffer()); onp(b.length); return b; }
+        const rd = r.body.getReader(), ch = []; let got = 0;
+        for (;;) { const { done, value } = await rd.read(); if (done) break; ch.push(value); got += value.length; onp(got); }
+        const out = new Uint8Array(got); let o = 0; for (const c of ch) { out.set(c, o); o += c.length; }
+        try { if (window.caches) await (await caches.open('daeyeon-roster-v2')).put(new URL(u, location.href).href, new Response(out, { headers: { 'Content-Type': 'application/octet-stream' } })); } catch (e) {}   // 한 번 받은 두뇌는 이 기기에 저장 (sw.js 와 같은 저장소)
+        return out;
+    }
+    function semScript(src) { return new Promise((ok, no) => { if (document.querySelector('script[data-sem="' + src + '"]')) return ok(); const s = document.createElement('script'); s.src = src; s.dataset.sem = src; s.onload = ok; s.onerror = () => no(new Error('불러오기 실패')); document.head.appendChild(s); }); }
+    // 받기 + 켜기. onp(0~1) · 받기만 하고 끝낼 땐 keep=false (메모리 아끼기)
+    function semLoad(lv, onp, keep) {
+        onp = onp || (() => {});
+        if (SEM.lv === lv && SEM.sess) return Promise.resolve(true);
+        if (SEM.p && SEM.plv === lv) return SEM.p;
+        SEM.plv = lv;
+        return (SEM.p = (async () => {
+            const m = await semManifest(lv), parts = semParts(lv, m);
+            const tot = m.bytes + SEM_LV[lv].d * 2500 + 11.3e6; let base = 0;
+            for (const [u, n] of SEM_ORT) { if (!(await inCache(u))) await getFile(u, n, g => onp((base + g) / tot)); base += n; }
+            base = 11.3e6;
+            if (!window.ort) await semScript(ENGINE[0][0]);
+            if (!window.SemTok) await semScript('sem/sem-tok.js?v=' + VER);
+            const [voc, idx] = await Promise.all([fetch('sem/vocab.json').then(r => r.json()), fetch('sem/index.json').then(r => r.json())]);
+            const model = new Uint8Array(m.bytes); let o = 0;
+            for (const [u] of parts.slice(0, -1)) { const b = await semBytes(u, g => onp((base + o + g) / tot)); model.set(b, o); o += b.length; }
+            const ib = await semBytes(parts[parts.length - 1][0], g => onp((base + o + g) / tot));
+            onp(1);
+            if (keep === false) { SEM.p = null; return true; }
+            ort.env.wasm.wasmPaths = new URL('vendor/ort/', location.href).href; ort.env.wasm.numThreads = 1;
+            const sess = await ort.InferenceSession.create(model, { executionProviders: ['wasm'], graphOptimizationLevel: 'all' });
+            const N = idx.n, D = SEM_LV[lv].d;
+            if (ib.length !== N * D + N * 4) throw new Error('찾아보기 표 크기가 달라요');
+            Object.assign(SEM, { lv, sess, tok: new SemTok(voc.v), rows: idx.rows, X: new Int8Array(ib.buffer, ib.byteOffset, N * D), sc: new Float32Array(ib.slice(N * D).buffer), bg: null, err: '' });
+            return true;
+        })().catch(e => { SEM.p = null; SEM.err = String(e && e.message || e).slice(0, 80); throw e; }));
+    }
+    function semUnload() { try { if (SEM.sess && SEM.sess.release) SEM.sess.release(); } catch (e) {} Object.assign(SEM, { lv: '', sess: null, X: null, sc: null, rows: null, bg: null, p: null }); }
+    async function semEmbed(text) {
+        const ids = SEM.tok.encode('query: ' + text, 64), L = ids.length;
+        const big = BigInt64Array.from(ids.map(BigInt)), one = new BigInt64Array(L).fill(1n);
+        const feed = { input_ids: new ort.Tensor('int64', big, [1, L]), attention_mask: new ort.Tensor('int64', one, [1, L]) };
+        if (SEM.sess.inputNames.includes('token_type_ids')) feed.token_type_ids = new ort.Tensor('int64', new BigInt64Array(L), [1, L]);
+        const out = await SEM.sess.run(feed), h = out[SEM.sess.outputNames[0]].data, D = h.length / L, v = new Float32Array(D);
+        for (let t = 0; t < L; t++) for (let i = 0; i < D; i++) v[i] += h[t * D + i];
+        let nn = 0; for (let i = 0; i < D; i++) nn += v[i] * v[i]; nn = Math.sqrt(nn) || 1;
+        for (let i = 0; i < D; i++) v[i] /= nn;
+        return v;
+    }
+    const semBg = s => { s = String(s).replace(/\s+/g, ''); const z = new Set(s); for (let i = 0; i < s.length - 1; i++) z.add(s.slice(i, i + 2)); return z; };
+    async function semTop(text) {   // → [{g, s, t}] 대상별 가장 높은 점수 3개
+        const q = await semEmbed(text), D = q.length, N = SEM.rows.length, X = SEM.X, sc = SEM.sc, sim = new Float32Array(N);
+        for (let r = 0; r < N; r++) { let a = 0; const o = r * D; for (let i = 0; i < D; i++) a += q[i] * X[o + i]; sim[r] = a * sc[r]; }
+        if (!SEM.bg) SEM.bg = SEM.rows.map(x => semBg(x[0]));
+        const qb = semBg(text), best = new Map();
+        const order = Array.from(sim.keys()).sort((a, b) => sim[b] - sim[a]).slice(0, 200);
+        for (const r of order) {
+            let hit = 0; qb.forEach(x => { if (SEM.bg[r].has(x)) hit++; });
+            const s = sim[r], s2 = s + 0.05 * hit / Math.max(1, qb.size), g = SEM.rows[r][1], b = best.get(g);
+            if (!b || s2 > b.s2) best.set(g, { g, s, s2, t: SEM.rows[r][0] });
+        }
+        return [...best.values()].sort((a, b) => b.s2 - a.s2).slice(0, 3);
+    }
+    const semLabel = g => g.slice(2);
+    const semQ = g => g[0] === 'C' ? g.slice(2) : g[0] === 'T' ? g.slice(2).split(' (')[0] + '이 뭐야' : g.slice(2);
+    function semAnswer(g, s) {
+        const note = `🧠 「${s}」 → 「${semLabel(g)}」 뜻으로 알아들었어요`;
+        if (g[0] === 'T') { const x = DATA && DATA.terms.find(y => y[2] === g.slice(2)); if (x) return termCard(x, note); }
+        if (g[0] === 'F') { const r = DATA && DATA.faq.find(f => f[1] === g.slice(2)); if (r) return { h: '⚾ ' + r[1], l: [note, r[2]], btns: [{ t: '📚 용어 사전', fn: termMenu }], say: r[2] }; }
+        ctx.semIn = 1; let a; try { a = think1(g.slice(2)); } finally { ctx.semIn = 0; }
+        if (a && !a.miss) { a.l = [note].concat(a.l || []); return a; }
+        return null;
+    }
+    function semAns(s, t4) {   // 규칙 두뇌가 모를 때(또는 느슨하게 짐작만 했을 때) · 받은 두뇌가 있을 때만
+        const lv = semNow(); if (!lv || ctx.semIn || ctx.game || C(s).length < 2) return null;
+        return { h: '🧠 뜻을 생각하고 있어요…', wait: () => semLoad(lv).then(() => semTop(s)).then(top => {
+            const L = SEM_LV[lv], b = top[0];
+            if (b && b.s >= L.hi) { const a = semAnswer(b.g, s); if (a) return a; }
+            if (t4) return t4;
+            if (b && b.s >= L.lo) return missAns(s, top.filter(x => x.s >= L.lo - 0.02));
+            return missAns(s);
+        }, () => t4 || missAns(s)) };
+    }
+    // 두뇌 고르기 카드 (v2.128.0 · 하코 선택 B: 큰 카드 3장 나란히 · 똑똑함 · 빠르기 별점)
+    const SEM_STAR = { small: ['★', '★★★', ''], base: ['★★', '★★', '추천'], large: ['★★★', '★', 'PC용'] };
+    function semPick(note) {
+        if (mode === 'bub') open(true);
+        const now = semNow();
+        return { h: '🧠 부캉이 두뇌 고르기', wait: () => Promise.all(Object.keys(SEM_LV).map(semHas)).then(has => {
+            const ks = Object.keys(SEM_LV);
+            const card = (k, i) => { const L = SEM_LV[k], st = SEM_STAR[k], on = now === k, emo = L.n.split(' ')[0], nm = L.n.replace(/^\S+ /, '');
+                return `<div class="bka-sc${on ? ' on' : st[2] === '추천' ? ' rec' : ''}">${on ? '<span class="tg g">✓ 쓰는 중</span>' : st[2] ? `<span class="tg">${st[2]}</span>` : ''}<div class="e" aria-hidden="true">${emo}</div><b>${esc(nm)}</b><div class="mb">${L.mb}MB</div><div class="st"><span>똑똑함 <i>${st[0]}</i></span><span>빠르기 <i>${st[1]}</i></span></div>`
+                    + `<button type="button" data-k="${reg(() => bot(on ? { h: `${L.n} 쓰는 중이에요`, l: ['「공 맞으면 어떻게 돼」처럼 물어보세요'] } : semGo(k)))}">${on ? '쓰는 중' : has[i] ? '바꾸기' : '⬇ 받기'}</button></div>`; };
+            return { h: '🧠 부캉이 두뇌 고르기', l: [note || '처음 듣는 말도 「뜻」으로 알아듣는 두뇌예요. 고르면 한 번만 받아요.'],
+                html: `<div class="bka-sg">${ks.map(card).join('')}</div><div class="bka-snote">와이파이에서 받기를 추천해요 · 받은 뒤에는 인터넷 없이도 돼요</div>`,
+                btns: now ? [{ t: '🙅 뜻 두뇌 끄기', fn: semOff }] : [],
+                say: '아기, 어린이, 어른 부캉이 중에서 골라 주세요. 어린이 부캉이를 추천해요.' };
+        }) };
+    }
+    function semGo(lv) {
+        const L = SEM_LV[lv];
+        return { h: `⬇ ${L.n} 받는 중… 0%`, prog: 1, wait: (upd) => semLoad(lv, f => { if (upd) upd(`⬇ ${L.n} 받는 중… ${Math.round(f * 100)}%`); }).then(async () => {
+            const old = semNow(); opt.sem = lv; saveOpt();
+            if (old && old !== lv) semDrop(old);
+            rdBadge();
+            return { h: `✓ ${L.n} 준비 끝!`, l: ['이제 처음 듣는 말도 뜻으로 알아들어요', '「공 맞으면 어떻게 돼」처럼 물어보세요'], say: `${L.n.replace(/^\S+ /, '')} 두뇌로 바꿨어요.` };
+        }, e => ({ h: '두뇌를 받지 못했어요', l: ['인터넷 연결을 확인하고 다시 해 주세요', SEM.err || String(e && e.message || e).slice(0, 60)], btns: [{ t: '🔁 다시', fn: () => semGo(lv) }] })) };
+    }
+    async function semDrop(lv) {
+        try { const m = await semManifest(lv); if (window.caches) for (const k of await caches.keys()) { const ca = await caches.open(k); for (const [u] of semParts(lv, m)) await ca.delete(new URL(u, location.href).href); } } catch (e) {}
+    }
+    function semOff() { const old = semNow(); opt.sem = ''; saveOpt(); semUnload(); if (old) semDrop(old); rdBadge(); return { h: '뜻 두뇌를 껐어요', l: ['받은 파일도 지웠어요 · 기본 두뇌로 대답해요'], say: '뜻 두뇌를 껐어요.' }; }
 
     // ---------- 화면 ----------
     let pan = null, ov = null, bodyEl = null, inp = null, micB = null, stEl = null;
@@ -1997,7 +2144,8 @@
             const node = a.multi ? null : bodyEl.lastElementChild;
             ws.forEach(x => {
                 const w = x.wait; x.wait = null; x.pending = 1; waitN++;
-                Promise.resolve().then(w).catch(e => { console.warn('부캉이 비서:', e); return FAIL(); }).then(r => {
+                const upd = txt => [node, mode === 'bub' ? bc : null].forEach(n => { const hh = n && n.querySelector('.h'); if (hh) hh.textContent = txt; });   // v2.128.0: 받는 중 % 바꿔 그리기
+                Promise.resolve().then(() => w(upd)).catch(e => { console.warn('부캉이 비서:', e); return FAIL(); }).then(r => {
                     waitN = Math.max(0, waitN - 1); if (!waitN) V('bkKick', 1200);
                     if (node && node.parentNode) node.remove();
                     if (!r || !isOpenNow) return;
@@ -2106,6 +2254,8 @@
         else if (a === 'mic') listen();
         else if (a === 'set') bot(settings());
         else if (a === 'rd') bot(readyCard());
+        else if (a === 'sem') bot(semPick());
+        else if (a.startsWith('sem:')) { const lv = a.slice(4); if (lv === semNow()) return; b.closest('.bka-seg').querySelectorAll('button').forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', x === b); }); bot(lv ? semGo(lv) : semOff()); }
         else if (a === 'bk') { const on = !V('bkOn'); V('bkSet', on); bot({ h: on ? '「부캉아」 부르기를 켰어요' : '「부캉아」 부르기를 껐어요', l: on ? ['처음 한 번은 약 14MB를 받아요 (와이파이 추천)', '화면이 켜져 있을 때 어느 탭에서든 들어요'] : [] }); setSt(''); }
         else if (a === 'say') { opt.say = !opt.say; saveOpt(); bot({ h: opt.say ? '말로 물으면 대답을 소리로 읽어 드려요' : '대답을 소리로 읽지 않아요' }); }
         else if (a === 'share') { opt.share = opt.share === false; saveOpt(); bot({ h: opt.share ? '못 알아들은 말을 부캉이 공부에 보태요' : '못 알아들은 말을 보내지 않아요', l: opt.share ? ['누가 한 말인지는 보내지 않아요 · 선수 이름은 가려요'] : ['이 휴대폰에만 남아요'] }); }
@@ -2126,6 +2276,7 @@
                 ${on ? `<div class="r"><span>🎤 내 목소리 등록<small>${n ? n + '개 등록됨' : '「부캉아」 3번 녹음 · 더 잘 알아들어요'}</small></span><button type="button" class="sw" data-a="me">${n ? '다시 하기' : '등록'}</button>${n ? '<button type="button" class="sw" data-a="me-x">지우기</button>' : ''}</div>` : ''}
                 <div class="r"><span>🗣 부캉이 목소리<small>${esc(voiceNow()[1])} · ${esc(voiceNow()[4])}</small></span><button type="button" class="sw" data-a="voice">바꾸기</button></div>
                 <div class="r"><span>🔊 대답 읽어 주기<small>말로 물었을 때만 읽어요</small></span><button type="button" class="sw${opt.say ? ' on' : ''}" data-a="say" role="switch" aria-checked="${opt.say}">${opt.say ? '켜짐' : '꺼짐'}</button></div>
+                <div class="r bka-semr"><span>🧠 두뇌 단계<small>${semNow() ? esc(SEM_LV[semNow()].n) + ' · ' + SEM_LV[semNow()].mb + 'MB 쓰는 중' : '처음 듣는 말도 뜻으로 알아들어요 · 고르면 받아요'}</small></span><div class="bka-seg" role="group" aria-label="두뇌 단계">${[['', '끔'], ['small', '🐣 아기'], ['base', '🦉 어린이'], ['large', '🦅 어른']].map(([k, t]) => `<button type="button" data-a="sem:${k}" class="${semNow() === k ? 'on' : ''}" aria-pressed="${semNow() === k}">${t}</button>`).join('')}</div><button type="button" class="bka-segm" data-a="sem">크기 · 차이 비교 ›</button></div>
                 <div class="r"><span>📦 준비 상태<small>앱 ${esc(appVer())} · 두뇌 v${DATA_VER} · 받은 것 · 소리 시험</small></span><button type="button" class="sw" data-a="rd">보기</button></div>
                 <div class="r"><span>📮 못 알아들은 말 보태기<small>이름 없이 모아 부캉이를 더 똑똑하게 해요</small></span><button type="button" class="sw${opt.share !== false ? ' on' : ''}" data-a="share" role="switch" aria-checked="${opt.share !== false}">${opt.share !== false ? '켜짐' : '꺼짐'}</button></div></div>`);
             scrollEnd();
@@ -2196,7 +2347,7 @@
         if (bq && bq.classList.contains('live')) bq.classList.remove('live');
     }
     function open(full) {
-        build(); if (!DATA) loadData().catch(() => {});   // 용어 · 대화 자료를 미리 받아 둠
+        build(); if (!DATA) loadData().then(rdBadge, () => {});   // 용어 · 대화 자료를 미리 받아 둠
         const want = (full || !phone()) ? 'pan' : 'bub';
         if (isOpenNow && (mode === want || (mode === 'pan' && !full))) return;
         isOpenNow = true;
@@ -2231,6 +2382,36 @@
         if (bub) bub.hidden = true; if (fab) fab.hidden = true;
         document.documentElement.classList.remove('bka-open', 'bka-bub-on');
     }
+    // v2.128.0: 창 · 말풍선 안에서 위아래로 끌거나 휠을 돌려도 뒤 화면이 같이 움직이지 않게
+    //   (안쪽 글이 짧아 스크롤할 게 없거나, 맨 위 · 맨 아래에 닿았을 때 그 움직임을 막음 — 아이폰 · 안드로이드 · PC 휠)
+    (function () {
+        const IN = '.bka-pan,.bka-bub,.bka-ov,.bka-fab';
+        const scroller = (el, root) => {
+            for (; el && el !== root.parentNode; el = el.parentNode) {
+                if (el.nodeType !== 1) continue;
+                const oy = getComputedStyle(el).overflowY;
+                if ((oy === 'auto' || oy === 'scroll') && el.scrollHeight > el.clientHeight + 1) return el;
+                if (el === root) break;
+            }
+            return null;
+        };
+        const blocks = (t, dy) => {
+            const root = t && t.closest && t.closest(IN); if (!root || !isOpenNow) return false;
+            const sc = scroller(t, root); if (!sc) return true;
+            if (dy < 0 && sc.scrollTop <= 0) return true;                                        // 맨 위에서 더 내리기
+            if (dy > 0 && sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 1) return true;    // 맨 아래에서 더 올리기
+            return false;
+        };
+        let y0 = 0, x0 = 0;
+        document.addEventListener('touchstart', e => { const p = e.touches[0]; if (p) { y0 = p.clientY; x0 = p.clientX; } }, { passive: true, capture: true });
+        document.addEventListener('touchmove', e => {
+            const p = e.touches[0]; if (!p || e.touches.length > 1) return;
+            const dy = y0 - p.clientY, dx = x0 - p.clientX;
+            if (Math.abs(dx) > Math.abs(dy) && e.target.closest && e.target.closest('.bka-chips,.bka-cks,.bka-items')) return;   // 옆으로 넘기는 칩은 그대로
+            if (e.cancelable && blocks(e.target, dy)) e.preventDefault();
+        }, { passive: false, capture: true });
+        document.addEventListener('wheel', e => { if (e.cancelable && !e.ctrlKey && Math.abs(e.deltaY) > Math.abs(e.deltaX) && blocks(e.target, e.deltaY)) e.preventDefault(); }, { passive: false, capture: true });
+    })();
     // 뒤로가기: index.html 의 뒤로가기 지킴이(plLayers · plBack)에 끼워 넣기 — 비서 창이 열려 있으면 먼저 닫힘
     (function () {
         const L = window.plLayers, B = window.plBack;
