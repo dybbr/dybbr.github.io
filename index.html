@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.128.0 · b261113";
+        const APP_VERSION = "v2.128.1 · b261113";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -6838,6 +6838,7 @@
 
     // 👕 복장 고르기 (v2.40.0) — 유니폼 신청 품목(유니폼상의·바지·여름/겨울훈련티·바람막이·풀오버·겨울점퍼)을 상의·하의·이너·겉옷으로 나눔
     //   줄마다 하나씩 고르면 "아이보리 + 유니폼바지 + 바람막이"처럼 복장 문장이 자동으로 만들어짐 (같은 걸 한 번 더 누르면 해제)
+    //   v2.128.1: 같은 줄 안에서도 여러 개 고르기 (예: 아이보리 + 훈련티, 바람막이 + 겨울점퍼) — 줄 안 순서는 버튼 순서대로
     //   목록에 없는 건 ✏️ 직접 입력 → 맨 뒤에 붙음. 예전에 글로 적은 복장도 아는 이름은 버튼으로 다시 켜짐 (syn = 예전 표현)
     const DRESS_CATS = [
         { k: 'top', name: '상의', opts: [   // v2.40.1: 아이보리·빨강·훈련티 3가지
@@ -6858,7 +6859,14 @@
             { v: '겨울점퍼', ic: 'jumper', syn: ['점퍼', '패딩', '겨울 점퍼'] }
         ] }
     ];
-    let evDressSel = {}, evDressEtcOn = false;
+    let evDressSel = {}, evDressEtcOn = false;   // v2.128.1: evDressSel[줄] = [고른 이름들] (같은 줄 여러 개)
+    const dressSelHas = (k, v) => (evDressSel[k] || []).indexOf(v) !== -1;
+    function dressSelAdd(k, v) { if (!dressSelHas(k, v)) (evDressSel[k] = evDressSel[k] || []).push(v); }
+    function dressSelParts() {   // 줄 순서(상의 → 하의 → 이너 → 겉옷), 줄 안은 버튼 순서대로
+        const out = [];
+        DRESS_CATS.forEach(c => c.opts.forEach(o => { if (dressSelHas(c.k, o.v)) out.push(o.v); }));
+        return out;
+    }
     const dressKey = t => String(t || '').replace(/\s+/g, '');
     function dressFind(tok) {   // 낱말 하나 → { k, v } (띄어쓰기 무시하고 이름·예전 표현과 똑같을 때만)
         const n = dressKey(tok);
@@ -6873,8 +6881,7 @@
             const toks = text.split(/\s*[+,]\s*/).filter(Boolean), hits = toks.map(dressFind);
             const firstMiss = hits.findIndex(h => !h);
             const tailOnly = firstMiss === -1 || hits.slice(firstMiss).every(h => !h);   // 모르는 말이 맨 뒤에만 있을 때만 나눔
-            const dup = hits.filter(Boolean).some((h, i, a) => a.findIndex(x => x.k === h.k) !== i);
-            if (tailOnly && !dup) { hits.forEach(h => { if (h) evDressSel[h.k] = h.v; }); etc = firstMiss === -1 ? '' : toks.slice(firstMiss).join(' + '); }
+            if (tailOnly) { hits.forEach(h => { if (h) dressSelAdd(h.k, h.v); }); etc = firstMiss === -1 ? '' : toks.slice(firstMiss).join(' + '); }
             else etc = text;                                                                // 순서가 섞인 예전 글은 그대로 보관
         }
         document.getElementById('evDressEtc').value = etc;
@@ -6891,7 +6898,7 @@
         const box = document.getElementById('evDressBox');
         if (!box) return;
         box.innerHTML = DRESS_CATS.map(c => `<div class="ev-drow"><span class="ev-drow-k">${c.name}</span><div class="ev-dress-chips">`
-            + c.opts.map(o => `<button type="button" class="ev-dchip${evDressSel[c.k] === o.v ? ' on' : ''}" data-k="${c.k}" data-v="${escapeHtml(o.v)}" onclick="pickDressOpt(this)">${o.ic ? clothIcon(o) : dressSwatch(o.sw)}${escapeHtml(o.label || o.v)}</button>`).join('')
+            + c.opts.map(o => `<button type="button" class="ev-dchip${dressSelHas(c.k, o.v) ? ' on' : ''}" data-k="${c.k}" data-v="${escapeHtml(o.v)}" onclick="pickDressOpt(this)">${o.ic ? clothIcon(o) : dressSwatch(o.sw)}${escapeHtml(o.label || o.v)}</button>`).join('')
             + `</div></div>`).join('')
             + `<div class="ev-drow"><span class="ev-drow-k">기타</span><div class="ev-dress-chips"><button type="button" class="ev-dchip other${evDressEtcOn ? ' on' : ''}" onclick="toggleDressEtc()">✏️ 직접 입력</button></div></div>`;
         document.getElementById('evDressEtc').style.display = evDressEtcOn ? '' : 'none';
@@ -6899,7 +6906,8 @@
     }
     function pickDressOpt(btn) {
         const k = btn.dataset.k, v = btn.dataset.v;
-        if (evDressSel[k] === v) delete evDressSel[k]; else evDressSel[k] = v;
+        if (dressSelHas(k, v)) { evDressSel[k] = evDressSel[k].filter(x => x !== v); if (!evDressSel[k].length) delete evDressSel[k]; }   // 다시 누르면 해제
+        else dressSelAdd(k, v);                                                                                                      // 같은 줄 다른 것은 그대로 두고 더함
         renderDressChips();
     }
     function toggleDressEtc() {
@@ -6910,7 +6918,7 @@
         if (evDressEtcOn) setTimeout(() => { try { inp.focus(); } catch (e) {} }, 30);
     }
     function syncDressValue() {   // 고른 것 + 직접 입력 → 숨은 칸(evDress)에 저장될 문장
-        const parts = DRESS_CATS.map(c => evDressSel[c.k]).filter(Boolean);
+        const parts = dressSelParts();
         const etc = evDressEtcOn ? document.getElementById('evDressEtc').value.trim() : '';
         if (etc) parts.push(etc);
         const val = parts.join(' + ');
