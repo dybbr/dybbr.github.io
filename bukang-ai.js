@@ -8,7 +8,7 @@
     'use strict';
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     const LS = 'daeyeon_bka';
-    const VER = '2.129.1';
+    const VER = '2.132.0';
     const opt = (function () { try { return Object.assign({ say: true }, JSON.parse(localStorage.getItem(LS) || '{}')); } catch (e) { return { say: true }; } })();
     const saveOpt = () => { try { localStorage.setItem(LS, JSON.stringify(opt)); } catch (e) {} };
     const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -394,6 +394,7 @@
             const lv = /아기/.test(t) ? 'small' : /어린이/.test(t) ? 'base' : /어른/.test(t) ? 'large' : ''; return lv ? semGo(lv) : semPick();
         }
         if (/^(두뇌끄기|뜻두뇌꺼|뜻두뇌끄기)/.test(t)) return semOff();
+        if (/^(실험실|실험실열어|실험실열어줘|큐웬|qwen)/i.test(t) && isDev()) return { h: '🧪 실험실을 열게요', say: '', quiet: 1, run: labOpen };
         if (/소리시험|소리테스트|목소리시험|소리확인|소리가?안나|목소리가?안나|대답소리|말을?안해|대답을?안해|음성대답/.test(t)) return /안나|안해|안들/.test(t) ? noSoundTips() : soundTest();
         if (/^(상태|준비상태|네상태|너상태|상태어때|상태보여줘|상태알려줘)$/.test(t)) return readyCard();
         if (/준비상태|부캉이?상태|다운로드|받았어|받았나|버전|엔진/.test(t) && /부캉|준비|다운로드|받았|버전|엔진|두뇌/.test(t) && !/일정|경기|공지|노래|곡|앱업데이트/.test(t)) return readyCard();
@@ -661,6 +662,7 @@
         const t4 = terms4(s, t, true) || faq4(t) || talkAns(t);
         const sm = semAns(s, t4); if (sm) return sm;                  // v2.128.0: 🧠 뜻 두뇌 (받았을 때만) — 확신하면 느슨한 짐작(t4)보다 먼저
         if (t4) return t4;
+        const lb = labAns(s); if (lb) return lb;   // 🧪 v2.132.0: 개발자 실험실에서 고른 Qwen 이 모를 때만 짧게 지어서 답함
         return missAns(s);
     }
     function missAns(s, sug) {   // sug: 🧠 뜻 두뇌가 찾은 비슷한 뜻 (확신이 낮을 때)
@@ -2063,14 +2065,15 @@
         let ty = 0, tx = 0;
         const canScroll = (el, dy, dx) => {
             for (; el && el !== pan; el = el.parentElement) {
-                if (el.classList.contains('bka-body')) { if (el.scrollHeight > el.clientHeight + 1 && Math.abs(dy) >= Math.abs(dx)) { if (dy > 0 && el.scrollTop <= 0) return false; if (dy < 0 && el.scrollTop + el.clientHeight >= el.scrollHeight - 1) return false; return true; } return false; }
+                if (el.classList.contains('bka-body') || (el.classList.contains('bd') && el.parentElement && el.parentElement.classList.contains('bka-labx'))) { if (el.scrollHeight > el.clientHeight + 1 && Math.abs(dy) >= Math.abs(dx)) { if (dy > 0 && el.scrollTop <= 0) return false; if (dy < 0 && el.scrollTop + el.clientHeight >= el.scrollHeight - 1) return false; return true; } return false; }
                 if (el.classList.contains('bka-chips')) return Math.abs(dx) > Math.abs(dy) && el.scrollWidth > el.clientWidth + 1;
+                if ((el.classList.contains('pick') || el.classList.contains('bka-ltw')) && Math.abs(dx) > Math.abs(dy)) return el.scrollWidth > el.clientWidth + 1;   // 🧪 실험실: 옆으로 넘기는 줄 · 표
             }
             return false;
         };
         const onTs = e => { const t = e.touches[0]; if (t) { ty = t.clientY; tx = t.clientX; } };
         const onTm = e => { const t = e.touches[0]; if (!t || e.touches.length > 1) return; if (!canScroll(e.target, t.clientY - ty, t.clientX - tx) && e.cancelable) e.preventDefault(); };
-        [ov, pan].forEach(x => { x.addEventListener('touchstart', onTs, { passive: true }); x.addEventListener('touchmove', onTm, { passive: false }); x.addEventListener('wheel', e => { if (!e.target.closest || !e.target.closest('.bka-body')) e.preventDefault(); }, { passive: false }); });
+        [ov, pan].forEach(x => { x.addEventListener('touchstart', onTs, { passive: true }); x.addEventListener('touchmove', onTm, { passive: false }); x.addEventListener('wheel', e => { if (!e.target.closest || !e.target.closest('.bka-body, .bka-labx .bd')) e.preventDefault(); }, { passive: false }); });
         bodyEl = $('bkaBody'); inp = $('bkaInp'); stEl = $('bkaSt'); micB = pan.querySelector('.bka-mic');
         if (!SR) micB.hidden = true;
         pan.addEventListener('click', onClick);
@@ -2300,6 +2303,7 @@
         else if (a === 'mic') listen();
         else if (a === 'set') bot(settings());
         else if (a === 'rd') bot(readyCard());
+        else if (a === 'lab') labOpen();
         else if (a === 'sem') bot(semPick());
         else if (a.startsWith('sem:')) { const lv = a.slice(4); if (lv === semNow()) return; b.closest('.bka-seg').querySelectorAll('button').forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', x === b); }); bot(lv ? semGo(lv) : semOff()); }
         else if (a === 'bk') { const on = !V('bkOn'); V('bkSet', on); bot({ h: on ? '「부캉아」 부르기를 켰어요' : '「부캉아」 부르기를 껐어요', l: on ? ['처음 한 번은 약 14MB를 받아요 (와이파이 추천)', '화면이 켜져 있을 때 어느 탭에서든 들어요'] : [] }); setSt(''); }
@@ -2308,6 +2312,21 @@
         else if (a === 'voice') bot(voiceTalk('목소리', '목소리'));
         else if (a === 'me') enroll();
         else if (a === 'me-x') { V('bkClearMine'); bot({ h: '내 목소리 등록을 지웠어요' }); }
+    }
+    // ---------- 🧪 실험실 (v2.132.0 · 개발자 전용) — bukang-lab.js 는 개발자일 때만 불러옴 ----------
+    const isDev = () => { try { return typeof currentRole !== 'undefined' && currentRole === 'dev'; } catch (e) { return false; } };
+    let labP = null;
+    function labLoad() {
+        if (window.BKA_LAB) return Promise.resolve(window.BKA_LAB);
+        if (!isDev()) return Promise.reject(new Error('dev only'));
+        return labP || (labP = new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = 'bukang-lab.js?v=2.132.0'; sc.onload = () => window.BKA_LAB ? res(window.BKA_LAB) : rej(new Error('lab')); sc.onerror = () => { labP = null; rej(new Error('lab')); }; document.head.appendChild(sc); }));
+    }
+    const labUse = () => { if (!isDev()) return ''; try { return (JSON.parse(localStorage.getItem('daeyeon_bka_lab') || '{}') || {}).use || ''; } catch (e) { return ''; } };
+    function labOpen() { if (!isDev()) return; open(true); labLoad().then(L => L.open(pan), () => bot({ h: '실험실을 열지 못했어요', l: ['인터넷 연결을 확인해 주세요'] })); }
+    function labAns(s) {
+        if (!labUse()) return null;
+        logMiss(s);
+        return { h: '🧪 생각하고 있어요…', wait: upd => labLoad().then(L => L.answer(s, upd)).then(r => r ? { h: '🧪 ' + r.text, l: [r.tag], say: r.text } : Object.assign(missAns(s), { l: ['「' + s + '」', '🧪 실험 두뇌도 답을 못 했어요'] }), () => missAns(s)) };
     }
     function settings() {
         if (mode === 'bub') open(true);
@@ -2323,6 +2342,7 @@
                 <div class="r"><span>🗣 부캉이 목소리<small>${esc(voiceNow()[1])} · ${esc(voiceNow()[4])}</small></span><button type="button" class="sw" data-a="voice">바꾸기</button></div>
                 <div class="r"><span>🔊 대답 읽어 주기<small>말로 물었을 때만 읽어요</small></span><button type="button" class="sw${opt.say ? ' on' : ''}" data-a="say" role="switch" aria-checked="${opt.say}">${opt.say ? '켜짐' : '꺼짐'}</button></div>
                 <div class="r bka-semr"><span>🧠 두뇌 단계<small>${semNow() ? esc(SEM_LV[semNow()].n) + ' · ' + SEM_LV[semNow()].mb + 'MB 쓰는 중' : '처음 듣는 말도 뜻으로 알아들어요 · 고르면 받아요'}</small></span><div class="bka-seg" role="group" aria-label="두뇌 단계">${[['', '끔'], ['small', '🐣 아기'], ['base', '🦉 어린이'], ['large', '🦅 어른']].map(([k, t]) => `<button type="button" data-a="sem:${k}" class="${semNow() === k ? 'on' : ''}" aria-pressed="${semNow() === k}">${t}</button>`).join('')}</div><button type="button" class="bka-segm" data-a="sem">크기 · 차이 비교 ›</button></div>
+                ${isDev() ? `<div class="r"><span>🧪 실험실 (개발자만)<small>${labUse() ? 'Qwen 시험 두뇌 켜짐 · 모를 때만 지어서 답해요' : 'Qwen 작은 모델 5개 받아서 시험 · 학부모에겐 안 보여요'}</small></span><button type="button" class="sw" data-a="lab">열기</button></div>` : ''}
                 <div class="r"><span>📦 준비 상태<small>앱 ${esc(appVer())} · 두뇌 v${DATA_VER} · 받은 것 · 소리 시험</small></span><button type="button" class="sw" data-a="rd">보기</button></div>
                 <div class="r"><span>📮 못 알아들은 말 보태기<small>이름 없이 모아 부캉이를 더 똑똑하게 해요</small></span><button type="button" class="sw${opt.share !== false ? ' on' : ''}" data-a="share" role="switch" aria-checked="${opt.share !== false}">${opt.share !== false ? '켜짐' : '꺼짐'}</button></div></div>`);
             scrollEnd();
@@ -2453,7 +2473,7 @@
         document.addEventListener('touchmove', e => {
             const p = e.touches[0]; if (!p || e.touches.length > 1) return;
             const dy = y0 - p.clientY, dx = x0 - p.clientX;
-            if (Math.abs(dx) > Math.abs(dy) && e.target.closest && e.target.closest('.bka-chips,.bka-cks,.bka-items')) return;   // 옆으로 넘기는 칩은 그대로
+            if (Math.abs(dx) > Math.abs(dy) && e.target.closest && e.target.closest('.bka-chips,.bka-cks,.bka-items,.bka-labx .pick,.bka-ltw')) return;   // 옆으로 넘기는 칩은 그대로
             if (e.cancelable && blocks(e.target, dy)) e.preventDefault();
         }, { passive: false, capture: true });
         document.addEventListener('wheel', e => { if (e.cancelable && !e.ctrlKey && Math.abs(e.deltaY) > Math.abs(e.deltaX) && blocks(e.target, e.deltaY)) e.preventDefault(); }, { passive: false, capture: true });
