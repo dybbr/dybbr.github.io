@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.128.1 · b261113";
+        const APP_VERSION = "v2.129.0 · b261113";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -1968,7 +1968,39 @@
         .ev-date-txt .dow.sat { color: #2563eb; }
         .ev-date-txt .dow.sun { color: #dc2626; }
         .ev-date-txt .ph { color: #94a3b8; }
-        #eventEditModal .ev-dt-row input[type="time"] { padding-left: 2px; padding-right: 2px; letter-spacing: -0.3px; }
+        /* ⏰ v2.129.0: 시작 · 종료 시간 — 휴대폰 기본 시계(1분 단위) 대신 사이트가 직접 그린 고르기 창 (A안 숫자판: 오전/오후 · 시 · 분 5분 단위) */
+        .ev-tbtn { width: 100%; min-height: 36px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; font: inherit; font-size: 13.5px; color: #0f172a;
+            display: flex; align-items: center; justify-content: center; gap: 3px; cursor: pointer; padding: 6px 4px; white-space: nowrap; letter-spacing: -0.2px; }
+        .ev-tbtn .ap { font-size: 11.5px; color: #64748b; font-weight: 600; }
+        .ev-tbtn.empty { color: #94a3b8; }
+        #tpModal { z-index: 1001; align-items: flex-end; padding: 0; }
+        #tpModal .tp-sheet { background: #fff; width: 100%; max-width: 440px; border-radius: 18px 18px 0 0; padding: 10px 14px calc(12px + env(safe-area-inset-bottom));
+            box-shadow: 0 -8px 30px rgba(0,0,0,.2); max-height: calc(96dvh / var(--ui-zoom, 1)); overflow-y: auto; }
+        @media (min-width: 700px) { #tpModal { align-items: center; padding: 10px; } #tpModal .tp-sheet { border-radius: 16px; } #tpModal .tp-grab { display: none; } }
+        .tp-grab { width: 40px; height: 4px; border-radius: 2px; background: #cbd5e1; margin: 0 auto 10px; }
+        .tp-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+        .tp-tab { border: 2px solid #e2e8f0; border-radius: 12px; background: #f8fafc; padding: 7px 8px; text-align: left; cursor: pointer; font: inherit; min-width: 0; }
+        .tp-tab .k { display: block; font-size: 11.5px; color: #64748b; font-weight: 700; }
+        .tp-tab .v { display: block; font-size: 19px; font-weight: 800; color: #0b2240; letter-spacing: -0.5px; white-space: nowrap; }
+        .tp-tab .v.ph { color: #94a3b8; font-weight: 600; font-size: 15px; line-height: 28px; }
+        .tp-tab .d { font-size: 11px; color: #2563eb; font-weight: 700; margin-left: 4px; }
+        .tp-tab.on { border-color: #0b2240; background: #fff; box-shadow: 0 2px 8px rgba(11,34,64,.12); }
+        .tp-sec { font-size: 12px; font-weight: 800; color: #475569; margin: 2px 0 6px; }
+        .tp-ap { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+        .tp-c { border: 1.5px solid #e2e8f0; border-radius: 10px; background: #fff; color: #1e293b; font: inherit; font-size: 16px; font-weight: 700; min-height: 44px; cursor: pointer; padding: 0; }
+        .tp-c.on { background: #0b2240; border-color: #0b2240; color: #fff; }
+        .tp-c.soft { color: #94a3b8; font-weight: 600; }
+        .tp-c.on.soft { color: #fff; }
+        .tp-ab { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .tp-g3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+        .tp-dur { display: flex; gap: 6px; margin: 0 0 10px; }
+        .tp-dur button { flex: 1 1 0; min-width: 0; border: 1.5px dashed #93c5fd; background: #eff6ff; color: #1d4ed8; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 700;
+            min-height: 34px; cursor: pointer; white-space: nowrap; padding: 0 2px; letter-spacing: -0.3px; }
+        .tp-foot { display: flex; gap: 8px; margin-top: 12px; }
+        .tp-foot button { flex: 1; min-height: 46px; border-radius: 12px; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer; }
+        .tp-foot .tp-clear { flex: 0 0 30%; background: #fff; border: 1.5px solid #e2e8f0; color: #64748b; }
+        .tp-foot .tp-ok { background: #0b2240; border: none; color: #fff; }
+        @media (max-width: 359px) { .tp-c { min-height: 40px; font-size: 15px; } .tp-tab .v { font-size: 17px; } .tp-dur button { font-size: 12px; } }
         #eventEditModal .ev-dt-row input::-webkit-inner-spin-button, #eventEditModal .ev-dt-row input::-webkit-clear-button { display: none; }
         #eventEditModal .ev-dt-row input::-webkit-datetime-edit { padding: 0; }
         #eventEditModal .ev-res-seg button { min-height: 36px; }
@@ -3671,8 +3703,8 @@
         <div class="modal-scroll-body">
             <div class="ev-dt-row">
                 <div class="form-group"><label>날짜 *</label><div class="ev-date-wrap"><input type="date" id="evDate" onclick="evPick(this)" oninput="syncEvDateText()" onchange="syncEvDateText()"><span class="ev-date-txt" id="evDateTxt" aria-hidden="true"></span></div></div>
-                <div class="form-group"><label>시작</label><input type="time" id="evStart" onclick="evPick(this)"></div>
-                <div class="form-group"><label>종료</label><input type="time" id="evEnd" onclick="evPick(this)"></div>
+                <div class="form-group"><label>시작</label><input type="hidden" id="evStart"><button type="button" class="ev-tbtn empty" id="evStartBtn" onclick="openTimePick('s')">시간</button></div>
+                <div class="form-group"><label>종료</label><input type="hidden" id="evEnd"><button type="button" class="ev-tbtn empty" id="evEndBtn" onclick="openTimePick('e')">시간</button></div>
             </div>
             <div class="form-row2 ev-type-row">
                 <div class="form-group">
@@ -3755,6 +3787,16 @@
             <button class="btn-cancel" onclick="closeModal('eventEditModal')">취소</button>
             <button class="btn-save" id="btnEventSave" onclick="submitEventEditor()">저장</button>
         </div>
+    </div>
+</div>
+
+<!-- ⏰ v2.129.0: 일정 시작 · 종료 시간 고르기 창 (A안 숫자판) -->
+<div id="tpModal" class="modal" onclick="if (event.target === this) closeModal('tpModal')">
+    <div class="tp-sheet" role="dialog" aria-label="시간 고르기">
+        <div class="tp-grab"></div>
+        <div class="tp-tabs" id="tpTabs"></div>
+        <div id="tpBody"></div>
+        <div class="tp-foot"><button type="button" class="tp-clear" onclick="tpClear()">지우기</button><button type="button" class="tp-ok" onclick="tpOk()">확인</button></div>
     </div>
 </div>
 
@@ -6714,6 +6756,7 @@
         syncEvDateText();
         document.getElementById('evStart').value = ev.start || '';
         document.getElementById('evEnd').value = ev.end || '';
+        syncEvTimeBtns();   // ⏰ v2.129.0
         document.getElementById('evType').value = SCHED_TYPES[ev.type] ? ev.type : '기타';
         document.getElementById('evOpponent').value = ev.opponent || '';
         document.getElementById('evTitle').value = (ev.title && ev.title !== ev.type) ? ev.title : '';
@@ -6783,6 +6826,70 @@
     }
     // 📅 PC(마우스)에서는 날짜·시간 칸 어디를 눌러도 선택 창이 열리게 (휴대폰은 원래 칸을 누르면 열림) — v2.41.1
     function evPick(el) { try { if (el.showPicker && window.matchMedia && window.matchMedia('(pointer: fine)').matches) el.showPicker(); } catch (e) {} }
+    // ⏰ v2.129.0: 시작 · 종료 시간 고르기 (하코 요청 — 휴대폰 기본 시계는 1분 단위라 불편 · 아이폰은 모양도 다름)
+    //   칸에는 「오전 9:00」처럼 보여 주고, 값은 예전과 똑같이 "09:00"(24시간) 으로 숨은 칸에 둠 → 시트 · 서버는 바뀐 것 없음
+    //   창: 위에 시작 | 종료 두 칸 → 오전/오후 · 시(12칸) · 분(5분 단위 12칸) 을 차례로 누름. 분까지 고르면 종료로 저절로 넘어감
+    //       종료는 「시작부터 +1시간 · +2시간 …」으로 한 번에. 5분 단위가 아닌 예전 값(예: 10:37)도 그대로 보이고, 고르면 바뀜
+    const tpPad = n => String(n).padStart(2, '0');
+    const tpParse = v => { const m = /^(\d{1,2}):(\d{2})/.exec(v || ''); return m ? (+m[1] % 24) * 60 + Math.min(59, +m[2]) : null; };
+    const tpFmt = m => tpPad(Math.floor(m / 60) % 24) + ':' + tpPad(m % 60);
+    const tpNice = m => (m < 720 ? '오전 ' : '오후 ') + ((Math.floor(m / 60) % 12) || 12) + ':' + tpPad(m % 60);
+    const tpDur = d => { if (d <= 0) return ''; const h = Math.floor(d / 60), m = d % 60; return (h ? h + '시간' : '') + (m ? (h ? ' ' : '') + m + '분' : ''); };
+    let tpS = null;   // { tab: 's' | 'e', s: 분 | null, e: 분 | null }
+    function syncEvTimeBtns() {
+        [['evStart', 'evStartBtn'], ['evEnd', 'evEndBtn']].forEach(([id, bid]) => {
+            const m = tpParse(document.getElementById(id).value), b = document.getElementById(bid);
+            if (!b) return;
+            b.classList.toggle('empty', m == null);
+            b.innerHTML = m == null ? '시간' : `<span class="ap">${m < 720 ? '오전' : '오후'}</span>${(Math.floor(m / 60) % 12) || 12}:${tpPad(m % 60)}`;
+        });
+    }
+    function openTimePick(tab) {
+        tpS = { tab, s: tpParse(document.getElementById('evStart').value), e: tpParse(document.getElementById('evEnd').value) };
+        tpRender();
+        document.getElementById('tpModal').style.display = 'flex';
+    }
+    function tpClear() { tpS[tpS.tab] = null; tpRender(); }
+    function tpOk() {
+        document.getElementById('evStart').value = tpS.s == null ? '' : tpFmt(tpS.s);
+        document.getElementById('evEnd').value = tpS.e == null ? '' : tpFmt(tpS.e);
+        syncEvTimeBtns();
+        closeModal('tpModal');
+    }
+    function tpBase() { return tpS[tpS.tab] != null ? tpS[tpS.tab] : (tpS.tab === 'e' && tpS.s != null ? Math.min(tpS.s + 120, 1435) : 9 * 60); }
+    function tpSet(m, done) {
+        m = ((m % 1440) + 1440) % 1440;
+        tpS[tpS.tab] = m;
+        if (tpS.tab === 's' && tpS.e != null && tpS.e <= m) tpS.e = null;   // 종료가 시작보다 앞이 되면 비움
+        if (done && tpS.tab === 's') tpS.tab = 'e';
+        tpRender();
+    }
+    function tpRender() {
+        const S = tpS, d = (S.s != null && S.e != null) ? tpDur(S.e - S.s) : '';
+        const tab = (k, lbl, m, extra) => `<button type="button" class="tp-tab${S.tab === k ? ' on' : ''}" onclick="tpS.tab='${k}'; tpRender()"><span class="k">${lbl}</span><span class="v${m == null ? ' ph' : ''}">${m == null ? '눌러서 고르기' : tpNice(m)}${extra || ''}</span></button>`;
+        document.getElementById('tpTabs').innerHTML = tab('s', '시작', S.s) + tab('e', '종료', S.e, d ? `<span class="d">${d}</span>` : '');
+        const cur = S[S.tab], pm = (cur != null ? cur : tpBase()) >= 720;
+        const h12 = cur != null ? ((Math.floor(cur / 60) % 12) || 12) : null, mm = cur != null ? cur % 60 : null;
+        let h = '';
+        if (S.tab === 'e' && S.s != null && S.s < 1380)
+            h += '<div class="tp-sec">시작부터</div><div class="tp-dur">' + [60, 90, 120, 180, 240].filter(x => S.s + x < 1440)
+                .map(x => `<button type="button" onclick="tpSet(tpS.s + ${x})">+${x === 90 ? '1.5시간' : x / 60 + '시간'}</button>`).join('') + '</div>';
+        h += `<div class="tp-ap"><button type="button" class="tp-c${!pm ? ' on' : ''}" onclick="tpAp(0)">오전</button><button type="button" class="tp-c${pm ? ' on' : ''}" onclick="tpAp(1)">오후</button></div>`;
+        h += '<div class="tp-ab"><div><div class="tp-sec">시</div><div class="tp-g3">';
+        [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].forEach(x => h += `<button type="button" class="tp-c${h12 === x ? ' on' : ''}" onclick="tpHour(${x})">${x}</button>`);
+        h += '</div></div><div><div class="tp-sec">분 (5분 단위)</div><div class="tp-g3">';
+        for (let x = 0; x < 60; x += 5) h += `<button type="button" class="tp-c${mm === x ? ' on' : ''}${x % 10 ? ' soft' : ''}" onclick="tpMin(${x})">${tpPad(x)}</button>`;
+        document.getElementById('tpBody').innerHTML = h + '</div></div></div>';
+    }
+    function tpAp(pm) { const c = tpBase(); tpSet((Math.floor(c / 60) % 12 + (pm ? 12 : 0)) * 60 + c % 60); }
+    function tpHour(x) {
+        const has = tpS[tpS.tab] != null, c = tpBase();
+        let v = ((x % 12) + (c >= 720 ? 12 : 0)) * 60 + (has ? c % 60 : 0);
+        if (!has && x >= 1 && x <= 5 && v < 720) v += 720;   // 처음 고를 때 1~5시는 오후로 (야구부 일정은 새벽 1~5시가 없음)
+        if (tpS.tab === 'e' && tpS.s != null && v <= tpS.s && v + 720 > tpS.s && v < 720) v += 720;   // 종료가 시작보다 앞이면 오후로
+        tpSet(v);
+    }
+    function tpMin(x) { const c = tpBase(); tpSet(Math.floor(c / 60) * 60 + x, true); }
     // 🏆 경기 결과 버튼 + 점수 −/＋ (v2.39.0)
     //   점수를 둘 다 넣으면 승·패·무가 자동으로 골라짐. 반대로 결과를 먼저 눌렀는데 점수가 거꾸로면 두 점수를 바꿔 줌 (우리:상대 순서로 저장)
     let evScoreRaw = '';
