@@ -8,7 +8,7 @@
     'use strict';
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     const LS = 'daeyeon_bka';
-    const VER = '2.127.0';
+    const VER = '2.127.2';
     const opt = (function () { try { return Object.assign({ say: true }, JSON.parse(localStorage.getItem(LS) || '{}')); } catch (e) { return { say: true }; } })();
     const saveOpt = () => { try { localStorage.setItem(LS, JSON.stringify(opt)); } catch (e) {} };
     const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -1827,7 +1827,7 @@
             btns(B(`⬇ 받기 (${ENG_MB}MB)`, async () => {
                 btns('');
                 try {
-                    await getEngine(f => { const p = Math.round(f * 100); set('2', 'run', `② 「부캉아」 엔진 받는 중 · ${p}%`, `약 ${ENG_MB}MB 중 ${(f * ENG_MB).toFixed(1)}MB`); const el = $p('2'); if (el) el.querySelector('.tx').insertAdjacentHTML('beforeend', `<span class="bka-bar"><i style="width:${p}%"></i></span>`); });
+                    await getEngine(f => { const p = Math.round(f * 100); set('2', 'run', `② 「부캉아」 엔진 받는 중 · ${p}%`, `약 ${ENG_MB}MB 중 ${(f * ENG_MB).toFixed(1)}MB`); const el = $p('2'); if (el) el.querySelector('.tx').insertAdjacentHTML('beforeend', `<span class="bka-prog"><i style="width:${p}%"></i></span>`); });
                     rdSet({ eng: 1 }); set('2', 'ok', '② 「부캉아」 엔진', `약 ${ENG_MB}MB 받음 · 이 기기에 저장됨`);
                 } catch (e) { set('2', 'w', '② 「부캉아」 엔진', '받지 못했어요 · 나중에 ⚙ 에서 다시 받을 수 있어요'); }
                 stepSound();
