@@ -137,6 +137,16 @@
     const CHEER_USE = { bat: ['🏏', '타석 등장'], cheer: ['📣', '다 같이 응원'], hype: ['🔥', '경기 전'], work: ['💪', '훈련·몸 풀 때'], ride: ['🚗', '이동할 때'], rest: ['🌙', '경기 끝나고'] };
     function cheerUseText(u) { const x = CHEER_USE[u]; return x ? x[0] + ' ' + x[1] : ''; }
     window.CHEER_USE = CHEER_USE;
+    // 🗓️ v2.136.0: 곡 만든 날 — 곡 주소(…_20261114032231_…)에 남은 아보카도 생성 시각(세계 표준시)을 한국 시각으로
+    //   → { ts(정렬용 ms), mo, d, txt: '11.14' } · 주소에 시각이 없으면 null
+    function cheerMade(src) {
+        const m = /_(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})_/.exec(String(src || ''));
+        if (!m) return null;
+        const ts = Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]), k = new Date(ts + 9 * 3600e3);
+        const mo = k.getUTCMonth() + 1, d = k.getUTCDate();
+        return { ts: ts, mo: mo, d: d, txt: mo + '.' + String(d).padStart(2, '0') };
+    }
+    window.cheerMade = cheerMade;
     window.cheerUseText = cheerUseText;
     window.cheerHiddenKeys = cheerHiddenKeys;
     window.loadCheerSongs = loadCheerSongs;

@@ -28,7 +28,7 @@
         }
     </script>
     <!-- 🎵 선수별 주제곡 (v2.92.0) — 곡 목록은 cheer-songs.json (그 파일만 고치면 됨) · cheer-songs.js 를 고칠 때만 아래 ?v= 숫자 올리기 -->
-    <script src="cheer-songs.js?v=2.135.0"></script>
+    <script src="cheer-songs.js?v=2.136.0"></script>
     <script src="song-stat.js?v=2.124.0"></script>   <!-- 📊 v2.124.0: 주제곡 재생 세기 (6시간에 한 번 묶어 보냄) -->
 
     <!-- 브라우저 캐시 원천 방지 메타태그 -->
@@ -490,6 +490,10 @@
         .cpl-use.u-bat { color: #c8102e; } .cpl-use.u-cheer { color: #c2410c; } .cpl-use.u-hype { color: #b45309; }
         .cpl-use.u-work { color: #6d28d9; } .cpl-use.u-ride { color: #1d4ed8; } .cpl-use.u-rest { color: #334155; }
         .cpl-len { flex: 0 0 auto; font-size: 12px; font-weight: 800; color: var(--text-sub); font-variant-numeric: tabular-nums; }
+        .cpl-end { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; line-height: 1.25; }   /* 🗓️ v2.136.0: 길이 아래 만든 날 */
+        .cpl-made { font-size: 11px; font-weight: 700; color: #94a3b8; font-variant-numeric: tabular-nums; }
+        .cpl-new { font-style: normal; font-size: 10px; font-weight: 900; color: #ffffff; background: var(--kbo-red); border-radius: 5px; padding: 1px 5px; margin-left: 5px; vertical-align: 2px; letter-spacing: .02em; }
+        .cpl-shedit .cpl-item .cpl-end { display: none; }
         .cpl-item.on .cpl-pick { background: #ffedd5; }
         .cpl-item.off .cpl-t, .cpl-item.off .cpl-no { opacity: .5; }   /* 🚫 v2.118.0: 음악 탭에서 뺀 곡 */
         /* 🔒 v2.120.0: 우리 아이 곡 모든 분 목록에서 숨기기 (B안 — 보호자 · 운영진만 「공개 설정」) */
@@ -545,7 +549,7 @@
             .cpl-no, .cpl-t small { color: #f0b48a; }
             .cpl-use.u-bat { color: #fca5a5; } .cpl-use.u-cheer { color: #fdba74; } .cpl-use.u-hype { color: #fcd34d; } .cpl-use.u-work { color: #c4b5fd; } .cpl-use.u-ride { color: #93c5fd; } .cpl-use.u-rest { color: #cbd5e1; }
             .cpl-t b { color: #dde3ec; }
-            .cpl-len { color: #97a3b7; }
+            .cpl-len { color: #97a3b7; } .cpl-made { color: #7c8799; } .cpl-new { background: #e11d48; }
             .cpl-item.on .cpl-pick { background: #3a2a1c; }
             .cpl-item.on .cpl-no, .cpl-item.on .cpl-t b, .cpl-item.on .cpl-len { color: #ff8a9b; }
             .cheer-msg { color: #e78d8d; }
@@ -1571,7 +1575,10 @@
         if (!song || !song.src) return [];
         const vers = (typeof window.cheerVersions === 'function') ? window.cheerVersions(song) : [{ key: 's', label: song.title || '주제곡', title: song.title || '', src: song.src, lyrics: song.lyrics, times: song.times, len: song.len || '', beat: song.beat, vocal: song.vocal }];
         const hid = window.cheerHiddenKeys ? window.cheerHiddenKeys(p) : new Set();
-        vers.forEach(v => { v.hidAll = hid.has(v.key); });
+        vers.forEach(v => { v.hidAll = hid.has(v.key); v.made = window.cheerMade ? window.cheerMade(v.src) : null; });
+        // 🗓️ v2.136.0 A안: 이 선수 곡 중 가장 최근에 만든 묶음(가장 늦게 만든 곡과 3일 안) + 만든 지 14일 안이면 제목 옆 NEW
+        const last = Math.max(0, ...vers.map(v => v.made ? v.made.ts : 0));
+        vers.forEach(v => { v.isNew = !!(v.made && last - v.made.ts < 1.5 * 86400e3 && Date.now() - v.made.ts < 14 * 86400e3); });
         return all || canManageSongs(p) ? vers : vers.filter(v => !v.hidAll);
     }
     // 🔒 v2.120.0: 숨김 저장 — 화면은 바로 바꾸고(재생은 그대로) 서버(setHiddenSongs, v2.43.0)에 곡 키 전체를 보냄
@@ -1597,7 +1604,7 @@
             const li = box.querySelector('.cpl-item[data-i="' + i + '"]'); if (!li) return;
             li.classList.toggle('hidall', v.hidAll);
             const tag = li.querySelector('.cpl-off'); if (tag) tag.remove();
-            const len = li.querySelector('.cpl-len'), h = cheerTagHtml(v, off); if (len && h) len.insertAdjacentHTML('beforebegin', h);
+            const len = li.querySelector('.cpl-end') || li.querySelector('.cpl-len'), h = cheerTagHtml(v, off); if (len && h) len.insertAdjacentHTML('beforebegin', h);
             const sb = li.querySelector('.cpl-sh'); if (sb) { sb.classList.toggle('on', v.hidAll); sb.setAttribute('aria-pressed', v.hidAll ? 'true' : 'false'); sb.textContent = v.hidAll ? '🔒 숨김' : '👀 공개'; }
         });
         const sm = box.querySelector('.cpl-shbar small'); if (sm) sm.textContent = cheerShBarText(n);
@@ -1654,9 +1661,9 @@
         const list = multi ? `<ol class="cpl-list" aria-label="${escapeHtml(p.name)} 주제곡 목록">${vers.map((v, i) => `
                     <li class="cpl-item${off.has(v.key) ? ' off' : ''}${v.hidAll ? ' hidall' : ''}" data-i="${i}"><button type="button" class="cpl-pick" data-i="${i}">
                         <span class="cpl-no">${i + 1}</span>
-                        <span class="cpl-t"><b>${escapeHtml(v.label)}</b>${(v.beat || v.use) ? `<small>${cheerUseHtml(v.use)}${escapeHtml(v.beat || '')}</small>` : ''}</span>
+                        <span class="cpl-t"><b>${escapeHtml(v.label)}${v.isNew ? '<i class="cpl-new">NEW</i>' : ''}</b>${(v.beat || v.use) ? `<small>${cheerUseHtml(v.use)}${escapeHtml(v.beat || '')}</small>` : ''}</span>
                         ${cheerTagHtml(v, off)}
-                        <span class="cpl-len" data-len="${escapeHtml(v.len || '')}">${escapeHtml(v.len || '')}</span>
+                        <span class="cpl-end"><span class="cpl-len" data-len="${escapeHtml(v.len || '')}">${escapeHtml(v.len || '')}</span>${v.made ? `<small class="cpl-made">${v.made.txt}</small>` : ''}</span>
                     </button>${shB ? `<button type="button" class="cpl-sh${v.hidAll ? ' on' : ''}" data-k="${escapeHtml(v.key)}" aria-pressed="${v.hidAll ? 'true' : 'false'}">${v.hidAll ? '🔒 숨김' : '👀 공개'}</button>` : ''}</li>`).join('')}
                 </ol>` : '';
         const nHid = vers.filter(v => v.hidAll).length;
