@@ -28,7 +28,7 @@
         }
     </script>
     <!-- 🎵 선수별 주제곡 (v2.92.0) — 곡 목록은 cheer-songs.json (그 파일만 고치면 됨) · cheer-songs.js 를 고칠 때만 아래 ?v= 숫자 올리기 -->
-    <script src="cheer-songs.js?v=2.136.0"></script>
+    <script src="cheer-songs.js?v=2.137.0"></script>
     <script src="song-stat.js?v=2.124.0"></script>   <!-- 📊 v2.124.0: 주제곡 재생 세기 (6시간에 한 번 묶어 보냄) -->
 
     <!-- 브라우저 캐시 원천 방지 메타태그 -->
@@ -494,6 +494,11 @@
         .cpl-made { font-size: 11px; font-weight: 700; color: #94a3b8; font-variant-numeric: tabular-nums; }
         .cpl-new { font-style: normal; font-size: 10px; font-weight: 900; color: #ffffff; background: var(--kbo-red); border-radius: 5px; padding: 1px 5px; margin-left: 5px; vertical-align: 2px; letter-spacing: .02em; }
         .cpl-shedit .cpl-item .cpl-end { display: none; }
+        /* ⇅ v2.137.0 A안: 곡 목록 정렬 드롭다운 */
+        .cpl-sortbar { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: #fff7ed; border-bottom: 1px solid #fed7aa; font-size: 12.5px; font-weight: 800; color: #9a3412; }
+        .cpl-sortbar .cnt { flex: 1 1 auto; }
+        .cpl-sort { appearance: none; -webkit-appearance: none; font: inherit; font-size: 13px; font-weight: 900; color: #9a3412; background: #ffffff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239a3412'/%3E%3C/svg%3E") no-repeat right 10px center; border: 1.5px solid #fdba74; border-radius: 999px; padding: 5px 28px 5px 12px; cursor: pointer; max-width: 60%; }
+        .cpl-sort:focus-visible { outline: 3px solid #29a8e0; outline-offset: 2px; }
         .cpl-item.on .cpl-pick { background: #ffedd5; }
         .cpl-item.off .cpl-t, .cpl-item.off .cpl-no { opacity: .5; }   /* 🚫 v2.118.0: 음악 탭에서 뺀 곡 */
         /* 🔒 v2.120.0: 우리 아이 곡 모든 분 목록에서 숨기기 (B안 — 보호자 · 운영진만 「공개 설정」) */
@@ -550,6 +555,8 @@
             .cpl-use.u-bat { color: #fca5a5; } .cpl-use.u-cheer { color: #fdba74; } .cpl-use.u-hype { color: #fcd34d; } .cpl-use.u-work { color: #c4b5fd; } .cpl-use.u-ride { color: #93c5fd; } .cpl-use.u-rest { color: #cbd5e1; }
             .cpl-t b { color: #dde3ec; }
             .cpl-len { color: #97a3b7; } .cpl-made { color: #7c8799; } .cpl-new { background: #e11d48; }
+            .cpl-sortbar { background: #241d1c; border-bottom-color: #3a2d28; color: #f0b48a; }
+            .cpl-sort { background-color: #151e2e; color: #f0b48a; border-color: #5a3a2a; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23f0b48a'/%3E%3C/svg%3E"); }
             .cpl-item.on .cpl-pick { background: #3a2a1c; }
             .cpl-item.on .cpl-no, .cpl-item.on .cpl-t b, .cpl-item.on .cpl-len { color: #ff8a9b; }
             .cheer-msg { color: #e78d8d; }
@@ -1578,8 +1585,30 @@
         vers.forEach(v => { v.hidAll = hid.has(v.key); v.made = window.cheerMade ? window.cheerMade(v.src) : null; });
         // 🗓️ v2.136.0 A안: 이 선수 곡 중 가장 최근에 만든 묶음(가장 늦게 만든 곡과 3일 안) + 만든 지 14일 안이면 제목 옆 NEW
         const last = Math.max(0, ...vers.map(v => v.made ? v.made.ts : 0));
-        vers.forEach(v => { v.isNew = !!(v.made && last - v.made.ts < 1.5 * 86400e3 && Date.now() - v.made.ts < 14 * 86400e3); });
+        vers.forEach((v, i) => { v.isNew = !!(v.made && last - v.made.ts < 1.5 * 86400e3 && Date.now() - v.made.ts < 14 * 86400e3); v.o = i; });
+        vers.sort(cheerSortCmp(cheerSortGet()));   // ⇅ v2.137.0: 이 기기에서 고른 정렬 순서
         return all || canManageSongs(p) ? vers : vers.filter(v => !v.hidAll);
+    }
+    // ⇅ v2.137.0 A안: 곡 목록 정렬 — 이 기기(localStorage daeyeon_cpl_sort)에 기억, 모든 선수 화면에 똑같이
+    //   이어 듣기 · ‹ › 도 화면에 보이는 순서대로 · 곡 키(m0 · s · l …)는 그대로라 빼기 · 숨기기 · 재생 통계와 상관없음
+    const CPL_SORTS = [['base', '기본 순서'], ['new', '최신 곡 먼저'], ['old', '오래된 곡 먼저'], ['title', '제목 가나다'], ['len', '짧은 곡 먼저'], ['use', '추천 상황별']];
+    const CPL_USE_ORDER = ['bat', 'cheer', 'hype', 'work', 'ride', 'rest'];
+    function cheerSortGet() { try { const m = localStorage.getItem('daeyeon_cpl_sort'); return CPL_SORTS.some(x => x[0] === m) ? m : 'base'; } catch (e) { return 'base'; } }
+    function cheerSortSet(m) { try { if (m === 'base') localStorage.removeItem('daeyeon_cpl_sort'); else localStorage.setItem('daeyeon_cpl_sort', m); } catch (e) {} }
+    function cheerLenSec(t) { const m = /^(\d+):(\d{2})$/.exec(String(t || '').trim()); return m ? +m[1] * 60 + +m[2] : 1e9; }
+    function cheerSortCmp(mode) {
+        const ts = v => v.made ? v.made.ts : 0, u = v => { const i = CPL_USE_ORDER.indexOf(v.use); return i < 0 ? 99 : i; };
+        const f = mode === 'new' ? (a, b) => ts(b) - ts(a)
+            : mode === 'old' ? (a, b) => ts(a) - ts(b)
+            : mode === 'title' ? (a, b) => String(a.label || '').localeCompare(String(b.label || ''), 'ko')
+            : mode === 'len' ? (a, b) => cheerLenSec(a.len) - cheerLenSec(b.len)
+            : mode === 'use' ? (a, b) => u(a) - u(b)
+            : () => 0;
+        return (a, b) => f(a, b) || (a.o - b.o);
+    }
+    function cheerSortBarHtml(n) {
+        const m = cheerSortGet();
+        return `<div class="cpl-sortbar"><span class="cnt">🎵 곡 ${n}개</span><select class="cpl-sort" id="cheerSort" aria-label="곡 목록 순서">${CPL_SORTS.map(x => `<option value="${x[0]}"${x[0] === m ? ' selected' : ''}>${x[1]}</option>`).join('')}</select></div>`;
     }
     // 🔒 v2.120.0: 숨김 저장 — 화면은 바로 바꾸고(재생은 그대로) 서버(setHiddenSongs, v2.43.0)에 곡 키 전체를 보냄
     //   여러 번 빨리 눌러도 한 번에 하나씩 차례로 보냄(마지막 상태가 남게) · 못 보내면 마지막으로 저장된 상태로 되돌림
@@ -1658,7 +1687,7 @@
         if (!vers.length) return '';
         const shB = canManageSongs(p);   // 🔒 v2.120.0 B안: 보호자 · 운영진은 목록에서 곡마다 공개 · 숨김
         const multi = vers.length > 1;
-        const list = multi ? `<ol class="cpl-list" aria-label="${escapeHtml(p.name)} 주제곡 목록">${vers.map((v, i) => `
+        const list = multi ? `${cheerSortBarHtml(vers.length)}<ol class="cpl-list" aria-label="${escapeHtml(p.name)} 주제곡 목록">${vers.map((v, i) => `
                     <li class="cpl-item${off.has(v.key) ? ' off' : ''}${v.hidAll ? ' hidall' : ''}" data-i="${i}"><button type="button" class="cpl-pick" data-i="${i}">
                         <span class="cpl-no">${i + 1}</span>
                         <span class="cpl-t"><b>${escapeHtml(v.label)}${v.isNew ? '<i class="cpl-new">NEW</i>' : ''}</b>${(v.beat || v.use) ? `<small>${cheerUseHtml(v.use)}${escapeHtml(v.beat || '')}</small>` : ''}</span>
@@ -1803,6 +1832,25 @@
             const i = keys.indexOf(k); if (i >= 0) keys.splice(i, 1); else keys.push(k);
             saveHiddenSongs(p, keys, k);
         }));
+        // ⇅ v2.137.0: 정렬 바꾸기 — 목록 줄만 옮김 (듣던 곡 · 재생 위치는 그대로)
+        const sortSel = document.getElementById('cheerSort'), ol = box.querySelector('.cpl-list');
+        if (sortSel && ol) sortSel.addEventListener('change', function () {
+            const mode = this.value; cheerSortSet(mode);
+            const curKey = box._song ? box._song.key : '';
+            const pairs = vers.map((v, i) => ({ v: v, li: items[i] }));
+            const cmp = cheerSortCmp(mode); pairs.sort((x, y) => cmp(x.v, y.v));
+            pairs.forEach((x, i) => {
+                vers[i] = x.v; items[i] = x.li; x.li.dataset.i = i;
+                const pk = x.li.querySelector('.cpl-pick'); if (pk) pk.dataset.i = i;
+                const no = x.li.querySelector('.cpl-no'); if (no) no.textContent = i + 1;
+                ol.appendChild(x.li);
+            });
+            const ni = vers.findIndex(v => v.key === curKey); box._idx = ni < 0 ? 0 : ni;
+            countEl.textContent = '🎵 ' + (box._idx + 1) + ' / ' + vers.length;
+            if (prev) prev.disabled = box._idx === 0;
+            if (next) next.disabled = box._idx === vers.length - 1;
+            markList();
+        });
         items.forEach(li => li.querySelector('.cpl-pick').addEventListener('click', function () {
             const i = Number(this.dataset.i);
             if (i === box._idx) { if (audio.paused) play(); else audio.pause(); return; }
