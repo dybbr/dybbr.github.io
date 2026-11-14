@@ -111,8 +111,35 @@
     const mood = t => [t.beat, t.vocal].filter(Boolean).join(' · ');
     const cover = (t, cls) => `<span class="pl-cv pl-g${t.g || 0}${cls ? ' ' + cls : ''}" aria-hidden="true">${esc(t.no || '♪')}</span>`;
 
+    // 👕 v2.145.0: 등번호 색 = 관리자 ▸ 학년별 유니폼 색 (index.html 의 jerseyColors · 이미 받아 둔 설정이라 서버 호출 없음)
+    //   학년마다 .pl-gN 규칙을 한 번 만들어 둠: --gc 바탕색 · --gt 글자색(밝은 색이면 남색 글자) · --gl 흰색 계열 테두리 · --gsvg 유니폼 그림
+    let jsySig = '';
+    function jerseySync() {
+        let c = null;
+        try { c = jerseyColors; } catch (e) {}
+        if (!c) try { c = JSON.parse(localStorage.getItem('daeyeon_jersey_colors') || 'null'); } catch (e) {}
+        if (!c || typeof c !== 'object') return;
+        const ok = v => /^#[0-9a-f]{6}$/i.test(String(v || '')) ? String(v).toLowerCase() : '';
+        const lum = h => [1, 3, 5].map(i => parseInt(h.substr(i, 2), 16) / 255).map(v => v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4)).reduce((a, v, i) => a + v * [.2126, .7152, .0722][i], 0);
+        const rules = [];
+        for (let g = 0; g <= 6; g++) {
+            const hex = ok(c[String(g)]) || (g ? '#ffffff' : '#0b2240'), L = lum(hex);
+            const out = L < .05 ? '#2a4a7a' : '#0b2240', seam = L < .2 ? 'rgba(255,255,255,.22)' : 'rgba(0,0,0,.18)';
+            const svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M31 5 L7 17 L1 39 L21 45 L21 96 L79 96 L79 45 L99 39 L93 17 L69 5 Q50 15 31 5 Z' fill='" + hex + "' stroke='" + out + "' stroke-width='3' stroke-linejoin='round'/><path d='M34 7 L21 45 M66 7 L79 45' fill='none' stroke='" + seam + "' stroke-width='1.6'/><path d='M31 5 Q50 15 69 5' fill='none' stroke='" + out + "' stroke-width='2.2'/></svg>";
+            rules.push('.pl-g' + g + '{--gc:' + hex + ';--gt:' + (L > .42 ? '#0b2240' : '#ffffff') + ';--gl:' + (L > .75 ? 'rgba(15,23,42,.28)' : 'transparent') + ';--gs:' + (L > .42 ? 'rgba(0,0,0,.07)' : 'rgba(255,255,255,.08)') + ';--gsvg:url("data:image/svg+xml,' + encodeURIComponent(svg) + '")}');
+        }
+        const css = rules.join('\n');
+        if (css === jsySig) return;
+        jsySig = css;
+        let st = document.getElementById('plJerseyStyle');
+        if (!st) { st = document.createElement('style'); st.id = 'plJerseyStyle'; document.head.appendChild(st); }
+        st.textContent = css;
+    }
+    window.plJerseySync = function () { try { jerseySync(); } catch (e) {} };
+
     // ---------------- 곡 목록 만들기 (명단 + cheer-songs.json) ----------------
     function sync() {
+        jerseySync();
         let ps;
         try { ps = players; } catch (e) { return; }   // index.html 의 명단
         if (!Array.isArray(ps) || typeof window.cheerSongFor !== 'function' || typeof window.cheerVersions !== 'function') return;
