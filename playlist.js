@@ -164,8 +164,10 @@
         audio.id = 'plAudio'; audio.preload = 'none';
         audio.style.display = 'none';
         document.body.appendChild(audio);
-        audio.addEventListener('playing', () => { if (annDone) { paintState(); return; } fails = 0; hideMsg(); paintState(); startLoop(); });
-        audio.addEventListener('pause', () => { paintState(); });
+        audio.addEventListener('playing', () => { if (annDone) { paintState(); return; } fails = 0; waitStop(); hideMsg(); paintState(); startLoop(); });
+        audio.addEventListener('waiting', () => { if (!annDone) waitStart(); });   // ⏳ v2.139.1: 받는 중(버퍼링)
+        audio.addEventListener('error', () => waitStop());
+        audio.addEventListener('pause', () => { waitStop(); paintState(); });
         audio.addEventListener('play', () => bkKick(0));   // 🦉 소리가 나기 시작하면 「부캉아」 듣기 쉼
         audio.addEventListener('ended', () => { if (annDone) annStep(); else next(true); });
         audio.addEventListener('timeupdate', onTime);
@@ -178,6 +180,21 @@
         audio.addEventListener('error', () => { if (annDone) annFinish(); else onError(); });
         try { if (window.songStat) window.songStat.watch(audio, () => (cur && !annDone && attached) ? { id: cur.id, bat: walk } : null); } catch (e) {}   // 📊 v2.124.0: 재생 세기 (타석 등장곡은 따로)
         return audio;
+    }
+    // ⏳ v2.139.1: 느린 인터넷(차량 화면 · 핫스팟)에서 ⏸ 인데 0:00 에 멈춰 보이던 것 — 받는 중이면 알려 주고, 15초 넘게 안 오면 한 번 다시 받아 봄
+    let waitT = 0, waitN = 0, waitAt = -1, waitMsg = false;
+    function waitStop() { clearTimeout(waitT); waitT = 0; waitN = 0; if (waitMsg) { waitMsg = false; hideMsg(); } }
+    function waitStart() { if (waitT || !audio) return; waitN = 0; waitAt = audio.currentTime || 0; waitT = setTimeout(waitTick, 3000); }
+    function waitTick() {
+        waitT = 0;
+        if (!audio || audio.paused || !cur || annDone) { waitStop(); return; }
+        if ((audio.currentTime || 0) > waitAt + 0.5) { waitStop(); return; }   // 잘 나오고 있음
+        waitN++;
+        const m = $('plMsg');
+        if (waitN === 1 && m) { m.textContent = '곡을 받는 중이에요… 인터넷이 느리면 조금 걸려요'; m.hidden = false; waitMsg = true; }
+        if (waitN === 4) { const at = audio.currentTime || pendingSeek || 0; attach(at); const pr = audio.play(); if (pr && pr.catch) pr.catch(() => {}); }   // 약 15초: 한 번 다시 받기
+        if (waitN >= 8) { waitT = 0; waitMsg = false; showMsg('인터넷이 느려서 곡을 받지 못하고 있어요. 연결을 확인하거나 다음 곡(⏭)을 눌러 주세요.'); return; }
+        waitT = setTimeout(waitTick, 4000);
     }
     function setQueue(ids, startId) {
         base = ids.filter(i => !isOff(i) || i === startId);   // 뺀 곡은 빼고 (직접 누른 곡은 넣음)
@@ -205,6 +222,7 @@
         if (!attached) attach(pendingSeek || 0);
         if (!fadeInTimer) { try { audio.volume = 1; } catch (e) {} }
         if (muOn) muStop();   // 축하곡 · 공수 교대 음악이 나오던 중이면 서서히 끔
+        waitStop(); waitStart();
         const pr = audio.play();
         if (pr && pr.catch) pr.catch(e => { if (e && e.name !== 'AbortError' && e.name !== 'NotSupportedError') showMsg('재생하지 못했어요. ▶ 를 한 번 더 눌러 주세요.'); paintState(); });
     }
