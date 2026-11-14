@@ -520,6 +520,26 @@
         .cpl-shedit .cpl-shgo { display: none; } .cpl-shedit .cpl-shgo.done { display: block; }
         .cpl-off { flex: 0 0 auto; font-size: 11px; font-weight: 800; line-height: 18px; padding: 0 6px; border-radius: 6px; background: #94a3b8; color: #ffffff; }
         .cpl-item.on .cpl-no, .cpl-item.on .cpl-t b, .cpl-item.on .cpl-len { color: var(--kbo-red); }
+        /* 👦 v2.142.0 B안: 승원이 동생 노래 (개발자만) — 플레이어 위 이름 칩으로 형 · 동생 곡 바꾸기, 아이마다 색 */
+        .fam-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+        .fam-chip { font: inherit; font-size: 13px; font-weight: 900; min-height: 36px; padding: 4px 11px; border-radius: 999px; border: 2px solid rgba(255,255,255,.55); background: transparent; color: #ffffff; cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
+        .fam-chip i { font-style: normal; font-weight: 700; opacity: .8; margin-left: 3px; }
+        .fam-chip.on { background: #ffffff; border-color: #ffffff; color: var(--fam-c, var(--kbo-red)); }
+        .fam-chip:focus-visible { outline: 3px solid #ffffff; outline-offset: 2px; }
+        .fam-dev { display: inline-flex; align-items: center; font-size: 11px; font-weight: 900; line-height: 18px; padding: 0 7px; border-radius: 999px; background: #0b2240; color: #ffffff; margin-left: 6px; white-space: nowrap; vertical-align: 1px; }
+        .cheer-box.fam-won { --fam-c: #2f62d6; --fam-soft: #eef3fd; --fam-line: #c9d7f6; --fam-on: #dbe6fb; }
+        .cheer-box.fam-woo { --fam-c: #c2531f; --fam-soft: #fdf2ea; --fam-line: #f3cfb9; --fam-on: #fbe1d1; }
+        .cheer-box.fam { background: var(--fam-soft); border-color: var(--fam-line); }
+        .cheer-box.fam .cpl-top { background: var(--fam-c); }
+        .cheer-box.fam .cpl-top .cheer-play { color: var(--fam-c); }
+        .cheer-box.fam .cpl-sortbar { background: var(--fam-soft); border-bottom-color: var(--fam-line); color: var(--fam-c); }
+        .cheer-box.fam .cpl-sort { color: var(--fam-c); border-color: var(--fam-line); }
+        .cheer-box.fam .cpl-pick { border-bottom-color: var(--fam-line); }
+        .cheer-box.fam .cpl-no, .cheer-box.fam .cpl-t small { color: var(--fam-c); }
+        .cheer-box.fam .cpl-item.on .cpl-pick { background: var(--fam-on); }
+        .cheer-box.fam .cpl-item.on .cpl-no, .cheer-box.fam .cpl-item.on .cpl-t b, .cheer-box.fam .cpl-item.on .cpl-len { color: var(--fam-c); }
+        .cheer-box.fam .cl-block.chorus .cl-label { background: var(--fam-c); }
+        .cheer-box.fam .cl-block.chorus .cl-line { color: var(--fam-c); }
         .cheer-lyrics { background: #ffffff; border: 1px solid #fde2c4; border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 10px; max-height: 46vh; overflow-y: auto; overscroll-behavior: contain; }
         .cheer-lyrics[hidden] { display: none; }
         .cl-block { display: flex; flex-direction: column; gap: 3px; }
@@ -560,6 +580,10 @@
             .cpl-item.on .cpl-pick { background: #3a2a1c; }
             .cpl-item.on .cpl-no, .cpl-item.on .cpl-t b, .cpl-item.on .cpl-len { color: #ff8a9b; }
             .cheer-msg { color: #e78d8d; }
+            .cheer-box.fam-won { --fam-c: #7ea2f2; --fam-soft: #18202f; --fam-line: #2b3a57; --fam-on: #22304a; }
+            .cheer-box.fam-woo { --fam-c: #f29a6b; --fam-soft: #241b17; --fam-line: #4a3226; --fam-on: #3a281e; }
+            .cheer-box.fam .cpl-top { background: #2a4fa8; } .cheer-box.fam-woo .cpl-top { background: #a8461a; }
+            .cheer-box.fam .cpl-sort { background-color: #151e2e; }
             .cheer-lyrics { background: #151e2e; border-color: #3a2d28; }
             .cl-line { color: #dde3ec; }
             .cl-block.chorus .cl-line { color: #f5a3b5; }
@@ -1570,15 +1594,58 @@
             if (hv && hv.parentNode === body) hv.insertAdjacentHTML('beforebegin', html);
             else body.insertAdjacentHTML('beforeend', html);
             setupCheerPlayer(p);
+            famMount(p);
         });
+    }
+    // 👦 v2.142.0 B안: 승원이 동생 노래 (하코 요청 「둘째 · 셋째 노래를 첫째 형 밑에 동생으로, 개발자만」)
+    //   개발자로 로그인했을 때만 family-songs.json 을 받음 (학부모 기기에는 목록이 아예 안 내려감)
+    //   형(brother) 선수 화면의 플레이어 위에 [⚾ 형 승원] [👦 동생 원우] [👶 동생 우진] 칩 → 누르면 그 아이 곡으로 플레이어를 다시 그림
+    //   동생 곡은 재생 통계 · 숨기기 · 음악 탭과 상관없음 (가사 보기 · MP3 저장 · 이어 듣기 · 정렬은 그대로)
+    let famLoad = null;
+    function famData() {
+        if (!famLoad) famLoad = fetch('family-songs.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).catch(() => null);
+        return famLoad;
+    }
+    function famMount(p) {
+        if (currentRole !== 'dev' || !p || p.fam) return;
+        famData().then(function (j) {
+            const b = j && j.brother, sibs = j && Array.isArray(j.siblings) ? j.siblings.filter(x => x && x.key && x.name && x.src) : [];
+            if (!b || !sibs.length || String(b.no) !== String(p.no) || String(b.name).trim() !== p.name || currentPlayer !== p) return;
+            p._sibs = sibs;
+            famChips(p, '');
+        });
+    }
+    function famChips(owner, cur) {
+        const box = document.getElementById('cheerBox'); if (!box || !owner._sibs) return;
+        const top = box.querySelector('.cpl-top'); if (!top || top.querySelector('.fam-chips')) return;
+        const short = n => String(n).trim().slice(1);   // 김원우 → 원우
+        const n0 = cheerVersionsFor(owner, true).length;
+        const chip = (k, txt, n) => `<button type="button" class="fam-chip${k === cur ? ' on' : ''}" data-k="${escapeHtml(k)}" aria-pressed="${k === cur ? 'true' : 'false'}">${txt}<i>${n}</i></button>`;
+        top.insertAdjacentHTML('afterbegin', `<div class="fam-chips" role="group" aria-label="형 · 동생 노래 고르기">${chip('', '⚾ 형 ' + escapeHtml(short(owner.name)), n0)}${owner._sibs.map(s => chip(s.key, escapeHtml((s.ico || '') + ' ' + (s.rel || '동생') + ' ' + short(s.name)), (Array.isArray(s.more) ? s.more.filter(m => m && m.src).length : 0) + 1 + (s.long && s.long.src ? 1 : 0))).join('')}</div>`);
+        top.querySelectorAll('.fam-chip').forEach(c => c.addEventListener('click', () => { if (c.dataset.k !== cur) famSwitch(owner, c.dataset.k); }));
+        if (cur) { const cnt = box.querySelector('.cpl-sortbar .cnt'); if (cnt) cnt.insertAdjacentHTML('beforeend', '<span class="fam-dev">🔒 개발자만</span>'); }
+    }
+    function famSwitch(owner, key) {
+        const old = document.getElementById('cheerBox'); if (!old) return;
+        const a = old.querySelector('audio'); if (a) { try { a.pause(); a.removeAttribute('src'); a.load(); } catch (e) {} }
+        const sib = key ? owner._sibs.find(s => s.key === key) : null;
+        const q = sib ? { no: 0, name: String(sib.name).trim(), fam: sib, famOwner: owner, hideSongs: [] } : owner;
+        try { const u = new URL(location.href); if (u.searchParams.has('song')) { u.searchParams.delete('song'); history.replaceState(history.state, '', u.toString()); } } catch (e) {}
+        const html = cheerSongHtml(q); if (!html) return;
+        old.insertAdjacentHTML('afterend', html); old.remove();
+        const box = document.getElementById('cheerBox');
+        box.dataset.who = cheerWho(owner);   // 다시 그릴 때(유니폼 색 등) 이 플레이어를 그대로 다시 붙이게 — 형 화면 것
+        if (sib) box.classList.add('fam', 'fam-' + sib.key);
+        setupCheerPlayer(q);
+        famChips(owner, key || '');
     }
     // 🎵 주제곡 플레이리스트 (v2.103.0, C안) — 위에 큰 플레이어(‹ › 로 앞뒤 곡 · 1 / N), 아래 번호 목록(제목 · 장르 · 길이)
     //   한 곡이 끝나면 다음 곡을 이어서 틀어 줌 (마지막 곡이 끝나면 멈춤) · 목록에서 곡을 누르면 그 곡부터 재생
     //   오디오 칸은 하나만 쓰고 주소만 바꿈 → 휴대폰에서도 다음 곡이 끊기지 않고 이어짐 · 숏 · 롱이라는 글자는 안 보임 (곡 제목으로)
     // 🔒 숨긴 곡: 그 선수 보호자 · 코치진 · 총무 · 대표 · 개발자에게만 보임(「모두에게 숨김」 표시) · 다른 분에게는 목록에서 빠짐
-    function canManageSongs(p) { return isParentOfPlayer(p) || canViewPhoto; }
+    function canManageSongs(p) { return !p.fam && (isParentOfPlayer(p) || canViewPhoto); }   // 👦 v2.142.0: 동생 곡은 숨기기 없음
     function cheerVersionsFor(p, all) {
-        const song = (typeof window.cheerSongFor === 'function') ? window.cheerSongFor(p) : null;
+        const song = p.fam ? p.fam : (typeof window.cheerSongFor === 'function') ? window.cheerSongFor(p) : null;   // 👦 v2.142.0: 동생은 family-songs.json 의 곡 덩어리
         if (!song || !song.src) return [];
         const vers = (typeof window.cheerVersions === 'function') ? window.cheerVersions(song) : [{ key: 's', label: song.title || '주제곡', title: song.title || '', src: song.src, lyrics: song.lyrics, times: song.times, len: song.len || '', beat: song.beat, vocal: song.vocal }];
         const hid = window.cheerHiddenKeys ? window.cheerHiddenKeys(p) : new Set();
@@ -1726,7 +1793,7 @@
     function cheerFileName(p, song) {
         const t = song.title || song.label || '';
         const mood = [song.beat, song.vocal].filter(Boolean).join(' · ');
-        let n = p.name + ' 주제곡' + (t ? ' - ' + t : '') + (mood ? ' (' + mood + ')' : '');
+        let n = p.name + (p.fam ? ' 노래' : ' 주제곡') + (t ? ' - ' + t : '') + (mood ? ' (' + mood + ')' : '');
         n = n.replace(/[\\/:*?"<>|]/g, ' ').replace(/\s+/g, ' ').trim();
         return n.slice(0, 120) + '.mp3';
     }
@@ -1765,7 +1832,7 @@
         if (!vers.length) return;
         const audio = document.getElementById('cheerAudio'), btn = document.getElementById('cheerPlayBtn');
         // 📊 v2.124.0: 재생 세기 — 30초 넘게 들으면 1회 (음악 탭과 같은 곡 id 「배번/이름/곡키」)
-        if (audio) { audio._statPid = (p.no || 0) + '/' + p.name; try { if (window.songStat) window.songStat.watch(audio, () => { const b = document.getElementById('cheerBox'); return b && b._song && audio._statPid ? { id: audio._statPid + '/' + b._song.key, bat: false } : null; }); } catch (e) {} }
+        if (audio && !p.fam) { audio._statPid = (p.no || 0) + '/' + p.name; try { if (window.songStat) window.songStat.watch(audio, () => { const b = document.getElementById('cheerBox'); return b && b._song && audio._statPid ? { id: audio._statPid + '/' + b._song.key, bat: false } : null; }); } catch (e) {} }
         const seek = document.getElementById('cheerSeek'), time = document.getElementById('cheerTime');
         const lyrBtn = document.getElementById('cheerLyrBtn'), lyr = document.getElementById('cheerLyrics'), msg = document.getElementById('cheerMsg');
         const titleEl = document.getElementById('cheerTitle'), subEl = document.getElementById('cheerSub'), countEl = document.getElementById('cheerCount');
@@ -1873,7 +1940,7 @@
         seek.addEventListener('change', function () { seeking = false; const d = audio.duration; if (isFinite(d) && d > 0) audio.currentTime = seek.value / 1000 * d; else seek.value = 0; });
         lyrBtn.addEventListener('click', function () { openedOnce = true; setLyrics(lyr.hidden); });
         // 💿 v2.105.0: 새 기능 알림(첫 화면)에서 곡을 눌러 왔으면(?song=m0) 그 곡을 골라 두고 주제곡 칸으로 내려 줌 (재생은 ▶ 를 눌러야 — 휴대폰이 자동 재생을 막음)
-        const want = new URLSearchParams(window.location.search).get('song');
+        const want = p.fam ? null : new URLSearchParams(window.location.search).get('song');   // 👦 동생 곡에는 안 씀
         const wi = want ? vers.findIndex(v => v.key === want) : -1;
         const offK = cheerOffKeys(p), first = vers.findIndex(v => !offK.has(v.key) && !v.hidAll);   // 🚫 처음 올려 둘 곡: 뺀 곡이 아닌 첫 곡
         select(wi >= 0 ? wi : (first >= 0 ? first : 0), false);
