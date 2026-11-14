@@ -292,7 +292,8 @@ html.pl-lu-on .ui-zoom-ctrl { display: none !important; }   /* 타순 정하기:
 .pl-k3 .nx em { display: block; font-style: normal; font-size: 11px; letter-spacing: .08em; }
 .pl-k3 .now { font-size: 28px; font-weight: 900; line-height: 1.32; word-break: keep-all; }
 .pl-k3 .hint { font-size: 12px; font-weight: 700; opacity: .6; }
-.pl-k3 .now span, .pl-lyr p.now span { color: transparent; -webkit-text-fill-color: transparent; -webkit-background-clip: text; background-clip: text;
+/* 🎯 v2.133.0 단어마다 따로 칠함 (.kw = 띄어쓰기로 나눈 단어 하나) */
+.pl-k3 .now .kw, .pl-lyr p.now .kw { color: transparent; -webkit-text-fill-color: transparent; -webkit-background-clip: text; background-clip: text;
     background-image: linear-gradient(90deg, var(--pl-gold) 0, var(--pl-gold) var(--p, 0%), #ffffff var(--p, 0%)); }
 /* 전체 가사 */
 .pl-lyr { flex: 1 1 0; min-height: 0; overflow-y: auto; text-align: center; padding: 34% 2px; scrollbar-width: none; overscroll-behavior: contain; position: relative; }

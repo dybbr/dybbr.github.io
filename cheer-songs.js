@@ -51,19 +51,61 @@
     }
 
     // 🎤 노래방 시간표 (v2.94.0) — song.times = 가사 줄마다 [시작초, 끝초] (이름표 [Chorus] 같은 줄 · 빈 줄은 빼고 셈)
-    //   → 가사 줄 순서대로 { s, e } 목록 (모르는 줄은 null) · 시간표가 없거나 줄 수가 안 맞으면 null (그 곡은 강조 없이 예전처럼 가사만)
+    //   → 가사 줄 순서대로 { s, e, w } 목록 (모르는 줄은 null) · 시간표가 없거나 줄 수가 안 맞으면 null (그 곡은 강조 없이 예전처럼 가사만)
+    //   🎯 v2.133.0 단어 단위: [시작초, 끝초, [단어1시작, 단어1끝, 단어2시작, …]] — 줄을 띄어쓰기로 나눈 단어마다 (줄 시작에서 잰) 0.1초 단위
+    //      → w = [[시작초, 끝초], …] (단어 수가 안 맞으면 w 없이 예전처럼 줄 전체를 고르게 칠함)
+    //      아보카도 받아쓰기의 「단어별 시간」으로 만듦 (/mnt/project-files/cheer-songs/karaoke/wordkara.py)
     function cheerLineTimes(song) {
         const t = song && song.times;
         if (!Array.isArray(t) || !t.length) return null;
-        const n = cheerLyricBlocks(song).reduce((a, b) => a + b.lines.length, 0);
+        const txt = [];
+        cheerLyricBlocks(song).forEach(b => b.lines.forEach(l => txt.push(l)));
+        const n = txt.length;
         if (t.length !== n) { console.warn('주제곡 시간표 줄 수가 가사와 달라 강조를 끔:', song.name, t.length, '≠', n); return null; }
-        const out = t.map(v => {
+        const out = t.map((v, i) => {
             const a = Array.isArray(v) ? v : [v];
             const s = Number(a[0]), e = Number(a[1]);
-            return isFinite(s) && a[0] !== null ? { s: s, e: isFinite(e) && a[1] !== null && e > s ? e : null } : null;
+            if (!(isFinite(s) && a[0] !== null)) return null;
+            const r = { s: s, e: isFinite(e) && a[1] !== null && e > s ? e : null };
+            const w = a[2], nw = cheerWords(txt[i]).length;
+            if (Array.isArray(w) && w.length === nw * 2 && nw) {
+                r.w = [];
+                for (let k = 0; k < nw; k++) { const ws = s + Number(w[2 * k]) / 10, we = s + Number(w[2 * k + 1]) / 10; r.w.push([ws, Math.max(we, ws + 0.05)]); }
+                if (r.e == null) r.e = r.w[nw - 1][1];
+            }
+            return r;
         });
         return out.some(Boolean) ? out : null;
     }
+
+    // 🎯 v2.133.0: 가사 한 줄 → 띄어쓰기로 나눈 단어 목록 (시간표 w 와 같은 순서)
+    function cheerWords(line) { return String(line == null ? '' : line).trim().split(/\s+/).filter(Boolean); }
+    // 가사 한 줄 → 단어마다 <span class="kw"> 로 감싼 HTML (단어마다 따로 색칠)
+    function cheerWordHtml(line) {
+        const esc = v => String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        return cheerWords(line).map(w => '<span class="kw">' + esc(w) + '</span>').join(' ');
+    }
+    // 지금 시각(sec)에 줄 el 안의 단어들을 칠함 — t = cheerLineTimes 의 한 줄 { s, e, w } · e 는 끝초(없으면 부르는 이가 정해 줌)
+    //   단어 시간이 있으면 그 단어를 부르는 동안만 왼쪽부터 차오르고, 단어 사이에 쉬면 색칠도 멈춤
+    //   없으면(예전 시간표) 줄 전체 시간을 글자 수대로 단어에 나눠 줌 (예전과 같은 속도)
+    function cheerPaintWords(el, t, sec, e) {
+        if (!el || !t) return;
+        const ks = el.querySelectorAll('.kw');
+        if (!ks.length) return;
+        let w = t.w && t.w.length === ks.length ? t.w : null;
+        if (!w) {
+            const end = e != null ? e : (t.e != null ? t.e : t.s + 3), L = Array.from(ks).map(k => Math.max(1, k.textContent.length));
+            const tot = L.reduce((a, b) => a + b, 0);
+            let acc = 0; w = L.map(n => { const a = t.s + (end - t.s) * acc / tot; acc += n; return [a, t.s + (end - t.s) * acc / tot]; });
+        }
+        for (let i = 0; i < ks.length; i++) {
+            const a = w[i][0], b = w[i][1];
+            const p = sec <= a ? 0 : sec >= b ? 100 : (sec - a) / (b - a) * 100;
+            const v = p.toFixed(1) + '%';
+            if (ks[i]._p !== v) { ks[i]._p = v; ks[i].style.setProperty('--p', v); }
+        }
+    }
+    function cheerClearWords(el) { if (el) el.querySelectorAll('.kw').forEach(k => { k._p = ''; k.style.removeProperty('--p'); }); }
 
     // 🎵 숏 · 롱 두 버전 (v2.101.0) — 곡 덩어리의 src · lyrics · times = 숏(기본), long: { src, lyrics, times, len } = 롱
     //   → [{ key: 's', label: '숏', src, lyrics, times, len }, { key: 'l', label: '롱', … }] (롱이 없으면 숏 하나만)
@@ -96,4 +138,8 @@
     window.cheerSongFor = cheerSongFor;
     window.cheerLyricBlocks = cheerLyricBlocks;
     window.cheerLineTimes = cheerLineTimes;
+    window.cheerWords = cheerWords;
+    window.cheerWordHtml = cheerWordHtml;
+    window.cheerPaintWords = cheerPaintWords;
+    window.cheerClearWords = cheerClearWords;
 })();

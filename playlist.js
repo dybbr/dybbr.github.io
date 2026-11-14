@@ -931,7 +931,7 @@
                         for (let k = i + 1; k < tm.length; k++) if (tm[k]) { nx = tm[k].s; break; }
                         const guess = t.s + lines[i].tx.length * 0.35 + 1;
                         const e = t.e != null ? t.e : (nx != null ? Math.min(nx, guess) : guess);
-                        return { s: t.s, e: Math.max(e, t.s + 0.3) };
+                        return { s: t.s, e: Math.max(e, t.s + 0.3), w: t.w };   // 🎯 v2.133.0 w = 단어마다 [시작, 끝]
                     });
                 }
             } catch (e) { lines = []; spans = null; }
@@ -940,7 +940,7 @@
         if (!box) return;
         box.classList.toggle('plain', !spans);
         box.innerHTML = lines.length
-            ? lines.map((l, i) => (l.first && l.tag ? `<span class="pl-tag">${esc(l.tag)}</span>` : '') + `<p data-li="${i}"><span>${esc(l.tx)}</span></p>`).join('')
+            ? lines.map((l, i) => (l.first && l.tag ? `<span class="pl-tag">${esc(l.tag)}</span>` : '') + `<p data-li="${i}"><span>${window.cheerWordHtml(l.tx)}</span></p>`).join('')
             : '<p>가사가 없는 곡이에요</p>';
         box.scrollTop = 0;
         paintLyrics(true);
@@ -963,20 +963,20 @@
             kIdx = a;
             const c = a >= 0 ? a : Math.max(0, spans.findIndex(Boolean));   // 아직 첫 줄 전이면 첫 줄을 미리 보여 줌
             const pv = a > 0 ? lines[a - 1].tx : '♪', nx = lines[c + 1];
-            k3.innerHTML = `<span class="tag">${esc(lines[c] ? lines[c].tag : '')}</span><span class="pv">${esc(pv)}</span><span class="now"><span>${esc(lines[c] ? lines[c].tx : '')}</span></span>` +
+            k3.innerHTML = `<span class="tag">${esc(lines[c] ? lines[c].tag : '')}</span><span class="pv">${esc(pv)}</span><span class="now"><span>${lines[c] ? window.cheerWordHtml(lines[c].tx) : ''}</span></span>` +
                 `<span class="nx"><em>다음</em>${esc(nx ? nx.tx : '♪')}</span><span class="hint">가사를 누르면 전체가 크게 나와요</span>`;
             const box = $('plLyr');
             if (box) {
                 const ps = box.querySelectorAll('p');
-                ps.forEach((el, i) => { el.classList.toggle('now', i === a); el.classList.toggle('past', a >= 0 && i < a); if (i !== a) { const sp = el.firstElementChild; if (sp) sp.style.removeProperty('--p'); } });
+                ps.forEach((el, i) => { el.classList.toggle('now', i === a); el.classList.toggle('past', a >= 0 && i < a); if (i !== a) window.cheerClearWords(el); });
                 if (lyrOpen && ps[c]) { const el = ps[c]; box.scrollTo({ top: Math.max(0, el.offsetTop - box.clientHeight / 2 + el.offsetHeight / 2), behavior: force ? 'auto' : 'smooth' }); }
             }
         }
+        // 🎯 v2.133.0: 단어마다 따로 칠함 (단어 시간이 있으면 실제로 부르는 순간에 · 쉬는 사이엔 멈춤)
         const sp = a >= 0 ? spans[a] : null;
-        const pct = sp ? Math.max(0, Math.min(100, (sec - sp.s) / (sp.e - sp.s) * 100)).toFixed(1) + '%' : '0%';
-        const n1 = k3.querySelector('.now span');
-        if (n1) n1.style.setProperty('--p', pct);
-        if (lyrOpen) { const n2 = document.querySelector('#plLyr p.now span'); if (n2) n2.style.setProperty('--p', pct); }
+        const n1 = k3.querySelector('.now > span');
+        if (n1) { if (sp) window.cheerPaintWords(n1, sp, sec, sp.e); else window.cheerClearWords(n1); }
+        if (lyrOpen && sp) { const n2 = document.querySelector('#plLyr p.now > span'); if (n2) window.cheerPaintWords(n2, sp, sec, sp.e); }
     }
     function startLoop() {
         if (raf || !bigOpen) return;

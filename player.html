@@ -28,7 +28,7 @@
         }
     </script>
     <!-- 🎵 선수별 주제곡 (v2.92.0) — 곡 목록은 cheer-songs.json (그 파일만 고치면 됨) · cheer-songs.js 를 고칠 때만 아래 ?v= 숫자 올리기 -->
-    <script src="cheer-songs.js?v=2.121.0"></script>
+    <script src="cheer-songs.js?v=2.133.0"></script>
     <script src="song-stat.js?v=2.124.0"></script>   <!-- 📊 v2.124.0: 주제곡 재생 세기 (6시간에 한 번 묶어 보냄) -->
 
     <!-- 브라우저 캐시 원천 방지 메타태그 -->
@@ -520,9 +520,9 @@
         .cheer-lyrics.kara .cl-line { cursor: pointer; border-radius: 8px; margin: 0 -6px; padding: 2px 6px 2px 8px; transition: opacity .25s, background-color .25s, box-shadow .25s; }
         .cheer-lyrics.kara.on .cl-line.past { opacity: .45; }
         .cheer-lyrics.kara .cl-line.now { background: #fff1d6; box-shadow: inset 4px 0 0 var(--kbo-red); opacity: 1; font-size: 15px; }
-        .cheer-lyrics.kara .cl-line.now .cl-txt { color: transparent; -webkit-background-clip: text; background-clip: text; background-image: linear-gradient(90deg, var(--kbo-red) 0, var(--kbo-red) var(--p, 0%), #1e293b var(--p, 0%)); }
-        .cheer-lyrics.kara .cl-block.chorus .cl-line.now .cl-txt { background-image: linear-gradient(90deg, var(--kbo-red) 0, var(--kbo-red) var(--p, 0%), #9f1239 var(--p, 0%)); }
-        .cheer-lyrics.kara .cl-line.chant.now .cl-txt { background-image: linear-gradient(90deg, var(--kbo-red) 0, var(--kbo-red) var(--p, 0%), #64748b var(--p, 0%)); }
+        .cheer-lyrics.kara .cl-line.now .kw { color: transparent; -webkit-background-clip: text; background-clip: text; background-image: linear-gradient(90deg, var(--kbo-red) 0, var(--kbo-red) var(--p, 0%), #1e293b var(--p, 0%)); }
+        .cheer-lyrics.kara .cl-block.chorus .cl-line.now .kw { background-image: linear-gradient(90deg, var(--kbo-red) 0, var(--kbo-red) var(--p, 0%), #9f1239 var(--p, 0%)); }
+        .cheer-lyrics.kara .cl-line.chant.now .kw { background-image: linear-gradient(90deg, var(--kbo-red) 0, var(--kbo-red) var(--p, 0%), #64748b var(--p, 0%)); }
         .cheer-kara-tip { font-size: 11px; font-weight: 700; color: #9a3412; opacity: .85; }
         @media (prefers-reduced-motion: reduce) { .cheer-lyrics.kara .cl-line { transition: none; } }
         @media (max-width: 600px) { .cheer-box:not(.cpl) { padding: 10px 10px 8px; } .cheer-play { width: 44px; height: 44px; } .cpl-top .cheer-play { width: 52px; height: 52px; } .cpl-top { padding: 10px 10px 9px; } }
@@ -550,9 +550,9 @@
             .cl-block.chorus .cl-line { color: #f5a3b5; }
             .cl-line.chant { color: #97a3b7; }
             .cheer-lyrics.kara .cl-line.now { background: #3a2a1c; }
-            .cheer-lyrics.kara .cl-line.now .cl-txt { background-image: linear-gradient(90deg, #ff6b81 0, #ff6b81 var(--p, 0%), #dde3ec var(--p, 0%)); }
-            .cheer-lyrics.kara .cl-block.chorus .cl-line.now .cl-txt { background-image: linear-gradient(90deg, #ff6b81 0, #ff6b81 var(--p, 0%), #f5a3b5 var(--p, 0%)); }
-            .cheer-lyrics.kara .cl-line.chant.now .cl-txt { background-image: linear-gradient(90deg, #ff6b81 0, #ff6b81 var(--p, 0%), #97a3b7 var(--p, 0%)); }
+            .cheer-lyrics.kara .cl-line.now .kw { background-image: linear-gradient(90deg, #ff6b81 0, #ff6b81 var(--p, 0%), #dde3ec var(--p, 0%)); }
+            .cheer-lyrics.kara .cl-block.chorus .cl-line.now .kw { background-image: linear-gradient(90deg, #ff6b81 0, #ff6b81 var(--p, 0%), #f5a3b5 var(--p, 0%)); }
+            .cheer-lyrics.kara .cl-line.chant.now .kw { background-image: linear-gradient(90deg, #ff6b81 0, #ff6b81 var(--p, 0%), #97a3b7 var(--p, 0%)); }
             .cheer-kara-tip { color: #f0b48a; }
             .cl-label { background: #b4612c; }
             .cl-block.chorus .cl-label { background: #9b273a; }
@@ -1628,7 +1628,7 @@
         return blocks.map(b => `
             <div class="cl-block${b.label === '후렴' ? ' chorus' : ''}">
                 ${b.label ? `<span class="cl-label">${escapeHtml(b.label)}</span>` : ''}
-                ${b.lines.map(l => `<div class="cl-line${/^\(.*\)$/.test(l) ? ' chant' : ''}" data-i="${li++}"><span class="cl-txt">${escapeHtml(l)}</span></div>`).join('')}
+                ${b.lines.map(l => `<div class="cl-line${/^\(.*\)$/.test(l) ? ' chant' : ''}" data-i="${li++}"><span class="cl-txt">${typeof window.cheerWordHtml === 'function' ? window.cheerWordHtml(l) : escapeHtml(l)}</span></div>`).join('')}
             </div>`).join('');
     }
     // 🚫 v2.118.0: 음악 탭에서 「이 곡 빼기」 한 곡 (이 기기 localStorage daeyeon_pl.off · 곡 id 「배번/이름/키」 — playlist.js 와 같음)
@@ -1838,7 +1838,7 @@
                 for (let k = i + 1; k < times.length; k++) if (times[k]) { next = times[k].s; break; }
                 const txtLen = (lines[i] ? lines[i].textContent.length : 10);
                 let e = t.e != null ? t.e : (next != null ? Math.min(next, t.s + txtLen * 0.35 + 1) : t.s + txtLen * 0.35 + 1);
-                return { s: t.s, e: Math.max(e, t.s + 0.3) };
+                return { s: t.s, e: Math.max(e, t.s + 0.3), w: t.w };   // 🎯 v2.133.0 w = 단어마다 [시작, 끝]
             }) : null;
         }
         function activeAt(sec) {
@@ -1856,21 +1856,21 @@
             const sec = audio.currentTime;
             const a = activeAt(sec);
             if (a !== cur) {
-                lines.forEach((el, i) => { el.classList.toggle('now', i === a); el.classList.toggle('past', a >= 0 && i < a); if (i !== a) el.style.removeProperty('--p'); });
+                lines.forEach((el, i) => { el.classList.toggle('now', i === a); el.classList.toggle('past', a >= 0 && i < a); if (i !== a) window.cheerClearWords(el); });
                 cur = a;
                 if (a >= 0 && lines[a]) scrollToLine(lines[a]);
             }
             if (a >= 0 && lines[a]) {
+                // 🎯 v2.133.0: 단어마다 따로 칠함 (단어 시간이 있으면 실제로 부르는 순간에 · 쉬는 사이엔 멈춤)
                 const sp = spans[a];
-                const p = Math.max(0, Math.min(1, (sec + LEAD - sp.s) / (sp.e - sp.s)));
-                lines[a].style.setProperty('--p', (p * 100).toFixed(1) + '%');
+                window.cheerPaintWords(lines[a], sp, sp.w ? sec + 0.05 : sec + LEAD, sp.e);
             }
         }
         function loop() { paint(); raf = audio.paused ? 0 : requestAnimationFrame(loop); }
         audio.addEventListener('playing', function () { if (!spans) return; lyr.classList.add('on'); if (!raf) raf = requestAnimationFrame(loop); });
         audio.addEventListener('pause', function () { if (raf) cancelAnimationFrame(raf); raf = 0; paint(); });
         audio.addEventListener('seeked', paint);
-        audio.addEventListener('ended', function () { lines.forEach(el => { el.classList.remove('now', 'past'); el.style.removeProperty('--p'); }); cur = -1; lyr.classList.remove('on'); lyr.scrollTo({ top: 0 }); });
+        audio.addEventListener('ended', function () { lines.forEach(el => { el.classList.remove('now', 'past'); window.cheerClearWords(el); }); cur = -1; lyr.classList.remove('on'); lyr.scrollTo({ top: 0 }); });
         ['touchstart', 'wheel'].forEach(ev => lyr.addEventListener(ev, function () { userScrollUntil = Date.now() + 4000; }, { passive: true }));
         lyr.addEventListener('click', function (e) {
             const el = e.target.closest('.cl-line');
