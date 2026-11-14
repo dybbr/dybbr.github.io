@@ -58,7 +58,10 @@
     const notify = (text, sub) => { try { if (typeof bkNotify === 'function') bkNotify('info', text, sub || '', { ms: 3500 }); } catch (e) {} };
 
     // ---------------- 이 기기에 저장하는 설정 ----------------
-    const cfg = { shuffle: false, repeat: 'all', hook: true, fadeIn: true, autoSec: 20, lineup: [], walkSong: {}, batIdx: -1, xl: false, sets: [], lyrTip: false, ann: true, bk: false, off: [] };
+    // ⭐ v2.139.0: 내 목록 1·2·3 (이 기기에만 저장 · 서버 · 시트 안 씀) — 이름은 바꿀 수 있음
+    const FAV_N = 3, FAV_MAX = 300;
+    function FAV_DEF() { return [0, 1, 2].map(i => ({ name: '내 목록 ' + (i + 1), ids: [] })); }
+    const cfg = { shuffle: false, repeat: 'all', hook: true, fadeIn: true, autoSec: 20, lineup: [], walkSong: {}, batIdx: -1, xl: false, sets: [], lyrTip: false, ann: true, bk: false, off: [], fav: FAV_DEF() };
     try {
         const j = JSON.parse(localStorage.getItem(LS_KEY) || '{}') || {};
         if (typeof j.shuffle === 'boolean') cfg.shuffle = j.shuffle;
@@ -75,6 +78,7 @@
         if (typeof j.ann === 'boolean') cfg.ann = j.ann;
         if (typeof j.bk === 'boolean') cfg.bk = j.bk;
         if (Array.isArray(j.off)) cfg.off = j.off.filter(x => typeof x === 'string').slice(0, 600);
+        if (Array.isArray(j.fav)) cfg.fav = FAV_DEF().map((d, i) => { const x = j.fav[i]; return x && typeof x === 'object' ? { name: (typeof x.name === 'string' && x.name.trim() ? x.name.trim() : d.name).slice(0, 12), ids: Array.isArray(x.ids) ? Array.from(new Set(x.ids.filter(y => typeof y === 'string'))).slice(0, FAV_MAX) : [] } : d; });
         if (Array.isArray(j.sets)) cfg.sets = j.sets.filter(x => x && typeof x.name === 'string' && Array.isArray(x.lineup)).slice(0, 8).map(x => ({ name: x.name.slice(0, 12), lineup: x.lineup.filter(y => typeof y === 'string').slice(0, 30) }));
     } catch (e) {}
     function saveCfg() { try { localStorage.setItem(LS_KEY, JSON.stringify(cfg)); } catch (e) {} }
@@ -147,7 +151,7 @@
         const n0 = cfg.lineup.length;
         cfg.lineup = cfg.lineup.filter(pid => !!personOf(pid));
         if (cfg.lineup.length !== n0) { cfg.batIdx = -1; saveCfg(); }
-        if (filter !== 'all' && filter !== 'mine' && !people.some(p => String(p.g) === String(filter))) filter = 'all';
+        if (filter !== 'all' && filter !== 'mine' && !/^fav\d$/.test(filter) && !people.some(p => String(p.g) === String(filter))) filter = 'all';
         if (filter === 'mine' && !people.some(p => p.mine)) filter = 'all';
         if (!cur) restore();
         renderAll();
@@ -1032,7 +1036,7 @@
         document.body.appendChild(mic);
 
         const big = document.createElement('div');
-        big.id = 'plBig'; big.className = 'pl-big'; big.hidden = true;
+        big.id = 'plBig'; big.className = 'pl-big'; big.hidden = true; big.dataset.tab = 'lyr'; big.dataset.ptab = 'q';
         big.setAttribute('role', 'dialog'); big.setAttribute('aria-label', '주제곡 플레이어');
         big.innerHTML = `
             <div class="pl-bhead">
@@ -1041,11 +1045,13 @@
                 <span class="cnt" id="plCnt"></span>
                 <button type="button" class="pl-fs" data-pl="xl" id="plXl" hidden>가 크게</button>
             </div>
+            <div class="pl-song"><button type="button" class="pl-cvgo" id="plBigCv" data-pl="goplayer" aria-label="이 선수 화면으로 가기 (곡 목록)"></button><span class="tx"><b id="plBigT"></b><small id="plBigW"></small><em id="plBigG"></em><span class="pl-fav" id="plFav"><i id="plFavTx">내 목록에 담기</i>${[0, 1, 2].map(n => `<button type="button" data-pl="fav" data-n="${n}" aria-pressed="false">${n + 1}</button>`).join('')}</span></span><span class="pl-sbtns"><button type="button" class="pl-dl" data-pl="dl" id="plDl">⬇ MP3 저장</button><button type="button" class="pl-dl pl-offb" data-pl="offcur" id="plOffB" hidden>🚫 이 곡 빼기</button></span></div>
+            <div class="pl-tabs" id="plTabs" role="tablist" aria-label="가사 · 재생목록 · 내 목록"><button type="button" data-pl="ptab" data-t="lyr">가사</button><button type="button" data-pl="ptab" data-t="q">재생목록</button><button type="button" data-pl="ptab" data-t="my">⭐ 내 목록</button></div>
             <div class="pl-main" id="plMain">
-                <div class="pl-song"><button type="button" class="pl-cvgo" id="plBigCv" data-pl="goplayer" aria-label="이 선수 화면으로 가기 (곡 목록)"></button><span class="tx"><b id="plBigT"></b><small id="plBigW"></small><em id="plBigG"></em></span><span class="pl-sbtns"><button type="button" class="pl-dl" data-pl="dl" id="plDl">⬇ MP3 저장</button><button type="button" class="pl-dl pl-offb" data-pl="offcur" id="plOffB" hidden>🚫 이 곡 빼기</button></span></div>
                 <button type="button" class="pl-k3" data-pl="lyrics" id="plK3" aria-label="가사 전체 보기"></button>
             </div>
             <div class="pl-lyr${cfg.xl ? ' xl' : ''}" id="plLyr" hidden></div>
+            <div class="pl-panel" id="plPanel"></div>
             <div class="pl-coach" id="plCoach" data-pl="coach-ok" hidden><div class="pl-coach-bub" id="plCoachBub" role="dialog" aria-label="가사 보는 법"><div class="who"><i></i>부캉이</div><p>여기 <b>가사를 누르면</b> 노래 전체 가사를 크게 볼 수 있어요!</p><button type="button" data-pl="coach-ok">알겠어요</button></div></div>
             <div class="pl-prog"><div class="pl-seek" id="plSeek" role="slider" tabindex="0" aria-label="재생 위치" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i><i id="plSeekFill"></i></i><b id="plSeekKnob"></b></div>
                 <div class="pl-times"><span id="plCurT">0:00</span><span id="plDurT"></span></div></div>
@@ -1104,7 +1110,7 @@
         root.style.setProperty('--pl-tabh', h + 'px');
         const m = $('plMini'); if (m && !m.hidden && m.offsetHeight) root.style.setProperty('--pl-minih', m.offsetHeight + 'px');   // 띠 높이 → 타순 띠가 그 위에 붙음
     }
-    function inFilter(t) { return filter === 'all' || filter === 'off' ? true : filter === 'hot' ? popRank.has(t.id) : filter === 'mine' ? (personOf(t.pid) || {}).mine : String(t.g) === String(filter); }
+    function inFilter(t) { return filter === 'all' || filter === 'off' ? true : filter === 'hot' ? popRank.has(t.id) : /^fav\d$/.test(filter) ? favHas(+filter.slice(3), t.id) : filter === 'mine' ? (personOf(t.pid) || {}).mine : String(t.g) === String(filter); }
     // 🔥 v2.124.0: 인기곡 (서버 v2.44.0 bootstrap 의 pop = 최근 7일 많은 가족이 들은 곡 id 순서 · 숫자 없음) → 숨긴 곡 · 뺀 곡 · 없는 곡은 빼고 순위
     let popRaw = [], popIds = [], popRank = new Map();
     const POP_MIN = 3;   // 이만큼은 모여야 「인기」를 보여 줌 (처음 며칠은 안 보임)
@@ -1125,6 +1131,7 @@
     function listIds() {   // 지금 보이는 목록 (전체 재생 · 셔플 재생 · 줄 누르기에 씀)
         if (filter === 'off') return tracks.filter(t => isOff(t.id)).map(t => t.id);
         if (filter === 'hot') return popIds.slice();
+        if (/^fav\d$/.test(filter)) return favIds(+filter.slice(3)).filter(i => !isOff(i));   // ⭐ 담은 순서대로
         const ids = tracks.filter(inFilter).map(t => t.id);
         return ids.filter(i => !isOff(i));   // 뺀 곡은 목록에서 숨김 (「빠진 곡」 칩에 모임)
     }
@@ -1202,11 +1209,13 @@
         const grades = Array.from(new Set(people.map(p => p.g))).filter(Boolean).sort((a, b) => b - a);
         popCalc();
         if (filter === 'hot' && !popIds.length) filter = 'all';
+        if (/^fav\d$/.test(filter) && !favIds(+filter.slice(3)).length) filter = 'all';
         const chips = popIds.length ? [['hot', '🔥 인기순'], ['all', '전체']] : [['all', '전체']];
+        cfg.fav.forEach((f, n) => { const k = favIds(n).length; if (k) chips.push(['fav' + n, '⭐ ' + esc(f.name) + ' ' + k]); });   // ⭐ v2.139.0: 내 목록
         if (people.some(p => p.mine)) chips.push(['mine', '우리 아이']);
         grades.forEach(g => chips.push([String(g), g + '학년']));
         if (nOff) chips.push(['off', '🚫 빠진 곡 ' + nOff]);
-        $('plChips').innerHTML = chips.map(c => `<button type="button" data-pl="chip" data-f="${c[0]}" class="${String(filter) === c[0] ? 'on' : ''}${c[0] === 'off' ? ' offc' : ''}${c[0] === 'hot' ? ' hotc' : ''}">${c[1]}</button>`).join('');
+        $('plChips').innerHTML = chips.map(c => `<button type="button" data-pl="chip" data-f="${c[0]}" class="${String(filter) === c[0] ? 'on' : ''}${c[0] === 'off' ? ' offc' : ''}${c[0] === 'hot' ? ' hotc' : ''}${/^fav/.test(c[0]) ? ' favc' : ''}">${c[1]}</button>`).join('');
         const hot = $('plHot'), top = popIds.length ? byId.get(popIds[0]) : null;
         if (hot) {
             hot.hidden = !top;
@@ -1375,6 +1384,79 @@
             ${people.length ? '' : '<div class="pl-empty">주제곡을 불러오는 중이에요.</div>'}`;
         paintState();
     }
+    // ⭐ v2.139.0 (하코 선택 B + 넓은 화면 C): 큰 플레이어 탭 「가사 · 재생목록 · 내 목록」 · 제목 아래 ①②③ 한 번에 담기
+    //   폰: 탭을 누르면 가사 자리에 재생목록/내 목록 · 태블릿 · PC(넓고 높은 화면): 왼쪽 가사, 오른쪽에 재생목록 · 내 목록이 늘 보임 (CSS)
+    let pTab = 'lyr', favOpen = -1, favTxTimer = 0;
+    const favHas = (n, id) => !!(cfg.fav[n] && cfg.fav[n].ids.indexOf(id) >= 0);
+    function favSet(n, id, on) {
+        const f = cfg.fav[n]; if (!f || !id) return;
+        const i = f.ids.indexOf(id);
+        if (on && i < 0) { if (f.ids.length >= FAV_MAX) { notify('「' + f.name + '」은 ' + FAV_MAX + '곡까지 담을 수 있어요'); return; } f.ids.push(id); }
+        if (!on && i >= 0) f.ids.splice(i, 1);
+        saveCfg(); paintFav(); if (built && $('plChips')) renderList();
+    }
+    function favToggle(n) {
+        if (!cur || !cfg.fav[n]) return;
+        const on = !favHas(n, cur.id);
+        favSet(n, cur.id, on);
+        const tx = $('plFavTx');
+        if (tx) { tx.textContent = (on ? '「' + cfg.fav[n].name + '」에 담음' : '「' + cfg.fav[n].name + '」에서 뺌'); tx.classList.add('hit'); clearTimeout(favTxTimer); favTxTimer = setTimeout(() => { tx.textContent = '내 목록에 담기'; tx.classList.remove('hit'); }, 2200); }
+        if (bigOpen) renderPanel();
+    }
+    function paintFav() {
+        const box = $('plFav'); if (!box) return;
+        box.querySelectorAll('button').forEach(b => { const n = +b.dataset.n, on = !!cur && favHas(n, cur.id); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.setAttribute('aria-label', (cfg.fav[n] ? cfg.fav[n].name : '') + (on ? '에서 빼기' : '에 담기')); });
+    }
+    const favIds = n => (cfg.fav[n] ? cfg.fav[n].ids : []).filter(id => byId.has(id));
+    function favPlay(n, startId) {
+        const ids = favIds(n).filter(id => !isOff(id) || id === startId);
+        if (!ids.length) { notify('「' + (cfg.fav[n] || {}).name + '」에 담긴 곡이 없어요', '곡을 듣다가 제목 아래 ' + (n + 1) + ' 을 누르면 담겨요'); return; }
+        if (startId) playTrack(startId, ids); else playAll(ids, false);
+    }
+    function favRename(n) {
+        const f = cfg.fav[n]; if (!f) return;
+        let v = null; try { v = window.prompt((n + 1) + '번 목록 이름 (12자까지)', f.name); } catch (e) {}
+        if (v == null) return;
+        v = String(v).replace(/\s+/g, ' ').trim().slice(0, 12);
+        f.name = v || '내 목록 ' + (n + 1); saveCfg(); paintFav(); renderPanel(); if ($('plChips')) renderList();
+    }
+    function setTab(t) {
+        pTab = t === 'q' || t === 'my' ? t : 'lyr';
+        const big = $('plBig'); if (!big) return;
+        big.dataset.tab = pTab; big.dataset.ptab = pTab === 'my' ? 'my' : 'q';
+        big.querySelectorAll('#plTabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.t === pTab ? 'true' : 'false'));
+        if (pTab !== 'lyr' && lyrOpen) setLyr(false);
+        renderPanel();
+        if (pTab === 'lyr') { kIdx = -2; paintLyrics(true); }
+    }
+    function qRow(t, i, cls, extra) {
+        return `<button type="button" class="pl-qr${cls ? ' ' + cls : ''}" data-pl="qjump" data-i="${i}">${cover(t)}<span class="t"><b>${esc(t.title)}</b><small>${esc(t.name)}${t.beat ? ' · ' + esc(t.beat) : ''}</small></span>${extra || `<span class="d">${esc(t.len || '')}</span>`}</button>`;
+    }
+    function renderPanel() {
+        const box = $('plPanel'); if (!box || !built) return;
+        const big = $('plBig'), ptab = big ? big.dataset.ptab : 'q';
+        if (ptab === 'my') {
+            box.innerHTML = `<div class="pl-qh">내 목록 · ▶ 를 누르면 그 목록만 이어 듣기</div>` + cfg.fav.map((f, n) => {
+                const ids = favIds(n), sec = ids.reduce((a, id) => a + lenSec(byId.get(id).len), 0), m = Math.round(sec / 60);
+                const open = favOpen === n;
+                const rows = open ? (ids.length ? ids.map(id => { const t = byId.get(id); return `<div class="pl-fr${cur && cur.id === id ? ' now' : ''}"><button type="button" class="pl-frp" data-pl="favrow" data-n="${n}" data-id="${esc(id)}">${cover(t)}<span class="t"><b>${esc(t.title)}</b><small>${esc(t.name)}</small></span><span class="d">${esc(t.len || '')}</span></button><button type="button" class="pl-frx" data-pl="favdel" data-n="${n}" data-id="${esc(id)}" aria-label="${esc(t.title)} 목록에서 빼기">✕</button></div>`; }).join('') : `<div class="pl-pempty">아직 담긴 곡이 없어요.<br>곡을 듣다가 제목 아래 <b>${n + 1}</b> 을 누르면 여기에 담겨요.</div>`) : '';
+                return `<div class="pl-fc${open ? ' open' : ''}"><div class="pl-fch"><button type="button" class="pl-fcm" data-pl="favopen" data-n="${n}" aria-expanded="${open}"><span class="no">${n + 1}</span><span class="t"><b>${esc(f.name)}</b><small>${ids.length ? ids.length + '곡' + (m ? ' · 약 ' + m + '분' : '') : '비어 있음'} · ${open ? '접기 ▴' : '곡 보기 ▾'}</small></span></button><button type="button" class="pl-fce" data-pl="favname" data-n="${n}">✏ 이름</button><button type="button" class="pl-fcp" data-pl="favplay" data-n="${n}" aria-label="${esc(f.name)} 이어 듣기"${ids.length ? '' : ' disabled'}>${I.play}</button></div>${rows}</div>`;
+            }).join('') + `<div class="pl-pnote">이 휴대폰에만 저장돼요 · 다른 기기에는 따로 담아 주세요</div>`;
+            return;
+        }
+        if (!cur || !order.length) { box.innerHTML = '<div class="pl-pempty">곡을 고르면 재생목록이 여기에 나와요</div>'; return; }
+        const eq = '<span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>';
+        let h = '';
+        let pi = qi - 1; while (pi >= 0 && isOff(order[pi])) pi--;
+        if (pi >= 0 && byId.get(order[pi])) h += `<div class="pl-qh">이전 곡</div>` + qRow(byId.get(order[pi]), pi, 'past');
+        h += `<div class="pl-qh">지금 듣는 곡${walk ? ' · 타석 등장곡' : ''}</div>` + qRow(cur, qi, 'now', eq);
+        const nx = []; for (let j = qi + 1; j < order.length && nx.length < 40; j++) if (!isOff(order[j]) && byId.get(order[j])) nx.push(j);
+        let left = 0; for (let j = qi + 1; j < order.length; j++) if (!isOff(order[j])) left++;
+        h += `<div class="pl-qh">다음 곡${left ? ' · ' + left + '곡 남음' : ''}${cfg.shuffle ? ' · 셔플' : ''}</div>`;
+        h += nx.length ? nx.map(j => qRow(byId.get(order[j]), j, '')).join('') + (left > nx.length ? `<div class="pl-pnote">… ${left - nx.length}곡 더 있어요</div>` : '')
+            : `<div class="pl-pempty">마지막 곡이에요${cfg.repeat === 'all' ? ' · 끝나면 처음부터 다시 들어요' : ''}</div>`;
+        box.innerHTML = h;
+    }
     // 👤 v2.138.0: 큰 플레이어 왼쪽 위 등번호를 누르면 그 선수 상세 화면 (지금 곡을 골라 두고 곡 목록으로 내려감 · 하코 요청)
     function goPlayer() {
         if (!cur) return;
@@ -1396,7 +1478,7 @@
             $('plDurT').textContent = cur.len || '';
         }
         document.querySelectorAll('#plRows .pl-row').forEach(el => el.classList.toggle('cur', !!cur && el.dataset.id === cur.id));
-        paintOff();
+        paintOff(); paintFav(); if (bigOpen) renderPanel();
     }
     function paintVol(k) {
         const v = $('plVol');
@@ -1447,7 +1529,7 @@
         bigOpen = true;
         $('plBig').hidden = false;
         root.classList.add('pl-big-on');
-        setLyr(false);
+        setLyr(false); setTab(pTab);
         kIdx = -2; paintLyrics(true); paintTime(); startLoop();
         coach(!cfg.lyrTip && lines.length > 0);
     }
@@ -1472,7 +1554,7 @@
     }
     function setLyr(open) {   // 큰 글씨 세 줄 ↔ 전체 가사
         lyrOpen = !!open;
-        $('plMain').hidden = lyrOpen; $('plLyr').hidden = !lyrOpen;
+        $('plMain').hidden = lyrOpen; $('plLyr').hidden = !lyrOpen; $('plBig').classList.toggle('lyr-on', lyrOpen);
         $('plCnt').hidden = lyrOpen; $('plXl').hidden = !lyrOpen;
         $('plCloseTx').textContent = lyrOpen ? '가사 닫기' : '닫기';
         $('plHeadTx').textContent = lyrOpen && cur ? cur.title : '지금 재생 중';
@@ -1521,6 +1603,14 @@
             case 'shuffleall': playAll(listIds(), true); break;
             case 'open': openBig(); break;
             case 'goplayer': goPlayer(); break;
+            case 'ptab': setTab(d.t); break;
+            case 'fav': favToggle(+d.n); break;
+            case 'qjump': { const i = +d.i; const t = byId.get(order[i]); if (t && i !== qi) { walk = false; qi = i; load(t, true); } else if (t) toggle(); break; }
+            case 'favplay': favPlay(+d.n, null); break;
+            case 'favopen': favOpen = favOpen === +d.n ? -1 : +d.n; renderPanel(); break;
+            case 'favrow': favPlay(+d.n, d.id); break;
+            case 'favdel': favSet(+d.n, d.id, false); renderPanel(); break;
+            case 'favname': favRename(+d.n); break;
             case 'close': if (lyrOpen) setLyr(false); else closeBig(); break;
             case 'toggle': toggle(); break;
             case 'next': next(false); break;

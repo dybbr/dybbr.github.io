@@ -477,3 +477,75 @@ body:has(.pl-micpan:not([hidden])) .ui-zoom-ctrl { visibility: hidden; }
 @media (min-width: 700px) { .pl-st-tiles { grid-template-columns: repeat(4, 1fr); } }
 @media (min-width: 1000px) { .pl-st-grid { grid-template-columns: 1.25fr 1fr; } }
 @media (prefers-color-scheme: dark) { .pl-st-tiles i { color: #5fd3c2; } }
+
+/* ───── ⭐ v2.139.0 (하코 선택 B + 넓은 화면 C): 큰 플레이어 탭 「가사 · 재생목록 · 내 목록」 · 제목 아래 ①②③ 담기 · 넓은 화면은 오른쪽 목록 ───── */
+.pl-chips button.favc { border-color: var(--pl-gold); }
+.pl-chips button.favc.on { background: var(--pl-gold); border-color: var(--pl-gold); color: #0b2240; }
+.pl-fav { display: flex; align-items: center; gap: 5px; margin-top: 5px; min-width: 0; }
+.pl-fav i { font-style: normal; font-size: 11.5px; font-weight: 800; opacity: .82; margin-right: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.pl-fav i.hit { opacity: 1; color: var(--pl-gold); }
+.pl-fav button { flex: none; width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, .6); background: transparent; color: #ffffff; font-size: 13.5px; font-weight: 900; cursor: pointer; display: grid; place-items: center; padding: 0; }
+.pl-fav button.on { background: var(--pl-gold); border-color: var(--pl-gold); color: #0b2240; }
+.pl-tabs { flex: none; display: flex; gap: 2px; padding: 3px; margin: 10px 0 4px; border-radius: 999px; background: rgba(0, 0, 0, .2); }
+.pl-tabs button { flex: 1 1 0; height: 34px; border: 0; border-radius: 999px; background: transparent; color: #ffffff; font-size: 13.5px; font-weight: 800; opacity: .82; cursor: pointer; }
+.pl-big[data-tab="lyr"] .pl-tabs [data-t="lyr"], .pl-big[data-tab="q"] .pl-tabs [data-t="q"], .pl-big[data-tab="my"] .pl-tabs [data-t="my"] { background: #ffffff; color: var(--pl-red); opacity: 1; }
+.pl-panel { display: none; flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: 2px 0 6px; flex-direction: column; }
+.pl-big[data-tab="q"] .pl-panel, .pl-big[data-tab="my"] .pl-panel { display: flex; }
+.pl-big[data-tab="q"] .pl-main, .pl-big[data-tab="my"] .pl-main, .pl-big[data-tab="q"] .pl-lyr, .pl-big[data-tab="my"] .pl-lyr { display: none !important; }
+.pl-big.lyr-on .pl-song, .pl-big.lyr-on .pl-tabs { display: none; }
+.pl-qh { flex: none; font-size: 11.5px; font-weight: 900; letter-spacing: .04em; opacity: .72; margin: 10px 4px 3px; }
+.pl-qh:first-child { margin-top: 4px; }
+.pl-qr, .pl-frp { flex: none; width: 100%; display: flex; align-items: center; gap: 11px; padding: 7px 6px; border: 0; border-radius: 12px; background: transparent; color: inherit; text-align: left; cursor: pointer; font: inherit; }
+.pl-qr .pl-cv, .pl-frp .pl-cv { width: 40px; height: 40px; font-size: 17px; border: 1px solid rgba(255, 255, 255, .35); }
+.pl-qr .t, .pl-frp .t { flex: 1; min-width: 0; display: grid; }
+.pl-qr .t b, .pl-frp .t b { font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl-qr .t small, .pl-frp .t small { font-size: 12px; opacity: .75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl-qr .d, .pl-frp .d { flex: none; font-size: 12px; opacity: .7; font-variant-numeric: tabular-nums; }
+.pl-qr.past { opacity: .5; }
+.pl-qr.now, .pl-fr.now .pl-frp { background: rgba(255, 255, 255, .16); }
+.pl-qr.now .t b, .pl-fr.now .t b { color: var(--pl-gold); }
+.pl-qr .eq { display: flex; gap: 2px; align-items: flex-end; height: 14px; flex: none; }
+.pl-qr .eq i { width: 3px; height: 100%; background: var(--pl-gold); transform-origin: bottom; transform: scaleY(.35); }
+html.pl-playing .pl-qr .eq i { animation: plEq .5s ease-in-out infinite alternate; }
+.pl-qr .eq i:nth-child(2) { animation-delay: .2s; } .pl-qr .eq i:nth-child(3) { animation-delay: .4s; }
+@media (hover: hover) { .pl-qr:hover, .pl-frp:hover { background: rgba(255, 255, 255, .1); } }
+.pl-fc { flex: none; border-radius: 14px; background: rgba(255, 255, 255, .1); margin: 0 0 8px; padding: 4px; }
+.pl-fch { display: flex; align-items: center; gap: 6px; }
+.pl-fcm { flex: 1; min-width: 0; display: flex; align-items: center; gap: 11px; padding: 6px; border: 0; background: transparent; color: inherit; text-align: left; cursor: pointer; font: inherit; }
+.pl-fcm .no { flex: none; width: 42px; height: 42px; border-radius: 12px; background: var(--pl-gold); color: #0b2240; display: grid; place-items: center; font-size: 19px; font-weight: 900; }
+.pl-fcm .t { min-width: 0; display: grid; }
+.pl-fcm .t b { font-size: 15.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl-fcm .t small { font-size: 12px; opacity: .78; }
+.pl-fce { flex: none; height: 34px; padding: 0 9px; border-radius: 9px; border: 1px solid rgba(255, 255, 255, .4); background: transparent; color: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+.pl-fcp { flex: none; width: 42px; height: 42px; margin-right: 4px; border-radius: 50%; border: 0; background: #ffffff; color: var(--pl-red); display: grid; place-items: center; cursor: pointer; padding: 0; }
+.pl-fcp svg { width: 20px; height: 20px; }
+.pl-fcp:disabled { opacity: .35; cursor: default; }
+.pl-fr { display: flex; align-items: center; gap: 4px; }
+.pl-frx { flex: none; width: 34px; height: 34px; border-radius: 50%; border: 0; background: transparent; color: inherit; opacity: .6; font-size: 14px; cursor: pointer; }
+.pl-pempty { font-size: 13px; opacity: .8; text-align: center; padding: 14px 8px; line-height: 1.55; word-break: keep-all; }
+.pl-pnote { flex: none; font-size: 11.5px; opacity: .65; text-align: center; padding: 6px 4px; }
+@media (max-height: 520px) and (orientation: landscape) {   /* 눕힌 휴대폰: 예전처럼 곡 · 버튼 + 가사만 */
+    .pl-tabs, .pl-panel, .pl-fav { display: none !important; }
+    .pl-big[data-tab] .pl-main:not([hidden]) { display: contents !important; }
+    .pl-big[data-tab] .pl-lyr:not([hidden]) { display: block !important; }
+}
+@media (min-width: 760px) and (min-height: 600px) {   /* 태블릿 · PC: 왼쪽 곡 · 가사 · 버튼, 오른쪽 재생목록 · 내 목록 (늘 보임) */
+    .pl-big:not([hidden]) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 300px); grid-template-rows: auto auto minmax(0, 1fr) auto auto auto; column-gap: 36px; justify-content: center;
+        padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px)); }
+    .pl-bhead { grid-column: 1 / -1; grid-row: 1; }
+    .pl-song { grid-column: 1; grid-row: 2; }
+    .pl-big .pl-main, .pl-big .pl-lyr { grid-column: 1; grid-row: 3; }
+    .pl-big[data-tab] .pl-main:not([hidden]) { display: flex !important; }
+    .pl-big[data-tab] .pl-lyr:not([hidden]) { display: block !important; }
+    .pl-prog { grid-column: 1; grid-row: 4; }
+    .pl-ctl { grid-column: 1; grid-row: 5; }
+    .pl-msg { grid-column: 1; grid-row: 6; }
+    .pl-tabs { grid-column: 2; grid-row: 2; align-self: end; margin: 0 0 8px; }
+    .pl-tabs [data-t="lyr"] { display: none; }
+    .pl-big .pl-tabs button { background: transparent; color: #ffffff; opacity: .82; }
+    .pl-big[data-ptab="q"] .pl-tabs [data-t="q"], .pl-big[data-ptab="my"] .pl-tabs [data-t="my"] { background: #ffffff; color: var(--pl-red); opacity: 1; }
+    .pl-big .pl-panel { display: flex; grid-column: 2; grid-row: 3 / 7; border-radius: 18px; background: rgba(5, 15, 35, .32); padding: 8px; margin-bottom: 4px; }
+    .pl-big.lyr-on .pl-song { display: none; }
+    .pl-big.lyr-on .pl-tabs { display: flex; }
+}
+@media (min-width: 1100px) and (min-height: 600px) { .pl-big:not([hidden]) { grid-template-columns: minmax(0, 560px) minmax(0, 400px); } }
