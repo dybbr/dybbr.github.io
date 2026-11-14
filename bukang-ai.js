@@ -8,7 +8,7 @@
     'use strict';
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     const LS = 'daeyeon_bka';
-    const VER = '2.132.1';
+    const VER = '2.133.1';
     const opt = (function () { try { return Object.assign({ say: true }, JSON.parse(localStorage.getItem(LS) || '{}')); } catch (e) { return { say: true }; } })();
     const saveOpt = () => { try { localStorage.setItem(LS, JSON.stringify(opt)); } catch (e) {} };
     const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -390,8 +390,9 @@
         if (ctx.game) { const g = gameTurn(s, t); if (g) return g; }   // 놀이 중이면 놀이가 먼저
         const qk = quick(s, t); if (qk) return qk;                     // 그만 · 중지 · 취소 · 잘 가 · 고마워 · 하나 더 · 그게 아니야
         if (/준비하기|처음준비|다시준비/.test(t) && /부캉|준비/.test(t)) return prepCard();
-        if (/(두뇌|두네|너네|뜻두뇌)(고르|골라|바꾸|바꿔|선택|받기|받아|단계|업그레이드|키워)|더똑똑해|똑똑한두뇌|두뇌크기/.test(t) || /^(아기|어린이|어른)부캉이?(로|으로)?(바꿔|해줘|받아|골라|할래)?$/.test(t)) {   // v2.128.0
-            const lv = /아기/.test(t) ? 'small' : /어린이/.test(t) ? 'base' : /어른/.test(t) ? 'large' : ''; return lv ? semGo(lv) : semPick();
+        if (/(두뇌|두네|너네|뜻두뇌)(고르|골라|바꾸|바꿔|선택|받기|받아|단계|업그레이드|키워)|더똑똑해|똑똑한두뇌|두뇌크기/.test(t) || /^(아기|어린이|어른)(부캉이?)?(두뇌)?(로|으로)?(바꿔|바꿔줘|해줘|받아|받아줘|골라|할래)?$/.test(t)) {   // v2.128.0
+            if (/어른/.test(t) && !/아기|어린이/.test(t)) return semPick('🦅 어른 부캉이는 크기(343MB)에 비해 나아지는 게 적어서 뺐어요. 🦉 어린이 부캉이가 가장 똑똑해요.');   // v2.133.1
+            const lv = /아기/.test(t) ? 'small' : /어린이/.test(t) ? 'base' : ''; return lv ? semGo(lv) : semPick();
         }
         if (/^(두뇌끄기|뜻두뇌꺼|뜻두뇌끄기)/.test(t)) return semOff();
         if (/소리시험|소리테스트|목소리시험|소리확인|소리가?안나|목소리가?안나|대답소리|말을?안해|대답을?안해|음성대답/.test(t)) return /안나|안해|안들/.test(t) ? noSoundTips() : soundTest();
@@ -1906,9 +1907,17 @@
     // 우리 서버 호출 없음 · 휴대폰 안에서만 계산 · 고른 단계만 받음(⚙ 「🧠 두뇌 고르기」). 표를 다시 만들 땐 tools/sem-index.py
     const SEM_LV = {
         small: { n: '🐣 아기 부캉이', mb: 36, hi: 0.95, lo: 0.90, d: 384, sp: '가장 빨라요 · 오래된 휴대폰도 괜찮아요' },
-        base: { n: '🦉 어린이 부캉이', mb: 115, hi: 0.925, lo: 0.875, d: 768, sp: '추천 · 속도와 똑똑함이 알맞아요', rec: 1 },
-        large: { n: '🦅 어른 부캉이', mb: 343, hi: 0.93, lo: 0.88, d: 1024, sp: '가장 크고 똑똑해요 · PC · 새 휴대폰용' }
+        base: { n: '🦉 어린이 부캉이', mb: 115, hi: 0.925, lo: 0.875, d: 768, sp: '추천 · 속도와 똑똑함이 알맞아요', rec: 1 }
     };
+    // v2.133.1: 🦅 어른 부캉이(large · 343MB)는 하코 결정으로 뺌 (사이트 용량 · 나아지는 게 적음) — 어른을 쓰던 기기는 어린이로 바꾸고, 받아 둔 어른 파일은 한 번 지움
+    if (opt.sem === 'large') { opt.sem = 'base'; saveOpt(); }
+    setTimeout(async () => {
+        try {
+            if (!window.caches || localStorage.getItem('daeyeon_bka_nolarge')) return;
+            for (const k of await caches.keys()) { const ca = await caches.open(k); for (const r of await ca.keys()) if (/\/sem\/large\//.test(r.url)) await ca.delete(r); }
+            localStorage.setItem('daeyeon_bka_nolarge', '1');
+        } catch (e) {}
+    }, 8000);
     const SEM_ORT = ENGINE.slice(0, 3);   // 「부캉아」 엔진과 같은 계산 엔진(ORT) 파일 — 이미 받았으면 다시 안 받음
     const SEM = { lv: '', sess: null, tok: null, rows: null, X: null, sc: null, bg: null, p: null, err: '' };
     const semNow = () => (opt.sem && SEM_LV[opt.sem]) ? opt.sem : '';
@@ -2008,7 +2017,7 @@
         }, () => t4 || missAns(s)) };
     }
     // 두뇌 고르기 카드 (v2.128.0 · 하코 선택 B: 큰 카드 3장 나란히 · 똑똑함 · 빠르기 별점)
-    const SEM_STAR = { small: ['★', '★★★', ''], base: ['★★', '★★', '추천'], large: ['★★★', '★', 'PC용'] };
+    const SEM_STAR = { small: ['★', '★★★', ''], base: ['★★', '★★', '추천'] };
     function semPick(note) {
         if (mode === 'bub') open(true);
         const now = semNow();
@@ -2020,7 +2029,7 @@
             return { h: '🧠 부캉이 두뇌 고르기', l: [note || '처음 듣는 말도 「뜻」으로 알아듣는 두뇌예요. 고르면 한 번만 받아요.'],
                 html: `<div class="bka-sg">${ks.map(card).join('')}</div><div class="bka-snote">와이파이에서 받기를 추천해요 · 받은 뒤에는 인터넷 없이도 돼요</div>`,
                 btns: now ? [{ t: '🙅 뜻 두뇌 끄기', fn: semOff }] : [],
-                say: '아기, 어린이, 어른 부캉이 중에서 골라 주세요. 어린이 부캉이를 추천해요.' };
+                say: '아기, 어린이 부캉이 중에서 골라 주세요. 어린이 부캉이를 추천해요.' };
         }) };
     }
     function semGo(lv) {
@@ -2324,7 +2333,7 @@
                 ${on ? `<div class="r"><span>🎤 내 목소리 등록<small>${n ? n + '개 등록됨' : '「부캉아」 3번 녹음 · 더 잘 알아들어요'}</small></span><button type="button" class="sw" data-a="me">${n ? '다시 하기' : '등록'}</button>${n ? '<button type="button" class="sw" data-a="me-x">지우기</button>' : ''}</div>` : ''}
                 <div class="r"><span>🗣 부캉이 목소리<small>${esc(voiceNow()[1])} · ${esc(voiceNow()[4])}</small></span><button type="button" class="sw" data-a="voice">바꾸기</button></div>
                 <div class="r"><span>🔊 대답 읽어 주기<small>말로 물었을 때만 읽어요</small></span><button type="button" class="sw${opt.say ? ' on' : ''}" data-a="say" role="switch" aria-checked="${opt.say}">${opt.say ? '켜짐' : '꺼짐'}</button></div>
-                <div class="r bka-semr"><span>🧠 두뇌 단계<small>${semNow() ? esc(SEM_LV[semNow()].n) + ' · ' + SEM_LV[semNow()].mb + 'MB 쓰는 중' : '처음 듣는 말도 뜻으로 알아들어요 · 고르면 받아요'}</small></span><div class="bka-seg" role="group" aria-label="두뇌 단계">${[['', '끔'], ['small', '🐣 아기'], ['base', '🦉 어린이'], ['large', '🦅 어른']].map(([k, t]) => `<button type="button" data-a="sem:${k}" class="${semNow() === k ? 'on' : ''}" aria-pressed="${semNow() === k}">${t}</button>`).join('')}</div><button type="button" class="bka-segm" data-a="sem">크기 · 차이 비교 ›</button></div>
+                <div class="r bka-semr"><span>🧠 두뇌 단계<small>${semNow() ? esc(SEM_LV[semNow()].n) + ' · ' + SEM_LV[semNow()].mb + 'MB 쓰는 중' : '처음 듣는 말도 뜻으로 알아들어요 · 고르면 받아요'}</small></span><div class="bka-seg" role="group" aria-label="두뇌 단계">${[['', '끔'], ['small', '🐣 아기'], ['base', '🦉 어린이']].map(([k, t]) => `<button type="button" data-a="sem:${k}" class="${semNow() === k ? 'on' : ''}" aria-pressed="${semNow() === k}">${t}</button>`).join('')}</div><button type="button" class="bka-segm" data-a="sem">크기 · 차이 비교 ›</button></div>
                 <div class="r"><span>📦 준비 상태<small>앱 ${esc(appVer())} · 두뇌 v${DATA_VER} · 받은 것 · 소리 시험</small></span><button type="button" class="sw" data-a="rd">보기</button></div>
                 <div class="r"><span>📮 못 알아들은 말 보태기<small>이름 없이 모아 부캉이를 더 똑똑하게 해요</small></span><button type="button" class="sw${opt.share !== false ? ' on' : ''}" data-a="share" role="switch" aria-checked="${opt.share !== false}">${opt.share !== false ? '켜짐' : '꺼짐'}</button></div></div>`);
             scrollEnd();

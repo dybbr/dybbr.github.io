@@ -128,7 +128,7 @@ html.bka-bub-on #uiZoomCtrl{display:none!important}
 .bka-done[hidden]{display:none}
 
 /* v2.128.0: 🧠 두뇌 고르기 — 큰 카드 3장(대화) · 단계 버튼(⚙ 설정) */
-.bka-sg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
+.bka-sg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px;max-width:420px}
 .bka-sc{border:2px solid #e2e8f0;border-radius:16px;padding:12px 6px 8px;text-align:center;background:#fff;position:relative;min-width:0}
 .bka-sc.rec{border-color:#f5b301;background:#fffbeb}
 .bka-sc.on{border-color:#16a34a;background:#f0fdf4}
