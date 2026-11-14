@@ -46,6 +46,7 @@
         shuffle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h3.5c2.5 0 4 1.2 5.5 5s3 5 5.5 5H21"/><path d="M3 17h3.5c1.6 0 2.8-.5 3.8-1.8M14 8.6c1-1 2-1.6 3.5-1.6H21"/><path d="M18.5 4.5 21 7l-2.5 2.5M18.5 14.5 21 17l-2.5 2.5"/></svg>',
         repeat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11V9.5A3.5 3.5 0 0 1 7.5 6H20M17 3l3 3-3 3"/><path d="M20 13v1.5a3.5 3.5 0 0 1-3.5 3.5H4M7 21l-3-3 3-3"/></svg>',
         repeat1: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11V9.5A3.5 3.5 0 0 1 7.5 6H20M17 3l3 3-3 3"/><path d="M20 13v1.5a3.5 3.5 0 0 1-3.5 3.5H4M7 21l-3-3 3-3"/><path d="M11 10.2l1.4-.9v5.6" stroke-width="1.9"/></svg>',
+        plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
         down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>'
     };
     const REPEAT_LABEL = { all: '전체 반복', one: '한 곡 반복', off: '반복 끔' };
@@ -1140,17 +1141,20 @@
                 <button type="button" data-pl="view" data-v="bat">⚾ 타석 모드</button>
             </div>
             <div id="plList">
-                <div class="pl-hero"><b>대연초 주제곡</b><small id="plCount"></small>
+                <div class="pl-hero"><div class="pl-hero-tx"><b>대연초 주제곡</b><small id="plCount"></small></div>
                     <div class="pl-hero-btns"><button type="button" class="main" data-pl="playall">${I.play}전체 재생</button><button type="button" data-pl="shuffleall">${I.shuffle}셔플 재생</button></div>
                     <div class="pl-hot" id="plHot" hidden></div>
                 </div>
                 <div class="pl-chips" id="plChips"></div>
-                <div class="pl-pinfo" id="plPinfo" hidden>🔥 지난 7일 동안 많은 가족이 들은 순서예요 · 숫자는 보여 주지 않아요</div>
+                <div class="pl-lbar" id="plLbar"></div>
+                <div class="pl-th" id="plTh" aria-hidden="true"><span>순위</span><span></span><span>곡</span><span>선수</span><span>장르 · 빠르기</span><span>시간</span><span>듣기</span><span>담기</span></div>
                 <div class="pl-rows" id="plRows"></div>
+                <div class="pl-addm" id="plAddM" hidden></div>
             </div>
             <div id="plBat" hidden></div>
             <div id="plStat" hidden></div>`;
         sec.addEventListener('click', onClick);
+        addEventListener('scroll', () => { const m = $('plAddM'); if (m && !m.hidden) m.hidden = true; }, { passive: true });   // 🎼 담기 메뉴는 스크롤하면 닫힘
 
         const mini = document.createElement('div');
         mini.id = 'plMini'; mini.className = 'pl-mini'; mini.hidden = true;
@@ -1339,6 +1343,16 @@
         b.textContent = cur && cur.hidAll ? '🔓 다시 공개' : off ? '↩ 다시 넣기' : '🚫 이 곡 빼기';
         const sh = $('plOSheet'); if (sh && !sh.hidden && (!cur || walk)) sh.hidden = true;
     }
+    function addMenu(btn, id) {   // 🎼 v2.146.0 A안: 줄마다 ＋ 담기 → 작은 메뉴에서 내 목록 고르기 (담긴 목록은 ✓, 다시 누르면 뺌)
+        const m = $('plAddM'), t = byId.get(id); if (!m || !t) return;
+        if (!m.hidden && m.dataset.id === id) { m.hidden = true; return; }
+        m.dataset.id = id;
+        m.innerHTML = `<b>「${esc(t.title)}」 담기</b>` + cfg.fav.map((f, n) => `<button type="button" data-pl="addto" data-n="${n}" data-id="${esc(id)}" class="${favHas(n, id) ? 'on' : ''}"><i>${favHas(n, id) ? '✓' : n + 1}</i>${esc(f.name)}<small>${favIds(n).length}곡</small></button>`).join('');
+        m.hidden = false;
+        const r = btn.getBoundingClientRect(), mw = m.offsetWidth, mh = m.offsetHeight;
+        const x = Math.max(8, Math.min(innerWidth - mw - 8, r.right - mw)), below = r.bottom + 6 + mh < innerHeight - 140;
+        m.style.left = x + 'px'; m.style.top = (below ? r.bottom + 6 : Math.max(8, r.top - mh - 6)) + 'px';
+    }
     function renderList() {
         const cnt = $('plCount');
         if (!cnt) return;
@@ -1361,14 +1375,21 @@
             hot.hidden = !top;
             if (top) hot.innerHTML = `<button type="button" class="pl-hot-tx" data-pl="chip" data-f="hot"><span class="em" aria-hidden="true">🔥</span><span class="tx">요즘 가장 많이 듣는 곡<b>${esc(top.title)} · ${esc(top.name)}</b></span></button><button type="button" class="pl-hot-go" data-pl="hotplay">${I.play}듣기</button>`;
         }
-        const pin = $('plPinfo'); if (pin) pin.hidden = filter !== 'hot';
         const ids = listIds();
+        const lb = $('plLbar');   // 🎼 v2.146.0 A안: 목록 위 한 줄 안내 (인기순이면 기준 설명)
+        if (lb) lb.innerHTML = ids.length ? (filter === 'hot' ? `🔥 지난 7일 동안 많은 가족이 들은 순서 · <b>${ids.length}곡</b>` : `<b>${ids.length}곡</b>`) : '';
+        const th = $('plTh'); if (th) th.hidden = !ids.length || filter === 'off';
         const html = ids.map((id, i) => {
             const t = byId.get(id);
-            const row = `<button type="button" class="pl-row${cur && cur.id === id ? ' cur' : ''}" data-pl="row" data-id="${esc(id)}"><span class="n">${i + 1}</span>${cover(t)}` +
-                `<span class="t"><b>${esc(t.title)}</b><small>${t.hidAll ? '<i class="pl-htag">🔒 모든 학부모에게 숨김</i>' : ''}${popTag(id)}${esc(t.name)}${t.beat ? ' · ' + esc(t.beat) : ''}</small></span><span class="d">${esc(t.len)}</span><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span></button>`;
+            // 🎼 v2.146.0 A안(멜론식 차트표): 순위 · 표지 · 곡 · 선수 · 장르 · 시간 · ▶ — 넓은 화면은 칸으로, 폰은 두 줄 (CSS)
+            const tag = (t.hidAll ? '<i class="pl-htag">🔒 모든 학부모에게 숨김</i>' : '') + popTag(id);
+            const row = `<button type="button" class="pl-row${cur && cur.id === id ? ' cur' : ''}" data-pl="row" data-id="${esc(id)}"><span class="n${filter === 'hot' && i < 3 ? ' top' : ''}">${i + 1}</span>${cover(t)}` +
+                `<span class="t"><b>${esc(t.title)}</b><small>${tag ? '<span class="tg">' + tag + '</span>' : ''}<span class="nb">${esc(t.name)}${t.beat ? ' · ' + esc(t.beat) : ''}</span></small></span>` +
+                `<span class="c-nm">${esc(t.name)}${t.g ? ' <small>' + t.g + '학년</small>' : ''}</span><span class="c-bt">${esc(t.beat || '')}</span><span class="d">${esc(t.len)}</span>` +
+                `<span class="go" aria-hidden="true">${I.play}<span class="eq"><i></i><i></i><i></i></span></span></button>`;
+            const add = `<button type="button" class="pl-add" data-pl="addm" data-id="${esc(id)}" aria-label="${esc(t.title)} 내 목록에 담기">${I.plus}</button>`;
             if (t.hidAll) return `<div class="pl-rw off">${row}<button type="button" class="pl-ox back hid" data-pl="unhide" data-id="${esc(id)}" aria-label="${esc(t.title)} 다시 공개">🔓 다시 공개</button></div>`;
-            return isOff(id) ? `<div class="pl-rw off">${row}<button type="button" class="pl-ox back" data-pl="off" data-id="${esc(id)}" aria-label="${esc(t.title)} 다시 넣기">↩ 다시 넣기</button></div>` : row;   // 「빠진 곡」 칩에서만 보임
+            return isOff(id) ? `<div class="pl-rw off">${row}<button type="button" class="pl-ox back" data-pl="off" data-id="${esc(id)}" aria-label="${esc(t.title)} 다시 넣기">↩ 다시 넣기</button></div>` : `<div class="pl-rw">${row}${add}</div>`;   // 「빠진 곡」 칩에서만 보임
         }).join('');
         const nHid = filter !== 'off' ? tracks.filter(t => inFilter(t) && isOff(t.id)).length : 0;
         $('plRows').innerHTML = html ? html : `<div class="pl-empty">${tracks.length ? (nHid ? '이 목록의 곡을 모두 뺐어요<br>「🚫 빠진 곡」에서 다시 넣을 수 있어요' : '이 학년에는 아직 곡이 없어요') : '주제곡을 불러오는 중이에요.<br>잠시 뒤에도 안 보이면 인터넷 연결을 확인해 주세요.'}</div>`;
@@ -1746,9 +1767,12 @@
             return;
         }
         const el = e.target.closest('[data-pl]');
+        const am = $('plAddM'); if (am && !am.hidden && !e.target.closest('#plAddM') && !(el && el.dataset.pl === 'addm')) am.hidden = true;
         if (!el) return;
         const d = el.dataset;
         switch (d.pl) {
+            case 'addm': addMenu(el, d.id); break;   // 🎼 v2.146.0: 목록 줄 ＋ → 내 목록 고르기
+            case 'addto': { const on = !favHas(+d.n, d.id); favSet(+d.n, d.id, on); if (cfg.fav[+d.n]) notify(on ? '「' + cfg.fav[+d.n].name + '」에 담았어요' : '「' + cfg.fav[+d.n].name + '」에서 뺐어요'); $('plAddM').hidden = true; if (bigOpen) renderPanel(); break; }
             case 'view': setView(d.v); break;
             case 'chip': filter = d.f; renderList(); break;
             case 'hotplay': if (popIds.length) playTrack(popIds[0], popIds); break;   // 🔥 v2.124.0: 인기 1위부터 인기순으로 이어 듣기

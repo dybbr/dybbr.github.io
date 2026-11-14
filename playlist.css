@@ -557,3 +557,86 @@ html.pl-playing .pl-qr .eq i { animation: plEq .5s ease-in-out infinite alternat
 .pl-times { align-items: center; }
 .pl-times .pl-dlp { font-style: normal; font-size: 11.5px; font-weight: 900; color: #ffd166; padding: 1px 8px; border-radius: 99px; background: rgba(0,0,0,.25); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .pl-times .pl-dlp[hidden] { display: none; }
+
+/* ───── 🎼 v2.146.0 「전체 곡」 목록 A안 (멜론식 차트표, 하코 선택) ─────
+   위 카드는 얇게(제목 + 작은 전체 재생 · 셔플) · 칩은 밑줄 탭 · 목록은 순위 · 표지 · 곡 · ▶ (폰)
+   760px 이상: 순위 · 표지 · 곡 · 선수 · 장르 · 시간 · 듣기 · 담기 칸 (표 머리 #plTh) */
+#plList .pl-hero { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; padding: 4px 2px 12px; margin: 0; border-radius: 0; background: transparent; color: var(--pl-fg); }
+#plList .pl-hero-tx { flex: 1 1 220px; min-width: 0; }
+#plList .pl-hero b { font-size: 24px; letter-spacing: -.02em; }
+#plList .pl-hero small { font-size: 13px; color: var(--pl-sub); opacity: 1; }
+#plList .pl-hero-btns { flex: none; margin: 0; gap: 6px; }
+#plList .pl-hero-btns button { flex: none; height: 40px; padding: 0 16px; border-radius: 999px; font-size: 14.5px; border: 1px solid var(--pl-line); background: var(--pl-soft); color: var(--pl-fg); }
+#plList .pl-hero-btns button.main { background: var(--pl-red); border-color: var(--pl-red); color: #ffffff; }
+#plList .pl-hero-btns svg { width: 16px; height: 16px; }
+#plList .pl-hot { display: none; }   /* 「요즘 가장 많이 듣는 곡」 띠 → 인기순 1위 줄이 대신 */
+#plChips { gap: 0; padding: 0; margin: 2px 0 0; border-bottom: 1px solid var(--pl-line); }
+#plChips button { position: relative; height: 46px; padding: 0 14px; border: 0; border-radius: 0; background: transparent; color: var(--pl-sub); font-size: 15px; }
+#plChips button.on, #plChips button.hotc.on, #plChips button.offc.on { background: transparent; color: var(--pl-fg); border: 0; }
+#plChips button.on::after { content: ''; position: absolute; left: 10px; right: 10px; bottom: 0; height: 3px; border-radius: 3px; background: var(--pl-red); }
+#plChips button.hotc { color: var(--pl-hot); }
+#plChips button.offc { border: 0; }
+.pl-lbar { padding: 10px 2px 8px; font-size: 13px; font-weight: 700; color: var(--pl-sub); }
+.pl-lbar:empty { display: none; }
+.pl-lbar b { color: var(--pl-fg); }
+.pl-th { display: none; }
+#plRows { background: transparent; border: 0; border-radius: 0; border-top: 2px solid var(--pl-fg); overflow: visible; }
+#plRows .pl-rw { border-bottom: 1px solid var(--pl-line); }
+#plRows .pl-row { display: grid; grid-template-columns: 30px 48px minmax(0, 1fr) 40px; gap: 10px; align-items: center; padding: 8px 2px; border: 0; }
+#plRows .pl-row .n { width: auto; font-size: 16px; font-weight: 900; color: var(--pl-fg); }
+#plRows .pl-row .n.top { color: var(--pl-hot); }
+#plRows .pl-row .pl-cv { width: 48px; height: 48px; }
+#plRows .pl-row .t b { font-size: 15.5px; }
+#plRows .pl-row .t small .tg .pl-pop, #plRows .pl-row .t small .tg .pl-htag { margin-right: 5px; }
+#plRows .pl-row .c-nm, #plRows .pl-row .c-bt, #plRows .pl-row .d { display: none; }
+#plRows .pl-row .go { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--pl-line); color: var(--pl-fg); }
+#plRows .pl-row .go svg { width: 16px; height: 16px; margin-left: 2px; }
+#plRows .pl-row .go .eq { display: none; height: 14px; }
+#plRows .pl-row .go .eq i { background: #ffffff; }
+#plRows .pl-row.cur { background: linear-gradient(90deg, color-mix(in srgb, var(--pl-red) 16%, transparent), transparent 75%); }
+#plRows .pl-row.cur .go { background: var(--pl-red); border-color: var(--pl-red); color: #ffffff; }
+#plRows .pl-row.cur .go svg { display: none; }
+#plRows .pl-row.cur .go .eq { display: flex; }
+#plRows .pl-row.cur .d { display: none; }
+.pl-add { display: none; }
+#plRows .pl-rw.off .pl-row { grid-template-columns: 30px 48px minmax(0, 1fr); }
+#plRows .pl-rw.off .pl-row .go { display: none; }
+.pl-addm { position: fixed; z-index: 60; min-width: 220px; max-width: calc(100vw - 16px); padding: 8px; border-radius: 14px; background: var(--pl-card); border: 1px solid var(--pl-line); box-shadow: 0 14px 34px -10px rgba(0, 0, 0, .45); display: grid; gap: 4px; }
+.pl-addm[hidden] { display: none; }
+.pl-addm > b { font-size: 13px; color: var(--pl-sub); padding: 4px 6px 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl-addm button { display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 10px; border: 0; border-radius: 10px; background: transparent; color: var(--pl-fg); font-size: 15px; font-weight: 800; text-align: left; cursor: pointer; }
+.pl-addm button:hover { background: var(--pl-soft); }
+.pl-addm button i { font-style: normal; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--pl-soft); font-size: 13px; }
+.pl-addm button.on i { background: var(--pl-red); color: #ffffff; }
+.pl-addm button small { margin-left: auto; font-size: 12px; color: var(--pl-sub); font-weight: 700; }
+@media (max-width: 759px) {
+    #plList .pl-hero-btns { flex: 1 1 100%; }
+    #plList .pl-hero-btns button { flex: 1; height: 44px; }
+    #plChips { margin: 0 -2px; }
+}
+@media (min-width: 760px) {
+    .pl-th { display: grid; grid-template-columns: 52px 52px minmax(0, 1.3fr) 150px minmax(0, 1fr) 60px 52px 52px; gap: 12px; padding: 8px 6px; font-size: 12.5px; font-weight: 800; color: var(--pl-sub); }
+    .pl-th[hidden] { display: none; }
+    .pl-th span:nth-child(n+6) { text-align: center; }
+    #plRows .pl-rw { display: grid; grid-template-columns: minmax(0, 1fr) 52px; column-gap: 12px; align-items: center; padding-right: 6px; }
+    #plRows .pl-row { grid-template-columns: 52px 52px minmax(0, 1.3fr) 150px minmax(0, 1fr) 60px 52px; gap: 12px; padding: 9px 0 9px 6px; }
+    #plRows .pl-rw.off { grid-template-columns: minmax(0, 1fr) auto; }
+    #plRows .pl-rw.off .pl-row { grid-template-columns: 52px 52px minmax(0, 1.3fr) 150px minmax(0, 1fr) 60px; }
+    #plRows .pl-row .n { font-size: 18px; }
+    #plRows .pl-row .t small .nb { display: none; }
+    #plRows .pl-row .t small:not(:has(.tg)) { display: none; }
+    #plRows .pl-row .c-nm, #plRows .pl-row .c-bt, #plRows .pl-row .d { display: block; min-width: 0; font-size: 14px; color: var(--pl-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #plRows .pl-row .c-nm { color: var(--pl-fg); font-weight: 700; }
+    #plRows .pl-row .c-nm small { font-size: 12px; color: var(--pl-sub); font-weight: 600; }
+    #plRows .pl-row .d, #plRows .pl-row.cur .d { display: block; text-align: center; font-variant-numeric: tabular-nums; }
+    #plRows .pl-row .go { justify-self: center; }
+    .pl-add { display: grid; place-items: center; justify-self: center; width: 40px; height: 40px; border-radius: 50%; border: 0; background: transparent; color: var(--pl-sub); cursor: pointer; }
+    .pl-add svg { width: 20px; height: 20px; }
+    @media (hover: hover) { #plRows .pl-rw:hover { background: var(--pl-soft); } .pl-add:hover { color: var(--pl-fg); background: var(--pl-card); } }
+}
+@media (min-width: 760px) and (max-width: 979px) {   /* 세로 태블릿: 장르 칸 빼기 */
+    .pl-th, #plRows .pl-row { grid-template-columns: 44px 48px minmax(0, 1.4fr) 120px 56px 48px; }
+    .pl-th { grid-template-columns: 44px 48px minmax(0, 1.4fr) 120px 56px 48px 52px; }
+    .pl-th span:nth-child(5), #plRows .pl-row .c-bt { display: none; }
+    #plRows .pl-rw.off .pl-row { grid-template-columns: 44px 48px minmax(0, 1.4fr) 120px 56px; }
+}
