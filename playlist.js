@@ -165,13 +165,14 @@
         audio.style.display = 'none';
         document.body.appendChild(audio);
         audio.addEventListener('playing', () => { if (annDone) { paintState(); return; } unlocked = true; fails = 0; waitStop(); hideMsg(); paintState(); startLoop(); songAfterPlay(); });
-        audio.addEventListener('waiting', () => { if (!annDone) { songYield(); waitStart(); } });   // ⏳ v2.139.1: 받는 중(버퍼링)
+        audio.addEventListener('waiting', () => { if (!annDone) { songYield(); waitStart(); dlOn(true); } });   // ⏳ v2.139.1: 받는 중(버퍼링)
         audio.addEventListener('error', () => waitStop());
         audio.addEventListener('pause', () => { waitStop(); paintState(); });
         audio.addEventListener('play', () => bkKick(0));   // 🦉 소리가 나기 시작하면 「부캉아」 듣기 쉼
         audio.addEventListener('ended', () => { if (annDone) annStep(); else next(true); });
         audio.addEventListener('timeupdate', onTime);
         audio.addEventListener('durationchange', () => { if (!annDone) paintTime(); });
+        audio.addEventListener('progress', () => { if (!annDone) paintBuf(); });   // ⬇ v2.141.0
         audio.addEventListener('loadedmetadata', () => {
             if (annDone) return;
             if (pendingSeek != null) { const at = pendingSeek; pendingSeek = null; try { if (Math.abs(audio.currentTime - at) > 0.5) audio.currentTime = at; } catch (e) {} }
@@ -271,7 +272,7 @@
     }
     // ⏳ v2.139.1: 느린 인터넷(차량 화면 · 핫스팟)에서 ⏸ 인데 0:00 에 멈춰 보이던 것 — 받는 중이면 알려 주고, 15초 넘게 안 오면 한 번 다시 받아 봄
     let waitT = 0, waitN = 0, waitAt = -1, waitMsg = false;
-    function waitStop() { clearTimeout(waitT); waitT = 0; waitN = 0; if (waitMsg) { waitMsg = false; hideMsg(); } }
+    function waitStop() { clearTimeout(waitT); waitT = 0; waitN = 0; dlOn(false); if (waitMsg) { waitMsg = false; hideMsg(); } }
     function waitStart() { if (waitT || !audio) return; waitN = 0; waitAt = audio.currentTime || 0; waitT = setTimeout(waitTick, 3000); }
     function waitTick() {
         waitT = 0;
@@ -279,7 +280,7 @@
         if ((audio.currentTime || 0) > waitAt + 0.5) { waitStop(); return; }   // 잘 나오고 있음
         waitN++;
         const m = $('plMsg');
-        if (waitN === 1 && m) { m.textContent = '곡을 받는 중이에요… 인터넷이 느리면 조금 걸려요'; m.hidden = false; waitMsg = true; }
+        if (waitN === 1) { dlOn(true); if (m) { m.textContent = '곡을 받는 중이에요… 재생 막대의 연한 부분이 받은 만큼이에요'; m.hidden = false; waitMsg = true; } }
         if (waitN === 4) { const at = audio.currentTime || pendingSeek || 0; attach(at); const pr = audio.play(); if (pr && pr.catch) pr.catch(() => {}); }   // 약 15초: 한 번 다시 받기
         if (waitN >= 8) { waitT = 0; waitMsg = false; showMsg('인터넷이 느려서 곡을 받지 못하고 있어요. 연결을 확인하거나 다음 곡(⏭)을 눌러 주세요.'); return; }
         waitT = setTimeout(waitTick, 4000);
@@ -312,7 +313,7 @@
         if (!attached) attach(pendingSeek || 0);
         if (!fadeInTimer) { try { audio.volume = 1; } catch (e) {} }
         if (muOn) muStop();   // 축하곡 · 공수 교대 음악이 나오던 중이면 서서히 끔
-        waitStop(); waitStart();
+        waitStop(); waitStart(); if (audio.readyState < 3) dlOn(true);
         const pr = audio.play();
         if (pr && pr.catch) pr.catch(e => { if (e && e.name !== 'AbortError' && e.name !== 'NotSupportedError') showMsg('재생하지 못했어요. ▶ 를 한 번 더 눌러 주세요.'); paintState(); });
     }
@@ -1165,8 +1166,8 @@
             <div class="pl-lyr${cfg.xl ? ' xl' : ''}" id="plLyr" hidden></div>
             <div class="pl-panel" id="plPanel"></div>
             <div class="pl-coach" id="plCoach" data-pl="coach-ok" hidden><div class="pl-coach-bub" id="plCoachBub" role="dialog" aria-label="가사 보는 법"><div class="who"><i></i>부캉이</div><p>여기 <b>가사를 누르면</b> 노래 전체 가사를 크게 볼 수 있어요!</p><button type="button" data-pl="coach-ok">알겠어요</button></div></div>
-            <div class="pl-prog"><div class="pl-seek" id="plSeek" role="slider" tabindex="0" aria-label="재생 위치" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i><i id="plSeekFill"></i></i><b id="plSeekKnob"></b></div>
-                <div class="pl-times"><span id="plCurT">0:00</span><span id="plDurT"></span></div></div>
+            <div class="pl-prog"><div class="pl-seek" id="plSeek" role="slider" tabindex="0" aria-label="재생 위치" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i><span class="pl-buf" id="plSeekBuf"></span><i id="plSeekFill"></i></i><b id="plSeekKnob"></b></div>
+                <div class="pl-times"><span id="plCurT">0:00</span><em class="pl-dlp" id="plDlPct" hidden></em><span id="plDurT"></span></div></div>
             <div class="pl-ctl">
                 <button type="button" class="md" data-pl="shuffle" id="plShuf" aria-label="셔플">${I.shuffle}<em></em></button>
                 <button type="button" class="sk" data-pl="prev" aria-label="이전 곡">${I.prev}</button>
@@ -1617,6 +1618,23 @@
         try { if ('mediaSession' in navigator) navigator.mediaSession.playbackState = playing ? 'playing' : (cur ? 'paused' : 'none'); } catch (e) {}
     }
     const dur = () => { const d = audio && attached ? audio.duration : 0; return isFinite(d) && d > 0 ? d : (cur ? lenSec(cur.len) : 0); };
+    // ⬇ v2.141.0: 받아 둔 만큼 (하코 「받는 중에 게이지나 퍼센트」 · B안) — 재생 막대에 연한 색, 받는 중이면 시간 사이에 「⬇ 받는 중 N%」
+    let dlShow = false;
+    function bufFrac() {
+        if (!audio || !attached || !cur) return 0;
+        if ((audio.currentSrc || audio.src || '').indexOf('blob:') === 0) return 1;   // 휴대폰에 저장된 곡
+        const d = audio.duration; if (!d || !isFinite(d)) return 0;
+        let e = 0; try { const b = audio.buffered, t = audio.currentTime || 0; for (let i = 0; i < b.length; i++) { if (b.start(i) <= t + 1 && b.end(i) > e) e = b.end(i); } } catch (x) {}
+        return Math.max(0, Math.min(1, e / d));
+    }
+    function paintBuf() {
+        if (!built) return;
+        const f = bufFrac(), bf = $('plSeekBuf'); if (bf) bf.style.width = (f * 100).toFixed(1) + '%';
+        const el = $('plDlPct'); if (!el) return;
+        if (dlShow && cur) { el.textContent = (audio && audio.duration && isFinite(audio.duration)) ? '⬇ 받는 중 ' + Math.floor(f * 100) + '%' : '⬇ 연결 중…'; el.hidden = false; }
+        else el.hidden = true;
+    }
+    function dlOn(on) { dlShow = !!on; paintBuf(); }
     function paintTime() {
         if (!built || !cur) return;
         const d = dur(), c = attached && audio ? (audio.currentTime || 0) : (pendingSeek || 0);
@@ -1624,6 +1642,7 @@
         $('plMiniBar').style.width = (f * 100).toFixed(2) + '%';
         if (!seeking) { setSeek(f); $('plCurT').textContent = fmt(c); }
         $('plDurT').textContent = d ? fmt(d) : (cur.len || '');
+        paintBuf();
         if (bigOpen && (!audio || audio.paused)) paintLyrics(false);
     }
     function setSeek(f) {
