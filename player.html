@@ -28,7 +28,7 @@
         }
     </script>
     <!-- 🎵 선수별 주제곡 (v2.92.0) — 곡 목록은 cheer-songs.json (그 파일만 고치면 됨) · cheer-songs.js 를 고칠 때만 아래 ?v= 숫자 올리기 -->
-    <script src="cheer-songs.js?v=2.137.0"></script>
+    <script src="cheer-songs.js?v=2.144.0"></script>
     <script src="song-stat.js?v=2.124.0"></script>   <!-- 📊 v2.124.0: 주제곡 재생 세기 (6시간에 한 번 묶어 보냄) -->
 
     <!-- 브라우저 캐시 원천 방지 메타태그 -->
@@ -540,6 +540,9 @@
         .cheer-box.fam .cpl-item.on .cpl-no, .cheer-box.fam .cpl-item.on .cpl-t b, .cheer-box.fam .cpl-item.on .cpl-len { color: var(--fam-c); }
         .cheer-box.fam .cl-block.chorus .cl-label { background: var(--fam-c); }
         .cheer-box.fam .cl-block.chorus .cl-line { color: var(--fam-c); }
+        .cheer-box.fam .cheer-lyrics.kara .cl-line.now { background: var(--fam-on); box-shadow: inset 4px 0 0 var(--fam-c); }   /* 🎤 v2.144.0: 동생 곡 노래방 색칠도 그 아이 색 */
+        .cheer-box.fam .cheer-lyrics.kara .cl-line.now .kw { background-image: linear-gradient(90deg, var(--fam-c) 0, var(--fam-c) var(--p, 0%), #1e293b var(--p, 0%)); }
+        .cheer-box.fam .cheer-lyrics.kara .cl-block.chorus .cl-line.now .kw { background-image: linear-gradient(90deg, #0b2240 0, #0b2240 var(--p, 0%), var(--fam-c) var(--p, 0%)); }
         .cheer-lyrics { background: #ffffff; border: 1px solid #fde2c4; border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 10px; max-height: 46vh; overflow-y: auto; overscroll-behavior: contain; }
         .cheer-lyrics[hidden] { display: none; }
         .cl-block { display: flex; flex-direction: column; gap: 3px; }
@@ -584,6 +587,8 @@
             .cheer-box.fam-woo { --fam-c: #f29a6b; --fam-soft: #241b17; --fam-line: #4a3226; --fam-on: #3a281e; }
             .cheer-box.fam .cpl-top { background: #2a4fa8; } .cheer-box.fam-woo .cpl-top { background: #a8461a; }
             .cheer-box.fam .cpl-sort { background-color: #151e2e; }
+            .cheer-box.fam .cheer-lyrics.kara .cl-line.now .kw { background-image: linear-gradient(90deg, var(--fam-c) 0, var(--fam-c) var(--p, 0%), #dde3ec var(--p, 0%)); }
+            .cheer-box.fam .cheer-lyrics.kara .cl-block.chorus .cl-line.now .kw { background-image: linear-gradient(90deg, #ffffff 0, #ffffff var(--p, 0%), var(--fam-c) var(--p, 0%)); }
             .cheer-lyrics { background: #151e2e; border-color: #3a2d28; }
             .cl-line { color: #dde3ec; }
             .cl-block.chorus .cl-line { color: #f5a3b5; }

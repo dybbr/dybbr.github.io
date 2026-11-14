@@ -13,7 +13,8 @@
 
     const SECTION_NAMES = {
         'intro': '인트로', 'verse 1': '1절', 'verse 2': '2절', 'verse 3': '3절', 'verse': '절',
-        'pre-chorus': '프리코러스', 'build up': '빌드업', 'chorus': '후렴', 'bridge': '브리지', 'break': '브레이크', 'outro': '아웃트로'
+        'pre-chorus': '프리코러스', 'build up': '빌드업', 'chorus': '후렴', 'bridge': '브리지', 'break': '브레이크', 'outro': '아웃트로',
+        'post-chorus': '후렴 뒤', 'final chorus': '후렴', 'instrumental break': '간주', 'inst': '간주'   // v2.144.0: 동생 곡에 있는 이름표
     };
 
     // cheer-songs.json 받기 (한 화면에서 한 번만) — 끝나면 곡 수를 돌려줌 (실패해도 0)
