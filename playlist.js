@@ -165,7 +165,7 @@
         audio.style.display = 'none';
         document.body.appendChild(audio);
         audio.addEventListener('playing', () => { if (annDone) { paintState(); return; } unlocked = true; fails = 0; waitStop(); hideMsg(); paintState(); startLoop(); songAfterPlay(); });
-        audio.addEventListener('waiting', () => { if (!annDone) waitStart(); });   // ⏳ v2.139.1: 받는 중(버퍼링)
+        audio.addEventListener('waiting', () => { if (!annDone) { songYield(); waitStart(); } });   // ⏳ v2.139.1: 받는 중(버퍼링)
         audio.addEventListener('error', () => waitStop());
         audio.addEventListener('pause', () => { waitStop(); paintState(); });
         audio.addEventListener('play', () => bkKick(0));   // 🦉 소리가 나기 시작하면 「부캉아」 듣기 쉼
@@ -186,7 +186,7 @@
     //   곡이 나오기 시작하고 4초 뒤에 지금 곡을 통째로 받아 두고, 다음 곡도 미리 받아 둠 → 차 안처럼 인터넷이 약해도 다음 곡이 끊기지 않음
     //   저장본은 재생 직전에만 꺼냄(blob) · 꺼내 둔 것은 지금 · 다음 곡 몇 개만 남기고 정리 (메모리 아끼기)
     const SONG_CACHE = 'daeyeon-songs-v1', SONG_MAX = 80, SONG_LRU = 'daeyeon_song_lru';
-    let songLru = [], unlocked = false, songTimer = 0;
+    let songLru = [], unlocked = false, songTimer = 0, songAbort = null;
     try { const a = JSON.parse(localStorage.getItem(SONG_LRU) || '[]'); if (Array.isArray(a)) songLru = a.filter(x => typeof x === 'string').slice(-SONG_MAX); } catch (e) {}
     const songCached = new Set(songLru), songGetting = new Set(), songBlobs = [];
     const songCan = () => { try { return 'caches' in window && window.isSecureContext !== false; } catch (e) { return false; } };
@@ -206,8 +206,9 @@
         if (!src || !songCan() || songGetting.has(src)) return;
         if (songCached.has(src)) { songTouch(src); return; }
         songGetting.add(src);
+        const ac = window.AbortController ? new AbortController() : null; songAbort = ac;
         try {
-            const r = await fetch(src, { mode: 'cors' });
+            const r = await fetch(src, ac ? { mode: 'cors', signal: ac.signal } : { mode: 'cors' });
             if (!r.ok || r.headers.get('content-length') === '0') throw new Error('HTTP ' + r.status);
             const c = await caches.open(SONG_CACHE);
             try { await c.put(src, r.clone()); }
@@ -217,8 +218,8 @@
                 songSave(); await c.put(src, r);
             }
             songTouch(src); await songTrim(c);
-        } catch (e) { console.warn('곡 저장 실패:', e); }
-        finally { songGetting.delete(src); }
+        } catch (e) { if (!e || e.name !== 'AbortError') console.warn('곡 저장 실패:', e); try { const c = await caches.open(SONG_CACHE); await c.delete(src); } catch (x) {} }
+        finally { songGetting.delete(src); if (songAbort === ac) songAbort = null; }
     }
     async function songBlob(src) {   // 저장본 → 재생용 주소
         if (blobUrl[src]) return blobUrl[src];
@@ -242,15 +243,31 @@
         for (let k = 1; k < order.length; k++) { const id = order[(qi + k) % order.length]; if (!isOff(id) && byId.get(id)) return byId.get(id); }
         return null;
     }
+    // v2.140.1: 하코 차량(핫스팟)에서 「멈췄다 나왔다」 반복 — 듣는 곡과 저장용 내려받기가 인터넷을 나눠 써서였음
+    //   → 듣는 곡을 30초 넘게 앞서 받아 뒀을 때만 다음 곡을 받기 시작 · 듣는 곡 저장(⏮ 이전 곡용)은 다음 곡을 저장하고, 듣는 곡을 끝까지 받은 뒤에만
+    //   → 듣는 곡이 버벅이면(waiting) 받던 다음 곡은 바로 그만둠 (나중에 다시)
+    function songAhead() {   // 지금 위치에서 몇 초 앞까지 받아 뒀는지
+        try { const b = audio.buffered, t = audio.currentTime; for (let i = 0; i < b.length; i++) if (b.start(i) <= t + 0.5 && b.end(i) >= t) return b.end(i) - t; } catch (e) {}
+        return 0;
+    }
+    function songTick() {
+        if (!audio || audio.paused || !cur || walk || annDone || songAbort) return;
+        const fromMem = (audio.currentSrc || audio.src || '').indexOf('blob:') === 0;
+        const left = (audio.duration || 0) - (audio.currentTime || 0);
+        const roomy = fromMem || (left > 0 && songAhead() >= Math.min(30, left - 1));   // 듣는 곡을 넉넉히 받아 둠
+        const nx = songNext(), t = cur;
+        if (nx && songCached.has(nx.src)) { if (!blobUrl[nx.src]) songBlob(nx.src).catch(() => {}); }
+        else if (nx) { if (roomy && !songGetting.has(nx.src)) songStore(nx.src).then(() => { if (cur === t && songCached.has(nx.src)) songBlob(nx.src).catch(() => {}); }); return; }
+        // 다음 곡까지 저장했으면, 듣는 곡도 저장 (⏮ 이전 곡 · 다시 듣기용) — 듣는 곡을 끝까지 받아 둔 뒤에만
+        if (!fromMem && !songCached.has(t.src) && !songGetting.has(t.src) && left > 0 && songAhead() >= left - 1) songStore(t.src);
+    }
+    window.plSongDbg = () => ({ getting: [...songGetting], lru: songLru.length, ahead: audio ? +songAhead().toFixed(1) : 0 });   // 점검용
+    function songYield() { if (songAbort) { try { songAbort.abort(); } catch (e) {} songAbort = null; } }   // 듣는 곡 먼저
     function songAfterPlay() {
-        clearTimeout(songTimer);
+        clearInterval(songTimer); songTimer = 0;
         if (!songCan() || walk) return;
-        songTimer = setTimeout(async () => {
-            const t = cur; if (!t) return;
-            await songStore(t.src);
-            const nx = songNext();
-            if (nx && cur === t) { await songStore(nx.src); if (cur === t && songCached.has(nx.src)) songBlob(nx.src).catch(() => {}); }
-        }, 4000);
+        if (cur && songCached.has(cur.src)) songTouch(cur.src);
+        songTimer = setInterval(songTick, 3000);
     }
     // ⏳ v2.139.1: 느린 인터넷(차량 화면 · 핫스팟)에서 ⏸ 인데 0:00 에 멈춰 보이던 것 — 받는 중이면 알려 주고, 15초 넘게 안 오면 한 번 다시 받아 봄
     let waitT = 0, waitN = 0, waitAt = -1, waitMsg = false;

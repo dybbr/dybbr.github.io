@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>재생 점검</title>
+<!-- 🔧 v2.140.1: 차량 화면 · 태블릿에서 노래가 0:00 에 멈출 때 원인을 찾는 점검 페이지 (개인정보 없음 · 우리 서버 호출 없음) -->
+<style>
+:root{--bg:#f4f6fa;--card:#fff;--ink:#17202e;--sub:#5b6577;--line:#dfe4ec;--ok:#16834a;--bad:#c62828;--warn:#b26a00;--pri:#0b3d91}
+@media (prefers-color-scheme:dark){:root{--bg:#10141b;--card:#1a202b;--ink:#e8edf5;--sub:#9aa5b8;--line:#2c3443;--ok:#4cc985;--bad:#ff6b6b;--warn:#ffb74d;--pri:#7aa7ff}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+main{max-width:760px;margin:0 auto;padding:16px}
+h1{font-size:22px;margin:4px 0 2px}
+p.sub{color:var(--sub);margin:0 0 14px;font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:0 0 12px}
+button{font:inherit;border:0;border-radius:12px;padding:14px 18px;font-weight:700;cursor:pointer}
+#go{width:100%;background:var(--pri);color:#fff;font-size:19px}
+#go:disabled{opacity:.5}
+#copy{background:var(--line);color:var(--ink);margin-top:10px;width:100%}
+.row{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.ic{width:26px;flex:none;font-size:18px;text-align:center}
+.row b{display:block}
+.row small{color:var(--sub);word-break:break-all}
+.ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}
+#verdict{font-size:17px;font-weight:700}
+#log{font:12px/1.45 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;color:var(--sub);max-height:260px;overflow:auto;margin:0}
+a{color:var(--pri)}
+</style>
+</head>
+<body>
+<main>
+<h1>🔧 노래 재생 점검</h1>
+<p class="sub">노래가 0:00 에서 멈추는 기기에서 열고 아래 버튼을 눌러 주세요. 약 1분 걸리고, 소리가 잠깐 날 수 있어요. 끝나면 「결과 복사」를 눌러 보내 주세요.</p>
+<div class="card"><button id="go">점검 시작</button></div>
+<div class="card" id="res" hidden>
+  <div id="verdict"></div>
+  <div id="rows" style="margin-top:8px"></div>
+  <button id="copy">결과 복사</button>
+</div>
+<div class="card"><pre id="log">기록이 여기 나와요.</pre></div>
+<p class="sub"><a href="./">← 사이트로 돌아가기</a></p>
+</main>
+<script>
+(function () {
+  'use strict';
+  var SONG = 'https://cdn.abocado.ai/ai/audio/google_a7d80a06/mcp_google_a7d80a06_20261025161516_jox155_0.mp3';
+  var SMALL = 'sfx/clap.mp3';
+  var $ = function (id) { return document.getElementById(id); };
+  var t0 = 0, lines = [], rows = [], result = {};
+  function now() { return ((performance.now() - t0) / 1000).toFixed(1) + 's'; }
+  function log(s) { lines.push(now() + ' ' + s); $('log').textContent = lines.join('\n'); $('log').scrollTop = 1e9; }
+  function row(ic, cls, title, detail) { rows.push({ ic: ic, cls: cls, title: title, detail: detail || '' }); paintRows(); }
+  function paintRows() {
+    $('rows').innerHTML = rows.map(function (r) { return '<div class="row"><span class="ic ' + r.cls + '">' + r.ic + '</span><div><b class="' + r.cls + '">' + r.title + '</b><small>' + r.detail + '</small></div></div>'; }).join('');
+  }
+  var wait = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
+  function info() {
+    var c = navigator.connection || {};
+    var ua = navigator.userAgent;
+    var m = ua.match(/Chrome\/(\d+)/), wv = /; wv\)|Version\/\d.*Chrome/.test(ua);
+    result.ua = ua; result.chrome = m ? +m[1] : 0; result.webview = wv;
+    result.net = { type: c.effectiveType || '?', down: c.downlink || '?', rtt: c.rtt || '?', save: !!c.saveData };
+    result.clock = new Date().toISOString();
+    result.screen = screen.width + 'x' + screen.height + ' @' + (window.devicePixelRatio || 1);
+    var a = document.createElement('audio');
+    result.mp3 = a.canPlayType('audio/mpeg') || 'no';
+    log('기기: ' + ua);
+    log('화면 ' + result.screen + ' · 앱 안 화면(WebView) ' + (wv ? '예' : '아니요') + ' · 크롬 ' + (result.chrome || '?'));
+    log('인터넷(기기 추정): ' + JSON.stringify(result.net) + ' · 기기 시각 ' + result.clock);
+    log('mp3 재생 가능: ' + result.mp3);
+    var old = result.chrome && result.chrome < 80;
+    row(old ? '⚠️' : 'ℹ️', old ? 'warn' : '', '기기 · 브라우저', (wv ? '앱 안 화면(WebView)' : '브라우저') + ' · 크롬 ' + (result.chrome || '알 수 없음') + (old ? ' (오래된 버전)' : '') + ' · mp3 ' + (result.mp3 || 'no'));
+    var y = new Date().getFullYear();
+    if (y < 2025 || y > 2030) row('❌', 'bad', '기기 날짜가 틀려요', '기기 시각 ' + result.clock + ' → 날짜가 틀리면 보안 연결이 실패해 노래를 못 받아요');
+  }
+  async function speed(url, label, key) {
+    log(label + ' 받기 시작');
+    var s = performance.now(), first = 0, got = 0, total = 0;
+    try {
+      var ctl = new AbortController(); var to = setTimeout(function () { ctl.abort(); }, 40000);
+      var r = await fetch(url + (url.indexOf('?') < 0 ? '?' : '&') + 'chk=' + Date.now(), { cache: 'no-store', signal: ctl.signal });
+      first = performance.now() - s;
+      total = +r.headers.get('content-length') || 0;
+      log(label + ' 응답 ' + r.status + ' · 첫 응답 ' + (first / 1000).toFixed(2) + '초 · 크기 ' + (total ? (total / 1048576).toFixed(2) + 'MB' : '?'));
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      var chunks = [];
+      if (r.body && r.body.getReader) {
+        var rd = r.body.getReader(), lastLog = 0;
+        for (;;) { var x = await rd.read(); if (x.done) break; chunks.push(x.value); got += x.value.length; var el = performance.now() - s; if (el - lastLog > 3000) { lastLog = el; log('  … ' + (got / 1048576).toFixed(2) + 'MB (' + (el / 1000).toFixed(0) + '초)'); } }
+      } else { var bb = await r.arrayBuffer(); chunks.push(new Uint8Array(bb)); got = bb.byteLength; }
+      clearTimeout(to);
+      var sec = (performance.now() - s) / 1000, mbps = got * 8 / 1e6 / sec;
+      log(label + ' 다 받음 ' + (got / 1048576).toFixed(2) + 'MB · ' + sec.toFixed(1) + '초 · ' + mbps.toFixed(1) + 'Mbps');
+      result[key] = { ok: true, sec: +sec.toFixed(1), mbps: +mbps.toFixed(1), first: +(first / 1000).toFixed(2), mb: +(got / 1048576).toFixed(2) };
+      return new Blob(chunks, { type: 'audio/mpeg' });
+    } catch (e) {
+      var sec2 = (performance.now() - s) / 1000;
+      log(label + ' 실패: ' + (e && e.name) + ' ' + (e && e.message) + ' · ' + (got / 1048576).toFixed(2) + 'MB 받음 · ' + sec2.toFixed(1) + '초');
+      result[key] = { ok: false, err: (e && e.name) + ' ' + (e && e.message), sec: +sec2.toFixed(1), mb: +(got / 1048576).toFixed(2) };
+      return null;
+    }
+  }
+  function playTest(src, label, key, secs) {
+    return new Promise(function (done) {
+      var a = new Audio(), s = performance.now(), firstMove = 0, maxT = 0, evs = [], fin = false;
+      a.preload = 'auto';
+      var ev = ['loadstart', 'loadedmetadata', 'canplay', 'playing', 'waiting', 'stalled', 'suspend', 'pause', 'error', 'ended'];
+      ev.forEach(function (n) { a.addEventListener(n, function () { var tt = ((performance.now() - s) / 1000).toFixed(1); evs.push(n + '@' + tt); log('  ' + label + ' ' + n + ' (' + tt + '초, 위치 ' + a.currentTime.toFixed(1) + ', rs ' + a.readyState + ', ns ' + a.networkState + (n === 'error' && a.error ? ', 오류 ' + a.error.code + ' ' + (a.error.message || '') : '') + ')'); }); });
+      a.addEventListener('timeupdate', function () { if (a.currentTime > 0.3 && !firstMove) { firstMove = (performance.now() - s) / 1000; log('  ' + label + ' 소리 시작 ' + firstMove.toFixed(1) + '초'); } if (a.currentTime > maxT) maxT = a.currentTime; });
+      a.volume = 0.25; a.src = src;
+      log(label + ' 재생 시도');
+      var p; try { p = a.play(); } catch (e) { p = Promise.reject(e); }
+      var playErr = '';
+      if (p && p.catch) p.catch(function (e) { playErr = (e && e.name) + ' ' + (e && e.message); log('  ' + label + ' play() 거절: ' + playErr); });
+      setTimeout(function () {
+        if (fin) return; fin = true;
+        var r = { start: firstMove ? +firstMove.toFixed(1) : 0, pos: +maxT.toFixed(1), paused: a.paused, rs: a.readyState, ns: a.networkState, err: a.error ? a.error.code : 0, playErr: playErr, ev: evs.join(' ') };
+        try { var b = a.buffered; r.buf = b.length ? +b.end(b.length - 1).toFixed(1) : 0; } catch (e) {}
+        try { a.pause(); a.removeAttribute('src'); a.load(); } catch (e) {}
+        result[key] = r; log(label + ' 결과 ' + JSON.stringify(r)); done(r);
+      }, secs * 1000);
+    });
+  }
+  function judge(r, title) {
+    if (r.start) return row('✅', 'ok', title + ': 소리 나옴', r.start + '초 만에 시작 · ' + r.pos + '초까지 재생');
+    if (r.playErr) return row('❌', 'bad', title + ': 재생을 막음', r.playErr + ' (기기가 소리 재생을 허락하지 않음)');
+    if (r.err) return row('❌', 'bad', title + ': 파일을 못 읽음', '오류 번호 ' + r.err + (r.err === 4 ? ' (이 기기가 이 파일 형식을 못 읽음)' : r.err === 2 ? ' (인터넷 오류)' : ''));
+    if (!r.paused) return row('❌', 'bad', title + ': ⏸ 인데 0:00 그대로', '받은 양 ' + (r.buf || 0) + '초분 · 상태 rs' + r.rs + '/ns' + r.ns + ' → 차에서 본 것과 같은 증상');
+    return row('⚠️', 'warn', title + ': 멈춰 있음', '상태 rs' + r.rs + '/ns' + r.ns);
+  }
+  async function run() {
+    $('go').disabled = true; $('go').textContent = '점검 중… (약 1분)';
+    t0 = performance.now(); lines = []; rows = []; result = { at: new Date().toString() };
+    $('res').hidden = false; $('verdict').textContent = '점검 중이에요…';
+    info();
+    // ① 짧은 소리(우리 사이트) — 기기가 소리를 낼 수 있는지
+    judge(await playTest(SMALL, '① 박수(사이트)', 'pSmall', 4), '① 짧은 소리');
+    // ② 노래를 인터넷에서 바로 (음악 탭과 같은 방식)
+    var r2 = await playTest(SONG, '② 노래 바로 재생', 'pSong', 15);
+    judge(r2, '② 노래 바로 재생');
+    // ③ 노래 파일 통째 받기 속도
+    var blob = await speed(SONG, '③ 노래 파일 받기', 'dl');
+    var d = result.dl;
+    if (d.ok) row(d.sec > 20 ? '⚠️' : '✅', d.sec > 20 ? 'warn' : 'ok', '③ 노래 파일 받기 ' + d.sec + '초', d.mb + 'MB · ' + d.mbps + 'Mbps · 첫 응답 ' + d.first + '초');
+    else row('❌', 'bad', '③ 노래 파일을 못 받음', d.err + ' · ' + d.mb + 'MB 받다 멈춤 (' + d.sec + '초)');
+    // ④ 받아 둔 파일로 재생 (v2.140.0 휴대폰 저장과 같은 방식)
+    var r4 = null;
+    if (blob) { var u = URL.createObjectURL(blob); r4 = await playTest(u, '④ 받아 둔 파일 재생', 'pBlob', 6); URL.revokeObjectURL(u); judge(r4, '④ 받아 둔 파일 재생'); }
+    // 결론
+    var v;
+    var slow = d.ok && d.mbps < 0.6;   // 노래 파일은 약 256kbps → 0.6Mbps 아래면 빠듯함
+    if (r2.start && slow) v = '⚠️ 소리는 나오지만 인터넷이 ' + d.mbps + 'Mbps 로 빠듯해요 (0.6Mbps 이상이면 넉넉) → 중간에 멈출 수 있어요. 한 번 들은 곡 · 다음 곡은 휴대폰에 저장돼 괜찮아요.';
+    else if (r2.start) v = '✅ 이 기기에서는 노래가 잘 나와요 (인터넷 ' + (d.ok ? d.mbps + 'Mbps' : '측정 실패') + '). 그때 인터넷이 잠깐 느렸던 것 같아요.';
+    else if (result.pSmall && !result.pSmall.start) v = '❌ 짧은 소리도 안 나와요 → 이 기기(앱 화면)가 웹 소리 재생을 막고 있어요.';
+    else if (r4 && r4.start) v = '❌ 인터넷에서 바로 틀면 멈추고, 받아 둔 파일은 나와요 → 노래 서버 연결 방식 문제예요. (v2.140.0 저장 기능으로 일부 해결, 더 고칠게요)';
+    else if (!d.ok || d.sec > 20) v = '⚠️ 노래 파일 받는 속도가 너무 느려요 → 인터넷(핫스팟) 쪽 문제예요.';
+    else if (r4 && !r4.start) v = '❌ 파일은 받았는데 이 기기가 노래 형식을 못 틀어요 → 형식 문제예요.';
+    else v = '⚠️ 원인을 확실히 못 정했어요. 결과를 보내 주시면 살펴볼게요.';
+    $('verdict').textContent = v; result.verdict = v; log('결론: ' + v);
+    $('go').disabled = false; $('go').textContent = '다시 점검';
+  }
+  $('go').addEventListener('click', function () { run().catch(function (e) { log('점검 오류: ' + e); $('go').disabled = false; }); });
+  $('copy').addEventListener('click', function () {
+    var txt = '[재생 점검]\n' + (result.verdict || '') + '\n' + rows.map(function (r) { return r.ic + ' ' + r.title + ' — ' + r.detail; }).join('\n') + '\n\n' + JSON.stringify(result) + '\n\n' + lines.join('\n');
+    var done = function () { $('copy').textContent = '복사했어요 ✓ 카톡이나 채팅에 붙여 넣어 주세요'; };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, fb); else fb();
+    function fb() { var ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); done(); } catch (e) {} ta.remove(); }
+  });
+})();
+</script>
+</body>
+</html>
