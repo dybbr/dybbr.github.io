@@ -113,15 +113,15 @@
     function cheerVersions(song) {
         if (!song || !song.src) return [];
         // 🎵 플레이리스트 (v2.103.0) — 곡마다 title(제목)이 있으면 그걸 이름으로 씀 · 순서는 추가 곡(more, 새 전문 작사 곡) → 숏 → 롱
-        const S = { key: 's', label: song.title || '숏', title: song.title || '', src: song.src, lyrics: song.lyrics, times: song.times, len: song.len || '', beat: song.beat, vocal: song.vocal };
+        const S = { key: 's', label: song.title || '숏', title: song.title || '', src: song.src, lyrics: song.lyrics, times: song.times, len: song.len || '', beat: song.beat, vocal: song.vocal, use: song.use || '' };
         const out = [];
         // 🎵 추가 곡 (v2.102.0) — more: [{ title, label, src, len, beat, vocal, lyrics, times }, …] (곡 수 제한 없음)
         (Array.isArray(song.more) ? song.more : []).forEach((M, i) => {
-            if (M && M.src) out.push({ key: 'm' + i, label: M.title || M.label || ('추가 ' + (i + 1)), title: M.title || M.label || '', src: M.src, lyrics: M.lyrics || [], times: M.times, len: M.len || '', beat: M.beat || '', vocal: M.vocal || '' });
+            if (M && M.src) out.push({ key: 'm' + i, label: M.title || M.label || ('추가 ' + (i + 1)), title: M.title || M.label || '', src: M.src, lyrics: M.lyrics || [], times: M.times, len: M.len || '', beat: M.beat || '', vocal: M.vocal || '', use: M.use || '' });
         });
         out.push(S);
         const L = song.long;
-        if (L && L.src) out.push({ key: 'l', label: L.title || '롱', title: L.title || '', src: L.src, lyrics: L.lyrics || song.lyrics, times: L.lyrics ? L.times : song.times, len: L.len || '', beat: L.beat || song.beat, vocal: L.vocal || song.vocal });
+        if (L && L.src) out.push({ key: 'l', label: L.title || '롱', title: L.title || '', src: L.src, lyrics: L.lyrics || song.lyrics, times: L.lyrics ? L.times : song.times, len: L.len || '', beat: L.beat || song.beat, vocal: L.vocal || song.vocal, use: L.use || '' });
         return out;
     }
 
@@ -132,6 +132,12 @@
         return new Set(a.map(x => String(x || '').trim()).filter(Boolean));
     }
 
+    // 🏷️ v2.135.0: 곡마다 추천 상황 (cheer-songs.json 의 use) — 하코 선택 B안: 곡 목록 장르 줄 앞에 「🏏 타석 등장 · 」
+    //   정하는 규칙: /mnt/project-files/cheer-songs/situation/classify.py (등장곡 · 숏 = 타석 등장, 떼창 = 다 같이 응원, 나머지는 장르 · 빠르기)
+    const CHEER_USE = { bat: ['🏏', '타석 등장'], cheer: ['📣', '다 같이 응원'], hype: ['🔥', '경기 전'], work: ['💪', '훈련·몸 풀 때'], ride: ['🚗', '이동할 때'], rest: ['🌙', '경기 끝나고'] };
+    function cheerUseText(u) { const x = CHEER_USE[u]; return x ? x[0] + ' ' + x[1] : ''; }
+    window.CHEER_USE = CHEER_USE;
+    window.cheerUseText = cheerUseText;
     window.cheerHiddenKeys = cheerHiddenKeys;
     window.loadCheerSongs = loadCheerSongs;
     window.cheerVersions = cheerVersions;

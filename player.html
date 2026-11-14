@@ -28,7 +28,7 @@
         }
     </script>
     <!-- 🎵 선수별 주제곡 (v2.92.0) — 곡 목록은 cheer-songs.json (그 파일만 고치면 됨) · cheer-songs.js 를 고칠 때만 아래 ?v= 숫자 올리기 -->
-    <script src="cheer-songs.js?v=2.133.0"></script>
+    <script src="cheer-songs.js?v=2.135.0"></script>
     <script src="song-stat.js?v=2.124.0"></script>   <!-- 📊 v2.124.0: 주제곡 재생 세기 (6시간에 한 번 묶어 보냄) -->
 
     <!-- 브라우저 캐시 원천 방지 메타태그 -->
@@ -486,6 +486,9 @@
         .cpl-t { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
         .cpl-t b { font-size: 14px; font-weight: 900; color: var(--text-title); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .cpl-t small { font-size: 11px; font-weight: 700; color: #9a3412; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .cpl-use { font-style: normal; font-weight: 900; color: #9a3412; }   /* 🏷️ v2.135.0: 추천 상황 (상황마다 색) */
+        .cpl-use.u-bat { color: #c8102e; } .cpl-use.u-cheer { color: #c2410c; } .cpl-use.u-hype { color: #b45309; }
+        .cpl-use.u-work { color: #6d28d9; } .cpl-use.u-ride { color: #1d4ed8; } .cpl-use.u-rest { color: #334155; }
         .cpl-len { flex: 0 0 auto; font-size: 12px; font-weight: 800; color: var(--text-sub); font-variant-numeric: tabular-nums; }
         .cpl-item.on .cpl-pick { background: #ffedd5; }
         .cpl-item.off .cpl-t, .cpl-item.off .cpl-no { opacity: .5; }   /* 🚫 v2.118.0: 음악 탭에서 뺀 곡 */
@@ -540,6 +543,7 @@
             .cpl-top .cheer-msg { color: #ffffff; }
             .cpl-pick { border-bottom-color: #3a2d28; }
             .cpl-no, .cpl-t small { color: #f0b48a; }
+            .cpl-use.u-bat { color: #fca5a5; } .cpl-use.u-cheer { color: #fdba74; } .cpl-use.u-hype { color: #fcd34d; } .cpl-use.u-work { color: #c4b5fd; } .cpl-use.u-ride { color: #93c5fd; } .cpl-use.u-rest { color: #cbd5e1; }
             .cpl-t b { color: #dde3ec; }
             .cpl-len { color: #97a3b7; }
             .cpl-item.on .cpl-pick { background: #3a2a1c; }
@@ -1574,6 +1578,11 @@
     //   여러 번 빨리 눌러도 한 번에 하나씩 차례로 보냄(마지막 상태가 남게) · 못 보내면 마지막으로 저장된 상태로 되돌림
     //   명단 화면 저장본도 같이 고쳐 「오래됨」으로 → 음악 탭으로 돌아가면 서버에서 새로 받음
     const shSend = { busy: false, again: false, saved: null };
+    // 🏷️ v2.135.0 B안: 곡 목록 장르 줄 앞에 추천 상황 글씨 (상황마다 색) — 「🏏 타석 등장 · 아레나 록 132 BPM」
+    function cheerUseHtml(u) {
+        const x = window.CHEER_USE && window.CHEER_USE[u];
+        return x ? `<i class="cpl-use u-${escapeHtml(u)}">${x[0]} ${escapeHtml(x[1])}</i> · ` : '';
+    }
     function cheerTagHtml(v, off) {
         return v.hidAll ? '<span class="cpl-off cpl-hid" title="모든 학부모 목록에서 숨긴 곡 · 보호자와 운영진에게만 보임">🔒 숨김</span>'
             : off.has(v.key) ? '<span class="cpl-off" title="음악 탭에서 뺀 곡 · 이어 듣기에서 건너뜀">빠짐</span>' : '';
@@ -1645,7 +1654,7 @@
         const list = multi ? `<ol class="cpl-list" aria-label="${escapeHtml(p.name)} 주제곡 목록">${vers.map((v, i) => `
                     <li class="cpl-item${off.has(v.key) ? ' off' : ''}${v.hidAll ? ' hidall' : ''}" data-i="${i}"><button type="button" class="cpl-pick" data-i="${i}">
                         <span class="cpl-no">${i + 1}</span>
-                        <span class="cpl-t"><b>${escapeHtml(v.label)}</b>${v.beat ? `<small>${escapeHtml(v.beat)}</small>` : ''}</span>
+                        <span class="cpl-t"><b>${escapeHtml(v.label)}</b>${(v.beat || v.use) ? `<small>${cheerUseHtml(v.use)}${escapeHtml(v.beat || '')}</small>` : ''}</span>
                         ${cheerTagHtml(v, off)}
                         <span class="cpl-len" data-len="${escapeHtml(v.len || '')}">${escapeHtml(v.len || '')}</span>
                     </button>${shB ? `<button type="button" class="cpl-sh${v.hidAll ? ' on' : ''}" data-k="${escapeHtml(v.key)}" aria-pressed="${v.hidAll ? 'true' : 'false'}">${v.hidAll ? '🔒 숨김' : '👀 공개'}</button>` : ''}</li>`).join('')}
