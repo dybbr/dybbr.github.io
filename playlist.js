@@ -164,7 +164,7 @@
         audio.id = 'plAudio'; audio.preload = 'none';
         audio.style.display = 'none';
         document.body.appendChild(audio);
-        audio.addEventListener('playing', () => { if (annDone) { paintState(); return; } fails = 0; waitStop(); hideMsg(); paintState(); startLoop(); });
+        audio.addEventListener('playing', () => { if (annDone) { paintState(); return; } unlocked = true; fails = 0; waitStop(); hideMsg(); paintState(); startLoop(); songAfterPlay(); });
         audio.addEventListener('waiting', () => { if (!annDone) waitStart(); });   // ⏳ v2.139.1: 받는 중(버퍼링)
         audio.addEventListener('error', () => waitStop());
         audio.addEventListener('pause', () => { waitStop(); paintState(); });
@@ -180,6 +180,77 @@
         audio.addEventListener('error', () => { if (annDone) annFinish(); else onError(); });
         try { if (window.songStat) window.songStat.watch(audio, () => (cur && !annDone && attached) ? { id: cur.id, bat: walk } : null); } catch (e) {}   // 📊 v2.124.0: 재생 세기 (타석 등장곡은 따로)
         return audio;
+    }
+    // 💾 v2.140.0: 들은 곡 · 다음 곡을 휴대폰에 저장 (하코 「받아 놓으면 캐시 하면 되잖아」) — 다음부터는 인터넷 없이 바로 나옴
+    //   저장소: Cache 'daeyeon-songs-v1' (타석 미리 받기 'daeyeon-walkup-v1' 과 따로) · 최근 들은 순서로 SONG_MAX 곡까지 (곡당 약 3MB)
+    //   곡이 나오기 시작하고 4초 뒤에 지금 곡을 통째로 받아 두고, 다음 곡도 미리 받아 둠 → 차 안처럼 인터넷이 약해도 다음 곡이 끊기지 않음
+    //   저장본은 재생 직전에만 꺼냄(blob) · 꺼내 둔 것은 지금 · 다음 곡 몇 개만 남기고 정리 (메모리 아끼기)
+    const SONG_CACHE = 'daeyeon-songs-v1', SONG_MAX = 80, SONG_LRU = 'daeyeon_song_lru';
+    let songLru = [], unlocked = false, songTimer = 0;
+    try { const a = JSON.parse(localStorage.getItem(SONG_LRU) || '[]'); if (Array.isArray(a)) songLru = a.filter(x => typeof x === 'string').slice(-SONG_MAX); } catch (e) {}
+    const songCached = new Set(songLru), songGetting = new Set(), songBlobs = [];
+    const songCan = () => { try { return 'caches' in window && window.isSecureContext !== false; } catch (e) { return false; } };
+    function songSave() { try { localStorage.setItem(SONG_LRU, JSON.stringify(songLru)); } catch (e) {} }
+    function songTouch(src) { songLru = songLru.filter(x => x !== src); songLru.push(src); songCached.add(src); songSave(); }
+    function songForget(src) { songLru = songLru.filter(x => x !== src); songCached.delete(src); songSave(); }
+    async function songTrim(c) {
+        while (songLru.length > SONG_MAX) {
+            const old = songLru.shift(); songCached.delete(old);
+            if (cur && cur.src === old) { songLru.push(old); songCached.add(old); if (songLru.length <= SONG_MAX + 1) break; continue; }
+            try { await c.delete(old); } catch (e) {}
+        }
+        songSave();
+        try { for (const k of await c.keys()) if (!songCached.has(k.url) && !songGetting.has(k.url)) await c.delete(k); } catch (e) {}   // 목록에 없는 저장본(예전 것)도 정리
+    }
+    async function songStore(src) {   // 통째로 받아서 저장 (이미 있으면 그냥 순서만 앞으로)
+        if (!src || !songCan() || songGetting.has(src)) return;
+        if (songCached.has(src)) { songTouch(src); return; }
+        songGetting.add(src);
+        try {
+            const r = await fetch(src, { mode: 'cors' });
+            if (!r.ok || r.headers.get('content-length') === '0') throw new Error('HTTP ' + r.status);
+            const c = await caches.open(SONG_CACHE);
+            try { await c.put(src, r.clone()); }
+            catch (e) {   // 휴대폰 저장 공간이 모자라면 오래된 곡 10개를 지우고 한 번만 다시
+                if (!e || e.name !== 'QuotaExceededError') throw e;
+                for (const old of songLru.splice(0, 10)) { songCached.delete(old); try { await c.delete(old); } catch (x) {} }
+                songSave(); await c.put(src, r);
+            }
+            songTouch(src); await songTrim(c);
+        } catch (e) { console.warn('곡 저장 실패:', e); }
+        finally { songGetting.delete(src); }
+    }
+    async function songBlob(src) {   // 저장본 → 재생용 주소
+        if (blobUrl[src]) return blobUrl[src];
+        if (!songCached.has(src) || !songCan()) return null;
+        const c = await caches.open(SONG_CACHE), r = await c.match(src);
+        if (!r) { songForget(src); return null; }
+        const b = await r.blob();
+        if (!b.size) { songForget(src); try { await c.delete(src); } catch (e) {} return null; }
+        if (blobUrl[src]) return blobUrl[src];
+        blobUrl[src] = URL.createObjectURL(b); songBlobs.push(src); songTouch(src);
+        while (songBlobs.length > 4) {   // 꺼내 둔 저장본은 4개까지 (지금 곡 · 다음 곡은 남김)
+            const i = songBlobs.findIndex(x => !(cur && cur.src === x) && x !== (songNext() || {}).src);
+            if (i < 0) break;
+            const old = songBlobs.splice(i, 1)[0];
+            try { URL.revokeObjectURL(blobUrl[old]); } catch (e) {} delete blobUrl[old];
+        }
+        return blobUrl[src];
+    }
+    function songNext() {   // 다음에 나올 곡 (뺀 곡 건너뜀 · 끝이면 처음)
+        if (!order.length || qi < 0) return null;
+        for (let k = 1; k < order.length; k++) { const id = order[(qi + k) % order.length]; if (!isOff(id) && byId.get(id)) return byId.get(id); }
+        return null;
+    }
+    function songAfterPlay() {
+        clearTimeout(songTimer);
+        if (!songCan() || walk) return;
+        songTimer = setTimeout(async () => {
+            const t = cur; if (!t) return;
+            await songStore(t.src);
+            const nx = songNext();
+            if (nx && cur === t) { await songStore(nx.src); if (cur === t && songCached.has(nx.src)) songBlob(nx.src).catch(() => {}); }
+        }, 4000);
     }
     // ⏳ v2.139.1: 느린 인터넷(차량 화면 · 핫스팟)에서 ⏸ 인데 0:00 에 멈춰 보이던 것 — 받는 중이면 알려 주고, 15초 넘게 안 오면 한 번 다시 받아 봄
     let waitT = 0, waitN = 0, waitAt = -1, waitMsg = false;
@@ -211,7 +282,9 @@
         ensureAudio();
         clearFade();
         cur = t; attached = false; pendingSeek = at > 0 ? at : null;
-        if (andPlay) { attach(at || 0); play(); }
+        if (andPlay && !blobUrl[t.src] && songCached.has(t.src) && unlocked) {   // 💾 휴대폰에 저장해 둔 곡: 저장본을 꺼내서 틂 (인터넷 안 씀)
+            songBlob(t.src).catch(() => null).then(() => { if (cur === t && !attached) { attach(at || 0); play(); } });
+        } else if (andPlay) { attach(at || 0); play(); }
         else { try { audio.removeAttribute('src'); audio.load(); } catch (e) {} }
         prepLyrics(); renderNow(); paintState(); paintTime(); setMeta();
     }
@@ -310,6 +383,10 @@
         if (blobUrl[cur.src] && audio.src.indexOf('blob:') === 0) {   // 받아 둔 파일이 깨졌으면 인터넷 것으로 다시
             try { URL.revokeObjectURL(blobUrl[cur.src]); } catch (e) {}
             delete blobUrl[cur.src];
+            if (songCached.has(cur.src)) {   // 💾 휴대폰 저장본이 깨졌으면 지우고 다음엔 새로 받음
+                const bad = cur.src; songForget(bad); const k = songBlobs.indexOf(bad); if (k >= 0) songBlobs.splice(k, 1);
+                if (songCan()) caches.open(SONG_CACHE).then(c => c.delete(bad)).catch(() => {});
+            }
             const at = audio.currentTime || pendingSeek || 0;
             attach(at); play(); return;
         }

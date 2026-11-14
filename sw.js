@@ -11,6 +11,8 @@
 //     (명단·비밀번호·주문 데이터가 캐시에 남아 옛날 값이 보이는 일을 막기 위함).
 // 사이트를 수정해서 올릴 때 이 파일은 바꿀 필요 없음. 캐시 구조를 바꿀 때만 버전을 올린다.
 const CACHE_NAME = 'daeyeon-roster-v2';   // v2 (2026-10-07): 주소 뒤 ?… 가 다른 페이지가 따로따로 쌓이던 저장본 정리
+// v2.140.0: 사이트가 직접 쓰는 저장소(타석 미리 받기 · 휴대폰에 저장한 곡)는 이 파일이 바뀌어도 지우지 않음
+const KEEP_CACHES = [CACHE_NAME, 'daeyeon-walkup-v1', 'daeyeon-songs-v1'];
 
 self.addEventListener('install', function (event) {
     self.skipWaiting();
@@ -19,7 +21,7 @@ self.addEventListener('install', function (event) {
 self.addEventListener('activate', function (event) {
     event.waitUntil(
         caches.keys().then(function (keys) {
-            return Promise.all(keys.filter(function (k) { return k !== CACHE_NAME; }).map(function (k) { return caches.delete(k); }));
+            return Promise.all(keys.filter(function (k) { return KEEP_CACHES.indexOf(k) < 0; }).map(function (k) { return caches.delete(k); }));
         }).then(function () { return self.clients.claim(); })
     );
 });
