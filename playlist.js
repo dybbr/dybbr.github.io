@@ -1042,7 +1042,7 @@
                 <button type="button" class="pl-fs" data-pl="xl" id="plXl" hidden>가 크게</button>
             </div>
             <div class="pl-main" id="plMain">
-                <div class="pl-song"><span id="plBigCv"></span><span class="tx"><b id="plBigT"></b><small id="plBigW"></small><em id="plBigG"></em></span><span class="pl-sbtns"><button type="button" class="pl-dl" data-pl="dl" id="plDl">⬇ MP3 저장</button><button type="button" class="pl-dl pl-offb" data-pl="offcur" id="plOffB" hidden>🚫 이 곡 빼기</button></span></div>
+                <div class="pl-song"><button type="button" class="pl-cvgo" id="plBigCv" data-pl="goplayer" aria-label="이 선수 화면으로 가기 (곡 목록)"></button><span class="tx"><b id="plBigT"></b><small id="plBigW"></small><em id="plBigG"></em></span><span class="pl-sbtns"><button type="button" class="pl-dl" data-pl="dl" id="plDl">⬇ MP3 저장</button><button type="button" class="pl-dl pl-offb" data-pl="offcur" id="plOffB" hidden>🚫 이 곡 빼기</button></span></div>
                 <button type="button" class="pl-k3" data-pl="lyrics" id="plK3" aria-label="가사 전체 보기"></button>
             </div>
             <div class="pl-lyr${cfg.xl ? ' xl' : ''}" id="plLyr" hidden></div>
@@ -1375,6 +1375,14 @@
             ${people.length ? '' : '<div class="pl-empty">주제곡을 불러오는 중이에요.</div>'}`;
         paintState();
     }
+    // 👤 v2.138.0: 큰 플레이어 왼쪽 위 등번호를 누르면 그 선수 상세 화면 (지금 곡을 골라 두고 곡 목록으로 내려감 · 하코 요청)
+    function goPlayer() {
+        if (!cur) return;
+        const person = personOf(cur.pid), p = person && person.src;
+        if (!p || !p.grade) return;
+        remember();
+        window.location.href = 'player.html?path=' + encodeURIComponent(p.grade + '/' + (p.no || p.name)) + '&song=' + encodeURIComponent(cur.key);
+    }
     function renderNow() {   // 지금 곡이 바뀔 때: 띠 · 큰 플레이어 · 목록 표시
         if (!built) return;
         const mini = $('plMini');
@@ -1512,6 +1520,7 @@
             case 'playall': playAll(listIds(), false); break;
             case 'shuffleall': playAll(listIds(), true); break;
             case 'open': openBig(); break;
+            case 'goplayer': goPlayer(); break;
             case 'close': if (lyrOpen) setLyr(false); else closeBig(); break;
             case 'toggle': toggle(); break;
             case 'next': next(false); break;

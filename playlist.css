@@ -277,6 +277,9 @@ html.pl-lu-on .ui-zoom-ctrl { display: none !important; }   /* 타순 정하기:
 .pl-coach-bub button { justify-self: end; min-height: 40px; padding: 0 18px; border: 0; border-radius: 11px; background: #c8102e; color: #ffffff; font: inherit; font-size: 15px; font-weight: 900; cursor: pointer; }
 
 .pl-song { flex: none; display: flex; align-items: center; gap: 12px; padding: 6px 0 0; }
+.pl-cvgo { flex: none; border: 0; padding: 0; background: transparent; color: inherit; cursor: pointer; border-radius: 12px; -webkit-tap-highlight-color: transparent; }   /* 👤 v2.138.0: 등번호 누르면 선수 화면 */
+.pl-cvgo:focus-visible { outline: 3px solid var(--pl-gold); outline-offset: 2px; }
+.pl-cvgo:active { transform: scale(.95); }
 .pl-song .pl-cv { width: 58px; height: 58px; border-radius: 12px; font-size: 26px; border: 1.5px solid rgba(255, 255, 255, .5); }
 .pl-song .tx { flex: 1; min-width: 0; display: grid; gap: 1px; }
 .pl-song .tx b { font-size: 19px; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

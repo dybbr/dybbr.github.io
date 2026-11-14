@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.137.0 · b261114";
+        const APP_VERSION = "v2.138.0 · b261114";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -109,8 +109,8 @@
     <script src="cheer-songs.js?v=2.137.0"></script>
     <script src="song-stat.js?v=2.124.0"></script>   <!-- 📊 v2.124.0: 주제곡 재생 세기 (6시간에 한 번 묶어 보냄 · 서버 v2.44.0) -->
     <!-- 🎧 주제곡 플레이리스트 (v2.106.0) — 「음악」 탭 · 아래 작은 플레이어 띠 · 큰 플레이어 · ⚾ 타석 모드 · playlist.js / playlist.css 를 고칠 때만 아래 ?v= 숫자 올리기 -->
-    <link rel="stylesheet" href="playlist.css?v=2.133.0">
-    <script src="playlist.js?v=2.133.0"></script>
+    <link rel="stylesheet" href="playlist.css?v=2.138.0">
+    <script src="playlist.js?v=2.138.0"></script>
     <!-- 🦉 부캉이 비서 (v2.120.0) — 「부캉아」 · 🎙 · 글자로 묻기 → 일정 · 결과 · 구장 · 선수 · 공지 · 당번 · 노래 (bukang-ai.js / bukang-ai.css 를 고칠 때만 ?v= 올리기) -->
     <link rel="stylesheet" href="bukang-ai.css?v=2.133.1">
     <script src="bukang-ai.js?v=2.133.1"></script>
