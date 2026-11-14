@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.133.1 · b261114";
+        const APP_VERSION = "v2.134.0 · b261114";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -7709,10 +7709,11 @@
     //   · 다음에 새 곡을 또 내면 WN_ID 만 바꾸면 다시 한 번 뜸 (새 곡 판별: more[] 의 key 가 WN_KEY_RE 에 맞는 곡)
     //   · v2.105.2: 태블릿에서 잘리던 포스터를 고치고 다시 알림 → WN_ID 'songs-2026-11' → 'songs-2026-11b' (이미 본 기기도 한 번 더 뜸)
     //   · v2.116.1: 11-12 새 곡 74곡(키 「학년-배번-3」 · 「-4」)을 알림 → WN_ID 'songs-2026-11c' · 새 곡 = WN_NEW_RE 에 맞는 곡만 셈 (예전 곡 · 김승원 P1~P3 빼고)
+    //   · v2.134.0: 11-14 새 곡 114곡(키 「-5」 등장곡 · 「-6」 떼창 · 「-7」 이야기)을 알림 → WN_ID 'songs-2026-11d' · WN_NEW_RE 는 [567]
     //   · 서버 · 시트 호출 없음 (명단 · cheer-songs.json 은 원래 받던 것)
     // ==========================================================
-    const WN_NEW_RE = /^\d+-\d+-[34]$/;   // 이번 알림에서 「새 곡」으로 셀 키 (다음에 새 곡을 내면 이것과 WN_ID 를 같이 바꿈)
-    const WN_ID = 'songs-2026-11c', WN_UNTIL = '2026-12-31', WN_SEEN_KEY = 'daeyeon_whatsnew_seen', WN_KEY_RE = /^(\d+-\d+-\d+|P\d+)$/;
+    const WN_NEW_RE = /^\d+-\d+-[567]$/;   // 이번 알림에서 「새 곡」으로 셀 키 (다음에 새 곡을 내면 이것과 WN_ID 를 같이 바꿈)
+    const WN_ID = 'songs-2026-11d', WN_UNTIL = '2026-12-31', WN_SEEN_KEY = 'daeyeon_whatsnew_seen', WN_KEY_RE = /^(\d+-\d+-\d+|P\d+)$/;
     let wnTimer = null;
     function wnSeen() { try { return localStorage.getItem(WN_SEEN_KEY) === WN_ID; } catch (e) { return true; } }
     function wnMark() { try { localStorage.setItem(WN_SEEN_KEY, WN_ID); } catch (e) {} }
