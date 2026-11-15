@@ -551,6 +551,19 @@
         .cl-line { font-size: 14px; font-weight: 700; color: #1e293b; line-height: 1.55; word-break: keep-all; }
         .cl-block.chorus .cl-line { font-weight: 900; color: #9f1239; }
         .cl-line.chant { color: #64748b; font-weight: 800; }
+        /* 🔁 v2.147.0: 반복 구간 접기 — 줄 끝 ×2 · 여러 줄 묶음은 왼쪽 선 · 똑같은 후렴은 「↻ 후렴 반복」 막대 · 부르는 중엔 2/3 */
+        .cl-x { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 6px; font-size: 11.5px; font-weight: 900; line-height: 1.5; color: #c2410c; background: #ffedd5; vertical-align: 1px; font-variant-numeric: tabular-nums; }
+        .cl-x.on { color: #ffffff; background: var(--kbo-red); }
+        .cl-label i { font-style: normal; margin-left: 3px; padding: 0 5px; border-radius: 999px; background: rgba(255,255,255,.28); font-variant-numeric: tabular-nums; }
+        .cl-label i.on { background: #ffffff; color: var(--kbo-red); }
+        .cl-grp { display: flex; flex-direction: column; gap: 3px; border-left: 3px solid #fdba74; padding-left: 8px; margin-left: 1px; }
+        .cl-block.ref { flex-direction: row; }
+        .cl-refbar { flex: 1; display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 8px; text-align: left; font: inherit; border: 1px dashed #fda4af; background: #fff5f6; color: #9f1239; border-radius: 9px; padding: 6px 10px; cursor: pointer; }
+        .cl-refbar b { font-size: 13px; font-weight: 900; }
+        .cl-refbar small { font-size: 11.5px; font-weight: 700; color: #be6b7c; }
+        .cl-block.ref.now .cl-refbar { border-style: solid; border-color: var(--kbo-red); background: #fff1d6; box-shadow: inset 4px 0 0 var(--kbo-red); }
+        .cl-fold { position: sticky; top: -10px; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: -10px -12px 0; padding: 7px 12px; background: #fff7ed; border-bottom: 1px solid #fde2c4; font-size: 12px; font-weight: 800; color: #9a3412; }
+        .cl-fold-btn { flex: none; font: inherit; font-size: 12px; font-weight: 900; color: #ffffff; background: #ea580c; border: 0; border-radius: 999px; padding: 4px 11px; cursor: pointer; }
         /* 🎤 노래방 줄 강조 (v2.94.0) — 시간표(times) 있는 곡만 · 지금 부르는 줄은 빨간색이 왼쪽부터 차오름 · 지난 줄은 흐리게 */
         .cheer-lyrics.kara .cl-line { cursor: pointer; border-radius: 8px; margin: 0 -6px; padding: 2px 6px 2px 8px; transition: opacity .25s, background-color .25s, box-shadow .25s; }
         .cheer-lyrics.kara.on .cl-line.past { opacity: .45; }
@@ -593,6 +606,12 @@
             .cl-line { color: #dde3ec; }
             .cl-block.chorus .cl-line { color: #f5a3b5; }
             .cl-line.chant { color: #97a3b7; }
+            .cl-x { color: #fdba74; background: #3b2414; }
+            .cl-grp { border-left-color: #9a3412; }
+            .cl-refbar { background: #2a1820; border-color: #7f1d3a; color: #f5a3b5; }
+            .cl-refbar small { color: #c08497; }
+            .cl-block.ref.now .cl-refbar { background: #3a2a1c; }
+            .cl-fold { background: #2a1d12; border-bottom-color: #5b3a1e; color: #fdba74; }
             .cheer-lyrics.kara .cl-line.now { background: #3a2a1c; }
             .cheer-lyrics.kara .cl-line.now .kw { background-image: linear-gradient(90deg, #ff6b81 0, #ff6b81 var(--p, 0%), #dde3ec var(--p, 0%)); }
             .cheer-lyrics.kara .cl-block.chorus .cl-line.now .kw { background-image: linear-gradient(90deg, #ff6b81 0, #ff6b81 var(--p, 0%), #f5a3b5 var(--p, 0%)); }
@@ -1740,13 +1759,31 @@
             .then(() => { shSend.busy = false; if (shSend.again) { shSend.again = false; flushHiddenSongs(p); } });
     }
     function cheerLyricsHtml(song) {
-        const blocks = (typeof window.cheerLyricBlocks === 'function') ? window.cheerLyricBlocks(song) : [];
-        let li = 0;   // 가사 줄 번호 (이름표 빼고 0부터) — 시간표 times 의 순서와 같음
-        return blocks.map(b => `
-            <div class="cl-block${b.label === '후렴' ? ' chorus' : ''}">
-                ${b.label ? `<span class="cl-label">${escapeHtml(b.label)}</span>` : ''}
-                ${b.lines.map(l => `<div class="cl-line${/^\(.*\)$/.test(l) ? ' chant' : ''}" data-i="${li++}"><span class="cl-txt">${typeof window.cheerWordHtml === 'function' ? window.cheerWordHtml(l) : escapeHtml(l)}</span></div>`).join('')}
-            </div>`).join('');
+        // 🔁 v2.147.0: 반복 구간 접기 — 같은 줄이 이어지면 한 번만 쓰고 ×2 · 똑같은 후렴은 「↻ 후렴 반복」 한 줄 (cheerFoldView)
+        //   줄의 data-i = 그 줄이 처음 나오는 시간표 줄 번호 (누르면 거기부터) · 노래방 색칠은 setupCheerKaraoke 가 rowOf 로 찾아감
+        if (typeof window.cheerFoldView !== 'function') return '';
+        const fo = window.cheerFoldOpts(), v = window.cheerFoldView(song, fo);
+        const wh = l => typeof window.cheerWordHtml === 'function' ? window.cheerWordHtml(l) : escapeHtml(l);
+        const tg = fo.mode === 'c' ? `<div class="cl-fold"><span>${fo.off ? '반복도 모두 펼쳐 보는 중' : '🔁 반복은 ×2 로 접었어요'}</span><button type="button" class="cl-fold-btn">${fo.off ? '접어 보기' : '모두 펼치기'}</button></div>` : '';
+        return tg + v.blocks.map((b, bi) => {
+            const ch = /후렴/.test(b.label || '');
+            if (b.ref != null) {
+                return `
+            <div class="cl-block ref${ch ? ' chorus' : ''}" data-b="${bi}"><button type="button" class="cl-refbar" data-i="${b.ids[0]}"><b>↻ ${escapeHtml(b.label || '앞 구간')} 반복</b><small>위 ${escapeHtml(b.label || '구간')}을 한 번 더 · ${b.k}번째</small></button></div>`;
+            }
+            let h = '';
+            b.rows.forEach(r => {
+                if (r.g && r.gs) h += `<div class="cl-grp" data-n="${r.n}">`;
+                const x = r.n > 1 && (!r.g || r.ge) ? `<span class="cl-x" data-n="${r.n}">×${r.n}</span>` : '';
+                h += `<div class="cl-line${/^\(.*\)$/.test(r.tx) ? ' chant' : ''}" data-i="${r.ids[0]}" data-r="${r.r}"><span class="cl-txt">${wh(r.tx)}</span>${x}</div>`;
+                if (r.g && r.ge) h += `</div>`;
+            });
+            return `
+            <div class="cl-block${ch ? ' chorus' : ''}">
+                ${b.label ? `<span class="cl-label">${escapeHtml(b.label)}${b.rep > 1 ? ` <i data-n="${b.rep}" data-u="번">${b.rep}번</i>` : ''}</span>` : ''}
+                ${h}
+            </div>`;
+        }).join('');
     }
     // 🚫 v2.118.0: 음악 탭에서 「이 곡 빼기」 한 곡 (이 기기 localStorage daeyeon_pl.off · 곡 id 「배번/이름/키」 — playlist.js 와 같음)
     function cheerOffKeys(p) {
@@ -1958,13 +1995,19 @@
     //   (v2.103.0) 플레이리스트에서 곡이 바뀌면 reset() 으로 지금 곡의 시간표를 다시 읽음 (듣는 곳은 한 번만 붙임)
     function setupCheerKaraoke(box, audio, lyr) {
         const LEAD = 0.15;   // 눈으로 따라 읽기 좋게 줄을 조금 먼저 바꿈 (초)
-        let lines = [], spans = null, cur = -1, raf = 0, userScrollUntil = 0;
+        let lines = [], spans = null, cur = -1, raf = 0, userScrollUntil = 0, fold = null, refs = [], uniq = [];
         function reset() {
             const song = box._song || null;
             const times = (song && typeof window.cheerLineTimes === 'function') ? window.cheerLineTimes(song) : null;
             lyr.classList.toggle('kara', !!times);
             lyr.classList.remove('on');
-            lines = Array.from(lyr.querySelectorAll('.cl-line'));
+            // 🔁 v2.147.0: 접힌 가사 — 시간표 줄 i 가 칠할 화면 줄 lines[i] (같은 줄이 여러 번 맡을 수 있음) · 접은 후렴은 refs[i] 막대도 같이 켬
+            const rowEls = {};
+            lyr.querySelectorAll('.cl-line[data-r]').forEach(el => { rowEls[el.dataset.r] = el; });
+            fold = (song && typeof window.cheerFoldView === 'function') ? window.cheerFoldView(song, window.cheerFoldOpts()) : null;
+            lines = fold ? fold.rowOf.map(o => (o && rowEls[o.r]) || null) : Array.from(lyr.querySelectorAll('.cl-line'));
+            refs = fold ? fold.refOf.map(b => b >= 0 ? lyr.querySelector('.cl-block.ref[data-b="' + b + '"]') : null) : [];
+            uniq = Array.from(new Set(lines.filter(Boolean)));
             cur = -1;
             if (raf) { cancelAnimationFrame(raf); raf = 0; }
             // 줄마다 강조가 끝나는 시각: 끝초가 있으면 그것, 없으면 다음 줄 시작 (글자 수로 너무 길어지지 않게)
@@ -1992,9 +2035,24 @@
             const sec = audio.currentTime;
             const a = activeAt(sec);
             if (a !== cur) {
-                lines.forEach((el, i) => { el.classList.toggle('now', i === a); el.classList.toggle('past', a >= 0 && i < a); if (i !== a) window.cheerClearWords(el); });
+                const nowEl = a >= 0 ? lines[a] : null, refEl = a >= 0 ? refs[a] : null;
+                uniq.forEach(el => {
+                    const on = el === nowEl;
+                    let last = -1; for (let i = 0; i < lines.length; i++) if (lines[i] === el) last = i;   // 이 줄을 마지막으로 부르는 차례
+                    el.classList.toggle('now', on); el.classList.toggle('past', !on && a >= 0 && last < a);
+                    if (!on) window.cheerClearWords(el);
+                });
+                lyr.querySelectorAll('.cl-x').forEach(x => { x.textContent = '×' + x.dataset.n; x.classList.remove('on'); });
+                lyr.querySelectorAll('.cl-block.ref').forEach(el => el.classList.toggle('now', el === refEl));
+                lyr.querySelectorAll('.cl-label i').forEach(x => { x.textContent = x.dataset.n + '번'; x.classList.remove('on'); });
+                const o = fold && a >= 0 ? fold.rowOf[a] : null;
+                if (o && nowEl) {   // 반복 중이면 「2/3」 처럼 몇 번째인지 (줄 반복은 줄 끝 · 후렴 반복은 후렴 이름표)
+                    const x = o.ref ? nowEl.closest('.cl-block').querySelector('.cl-label i') : o.n > 1 ? (nowEl.closest('.cl-grp') || nowEl).querySelector('.cl-x') : null;
+                    if (x) { x.textContent = o.k + '/' + o.n; x.classList.add('on'); }
+                    else if (o.n === 1) { const li = nowEl.closest('.cl-block').querySelector('.cl-label i'); if (li) { li.textContent = '1/' + li.dataset.n; li.classList.add('on'); } }
+                }
                 cur = a;
-                if (a >= 0 && lines[a]) scrollToLine(lines[a]);
+                if (nowEl) scrollToLine(nowEl);
             }
             if (a >= 0 && lines[a]) {
                 // 🎯 v2.133.0: 단어마다 따로 칠함 (단어 시간이 있으면 실제로 부르는 순간에 · 쉬는 사이엔 멈춤)
@@ -2006,10 +2064,12 @@
         audio.addEventListener('playing', function () { if (!spans) return; lyr.classList.add('on'); if (!raf) raf = requestAnimationFrame(loop); });
         audio.addEventListener('pause', function () { if (raf) cancelAnimationFrame(raf); raf = 0; paint(); });
         audio.addEventListener('seeked', paint);
-        audio.addEventListener('ended', function () { lines.forEach(el => { el.classList.remove('now', 'past'); window.cheerClearWords(el); }); cur = -1; lyr.classList.remove('on'); lyr.scrollTo({ top: 0 }); });
+        audio.addEventListener('ended', function () { uniq.forEach(el => { el.classList.remove('now', 'past'); window.cheerClearWords(el); }); lyr.querySelectorAll('.cl-block.ref.now').forEach(el => el.classList.remove('now')); cur = -1; lyr.classList.remove('on'); lyr.scrollTo({ top: 0 }); });
         ['touchstart', 'wheel'].forEach(ev => lyr.addEventListener(ev, function () { userScrollUntil = Date.now() + 4000; }, { passive: true }));
         lyr.addEventListener('click', function (e) {
-            const el = e.target.closest('.cl-line');
+            const fb = e.target.closest('.cl-fold-btn');   // 🔁 C안: 반복 펼치기 · 접기
+            if (fb) { window.cheerFoldSetOpen(!window.cheerFoldOpen()); const st = lyr.scrollTop; lyr.innerHTML = cheerLyricsHtml(box._song); lyr.scrollTop = st; reset(); if (!audio.paused) { lyr.classList.add('on'); paint(); } return; }
+            const el = e.target.closest('.cl-line, .cl-refbar');
             if (!el || !spans) return;
             const sp = spans[Number(el.dataset.i)];
             if (!sp) return;

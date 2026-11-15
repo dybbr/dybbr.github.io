@@ -51,6 +51,69 @@
         return blocks.filter(b => b.lines.length);
     }
 
+    // 🔁 v2.147.0: 가사 반복 구간 접기 — 연속으로 같은 줄(1~4줄 묶음)은 한 번만 쓰고 「×2」 · 「×3」 표시
+    //   sec: true 면 앞에서 나온 것과 똑같은 절(후렴 등, 2줄 이상)은 「↻ 후렴 반복」 한 줄로 접음
+    //   데이터(cheer-songs.json)는 그대로 · 화면에서만 계산 · 노래방 시간표(times)의 줄 번호는 그대로 씀
+    //   → { blocks: [{ label, rows: [{ r, tx, ids, n, g, gs, ge }], rep, ref, k, ids }], rowOf: [{ r, k, n }], refOf: [블록 번호 · 아니면 -1] }
+    //      r = 화면 줄 번호 · ids = 그 화면 줄이 맡는 시간표 줄 번호들 · n = 몇 번 반복 · g = 여러 줄 묶음 번호(gs 처음 · ge 끝)
+    function cheerFoldView(song, opt) {
+        const sec = !!(opt && opt.sec), off = !!(opt && opt.off);
+        const src = cheerLyricBlocks(song), out = [], rowOf = [], refOf = [], seen = {};
+        let idx = 0, r = 0, g = 0;
+        const same = (L, a, b, k) => { for (let j = 0; j < k; j++) if (L[a + j] !== L[b + j]) return false; return true; };
+        src.forEach(b => {
+            const ids = b.lines.map(() => idx++), key = b.lines.join('\n');
+            if (!off && sec && b.lines.length >= 2 && seen[key] != null) {
+                const o = out[seen[key]];
+                o.rep = (o.rep || 1) + 1;
+                const blk = { label: b.label, rows: [], ref: seen[key], k: o.rep, ids: ids };
+                ids.forEach((t, j) => { const m = o.lineRow[j]; rowOf[t] = { r: m.r, k: o.rep, n: o.rep, ref: true }; refOf[t] = out.length; });
+                out.push(blk);
+                return;
+            }
+            if (seen[key] == null) seen[key] = out.length;
+            const rows = [], lineRow = [];
+            const L = b.lines;
+            let i = 0;
+            while (i < L.length) {
+                let best = null;
+                if (!off) for (let k = 1; k <= 4 && i + 2 * k <= L.length; k++) {
+                    let n = 1;
+                    while (i + (n + 1) * k <= L.length && same(L, i, i + n * k, k)) n++;
+                    if (n > 1) { best = { k: k, n: n }; break; }
+                }
+                if (!best) {
+                    const row = { r: r++, tx: L[i], ids: [ids[i]], n: 1 };
+                    rows.push(row); lineRow[i] = row; rowOf[ids[i]] = { r: row.r, k: 1, n: 1 }; refOf[ids[i]] = -1;
+                    i++; continue;
+                }
+                const gid = best.k > 1 ? ++g : 0;
+                for (let j = 0; j < best.k; j++) {
+                    const row = { r: r++, tx: L[i + j], ids: [], n: best.n, g: gid, gs: j === 0, ge: j === best.k - 1 };
+                    for (let m = 0; m < best.n; m++) { const li = i + m * best.k + j; row.ids.push(ids[li]); lineRow[li] = row; rowOf[ids[li]] = { r: row.r, k: m + 1, n: best.n }; refOf[ids[li]] = -1; }
+                    rows.push(row);
+                }
+                i += best.k * best.n;
+            }
+            out.push({ label: b.label, rows: rows, lineRow: lineRow, rep: 1, ref: null, ids: ids });
+        });
+        rowOf.forEach((o, t) => { if (o && o.ref) o.n = out[out[refOf[t]].ref].rep; });   // 후렴이 세 번이면 모두 「/3」
+        return { blocks: out, rowOf: rowOf, refOf: refOf, rows: r };
+    }
+    // 🔁 접기 방식 — 'a' 줄 반복만 · 'b' 줄 + 후렴 반복 · 'c' b + 펼치기 스위치 (시안 확인용: localStorage daeyeon_fold · 주소 ?fold=)
+    function cheerFoldMode() {
+        let m = '';
+        try { m = (new URLSearchParams(location.search).get('fold')) || localStorage.getItem('daeyeon_fold') || ''; } catch (e) {}
+        return /^(a|b|c|off)$/.test(m) ? m : 'off';
+    }
+    function cheerFoldOpen() { try { return localStorage.getItem('daeyeon_fold_open') === '1'; } catch (e) { return false; } }
+    function cheerFoldSetOpen(v) { try { localStorage.setItem('daeyeon_fold_open', v ? '1' : '0'); } catch (e) {} }
+    function cheerFoldOpts() {
+        const m = cheerFoldMode();
+        if (m === 'off' || (m === 'c' && cheerFoldOpen())) return { off: true, mode: m };
+        return { sec: m !== 'a', mode: m };
+    }
+
     // 🎤 노래방 시간표 (v2.94.0) — song.times = 가사 줄마다 [시작초, 끝초] (이름표 [Chorus] 같은 줄 · 빈 줄은 빼고 셈)
     //   → 가사 줄 순서대로 { s, e, w } 목록 (모르는 줄은 null) · 시간표가 없거나 줄 수가 안 맞으면 null (그 곡은 강조 없이 예전처럼 가사만)
     //   🎯 v2.133.0 단어 단위: [시작초, 끝초, [단어1시작, 단어1끝, 단어2시작, …]] — 줄을 띄어쓰기로 나눈 단어마다 (줄 시작에서 잰) 0.1초 단위
@@ -155,6 +218,11 @@
     window.cheerSongFor = cheerSongFor;
     window.cheerLyricBlocks = cheerLyricBlocks;
     window.cheerLineTimes = cheerLineTimes;
+    window.cheerFoldView = cheerFoldView;
+    window.cheerFoldMode = cheerFoldMode;
+    window.cheerFoldOpen = cheerFoldOpen;
+    window.cheerFoldSetOpen = cheerFoldSetOpen;
+    window.cheerFoldOpts = cheerFoldOpts;
     window.cheerWords = cheerWords;
     window.cheerWordHtml = cheerWordHtml;
     window.cheerPaintWords = cheerPaintWords;

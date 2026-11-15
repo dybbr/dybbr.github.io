@@ -101,6 +101,7 @@
     let view = 'list', filter = 'all', mode = '', pickPid = ''; // 음악 탭 안: 전체 곡/타석 · 학년 걸러 보기 · 타순 정하기/곡 고르기
     let built = false, audio = null, raf = 0, seeking = false, seekF = 0;
     let lines = [], spans = null, kIdx = -2;                    // 가사 줄 · 시간표 · 지금 줄
+    let lyrFold = null, lyrEls = [], lyrRefs = [];                // 🔁 v2.147.0 반복 접기: 접은 모양 · 시간표 줄 i → 전체 가사 화면 줄 · 접은 후렴 막대
     let bigOpen = false, lyrOpen = false, wake = null, preBusy = false, preText = '';
     const blobUrl = {};                                         // 미리 받아 둔 곡: 음원 주소 → 기기 안 주소
     const sndEl = {};                                           // 효과음 띠: 버튼마다 소리 하나
@@ -1084,11 +1085,47 @@
         const box = $('plLyr');
         if (!box) return;
         box.classList.toggle('plain', !spans);
-        box.innerHTML = lines.length
-            ? lines.map((l, i) => (l.first && l.tag ? `<span class="pl-tag">${esc(l.tag)}</span>` : '') + `<p data-li="${i}"><span>${window.cheerWordHtml(l.tx)}</span></p>`).join('')
-            : '<p>가사가 없는 곡이에요</p>';
+        box.innerHTML = lines.length ? lyrFoldHtml() : '<p>가사가 없는 곡이에요</p>';
+        lyrMap(box);
         box.scrollTop = 0;
         paintLyrics(true);
+    }
+    // 🔁 v2.147.0: 전체 가사에서 반복 구간 접기 — 같은 줄이 이어지면 ×2 · 똑같은 후렴은 「↻ 후렴 반복」 (cheer-songs.js cheerFoldView)
+    function lyrFoldHtml() {
+        const fo = window.cheerFoldOpts();
+        lyrFold = window.cheerFoldView(cur, fo);
+        const tg = fo.mode === 'c' ? `<div class="pl-fold"><button type="button" data-pl="fold">${fo.off ? '🔁 반복 접어 보기' : '🔁 반복 모두 펼치기'}</button></div>` : '';
+        return tg + lyrFold.blocks.map((b, bi) => {
+            if (b.ref != null) return `<button type="button" class="pl-ref" data-b="${bi}" data-li="${b.ids[0]}">↻ ${esc(b.label || '앞 구간')} 반복<small>위 ${esc(b.label || '구간')}을 한 번 더</small></button>`;
+            let h = b.label ? `<span class="pl-tag">${esc(b.label)}${b.rep > 1 ? ` <i data-n="${b.rep}" data-u="번">${b.rep}번</i>` : ''}</span>` : '';
+            b.rows.forEach(r => {
+                if (r.g && r.gs) h += '<div class="pl-grp">';
+                h += `<p data-li="${r.ids[0]}" data-r="${r.r}"><span>${window.cheerWordHtml(r.tx)}</span>${r.n > 1 && (!r.g || r.ge) ? `<em class="pl-x" data-n="${r.n}">×${r.n}</em>` : ''}</p>`;
+                if (r.g && r.ge) h += '</div>';
+            });
+            return h;
+        }).join('');
+    }
+    function lyrMap(box) {
+        const els = {};
+        box.querySelectorAll('p[data-r]').forEach(el => { els[el.dataset.r] = el; });
+        lyrEls = lyrFold ? lyrFold.rowOf.map(o => (o && els[o.r]) || null) : [];
+        lyrRefs = lyrFold ? lyrFold.refOf.map(b => b >= 0 ? box.querySelector('.pl-ref[data-b="' + b + '"]') : null) : [];
+    }
+    function lyrMark(box, a) {   // 지금 줄 a (시간표 줄 번호) 를 전체 가사에 표시 · 반복 중이면 「2/3」
+        const nowEl = a >= 0 ? lyrEls[a] : null;
+        const last = new Map(); lyrEls.forEach((el, i) => { if (el) last.set(el, i); });
+        last.forEach((li, el) => { const on = el === nowEl; el.classList.toggle('now', on); el.classList.toggle('past', !on && a >= 0 && li < a); if (!on) window.cheerClearWords(el); });
+        box.querySelectorAll('.pl-ref').forEach(el => el.classList.toggle('now', a >= 0 && el === lyrRefs[a]));
+        box.querySelectorAll('.pl-x, .pl-tag i').forEach(x => { x.textContent = x.dataset.u ? x.dataset.n + x.dataset.u : '×' + x.dataset.n; x.classList.remove('on'); });
+        const o = lyrFold && a >= 0 ? lyrFold.rowOf[a] : null;
+        if (o && nowEl) {
+            let x = null, txt = '';
+            if (o.ref || o.n === 1) { let t = nowEl.parentNode.classList.contains('pl-grp') ? nowEl.parentNode : nowEl; while (t && !(t.classList && t.classList.contains('pl-tag'))) t = t.previousElementSibling; x = t ? t.querySelector('i') : null; if (x) txt = (o.ref ? o.k : 1) + '/' + x.dataset.n; }
+            else { x = (nowEl.parentNode.classList.contains('pl-grp') ? nowEl.parentNode : nowEl).querySelector('.pl-x'); txt = o.k + '/' + o.n; }
+            if (x && txt) { x.textContent = txt; x.classList.add('on'); }
+        }
+        return nowEl;
     }
     function activeAt(sec) { let a = -1; for (let i = 0; i < spans.length; i++) if (spans[i] && spans[i].s <= sec + LEAD) a = i; return a; }
     function paintLyrics(force) {
@@ -1112,9 +1149,9 @@
                 `<span class="nx"><em>다음</em>${esc(nx ? nx.tx : '♪')}</span><span class="hint">가사를 누르면 전체가 크게 나와요</span>`;
             const box = $('plLyr');
             if (box) {
-                const ps = box.querySelectorAll('p');
-                ps.forEach((el, i) => { el.classList.toggle('now', i === a); el.classList.toggle('past', a >= 0 && i < a); if (i !== a) window.cheerClearWords(el); });
-                if (lyrOpen && ps[c]) { const el = ps[c]; box.scrollTo({ top: Math.max(0, el.offsetTop - box.clientHeight / 2 + el.offsetHeight / 2), behavior: force ? 'auto' : 'smooth' }); }
+                lyrMark(box, a);
+                const el = lyrEls[c];
+                if (lyrOpen && el) box.scrollTo({ top: Math.max(0, el.offsetTop - box.clientHeight / 2 + el.offsetHeight / 2), behavior: force ? 'auto' : 'smooth' });
             }
         }
         // 🎯 v2.133.0: 단어마다 따로 칠함 (단어 시간이 있으면 실제로 부르는 순간에 · 쉬는 사이엔 멈춤)
@@ -1760,7 +1797,7 @@
 
     // ---------------- 누르기 ----------------
     function onClick(e) {
-        const li = e.target.closest('#plLyr p[data-li]');
+        const li = e.target.closest('#plLyr [data-li]');
         if (li) {   // 전체 가사에서 줄을 누르면 그 줄부터
             const i = +li.dataset.li;
             if (spans && spans[i]) { if (!attached) { pendingSeek = spans[i].s; play(); } else { seekTo(spans[i].s); if (audio.paused) play(); } kIdx = -2; paintLyrics(true); }
@@ -1801,6 +1838,7 @@
             case 'repeat': cycleRepeat(); break;
             case 'lyrics': if (!$('plCoach').hidden) coachDone(); if (lines.length) setLyr(true); break;
             case 'coach-ok': coachDone(); break;
+            case 'fold': { window.cheerFoldSetOpen(!window.cheerFoldOpen()); const b = $('plLyr'), st = b.scrollTop; b.innerHTML = lyrFoldHtml(); lyrMap(b); b.scrollTop = st; kIdx = -2; paintLyrics(true); break; }   // 🔁 C안 반복 펼치기 · 접기
             case 'xl': cfg.xl = !cfg.xl; saveCfg(); $('plLyr').classList.toggle('xl', cfg.xl); $('plXl').textContent = cfg.xl ? '가 작게' : '가 크게'; kIdx = -2; paintLyrics(true); break;
             case 'dl': download(); break;
             case 'off': offToggle([d.id]); break;
