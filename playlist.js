@@ -1141,7 +1141,7 @@
         return '';
     }
     function lfsSet(n) { cfg.lfs = Math.max(0, Math.min(3, n)); saveCfg(); const b = $('plLyr'), st = b ? b.scrollTop : 0; lswPaint(); if (b) { b.innerHTML = lines.length ? lyrFoldHtml() : b.innerHTML; lyrMap(b); b.scrollTop = st; } kIdx = -2; paintLyrics(true); }
-    function k3Mode() { let m = ''; try { m = new URLSearchParams(location.search).get('k3') || localStorage.getItem('daeyeon_k3rep') || ''; } catch (e) {} return /^(a|b|c|off)$/.test(m) ? m : 'off'; }
+    function k3Mode() { let m = ''; try { m = new URLSearchParams(location.search).get('k3') || localStorage.getItem('daeyeon_k3rep') || ''; } catch (e) {} return /^(a|b|c|off)$/.test(m) ? m : 'b'; }   // 하코 선택 B안 (시험: ?k3= · localStorage daeyeon_k3rep)
     function lyrMap(box) {
         const els = {};
         box.querySelectorAll('p[data-r]').forEach(el => { els[el.dataset.r] = el; });
