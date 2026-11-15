@@ -62,7 +62,7 @@
     // ⭐ v2.139.0: 내 목록 1·2·3 (이 기기에만 저장 · 서버 · 시트 안 씀) — 이름은 바꿀 수 있음
     const FAV_N = 5, FAV_MAX = 300;   // ⭐ v2.148.0: 3 → 5개 (하코 선택 B안) · 예전 1·2·3번은 그대로
     function FAV_DEF() { return Array.from({ length: FAV_N }, (_, i) => ({ name: '내 목록 ' + (i + 1), ids: [] })); }
-    const cfg = { shuffle: false, repeat: 'all', hook: true, fadeIn: true, autoSec: 20, lineup: [], walkSong: {}, batIdx: -1, xl: false, sets: [], lyrTip: false, ann: true, bk: false, off: [], fav: FAV_DEF() };
+    const cfg = { shuffle: false, repeat: 'all', hook: true, fadeIn: true, autoSec: 20, lineup: [], walkSong: {}, batIdx: -1, xl: false, lfs: 1, sets: [], lyrTip: false, ann: true, bk: false, off: [], fav: FAV_DEF() };
     try {
         const j = JSON.parse(localStorage.getItem(LS_KEY) || '{}') || {};
         if (typeof j.shuffle === 'boolean') cfg.shuffle = j.shuffle;
@@ -75,6 +75,7 @@
         if (j.walkSong && typeof j.walkSong === 'object') cfg.walkSong = j.walkSong;
         if (typeof j.batIdx === 'number') cfg.batIdx = j.batIdx;
         if (typeof j.xl === 'boolean') cfg.xl = j.xl;
+        if (j.lfs === 0 || j.lfs === 1 || j.lfs === 2 || j.lfs === 3) cfg.lfs = j.lfs;
         if (typeof j.lyrTip === 'boolean') cfg.lyrTip = j.lyrTip;
         if (typeof j.ann === 'boolean') cfg.ann = j.ann;
         if (typeof j.bk === 'boolean') cfg.bk = j.bk;
@@ -101,7 +102,7 @@
     let view = 'list', filter = 'all', mode = '', pickPid = ''; // 음악 탭 안: 전체 곡/타석 · 학년 걸러 보기 · 타순 정하기/곡 고르기
     let built = false, audio = null, raf = 0, seeking = false, seekF = 0;
     let lines = [], spans = null, kIdx = -2;                    // 가사 줄 · 시간표 · 지금 줄
-    let lyrFold = null, lyrEls = [], lyrRefs = [];                // 🔁 v2.147.0 반복 접기: 접은 모양 · 시간표 줄 i → 전체 가사 화면 줄 · 접은 후렴 막대
+    let lyrFold = null, lyrEls = [], lyrRefs = [], k3Rep = [];   // k3Rep[i] = 3줄 화면용 반복 정보 { lk, ln 줄 반복 · sk, sn, lab 절 반복 }                // 🔁 v2.147.0 반복 접기: 접은 모양 · 시간표 줄 i → 전체 가사 화면 줄 · 접은 후렴 막대
     let bigOpen = false, lyrOpen = false, wake = null, preBusy = false, preText = '';
     const blobUrl = {};                                         // 미리 받아 둔 곡: 음원 주소 → 기기 안 주소
     const sndEl = {};                                           // 효과음 띠: 버튼마다 소리 하나
@@ -1082,10 +1083,21 @@
                 }
             } catch (e) { lines = []; spans = null; }
         }
+        k3Rep = [];   // 🔁 v2.149.0: 3줄 화면 반복 표시 — 펼침 · 접힘과 상관없이 늘 접은 모양으로 셈
+        if (cur && lines.length) try {
+            const f = window.cheerFoldView(cur, { sec: true });
+            f.blocks.forEach(b => {
+                const sn = b.ref != null ? f.blocks[b.ref].rep : b.rep, sk = b.ref != null ? b.k : 1;
+                b.ids.forEach(i => { const o = f.rowOf[i] || {}; k3Rep[i] = { lk: o.ref ? 1 : (o.k || 1), ln: o.ref ? 1 : (o.n || 1), sk: sk, sn: sn || 1, lab: b.label || '' }; });
+            });
+            // 접은 후렴 안의 줄 반복도 원래 후렴의 줄 반복을 따라감
+            f.blocks.forEach(b => { if (b.ref == null) return; const o = f.blocks[b.ref]; b.ids.forEach((i, j) => { const src = k3Rep[o.ids[j]]; if (src) { k3Rep[i].lk = src.lk; k3Rep[i].ln = src.ln; } }); });
+        } catch (e) { k3Rep = []; }
         const box = $('plLyr');
         if (!box) return;
         box.classList.toggle('plain', !spans);
         box.innerHTML = lines.length ? lyrFoldHtml() : '<p>가사가 없는 곡이에요</p>';
+        lswPaint();
         lyrMap(box);
         box.scrollTop = 0;
         paintLyrics(true);
@@ -1094,7 +1106,8 @@
     function lyrFoldHtml() {
         const fo = window.cheerFoldOpts();
         lyrFold = window.cheerFoldView(cur, fo);
-        const tg = fo.mode === 'c' ? `<div class="pl-fold"><button type="button" data-pl="fold">${fo.off ? '🔁 반복 접어 보기' : '🔁 반복 모두 펼치기'}</button></div>` : '';
+        const fb = fo.mode === 'c' ? `<button type="button" class="pl-foldb" data-pl="fold">${fo.off ? '🔁 반복 접어 보기' : '🔁 반복 모두 펼치기'}</button>` : '';
+        const tg = `<div class="pl-fold">${lswHtml(true)}${lfsHtml()}${fb}</div>`;
         return tg + lyrFold.blocks.map((b, bi) => {
             if (b.ref != null) return `<button type="button" class="pl-ref" data-b="${bi}" data-li="${b.ids[0]}">↻ ${esc(b.label || '앞 구간')} 반복<small>위 ${esc(b.label || '구간')}을 한 번 더</small></button>`;
             let h = b.label ? `<span class="pl-tag">${esc(b.label)}${b.rep > 1 ? ` <i data-n="${b.rep}" data-u="번">${b.rep}번</i>` : ''}</span>` : '';
@@ -1104,8 +1117,31 @@
                 if (r.g && r.ge) h += '</div>';
             });
             return h;
-        }).join('');
+        }).join('') + (k3Mode() === 'c' ? '<span class="pl-lsw-cc stick"><button type="button" class="pl-lsw-c" data-pl="lfs+" aria-label="가사 글자 크기">가<small>크기</small></button><button type="button" class="pl-lsw-c" data-pl="lyr3" aria-label="3줄 가사로">≡<small>3줄</small></button></span>' : '');
     }
+    // 🔁 v2.149.0: 3줄 가사 ↔ 전체 가사 전환 버튼 (시안 a 알약 · b 두 칸 스위치 · c 구석 동그라미)
+    function lswHtml(all) {
+        const m = k3Mode();
+        if (m === 'a') return all ? '<button type="button" class="pl-lsw-a" data-pl="lyr3">↩ 3줄 가사로</button>' : '<button type="button" class="pl-lsw-a" data-pl="lyrics">📜 전체 가사 보기</button>';
+        if (m === 'b') return `<span class="pl-lsw-b"><button type="button" data-pl="lyr3" class="${all ? '' : 'on'}">3줄 가사</button><button type="button" data-pl="lyrics" class="${all ? 'on' : ''}">전체 가사</button></span>`;
+        if (m === 'c') return all ? '' : '<button type="button" class="pl-lsw-c" data-pl="lyrics" aria-label="전체 가사 보기">☰<small>전체</small></button>';
+        return '';
+    }
+    function lswPaint() {
+        const k = $('plLswK'); if (k) k.innerHTML = lines.length ? lswHtml(false) + lfsHtml() + (k3Mode() === 'c' ? '<button type="button" class="pl-lsw-c up" data-pl="lfs+" aria-label="가사 글자 크기">가<small>크기</small></button>' : '') : '';
+        const big = $('plBig'); if (big) big.dataset.lsw = k3Mode();
+        if (big) big.style.setProperty('--lfs', LFS[cfg.lfs]);
+    }
+    // 🔠 v2.149.0: 가사 글자 크기 4단계 (3줄 · 전체 가사 같이) — cfg.lfs 0 작게 · 1 보통 · 2 크게 · 3 아주 크게
+    const LFS = [0.85, 1, 1.2, 1.4], LFS_TX = ['작게', '보통', '크게', '아주 크게'];
+    function lfsHtml() {
+        const m = k3Mode();
+        if (m === 'a') return `<span class="pl-lfs-a"><button type="button" data-pl="lfs-" aria-label="가사 글자 작게"${cfg.lfs <= 0 ? ' disabled' : ''}>가−</button><button type="button" data-pl="lfs+" aria-label="가사 글자 크게"${cfg.lfs >= 3 ? ' disabled' : ''}>가＋</button></span>`;
+        if (m === 'b') return `<span class="pl-lfs-b">${LFS.map((v, i) => `<button type="button" data-pl="lfs" data-n="${i}" class="${i === cfg.lfs ? 'on' : ''}" aria-label="가사 글자 ${LFS_TX[i]}" style="font-size:${11 + i * 2.5}px">가</button>`).join('')}</span>`;
+        return '';
+    }
+    function lfsSet(n) { cfg.lfs = Math.max(0, Math.min(3, n)); saveCfg(); const b = $('plLyr'), st = b ? b.scrollTop : 0; lswPaint(); if (b) { b.innerHTML = lines.length ? lyrFoldHtml() : b.innerHTML; lyrMap(b); b.scrollTop = st; } kIdx = -2; paintLyrics(true); }
+    function k3Mode() { let m = ''; try { m = new URLSearchParams(location.search).get('k3') || localStorage.getItem('daeyeon_k3rep') || ''; } catch (e) {} return /^(a|b|c|off)$/.test(m) ? m : 'off'; }
     function lyrMap(box) {
         const els = {};
         box.querySelectorAll('p[data-r]').forEach(el => { els[el.dataset.r] = el; });
@@ -1145,8 +1181,22 @@
             kIdx = a;
             const c = a >= 0 ? a : Math.max(0, spans.findIndex(Boolean));   // 아직 첫 줄 전이면 첫 줄을 미리 보여 줌
             const pv = a > 0 ? lines[a - 1].tx : '♪', nx = lines[c + 1];
-            k3.innerHTML = `<span class="tag">${esc(lines[c] ? lines[c].tag : '')}</span><span class="pv">${esc(pv)}</span><span class="now"><span>${lines[c] ? window.cheerWordHtml(lines[c].tx) : ''}</span></span>` +
-                `<span class="nx"><em>다음</em>${esc(nx ? nx.tx : '♪')}</span><span class="hint">가사를 누르면 전체가 크게 나와요</span>`;
+            const rp = a >= 0 ? k3Rep[a] : null, km = k3Mode();   // 🔁 v2.149.0 반복 표시 (시안 a · b · c)
+            let tagTx = esc(lines[c] ? lines[c].tag : ''), nowX = '', nowDots = '';
+            if (rp && km === 'a') {
+                if (rp.ln > 1) nowX = `<em class="k3x">${rp.lk}/${rp.ln}</em>`;
+                if (rp.sn > 1) tagTx += ` <i class="k3n">${rp.sk}번째</i>`;
+            } else if (rp && km === 'b') {
+                const bits = [];
+                if (rp.sn > 1) bits.push(`${rp.sk > 1 ? '↻ ' : ''}${rp.sk}/${rp.sn}`);
+                if (rp.ln > 1) bits.push(`이 줄 ${rp.lk}/${rp.ln}`);
+                if (bits.length) tagTx += ` <i class="k3n">${bits.join(' · ')}</i>`;
+            } else if (rp && km === 'c') {
+                if (rp.ln > 1) nowDots = `<i class="k3dots">${Array.from({ length: rp.ln }, (_, d) => `<b class="${d < rp.lk ? 'on' : ''}"></b>`).join('')}</i>`;
+                if (rp.sn > 1 && rp.sk > 1) tagTx = `↻ ${tagTx} 반복 <i class="k3n">${rp.sk}/${rp.sn}</i>`;
+            }
+            k3.innerHTML = `<span class="tag">${tagTx}</span><span class="pv">${esc(pv)}</span><span class="now"><span>${lines[c] ? window.cheerWordHtml(lines[c].tx) : ''}</span>${nowX}${nowDots}</span>` +
+                `<span class="nx"><em>다음</em>${esc(nx ? nx.tx : '♪')}</span>` + (km === 'off' ? '<span class="hint">가사를 누르면 전체가 크게 나와요</span>' : '');
             const box = $('plLyr');
             if (box) {
                 lyrMark(box, a);
@@ -1230,6 +1280,7 @@
             <div class="pl-tabs" id="plTabs" role="tablist" aria-label="가사 · 재생목록 · 내 목록"><button type="button" data-pl="ptab" data-t="lyr">가사</button><button type="button" data-pl="ptab" data-t="q">재생목록</button><button type="button" data-pl="ptab" data-t="my">⭐ 내 목록</button></div>
             <div class="pl-main" id="plMain">
                 <button type="button" class="pl-k3" data-pl="lyrics" id="plK3" aria-label="가사 전체 보기"></button>
+                <div class="pl-lsw" id="plLswK"></div>
             </div>
             <div class="pl-lyr${cfg.xl ? ' xl' : ''}" id="plLyr" hidden></div>
             <div class="pl-panel" id="plPanel"></div>
@@ -1771,7 +1822,7 @@
     function setLyr(open) {   // 큰 글씨 세 줄 ↔ 전체 가사
         lyrOpen = !!open;
         $('plMain').hidden = lyrOpen; $('plLyr').hidden = !lyrOpen; $('plBig').classList.toggle('lyr-on', lyrOpen);
-        $('plCnt').hidden = lyrOpen; $('plXl').hidden = !lyrOpen;
+        $('plCnt').hidden = lyrOpen; $('plXl').hidden = !lyrOpen || k3Mode() !== 'off';
         $('plCloseTx').textContent = lyrOpen ? '가사 닫기' : '닫기';
         $('plHeadTx').textContent = lyrOpen && cur ? cur.title : '지금 재생 중';
         if (lyrOpen) { kIdx = -2; paintLyrics(true); }
@@ -1836,6 +1887,10 @@
             case 'prev': prev(); break;
             case 'shuffle': toggleShuffle(); break;
             case 'repeat': cycleRepeat(); break;
+            case 'lyr3': setLyr(false); break;
+            case 'lfs-': lfsSet(cfg.lfs - 1); break;   // 🔠 v2.149.0 가사 글자 크기
+            case 'lfs+': lfsSet(k3Mode() === 'c' && cfg.lfs >= 3 ? 0 : cfg.lfs + 1); break;   // C안은 한 버튼으로 돌아가며
+            case 'lfs': lfsSet(+el.dataset.n); break;   // 🔁 v2.149.0 전체 가사 → 3줄
             case 'lyrics': if (!$('plCoach').hidden) coachDone(); if (lines.length) setLyr(true); break;
             case 'coach-ok': coachDone(); break;
             case 'fold': { window.cheerFoldSetOpen(!window.cheerFoldOpen()); const b = $('plLyr'), st = b.scrollTop; b.innerHTML = lyrFoldHtml(); lyrMap(b); b.scrollTop = st; kIdx = -2; paintLyrics(true); break; }   // 🔁 C안 반복 펼치기 · 접기

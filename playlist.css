@@ -665,3 +665,35 @@ html.pl-playing .pl-qr .eq i { animation: plEq .5s ease-in-out infinite alternat
 .pl-song > .tx > .pl-fav { grid-column: 1 / -1; grid-row: 4; margin-top: 8px; gap: 7px; }
 .pl-song > .tx > .pl-fav i { font-size: 12.5px; margin-right: 4px; color: var(--pl-gold); opacity: 1; }
 .pl-song > .tx > .pl-fav i.hit { color: #ffffff; }
+
+/* 🔁 v2.149.0: 3줄 화면 반복 표시 — a 줄 끝 배지 · b 위 이름표에 몰아서 · c 줄 아래 점 */
+.pl-k3 .k3x { display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 8px; font-style: normal; font-size: .5em; font-weight: 900; vertical-align: .32em; background: #ffffff; color: #b91c1c; font-variant-numeric: tabular-nums; }
+.pl-k3 .tag .k3n { font-style: normal; margin-left: 4px; padding: 0 7px; border-radius: 999px; background: #ffffff; color: #b91c1c; font-variant-numeric: tabular-nums; }
+.pl-k3 .k3dots { display: flex; justify-content: center; gap: 7px; margin-top: 8px; }
+.pl-k3 .k3dots b { width: 9px; height: 9px; border-radius: 50%; background: rgba(255, 255, 255, .3); }
+.pl-k3 .k3dots b.on { background: var(--pl-gold, #fbbf24); }
+/* 🔁 v2.149.0 시안: 3줄 ↔ 전체 가사 전환 버튼 */
+.pl-main { position: relative; }
+.pl-lsw { display: flex; justify-content: center; }
+.pl-lsw:empty { display: none; }
+.pl-lsw-a { font: inherit; font-size: 14px; font-weight: 900; color: inherit; background: rgba(255, 255, 255, .16); border: 1.5px solid rgba(255, 255, 255, .55); border-radius: 999px; padding: 8px 18px; cursor: pointer; margin: 2px 0 6px; }
+.pl-lsw-b { display: inline-flex; padding: 3px; border-radius: 999px; background: rgba(0, 0, 0, .28); margin: 2px 0 6px; }
+.pl-lsw-b button { font: inherit; font-size: 13.5px; font-weight: 900; color: rgba(255, 255, 255, .75); background: transparent; border: 0; border-radius: 999px; padding: 6px 16px; cursor: pointer; }
+.pl-lsw-b button.on { background: #ffffff; color: #b91c1c; }
+.pl-lsw-c { position: absolute; right: 6px; bottom: 6px; z-index: 2; width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; align-content: center; font: inherit; font-size: 20px; font-weight: 900; line-height: 1; color: #b91c1c; background: #ffffff; border: 0; box-shadow: 0 4px 14px rgba(0, 0, 0, .3); cursor: pointer; }
+.pl-lsw-c small { font-size: 10.5px; margin-top: 2px; }
+.pl-lyr .pl-lsw-cc.stick { position: sticky; bottom: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; pointer-events: none; }
+.pl-lyr .pl-lsw-cc .pl-lsw-c { position: static; pointer-events: auto; }
+.pl-main .pl-lsw-c.up { bottom: 66px; }
+.pl-lfs-a { display: inline-flex; gap: 6px; margin: 2px 0 6px 8px; }
+.pl-lfs-a button { font: inherit; font-size: 13.5px; font-weight: 900; color: inherit; background: rgba(0, 0, 0, .25); border: 1.5px solid rgba(255, 255, 255, .45); border-radius: 999px; padding: 7px 12px; cursor: pointer; }
+.pl-lfs-a button:disabled { opacity: .35; }
+.pl-lfs-b { display: inline-flex; align-items: center; padding: 3px; border-radius: 999px; background: rgba(0, 0, 0, .28); margin: 2px 0 6px 8px; }
+.pl-lfs-b button { font: inherit; font-weight: 900; color: rgba(255, 255, 255, .75); background: transparent; border: 0; border-radius: 999px; width: 34px; height: 30px; padding: 0; cursor: pointer; }
+.pl-lfs-b button.on { background: #ffffff; color: #b91c1c; }
+/* 🔠 v2.149.0 가사 글자 크기 (--lfs 배율) */
+.pl-k3 > .pv, .pl-k3 > .now, .pl-k3 > .nx, .pl-lyr p, .pl-lyr .pl-ref { zoom: var(--lfs, 1); }
+.pl-lyr .pl-fold { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.pl-lyr .pl-fold:empty { display: none; }
+.pl-lyr .pl-fold .pl-lsw-a, .pl-lyr .pl-fold .pl-lsw-b { margin: 0; }
+.pl-lyr .pl-foldb { font: inherit; font-size: 12.5px; font-weight: 900; color: inherit; background: rgba(0, 0, 0, .3); border: 1px solid rgba(255, 255, 255, .4); border-radius: 999px; padding: 5px 13px; cursor: pointer; }
