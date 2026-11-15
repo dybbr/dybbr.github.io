@@ -2068,7 +2068,7 @@
         ['touchstart', 'wheel'].forEach(ev => lyr.addEventListener(ev, function () { userScrollUntil = Date.now() + 4000; }, { passive: true }));
         lyr.addEventListener('click', function (e) {
             const fb = e.target.closest('.cl-fold-btn');   // 🔁 C안: 반복 펼치기 · 접기
-            if (fb) { window.cheerFoldSetOpen(!window.cheerFoldOpen()); const st = lyr.scrollTop; lyr.innerHTML = cheerLyricsHtml(box._song); lyr.scrollTop = st; reset(); if (!audio.paused) { lyr.classList.add('on'); paint(); } return; }
+            if (fb) { window.cheerFoldSetOpen(!window.cheerFoldOpen()); const st = lyr.scrollTop; lyr.innerHTML = cheerLyricsHtml(box._song); lyr.scrollTop = st; reset(); if (!audio.paused) { lyr.classList.add('on'); paint(); if (!raf) raf = requestAnimationFrame(loop); } return; }   // v2.147.1: 펼치면 색칠 고리가 멈추던 것 — 다시 돌림
             const el = e.target.closest('.cl-line, .cl-refbar');
             if (!el || !spans) return;
             const sp = spans[Number(el.dataset.i)];

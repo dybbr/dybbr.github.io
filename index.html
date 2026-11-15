@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.147.0 · b261115";
+        const APP_VERSION = "v2.147.1 · b261116";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -9286,6 +9286,14 @@
                 }
             } catch (e) {} finally { busy = false; }
         }
+        // 🔄 v2.147.1: 새 버전으로 처음 열리면 기기에 저장해 둔 선수 화면(player.html)을 지움 → 선수 화면도 처음부터 새것 (예전엔 한 번 더 새로고침해야 했음)
+        try {
+            if (localStorage.getItem('daeyeon_seen_ver') !== APP_VERSION && window.caches) {
+                const pu = new URL('player.html', location.href); pu.search = ''; pu.hash = '';
+                caches.keys().then(ks => Promise.all(ks.map(k => caches.open(k).then(c => c.delete(pu.href, { ignoreSearch: true })))))
+                    .then(() => { try { localStorage.setItem('daeyeon_seen_ver', APP_VERSION); } catch (e) {} }).catch(() => {});
+            }
+        } catch (e) {}
         window.addEventListener('load', () => setTimeout(() => check(true), 1200));
         document.addEventListener('visibilitychange', () => { if (!document.hidden) check(); });
         window.addEventListener('pageshow', e => { if (e.persisted) check(); });
