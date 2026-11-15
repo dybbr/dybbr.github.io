@@ -100,11 +100,12 @@
         rowOf.forEach((o, t) => { if (o && o.ref) o.n = out[out[refOf[t]].ref].rep; });   // 후렴이 세 번이면 모두 「/3」
         return { blocks: out, rowOf: rowOf, refOf: refOf, rows: r };
     }
-    // 🔁 접기 방식 — 'a' 줄 반복만 · 'b' 줄 + 후렴 반복 · 'c' b + 펼치기 스위치 (시안 확인용: localStorage daeyeon_fold · 주소 ?fold=)
+    // 🔁 접기 방식 — 하코 선택 C안: 줄 반복 ×2 + 똑같은 후렴은 한 줄 + 「모두 펼치기」 버튼(그 기기에 기억 daeyeon_fold_open)
+    //   (시험용으로 'a' 줄 반복만 · 'b' 버튼 없이 · 'off' 예전처럼 — localStorage daeyeon_fold · 주소 ?fold=)
     function cheerFoldMode() {
         let m = '';
         try { m = (new URLSearchParams(location.search).get('fold')) || localStorage.getItem('daeyeon_fold') || ''; } catch (e) {}
-        return /^(a|b|c|off)$/.test(m) ? m : 'off';
+        return /^(a|b|c|off)$/.test(m) ? m : 'c';
     }
     function cheerFoldOpen() { try { return localStorage.getItem('daeyeon_fold_open') === '1'; } catch (e) { return false; } }
     function cheerFoldSetOpen(v) { try { localStorage.setItem('daeyeon_fold_open', v ? '1' : '0'); } catch (e) {} }
