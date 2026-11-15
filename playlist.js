@@ -112,6 +112,12 @@
     const personOf = pid => people.find(p => p.pid === pid) || null;
     const who = t => `${t.name} · ${t.g ? t.g + '학년 ' : ''}${t.no ? t.no + '번' : ''}`.trim();
     const mood = t => [t.beat, t.vocal].filter(Boolean).join(' · ');
+    // 🏷️ v2.150.0 (하코 선택 B안): 큰 플레이어 선수 이름 아래 「추천 상황」 · 「발매일」 이름표 (하코: 「만듦」 대신 「발매」) 뒤에 장르 글자 · 최신곡 NEW 는 제목 옆
+    function bigTags(t) {
+        const u = window.CHEER_USE && window.CHEER_USE[t.use];
+        const tag = (u ? `<span class="pl-tag">${u[0]} ${esc(u[1])}</span>` : '') + (t.made ? `<span class="pl-tag">${new Date(t.made.ts + 9 * 3600e3).getUTCFullYear()}.${String(t.made.mo).padStart(2, '0')}.${String(t.made.d).padStart(2, '0')} 발매</span>` : '') ;
+        return tag + `<span class="pl-gtx">${esc(mood(t))}</span>`;
+    }
     const cover = (t, cls) => `<span class="pl-cv pl-g${t.g || 0}${cls ? ' ' + cls : ''}" aria-hidden="true">${esc(t.no || '♪')}</span>`;
 
     // 👕 v2.145.0: 등번호 색 = 관리자 ▸ 학년별 유니폼 색 (index.html 의 jerseyColors · 이미 받아 둔 설정이라 서버 호출 없음)
@@ -163,8 +169,12 @@
             const person = { pid: pid, no: p.no || 0, name: p.name, g: g, mine: mine, manage: manage, pos: p.pos && p.pos !== '-' ? String(p.pos) : '', src: p, tracks: [] };
             vers.forEach(v => (manage || !hid.has(v.key)) && person.tracks.push({
                 id: pid + '/' + v.key, pid: pid, no: person.no, name: p.name, g: g, key: v.key, hidAll: hid.has(v.key),
-                title: v.title || v.label || (p.name + ' 주제곡'), src: v.src, len: v.len || '', beat: v.beat || '', vocal: v.vocal || '', lyrics: v.lyrics, times: v.times
+                title: v.title || v.label || (p.name + ' 주제곡'), src: v.src, len: v.len || '', beat: v.beat || '', vocal: v.vocal || '', lyrics: v.lyrics, times: v.times,
+                use: v.use || '', made: window.cheerMade ? window.cheerMade(v.src) : null
             }));
+            // 🏷️ v2.150.0: 큰 플레이어 이름표 — NEW 는 곡 목록(player.html v2.136.0)과 같은 규칙: 이 선수 가장 최근 묶음(1.5일 안) + 만든 지 14일 안
+            const lastTs = Math.max(0, ...person.tracks.map(t => t.made ? t.made.ts : 0));
+            person.tracks.forEach(t => { t.isNew = !!(t.made && lastTs - t.made.ts < 1.5 * 86400e3 && Date.now() - t.made.ts < 14 * 86400e3); });
             if (person.tracks.length) ppl.push(person);
         });
         ppl.sort((a, b) => (b.g - a.g) || (a.no - b.no) || a.name.localeCompare(b.name));
@@ -1722,7 +1732,7 @@
         root.classList.toggle('pl-on', !!cur);
         if (cur) {
             $('plMiniCv').innerHTML = cover(cur); $('plMiniT').textContent = cur.title; $('plMiniW').textContent = who(cur);
-            $('plBigCv').innerHTML = cover(cur); $('plBigT').textContent = cur.title; $('plBigW').textContent = who(cur); $('plBigG').textContent = mood(cur);
+            $('plBigCv').innerHTML = cover(cur); $('plBigT').innerHTML = esc(cur.title) + (cur.isNew ? ' <span class="pl-tag new">NEW</span>' : ''); $('plBigW').textContent = who(cur); $('plBigG').innerHTML = bigTags(cur);
             $('plCnt').textContent = (qi + 1) + ' / ' + order.length;
             $('plDurT').textContent = cur.len || '';
         }
