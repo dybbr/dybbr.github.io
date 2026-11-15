@@ -60,8 +60,8 @@
 
     // ---------------- 이 기기에 저장하는 설정 ----------------
     // ⭐ v2.139.0: 내 목록 1·2·3 (이 기기에만 저장 · 서버 · 시트 안 씀) — 이름은 바꿀 수 있음
-    const FAV_N = 3, FAV_MAX = 300;
-    function FAV_DEF() { return [0, 1, 2].map(i => ({ name: '내 목록 ' + (i + 1), ids: [] })); }
+    const FAV_N = 5, FAV_MAX = 300;   // ⭐ v2.148.0: 3 → 5개 (하코 선택 B안) · 예전 1·2·3번은 그대로
+    function FAV_DEF() { return Array.from({ length: FAV_N }, (_, i) => ({ name: '내 목록 ' + (i + 1), ids: [] })); }
     const cfg = { shuffle: false, repeat: 'all', hook: true, fadeIn: true, autoSec: 20, lineup: [], walkSong: {}, batIdx: -1, xl: false, sets: [], lyrTip: false, ann: true, bk: false, off: [], fav: FAV_DEF() };
     try {
         const j = JSON.parse(localStorage.getItem(LS_KEY) || '{}') || {};
@@ -1226,7 +1226,7 @@
                 <span class="cnt" id="plCnt"></span>
                 <button type="button" class="pl-fs" data-pl="xl" id="plXl" hidden>가 크게</button>
             </div>
-            <div class="pl-song"><button type="button" class="pl-cvgo" id="plBigCv" data-pl="goplayer" aria-label="이 선수 화면으로 가기 (곡 목록)"></button><span class="tx"><b id="plBigT"></b><small id="plBigW"></small><em id="plBigG"></em><span class="pl-fav" id="plFav"><i id="plFavTx">내 목록에 담기</i>${[0, 1, 2].map(n => `<button type="button" data-pl="fav" data-n="${n}" aria-pressed="false">${n + 1}</button>`).join('')}</span></span><span class="pl-sbtns"><button type="button" class="pl-dl" data-pl="dl" id="plDl">⬇ MP3 저장</button><button type="button" class="pl-dl pl-offb" data-pl="offcur" id="plOffB" hidden>🚫 이 곡 빼기</button></span></div>
+            <div class="pl-song"><button type="button" class="pl-cvgo" id="plBigCv" data-pl="goplayer" aria-label="이 선수 화면으로 가기 (곡 목록)"></button><span class="tx"><b id="plBigT"></b><small id="plBigW"></small><em id="plBigG"></em><span class="pl-fav" id="plFav"><i id="plFavTx">★ 내 목록</i>${Array.from({ length: FAV_N }, (_, n) => n).map(n => `<button type="button" data-pl="fav" data-n="${n}" aria-pressed="false">${n + 1}</button>`).join('')}</span></span><span class="pl-sbtns"><button type="button" class="pl-dl" data-pl="dl" id="plDl">⬇ MP3 저장</button><button type="button" class="pl-dl pl-offb" data-pl="offcur" id="plOffB" hidden>🚫 이 곡 빼기</button></span></div>
             <div class="pl-tabs" id="plTabs" role="tablist" aria-label="가사 · 재생목록 · 내 목록"><button type="button" data-pl="ptab" data-t="lyr">가사</button><button type="button" data-pl="ptab" data-t="q">재생목록</button><button type="button" data-pl="ptab" data-t="my">⭐ 내 목록</button></div>
             <div class="pl-main" id="plMain">
                 <button type="button" class="pl-k3" data-pl="lyrics" id="plK3" aria-label="가사 전체 보기"></button>
@@ -1598,7 +1598,7 @@
         const on = !favHas(n, cur.id);
         favSet(n, cur.id, on);
         const tx = $('plFavTx');
-        if (tx) { tx.textContent = (on ? '「' + cfg.fav[n].name + '」에 담음' : '「' + cfg.fav[n].name + '」에서 뺌'); tx.classList.add('hit'); clearTimeout(favTxTimer); favTxTimer = setTimeout(() => { tx.textContent = '내 목록에 담기'; tx.classList.remove('hit'); }, 2200); }
+        if (tx) { tx.textContent = (on ? '「' + cfg.fav[n].name + '」에 담음' : '「' + cfg.fav[n].name + '」에서 뺌'); tx.classList.add('hit'); clearTimeout(favTxTimer); favTxTimer = setTimeout(() => { tx.textContent = '★ 내 목록'; tx.classList.remove('hit'); }, 2200); }
         if (bigOpen) renderPanel();
     }
     function paintFav() {

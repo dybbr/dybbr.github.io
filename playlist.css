@@ -653,3 +653,15 @@ html.pl-playing .pl-qr .eq i { animation: plEq .5s ease-in-out infinite alternat
 .pl-lyr .pl-ref.now { opacity: 1; border-style: solid; background: rgba(255, 255, 255, .2); }
 .pl-lyr .pl-fold { margin: -10% 0 22px; }
 .pl-lyr .pl-fold button { font: inherit; font-size: 12.5px; font-weight: 900; color: inherit; background: rgba(0, 0, 0, .3); border: 1px solid rgba(255, 255, 255, .4); border-radius: 999px; padding: 5px 13px; cursor: pointer; }
+
+/* ⭐ v2.148.0: 내 목록 1~5 + 담기 줄 정렬 (하코 선택 B안) — 등번호는 글자 세 줄 왼쪽, 담기 줄은 맨 아래 등번호 왼쪽 끝부터 한 줄 */
+.pl-song { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; column-gap: 12px; row-gap: 1px; align-items: center; }
+.pl-song > .pl-cvgo { grid-column: 1; grid-row: 1 / 4; align-self: center; }
+.pl-song > .tx { display: contents; }
+.pl-song > .tx > b { grid-column: 2; grid-row: 1; }
+.pl-song > .tx > small { grid-column: 2; grid-row: 2; }
+.pl-song > .tx > em { grid-column: 2; grid-row: 3; }
+.pl-song > .pl-sbtns { grid-column: 3; grid-row: 1 / 4; align-self: center; }
+.pl-song > .tx > .pl-fav { grid-column: 1 / -1; grid-row: 4; margin-top: 8px; gap: 7px; }
+.pl-song > .tx > .pl-fav i { font-size: 12.5px; margin-right: 4px; color: var(--pl-gold); opacity: 1; }
+.pl-song > .tx > .pl-fav i.hit { color: #ffffff; }
