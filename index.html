@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.150.1 · 666788a";
+        const APP_VERSION = "v2.151.0 · 청소팝업";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -1293,6 +1293,57 @@
         .nt-popup { font-size: 11px; font-weight: 800; color: #b45309; }
         .upn-btns { justify-content: center; border-top: none; padding-top: 4px; }
         .upn-btns .btn-save { width: 100%; padding: 12px 14px; font-size: 15px; border-radius: 10px; }
+
+        /* 🧹 v2.151.0: 청소 당번 공지 팝업 (하코 선택 C안 「바통 터치 띠」) — 큰 한 문장 + 지난 › 이번 › 다음 가로 띠 + 그 주말 일정 */
+        #dpModal { z-index: 1002; }
+        .dp-card { max-width: 400px; padding: 16px 16px 14px; overflow: visible; margin-top: 34px; word-break: keep-all; }
+        .dp-bk { width: 80px; height: 80px; object-fit: contain; margin: -54px auto 0; display: block; flex-shrink: 0; filter: drop-shadow(0 4px 8px rgba(0,0,0,.18)); }
+        .dp-hd { text-align: center; font-size: 17px; font-weight: 900; color: #0f766e; margin: 2px 0 2px; flex-shrink: 0; }
+        .dp-btns { display: flex; gap: 8px; margin-top: 12px; flex-shrink: 0; }
+        .dp-btns button { flex: 1; min-height: 46px; border-radius: 10px; font: inherit; font-size: 14.5px; font-weight: 800; cursor: pointer; }
+        .dp-btns .ghost { flex: 0.8; background: #f1f5f9; border: 1px solid #cbd5e1; color: #0b2240; }
+        .dp-btns .pri { background: #0d9488; border: 0; color: #fff; }
+        .dp-mine .dp-btns .pri { background: #d97706; }
+        .dp-ev { margin-top: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px 10px; font-size: 12.5px; color: #334155; }
+        .dp-ev b.t { display: block; font-size: 11.5px; color: #64748b; font-weight: 800; margin-bottom: 4px; }
+        .dp-ev .r { display: flex; gap: 6px; align-items: baseline; padding: 2px 0; }
+        .dp-ev .r .k { flex: 0 0 auto; font-size: 11px; font-weight: 900; color: var(--c); background: var(--bg); border-radius: 5px; padding: 1px 5px; }
+        .dp-ev .r .d { flex: 0 0 auto; font-weight: 800; color: #0f172a; }
+        .dp-ev .r .x { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .dp-info { margin-top: 8px; font-size: 12.5px; color: #0f766e; font-weight: 700; text-align: center; }
+        .dp-mine .dp-info { color: #b45309; }
+        .dp-big { text-align: center; padding: 2px 4px 10px; }
+        .dp-big .wh { font-size: 13px; font-weight: 800; color: #0f766e; }
+        .dp-big .nm { font-size: 22px; font-weight: 900; color: #0f172a; line-height: 1.35; margin-top: 2px; }
+        .dp-big .nm em { font-style: normal; color: #0d9488; }
+        .dp-mine .dp-big .nm em, .dp-mine .dp-big .wh { color: #d97706; }
+        .dp-big .sb { font-size: 12.5px; color: #64748b; font-weight: 700; }
+        .dp-relay { display: grid; grid-template-columns: 1fr auto 1.25fr auto 1fr; align-items: stretch; gap: 4px; background: #f1f5f9; border-radius: 14px; padding: 8px 6px; }
+        .dp-relay .ar { align-self: center; color: #94a3b8; font-weight: 900; font-size: 15px; }
+        .dp-relay .c { border-radius: 10px; padding: 7px 4px; text-align: center; min-width: 0; }
+        .dp-relay .c .lb { font-size: 11px; font-weight: 900; color: #64748b; }
+        .dp-relay .c .wh { font-size: 11.5px; font-weight: 700; color: #64748b; }
+        .dp-relay .c .nm { font-size: 13.5px; font-weight: 900; color: #334155; margin-top: 2px; line-height: 1.3; overflow-wrap: anywhere; }
+        .dp-relay .c.now { background: #fff; box-shadow: 0 2px 8px rgba(15,23,42,.10); border: 2px solid #0d9488; }
+        .dp-relay .c.now .lb { color: #0f766e; }
+        .dp-relay .c.now .nm { color: #0f172a; font-size: 14.5px; }
+        .dp-mine .dp-relay .c.now { border-color: #f59e0b; }
+        .dp-relay .c.now.mine .lb { color: #b45309; }
+        .dp-relay .c.skip .nm { color: #64748b; }
+        .dp-relay .c.mine:not(.now) { background: #fffbeb; }
+        .dp-relay .c.mine:not(.now) .lb { color: #b45309; }
+        @media (prefers-color-scheme: dark) {
+            .dp-hd { color: #5eead4; }
+            .dp-btns .ghost { background: #1b2638; border-color: #2a374e; color: #dde3ec; }
+            .dp-btns .pri { background: #0f766e; } .dp-mine .dp-btns .pri { background: #b45309; }
+            .dp-ev { background: #131c2b; border-color: #2a374e; color: #cfd7e3; } .dp-ev .r .d { color: #dde3ec; } .dp-ev b.t { color: #97a3b7; }
+            .dp-info { color: #5eead4; } .dp-mine .dp-info { color: #fcd34d; }
+            .dp-big .nm { color: #dde3ec; } .dp-big .wh, .dp-big .nm em { color: #5eead4; } .dp-big .sb { color: #97a3b7; }
+            .dp-mine .dp-big .nm em, .dp-mine .dp-big .wh { color: #fcd34d; }
+            .dp-relay { background: #131c2b; } .dp-relay .c .nm { color: #cfd7e3; } .dp-relay .c .lb, .dp-relay .c .wh { color: #97a3b7; }
+            .dp-relay .c.now { background: #1b2638; border-color: #14b8a6; } .dp-relay .c.now .nm { color: #fff; } .dp-relay .c.now .lb { color: #5eead4; }
+            .dp-mine .dp-relay .c.now { border-color: #f59e0b; } .dp-relay .c.mine:not(.now) { background: #2a2113; } .dp-relay .c.mine:not(.now) .lb, .dp-relay .c.now.mine .lb { color: #fcd34d; }
+        }
 
         /* 💿 v2.105.0: 새 기능 알림 「74곡 대형 포스터」(C안) — 새 주제곡이 나왔을 때 로그인 후 기기마다 한 번 · 휴대폰은 화면 전체, 태블릿 · PC는 가운데 큰 포스터
            v2.105.2: 태블릿에서 위(제목 · ✕)와 아래(다음에 들을게요)가 잘리던 것 고침 — 화면 크기(110~130%)를 키운 기기에서 포스터까지 같이 커져 화면을 넘었음
@@ -4303,6 +4354,11 @@
     </div>
 </div>
 
+<!-- 🧹 청소 당번 공지 팝업 (v2.151.0, C안 「바통 터치 띠」) — 청소 주말이 든 주(월~일)에 회차마다 한 번 · 우리 집 차례면 금요일부터 한 번 더 -->
+<div id="dpModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="dpTitle">
+    <div class="modal-content dp-card" id="dpCard"></div>
+</div>
+
 <!-- 💿 새 기능 알림 (v2.105.0, C안 「74곡 대형 포스터」) — 새 주제곡이 나오면 로그인 후 기기마다 한 번 · 보호자는 우리 아이 새 곡 바로 가기 -->
 <div id="wnModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="wnNum">
     <div class="wn-poster">
@@ -5095,6 +5151,7 @@
         }
         dutyAsked = true;
         if (!noRender) renderDutyAll();
+        try { dpCheck(); } catch (e) {}   // 🧹 v2.151.0: 당번 정보를 받으면 팝업 확인
     }
     function dutyClear() { dutyData = null; dutyAsked = false; dutyAdm = null; dutyAdmAt = 0; }
     async function fetchDuty() {   // 서버 「한 번에」가 당번을 안 줬거나(예전 서버) 저장본으로 켜져 건너뛰었을 때만 (한 번)
@@ -7675,7 +7732,7 @@
             if (!document.documentElement.classList.contains('is-authenticated') || (lock && lock.style.display === 'flex')) return;
             if (document.documentElement.classList.contains('dy-intro')) { upnCheck(); return; }
             const list = upnPending();
-            if (!list.length) { wnCheck(); return; }
+            if (!list.length) { wnCheck(); dpCheck(); return; }   // 🧹 v2.151.0
             upnShowing = list.map(n => n.id);
             document.getElementById('upnList').innerHTML = list.map(n => {
                 const cm = noticeCatMeta(n.category);
@@ -7698,6 +7755,7 @@
         upnShowing = [];
         closeModal('upnModal');
         wnCheck();   // 💿 v2.105.0: 공지 팝업을 닫은 뒤 새 기능 알림
+        dpCheck();   // 🧹 v2.151.0: 청소 당번 팝업 (새 기능 알림이 뜨면 그걸 닫을 때)
     }
 
     // ==========================================================
@@ -7782,7 +7840,77 @@
             });
         }, 1200);
     }
-    function wnClose() { wnMark(); closeModal('wnModal'); }
+    function wnClose() { wnMark(); closeModal('wnModal'); dpCheck(); }   // 🧹 v2.151.0: 그다음 청소 당번 팝업
+
+    // ==========================================================
+    // 🧹 v2.151.0: 청소 당번 공지 팝업 (하코 선택 C안 「바통 터치 띠」)
+    //   · 이번 당번 가족(크게) + 지난 › 이번 › 다음 예고 가로 띠 + 그 주말 일정(경기 · 훈련) + 관리 탭 안내 문구
+    //   · 언제: 청소 주말(토)이 든 주의 월요일부터 그 일요일까지 · 앱을 열 때 · 「확인했어요」 = 그 회차는 이 기기에서 다시 안 뜸
+    //   · 우리 집 차례면 금요일(D-1)부터 한 번 더 · 쉬는 주말이면 「이번 주말은 쉬어요」로 한 번
+    //   · 누구: 보호자 · 관리자 (canViewSchedule — 1922 일반 열람자는 당번 정보를 못 받으니 안 뜸)
+    //   · 공지 팝업 · 새 기능 알림과 겹치지 않게 다른 창이 열려 있으면 기다렸다가 그 창을 닫을 때 다시 봄
+    //   · 서버 · 시트 호출 없음 (원래 받아 오던 당번 정보 dutyData · 일정 schedEvents 를 그대로 씀)
+    // ==========================================================
+    const DP_KEY = 'daeyeon_duty_pop';
+    let dpTimer = null, dpCur = null;
+    function dpSeen() { try { const o = JSON.parse(localStorage.getItem(DP_KEY) || '{}'); return o && typeof o === 'object' ? o : {}; } catch (e) { return {}; } }
+    function dpTarget() {   // → { u: 이번 회차, mine, fri } 또는 null
+        if (!dutyOk()) return null;
+        const u = dutyUp()[0];
+        if (!u) return null;
+        const n = dayDiff(u.d);
+        if (n > 5) return null;   // 그 주 월요일(토요일 5일 전)부터
+        const mine = !u.s && dutyIsMine(u), seen = dpSeen();
+        if (seen.d !== u.d) return { u: u, mine: mine, fri: mine && n <= 1 };
+        if (mine && n <= 1 && !seen.f) return { u: u, mine: mine, fri: true };   // 우리 집 차례 — 금요일부터 한 번 더
+        return null;
+    }
+    function dpCheck() {
+        clearTimeout(dpTimer);
+        dpTimer = setTimeout(function () {
+            const root = document.documentElement, lock = document.getElementById('lockOverlay');
+            if (!root.classList.contains('is-authenticated') || root.classList.contains('dy-intro') || (lock && lock.style.display === 'flex')) return;
+            if (Array.from(document.querySelectorAll('.modal')).some(m => m.style.display === 'flex')) return;   // 다른 창을 닫을 때 다시 봄
+            const t = dpTarget();
+            if (!t) return;
+            dpCur = t;
+            dpRender(t);
+            document.getElementById('dpModal').style.display = 'flex';
+            const sb = document.querySelector('#dpCard .modal-scroll-body'); if (sb) sb.scrollTop = 0;
+        }, 1800);
+    }
+    function dpRender(t) {
+        const u = t.u, today = ymdOf(new Date());
+        const next = dutyUp().filter(x => !x.s && x.d > u.d)[0] || null;
+        const past = (dutyData.recent || []).filter(r => r.d < today)[0] || null;
+        const fam = x => (x && x.p && x.p.length) ? x.p.map(y => y.n + ' 가족').join(' · ') : '';
+        const short = x => dutyWhen(x, true);
+        const cell = (cls, lb, x) => `<div class="c ${cls}${x && !x.s && dutyIsMine(x) ? ' mine' : ''}"><div class="lb">${lb}</div><div class="wh">${x ? short(x) : ''}</div><div class="nm">${x ? (x.s ? '쉼' : escapeHtml(x.p.map(y => y.n).join(' · '))) : '-'}</div></div>`;
+        const days = [u.d, u.e].filter(Boolean);
+        const evs = (schedEvents || []).filter(e => days.indexOf(e.date) !== -1).sort((a, b) => (a.date + (a.start || '')) < (b.date + (b.start || '')) ? -1 : 1);
+        const evRows = evs.map(e => { const m = typeMeta(e.type); return `<div class="r"><span class="d">${fmtMD(e.date)}</span><span class="k" style="--c:${m.c};--bg:${m.bg}">${escapeHtml(e.type || '기타')}</span><span class="x">${escapeHtml([e.start, e.title || e.opponent, e.place].filter(Boolean).join(' · '))}</span></div>`; }).join('');
+        let big, ev = '';
+        if (u.s) {
+            big = `<div class="wh">${dutyWhen(u)} · ${dutyDdU(u)}</div><div class="nm">이번 주말 부실 청소는 <em>쉬어요</em></div><div class="sb">${escapeHtml(u.m || '차례는 다음 회로 넘어가요')}</div>`;
+        } else {
+            big = `<div class="wh">${dutyWhen(u)} · ${dutyDdU(u)}</div><div class="nm">${t.mine ? '이번엔 <em>우리 집</em> 차례예요!' : `이번 주말은 <em>${escapeHtml(fam(u))}</em>`}</div><div class="sb">${escapeHtml(dutyWhoSub(u.p))}${dutyWhoSub(u.p) ? ' · ' : ''}토·일 중 하루</div>`;
+            ev = `<div class="dp-ev"><b class="t">이번 주말 일정 — 일정이 끝난 뒤 청소해 주세요</b>${evRows || '<div class="r">잡힌 일정이 없어요 · 토·일 중 편한 날에</div>'}</div>`;
+        }
+        const nextMine = next && dutyIsMine(next);
+        const card = document.getElementById('dpCard');
+        card.className = 'modal-content dp-card' + (t.mine ? ' dp-mine' : '');
+        card.innerHTML = `<img class="dp-bk" src="icons/bk/megaphone.webp" alt="" width="80" height="80"><div class="modal-header dp-hd" id="dpTitle">🧹 부실 청소 바통 터치</div>
+            <div class="modal-scroll-body"><div class="dp-big">${big}</div>
+            <div class="dp-relay">${cell('past', '✓ 지난', past)}<span class="ar">›</span>${cell('now' + (u.s ? ' skip' : ''), t.mine ? '우리 집' : '이번', u)}<span class="ar">›</span>${cell('next', nextMine ? '다음 · 우리 집' : '다음 예고', next)}</div>
+            ${ev}${dutyData.info && !u.s ? `<div class="dp-info">${escapeHtml(dutyData.info)}</div>` : ''}</div>
+            <div class="dp-btns"><button type="button" class="ghost" onclick="dpClose(1)">전체 순서</button><button type="button" class="pri" onclick="dpClose()">확인했어요</button></div>`;
+    }
+    function dpClose(all) {
+        if (dpCur) { const s = dpSeen(), same = s.d === dpCur.u.d; try { localStorage.setItem(DP_KEY, JSON.stringify({ d: dpCur.u.d, f: dpCur.fri || (same && s.f) ? 1 : 0 })); } catch (e) {} }
+        dpCur = null;
+        closeModal('dpModal');
+        if (all) openDutyModal(); else wnCheck();
+    }
     function openNoticeEditor(id) {
         if (!canEditSchedule()) return;
         const n = id ? noticeList.find(x => x.id === id) : null;
