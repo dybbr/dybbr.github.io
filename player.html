@@ -1928,8 +1928,39 @@
             seek.value = 0; showTime();
             kara.reset();
             markList();
+            setMeta();
             if (andPlay) play();
         }
+        // 🚗 v2.151.1: 차량 · 블루투스 · 이어폰 · 잠금 화면의 ⏮ ⏯ ⏭ 키 (음악 탭 큰 플레이어와 같게) — 뺀 곡 · 모두에게 숨긴 곡은 건너뜀
+        function setMeta() {
+            if (!('mediaSession' in navigator) || !box._song) return;
+            try {
+                const art = n => new URL('icons/icon-' + n + '.png', location.href).href;
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: box._song.label || (p.name + ' 주제곡'), artist: p.name + (p.fam ? '' : ' · ' + (parseInt(String(p.grade || '').replace(/[^0-9]/g, ''), 10) || '') + '학년 ' + (p.no || '') + '번'), album: '대연초 야구부 주제곡',
+                    artwork: [{ src: art(192), sizes: '192x192', type: 'image/png' }, { src: art(512), sizes: '512x512', type: 'image/png' }]
+                });
+            } catch (e) {}
+        }
+        function step(dir) {
+            const off = cheerOffKeys(p), n = vers.length;
+            for (let k = 1; k <= n; k++) {
+                const j = ((box._idx + dir * k) % n + n) % n;
+                if (!off.has(vers[j].key) && !vers[j].hidAll) { select(j, true); return; }
+            }
+            select(box._idx, true);
+        }
+        if ('mediaSession' in navigator) {
+            const on = (k, f) => { try { navigator.mediaSession.setActionHandler(k, f); } catch (e) {} };
+            on('play', () => play());
+            on('pause', () => audio.pause());
+            on('nexttrack', () => step(1));
+            on('previoustrack', () => { if (audio.currentTime > 3) { audio.currentTime = 0; showTime(); } else step(-1); });
+            on('seekto', d => { if (d && typeof d.seekTime === 'number' && isFinite(audio.duration)) { audio.currentTime = d.seekTime; showTime(); } });
+        }
+        const msState = s => { try { if ('mediaSession' in navigator) navigator.mediaSession.playbackState = s; } catch (e) {} };
+        audio.addEventListener('playing', () => { setMeta(); msState('playing'); });
+        audio.addEventListener('pause', () => msState('paused'));
         btn.addEventListener('click', function () { if (audio.paused) play(); else audio.pause(); });
         if (prev) prev.addEventListener('click', () => select(box._idx - 1, !audio.paused));
         if (next) next.addEventListener('click', () => select(box._idx + 1, !audio.paused));
