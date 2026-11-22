@@ -1,11 +1,11 @@
 // ==========================================================
-// ⚾ 대연초 야구부 관리 시스템 통합 백엔드 API (v2.45.0)
+// ⚾ 대연초 야구부 관리 시스템 통합 백엔드 API (v2.46.0)
 // ==========================================================
 // ★ API_KEY 는 코드에 적지 않고 「프로젝트 설정 → 스크립트 속성」의 API_KEY 에 넣어 둡니다 (v2.36.0~).
 //   값은 index.html / player.html 의 API_KEY 와 "같은 값"이어야 합니다. 속성이 비어 있으면 모든 요청을 거절합니다.
 var API_KEY = PropertiesService.getScriptProperties().getProperty("API_KEY") || null;
 
-var ALLOWED_POST_ACTIONS = ["login", "logout", "uploadPhoto", "deletePhoto", "submitOrder", "cancelOrder", "registerContact", "setUniformActive", "setJerseyColors", "changeAdminPw", "updatePlayerInfo", "setHiddenSongs", "songPlays", "bkaMiss", "saveEvents", "deleteEvent", "saveNotice", "deleteNotice", "saveVenue", "deleteVenue"];   // v2.14.0: 실시간 접속 알림(presence) 없앰 · v2.15.0: 보안 활동 로그(logActivity) 없앰 · v2.20.0: 공지 읽음(viewNotice) 없앰
+var ALLOWED_POST_ACTIONS = ["login", "logout", "uploadPhoto", "deletePhoto", "submitOrder", "cancelOrder", "registerContact", "setUniformActive", "setJerseyColors", "changeAdminPw", "updatePlayerInfo", "setHiddenSongs", "songPlays", "bkaMiss", "saveEvents", "deleteEvent", "saveNotice", "deleteNotice", "saveVenue", "deleteVenue", "saveGameRecord"];   // v2.14.0: 실시간 접속 알림(presence) 없앰 · v2.15.0: 보안 활동 로그(logActivity) 없앰 · v2.20.0: 공지 읽음(viewNotice) 없앰
 var ALLOWED_ORDER_ITEMS = ["모자", "바지 (허리)", "바지 (기장)", "유니폼상의", "여름훈련티", "겨울훈련티", "바람막이", "풀오버", "겨울점퍼", "응원복"];   // v2.41.0: 📣 응원복 (학부모 응원용)
 
 // ★ 1. 드라이브 권한 및 폴더 생성 테스트 함수
@@ -214,7 +214,8 @@ var DATA_KEYS = ["C_ROSTER", "C_GRADS", "C_EVENTS", "C_VENUES", "C_NOTICES", "C_
 var DATA_DROP = {   // (구장 이름을 바꿔 일정 장소까지 바뀌면 handleSaveVenue 가 일정 칸도 따로 비움)
   uploadPhoto: ["C_ROSTER", "C_GRADS"], deletePhoto: ["C_ROSTER", "C_GRADS"], updatePlayerInfo: ["C_ROSTER", "C_DUTY"], setHiddenSongs: ["C_ROSTER"], registerContact: ["C_ROSTER", "C_OFFICERS", "C_DUTY"],
   saveEvents: ["C_EVENTS"], deleteEvent: ["C_EVENTS"], saveVenue: ["C_VENUES"], deleteVenue: ["C_VENUES"],
-  saveNotice: ["C_NOTICES"], deleteNotice: ["C_NOTICES"]
+  saveNotice: ["C_NOTICES"], deleteNotice: ["C_NOTICES"],
+  saveGameRecord: ["C_EVENTS"]   // ⚾ v2.46.0: 일정의 「결과」 칸도 같이 바뀜
 };
 function cacheGetBig(key) {
   try {
@@ -1069,6 +1070,8 @@ function doPost(e) {
       if (!canEditScheduleRole(role)) return json({ result: "error", message: "일정/공지를 수정할 권한이 없습니다." });
     } else if (a === "saveVenue" || a === "deleteVenue") {   // v2.7.0: 🏟️ 구장 정보는 대표님 · 개발자만
       if (!(role === "super" || role === "dev")) return json({ result: "error", message: "구장 정보는 대표님만 수정할 수 있습니다." });
+    } else if (a === "saveGameRecord") {   // ⚾ v2.46.0: 경기 기록은 대표님 · 개발자만
+      if (!(role === "super" || role === "dev")) return json({ result: "error", message: "경기 기록은 대표님만 저장할 수 있습니다." });
     } else if (a === "setUniformActive" || a === "setJerseyColors") {
       if (!(role === "super" || role === "dev")) return json({ result: "error", message: "권한이 없습니다." });
     } else if (a === "setHiddenSongs" && (role === "sub" || role === "general")) {
@@ -1097,6 +1100,7 @@ function doPost(e) {
       case "deleteEvent":       return handleDeleteEvent(ss, data);
       case "saveVenue":         return handleSaveVenue(ss, data);     // v2.6.0: 📍 구장 등록/수정
       case "deleteVenue":       return handleDeleteVenue(ss, data);
+      case "saveGameRecord":    return handleSaveGameRecord(ss, data);   // ⚾ v2.46.0
       case "saveNotice":        return handleSaveNotice(ss, data);
       case "deleteNotice":      return handleDeleteNotice(ss, data);
       case "submitOrder":       return handleSubmitOrder(ss, data, session);
@@ -1773,8 +1777,19 @@ function doGet(e) {
         try { bo.duty = dutyPublic(readDuty(ss)); } catch (eB4) {}   // 🧹 v2.31.0: 부실 청소 당번 (보호자 · 관리자만)
       }
       try { bo.pop = songPopList(ss); } catch (eB5) {}   // 📊 v2.44.0: 학부모 화면 인기곡 (곡 id 순서만)
+      try { if (canSeeBoard(role)) bo.gameRecs = gameRecIds(); } catch (eB6) {}   // ⚾ v2.46.0: 기록표가 있는 경기(일정 ID) 목록 — 시트 안 읽음(속성 한 칸)
       bo.bka = 1;   // 🦉 v2.45.0: 「못 알아들은 말 받기(bkaMiss)」를 아는 서버라는 표시 → 사이트가 이걸 본 뒤에만 보냄
       return json(bo);
+    }
+
+    // ⚾ v2.46.0: 경기 기록 한 경기 읽기 — 운영진만 (학부모 공개는 대표님이 정한 뒤)
+    if (p.action === "oppTeams") {   // 상대 팀 선수 명단 — 대표님 · 개발자만 (다른 학교 아이들 이름이라 학부모 화면에는 안 보냄)
+      if (!(role === "super" || role === "dev")) return json({ result: "error", message: "대표님만 볼 수 있어요." });
+      return json({ result: "success", teams: readOppTeams(ss) });
+    }
+    if (p.action === "gameRecord") {
+      if (!session || !isAdminRole(role)) return json({ result: "error", message: "운영진만 볼 수 있어요." });
+      return json(readGameRecord(ss, cleanId(p.id, 40)));
     }
 
     // [0-3] 📅 일정 / 📢 공지사항 조회 (로그인한 사람만)
@@ -3346,4 +3361,79 @@ function isGradPlayer(ss, no, name) {
 function testSeasonPreview() {
   var pv = seasonPreviewData(SpreadsheetApp.getActiveSpreadsheet());
   Logger.log(JSON.stringify(pv));
+}
+
+
+// ==========================================================
+// ⚾ v2.46.0: 경기 기록 — 시트 「경기기록」 탭 (한 경기 한 줄)
+//   · 사이트는 경기 중에 휴대폰에만 저장하고, 끝난 뒤 「보내기」 한 번에 이 줄을 통째로 보냄 (같은 경기를 다시 보내면 덮어씀)
+//   · 기록 칸은 JSON 글 (한 칸 5만 자 제한 → 4만 자씩 4칸까지 나눠 담음)
+//   · 일정 ID가 있으면 그 일정의 「결과」 칸(예: 승 9:6)도 같이 채움 → 사이트의 경기 결과 카드가 그대로 뜸
+// ==========================================================
+var GAMEREC_SHEET_NAME = "경기기록";
+var GAMEREC_HEADERS = ["경기ID", "일정ID", "날짜", "대회", "상대", "우리점수", "상대점수", "결과", "수정일시", "기록1", "기록2", "기록3", "기록4"];
+function gameRecIds() {
+  try { return JSON.parse(PropertiesService.getScriptProperties().getProperty("GAME_REC_IDS") || "[]"); } catch (e) { return []; }
+}
+function handleSaveGameRecord(ss, data) {
+  var r = data.rec || {};
+  var id = cleanId(r.id, 40);
+  if (!id) return json({ result: "error", message: "경기 ID가 없습니다." });
+  var body = String(r.json || "");
+  if (body.length > 160000) return json({ result: "error", message: "기록이 너무 깁니다." });
+  try { JSON.parse(body); } catch (e) { return json({ result: "error", message: "기록 형식이 올바르지 않습니다." }); }
+  var sh = ensureSheet(ss, GAMEREC_SHEET_NAME, GAMEREC_HEADERS);
+  var evId = cleanId(r.eventId, 30);
+  var us = Math.max(0, Math.min(99, parseInt(r.us, 10) || 0)), them = Math.max(0, Math.min(99, parseInt(r.them, 10) || 0));
+  var res = (us > them ? "승 " : us < them ? "패 " : "무 ") + us + ":" + them;
+  var stamp = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm");
+  var row = [id, evId, cleanText(r.date, 10), cleanText(r.title, 60), cleanText(r.opp, 30), String(us), String(them), res, stamp];
+  for (var i = 0; i < 4; i++) row.push(body.substring(i * 40000, (i + 1) * 40000));
+  var at = findRowById(sh, id);
+  writeRow(sh, at === -1 ? sh.getLastRow() + 1 : at, row);
+  if (evId) {
+    var ids = gameRecIds();
+    if (ids.indexOf(evId) === -1) { ids.push(evId); if (ids.length > 400) ids = ids.slice(ids.length - 400); PropertiesService.getScriptProperties().setProperty("GAME_REC_IDS", JSON.stringify(ids)); }
+    if (r.setResult === true || r.setResult === "true") {   // 일정의 「결과」 칸만 고침 (다른 칸은 그대로)
+      var es = getScheduleSheet(ss), er = findRowById(es, evId), col = SCHEDULE_KEYS.indexOf("result") + 1;
+      if (er !== -1 && col > 0) { var c = es.getRange(er, col); c.setNumberFormat("@"); c.setValue(res); }
+    }
+  }
+  try { if (r.oppTeam && r.oppTeam.name) saveOppTeam(ss, r.oppTeam, stamp); } catch (eO) {}
+  return json({ result: "success", id: id, updated: stamp });
+}
+// 상대 팀 선수 명단 — 시트 「상대팀」 탭 (팀 · 배번 · 이름 · 수비 · 수정일시). 한 팀을 보낼 때마다 그 팀 줄을 통째로 바꿈
+var OPP_SHEET_NAME = "상대팀";
+var OPP_HEADERS = ["팀", "배번", "이름", "수비", "수정일시"];
+function saveOppTeam(ss, team, stamp) {
+  var name = cleanText(team.name, 20), list = Array.isArray(team.players) ? team.players.slice(0, 40) : [];
+  if (!name) return;
+  var sh = ensureSheet(ss, OPP_SHEET_NAME, OPP_HEADERS);
+  var last = sh.getLastRow(), keep = [];
+  if (last >= 2) { var vals = sh.getRange(2, 1, last - 1, OPP_HEADERS.length).getValues(); for (var i = 0; i < vals.length; i++) if (String(vals[i][0]) && String(vals[i][0]) !== name) keep.push(vals[i].map(String)); }
+  for (var k = 0; k < list.length; k++) {
+    var no = String(list[k].no == null ? "" : list[k].no).replace(/[^0-9]/g, "").substring(0, 3), nm = cleanText(list[k].name, 10);
+    if (no || nm) keep.push([name, no, nm, cleanText(list[k].pos, 4), stamp]);
+  }
+  if (last >= 2) sh.getRange(2, 1, last - 1, OPP_HEADERS.length).clearContent();
+  if (keep.length) { var rng = sh.getRange(2, 1, keep.length, OPP_HEADERS.length); rng.setNumberFormat("@"); rng.setValues(keep); }
+}
+function readOppTeams(ss) {
+  var sh = ss.getSheetByName(OPP_SHEET_NAME), out = {};
+  if (!sh || sh.getLastRow() < 2) return out;
+  var vals = sh.getRange(2, 1, sh.getLastRow() - 1, 4).getValues();
+  for (var i = 0; i < vals.length; i++) { var t = String(vals[i][0] || "").trim(); if (!t) continue; (out[t] = out[t] || []).push({ no: String(vals[i][1] || ""), name: String(vals[i][2] || ""), pos: String(vals[i][3] || "") }); }
+  return out;
+}
+function readGameRecord(ss, id) {
+  if (!id) return { result: "error", message: "경기 ID가 없습니다." };
+  var sh = ss.getSheetByName(GAMEREC_SHEET_NAME);
+  if (!sh || sh.getLastRow() < 2) return { result: "none" };
+  var vals = sh.getRange(2, 1, sh.getLastRow() - 1, GAMEREC_HEADERS.length).getValues();
+  for (var i = vals.length - 1; i >= 0; i--) {
+    if (String(vals[i][0]) === id || String(vals[i][1]) === id) {   // 경기 ID 또는 일정 ID로 찾음
+      return { result: "success", id: String(vals[i][0]), updated: String(vals[i][8]), json: String(vals[i][9]) + String(vals[i][10]) + String(vals[i][11]) + String(vals[i][12]) };
+    }
+  }
+  return { result: "none" };
 }
