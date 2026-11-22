@@ -230,7 +230,7 @@
                         + (es.length && ends[i + '|' + s + '|' + pi] ? `<span class="endm">//</span>` : '');
                     tds += `<td class="${isCur ? 'cur' : ''}"${ro ? '' : ` data-a="cellempty" data-t="${t}" data-i="${i}" data-s="${s}"`}>${inner}</td>`;
                 }
-                rows += `<tr class="${pi ? 'subrow' : ''}"><td class="od">${pi ? '' : s}</td><td class="nm"${ro ? '' : ` data-a="who" data-t="${t}" data-s="${s}" data-p="${pi}"`}><b>${esc(p.no)}</b> ${p.name ? esc(p.name) : (p.no === '' ? '<u>배번 넣기</u>' : '')}<small>${esc(p.pos || '')}</small></td>${tds}<td class="tt">${st.ab}</td><td class="tt">${st.h}</td><td class="tt">${st.rbi}</td></tr>`;
+                rows += `<tr class="${pi ? 'subrow' : ''}"><td class="od">${pi ? '' : s}</td><td class="nm"${ro ? '' : ` data-a="who" data-t="${t}" data-s="${s}" data-p="${pi}"`}><b>${esc(p.no)}</b> ${p.name ? esc(p.name) : (p.no === '' && !ro ? '<u>배번 넣기</u>' : '')}<small>${esc(p.pos || '')}</small></td>${tds}<td class="tt">${st.ab}</td><td class="tt">${st.h}</td><td class="tt">${st.rbi}</td></tr>`;
             });
         });
         const head = Array.from({ length: n }, (_, k) => `<th>${k + 1}회</th>`).join('');
@@ -442,7 +442,7 @@
 
     // ---------- 바깥에서 부르는 것 ----------
     function canRecord() { try { return isAuthValid() && (currentRole === 'super' || currentRole === 'dev'); } catch (e) { return false; } }
-    function canView() { try { return isAuthValid() && ['super', 'dev', 'sub', 'general'].indexOf(currentRole) !== -1; } catch (e) { return false; } }
+    function canView() { try { return isAuthValid(); } catch (e) { return false; } }   // v2.153.1: 학부모도 기록표를 봄 (상대 팀 이름은 서버가 빼고 줌)
     function open(evId) {
         const ev = evId ? schedEvents.find(x => x.id === evId) : null;
         const loc = evId ? localFor(evId) : null;

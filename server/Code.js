@@ -1782,14 +1782,18 @@ function doGet(e) {
       return json(bo);
     }
 
-    // ⚾ v2.46.0: 경기 기록 한 경기 읽기 — 운영진만 (학부모 공개는 대표님이 정한 뒤)
+    // ⚾ v2.46.0: 경기 기록 한 경기 읽기 — 로그인한 사람 모두 (학부모는 상대 팀 이름 없이)
     if (p.action === "oppTeams") {   // 상대 팀 선수 명단 — 대표님 · 개발자만 (다른 학교 아이들 이름이라 학부모 화면에는 안 보냄)
       if (!(role === "super" || role === "dev")) return json({ result: "error", message: "대표님만 볼 수 있어요." });
       return json({ result: "success", teams: readOppTeams(ss) });
     }
     if (p.action === "gameRecord") {
-      if (!session || !isAdminRole(role)) return json({ result: "error", message: "운영진만 볼 수 있어요." });
-      return json(readGameRecord(ss, cleanId(p.id, 40)));
+      if (!session || !canSeeBoard(role)) return json({ result: "error", message: "로그인한 뒤에 볼 수 있어요." });   // 학부모도 봄 (11-22 하코)
+      var gr = readGameRecord(ss, cleanId(p.id, 40));
+      if (gr.result === "success" && !isAdminRole(role)) {   // 학부모에게는 상대 팀 선수 이름을 빼고 배번만 (다른 학교 아이들 이름)
+        try { var gj = JSON.parse(gr.json); ((gj.tm && gj.tm.them && gj.tm.them.ln) || []).forEach(function (sl) { (sl.ps || []).forEach(function (q) { q.name = ""; }); }); gr.json = JSON.stringify(gj); } catch (eG) { return json({ result: "none" }); }
+      }
+      return json(gr);
     }
 
     // [0-3] 📅 일정 / 📢 공지사항 조회 (로그인한 사람만)
