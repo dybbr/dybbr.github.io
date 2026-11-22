@@ -160,14 +160,16 @@
     function grades() { const o = []; roster().forEach(q => { const g = String(q.grade || '?'); if (o.indexOf(g) === -1) o.push(g); }); return o; }
     // 우리 팀 타순 고르기 — 학년별로 (시안 A 학년 탭 · B 학년별 묶음 · C 학년 골라 보기)
     function pickBtn(q, used) { const n = used[q.no + '|' + q.name]; return `<button type="button" data-a="lnpick" data-no="${esc(q.no)}" data-name="${esc(q.name)}" class="${n ? 'on' : ''}">${n ? `<i>${n}</i>` : ''}<b>${esc(q.no)}</b>${esc(q.name)}</button>`; }
-    const GV = '';   // 하코가 시안을 고르면 'A' · 'B' · 'C' 중 하나로 (지금은 예전처럼 한 줄 목록)
+    const GV = 'B';   // 11-22 하코 선택: B 학년별 묶음 (A 학년 탭 · C 학년 골라 보기도 코드에 남겨 둠)
     function rosterPick(used) {
-        const R = roster(), gs = grades(), gv = lsGet('daeyeon_sb_gv') || GV;
+        const R = roster(), gs = grades(), gv = GV;
         if (!R.length) return '<p class="hint">선수 명단을 아직 못 받았어요. 앱을 한 번 새로고침해 주세요.</p>';
         const cnt = g => R.filter(q => String(q.grade) === g && used[q.no + '|' + q.name]).length;
         const gl = g => (g === '?' ? '학년 없음' : g + '학년');
         if (gv === 'B') {
-            if (!ui.gOpen) ui.gOpen = gs.slice(0, 2);
+            const eg = String((G && G.grades) || '').split(',').map(x => x.trim()).filter(x => gs.indexOf(x) !== -1);   // 일정의 대상 학년을 맨 위에
+            if (eg.length) { gs.sort((x, y) => (eg.indexOf(x) === -1) - (eg.indexOf(y) === -1) || Number(y) - Number(x)); }
+            if (!ui.gOpen) { if (eg.length === 1) { const g = eg[0], up = String(Number(g) + 1), dn = String(Number(g) - 1); ui.gOpen = [g, gs.indexOf(up) !== -1 ? up : dn]; } else ui.gOpen = eg.length ? eg.slice() : gs.slice(0, 2); }
             return gs.map(g => { const L = R.filter(q => String(q.grade) === g), op = ui.gOpen.indexOf(g) !== -1 || cnt(g) > 0;
                 return `<div class="sb-gsec"><button type="button" class="gh${op ? ' op' : ''}" data-a="gopen" data-g="${esc(g)}"><b>${gl(g)}</b> ${L.length}명${cnt(g) ? ` · <em>${cnt(g)}명 골랐어요</em>` : ''}<span>${op ? '접기 ▴' : '펼치기 ▾'}</span></button>${op ? `<div class="plist pick">${L.map(q => pickBtn(q, used)).join('')}</div>` : ''}</div>`; }).join('');
         }
@@ -183,7 +185,7 @@
     function newGame(ev) {
         const id = 'G' + (ev && ev.id ? String(ev.id).replace(/[^A-Za-z0-9_-]/g, '') : Date.now().toString(36));
         const d = new Date(), today = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-        return { v: 1, id: id, ev: ev ? ev.id : '', date: ev ? ev.date : today, title: ev ? (ev.title && ev.title !== ev.type ? ev.title : ev.type) : '', place: ev ? (ev.place || '') : '', start: ev ? (ev.start || '') : '',
+        return { v: 1, id: id, ev: ev ? ev.id : '', date: ev ? ev.date : today, title: ev ? (ev.title && ev.title !== ev.type ? ev.title : ev.type) : '', place: ev ? (ev.place || '') : '', grades: ev ? String(ev.grades || '') : '', start: ev ? (ev.start || '') : '',
             first: 'them', recThem: true, tm: { us: { name: '대연초', ln: [] }, them: { name: ev && ev.opponent ? ev.opponent : '상대', ln: [] } },
             log: [], runs: { us: {}, them: {} }, adj: { us: {}, them: {} }, cur: { t: 'them', i: 1, s: 1 }, nx: { us: 1, them: 1 }, seq: 0, done: false, sentAt: 0, begun: false };
     }
