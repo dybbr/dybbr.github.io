@@ -1,8 +1,6 @@
 /* ⚾ 경기 기록 (v2.153.0) — 휴대폰 먼저 · 야외 햇빛에서도 보이게 밝은 화면 한 가지 */
 html.sb-open, html.sb-open body { overflow: hidden !important; }
 html.sb-open .ui-zoom-ctrl, html.sb-open .bk-upd { display: none !important; }
-html.sb-open, html.sb-open body { overscroll-behavior: none; }
-.sb, .sb * { overscroll-behavior: contain; }
 .sb { --navy:#0b2240; --navy2:#163868; --red:#c8102e; --bg:#f4f6f9; --line:#dfe5ee; --t:#0f172a; --s:#5b6577; --hit:#15803d; --out:#475569; --walk:#2563eb; --err:#c2620a;
   position: fixed; inset: 0; z-index: 9000; background: var(--bg); color: var(--t); display: none; font-size: 15px; line-height: 1.35;
   padding: env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe-area-inset-bottom,0) env(safe-area-inset-left,0); color-scheme: light; }
