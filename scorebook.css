@@ -206,3 +206,39 @@ html.sb-open .ui-zoom-ctrl, html.sb-open .bk-upd { display: none !important; }
 .sb-gsec .gh em { color: var(--red); font-style: normal; font-weight: 800; }
 .sb-gsec .gh span { margin-left: auto; font-size: 12px; color: var(--s); }
 .sb-gsec .plist { padding: 0 8px 4px; }
+/* v2.153.5 휴대폰 배치 — 기록표 9명이 보이게 */
+@media (max-width: 759px) {
+  .sb-body.lay .sb-main { gap: 5px; padding: 5px 6px 6px; }
+  .sb-body.lay .sb-status { padding: 3px 8px; } .sb-body.lay .sb-status .inn { font-size: 15px; } .sb-body.lay .sb-status .sc b { font-size: 17px; }
+  .sb-body.lay .sb-sheetbox { padding: 4px; } .sb-body.lay .sb-stabs { margin-bottom: 3px; } .sb-body.lay .sb-stabs button { padding: 3px; font-size: 12px; }
+  .sb-body.lay .sb-sheet th { height: 22px; font-size: 11px; }
+  .sb-body.lay .sb-now { min-height: 36px; padding: 3px 8px; } .sb-body.lay .sb-now .nm { font-size: 17px; } .sb-body.lay .sb-now .no { font-size: 16px; }
+  .sb-body.lay .sb-pad { padding: 5px; }
+  .sb-body.lay .sb-undo { min-height: 36px; padding: 3px 4px 3px 12px; } .sb-body.lay .sb-undo button { min-height: 30px; padding: 0 12px; font-size: 14px; }
+  .sb-body.lay .sb-tools button { min-height: 38px; font-size: 13px; }
+  .sb-body.layA .sb-sheet th, .sb-body.layA .sb-sheet td { height: 31px; } .sb-body.layA .sb-sheet td { padding: 0 3px; }
+  .sb-body.layA .pb .kb { min-height: 36px; font-size: 13.5px; border-radius: 9px; } .sb-body.layA .g5 { gap: 4px; }
+  .sb-body.layA .sb-dirs { margin-top: 4px; } .sb-body.layA .sb-dirs button { min-height: 36px; font-size: 16px; }
+  .sb-body.layB .sb-sheet td { height: 33px; padding: 0 3px; }
+  .sb-body.layB .pb .kb { min-height: 42px; font-size: 14.5px; }
+  .sb-body.layB .sb-dirs { margin-top: 5px; } .sb-body.layB .sb-dirs button { min-height: 42px; }
+  .sb-body.layC .sb-sheet td { height: 35px; padding: 0 3px; }
+  .sb-body.layC .pb .kb { min-height: 42px; font-size: 15px; }
+  .sb-body.layC .sb-dirs.big { margin-top: 0; } .sb-body.layC .sb-dirs.big button { min-height: 46px; font-size: 18px; }
+}
+.sb .kb.etc { background: #e2e8f0; color: var(--navy) !important; }
+.sb-more { position: absolute; left: 5px; right: 5px; bottom: calc(100% + 4px); display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; background: #fff; border: 2px solid var(--navy); border-radius: 12px; padding: 6px; box-shadow: 0 -6px 20px #0b224033; z-index: 6; }
+.sb-more .kb { min-height: 46px !important; } .sb-more .kb.x { background: #fff; color: var(--navy) !important; border: 2px solid var(--line); }
+.sb .lc .nod { margin-top: 5px; }
+.sb .lc .lcbar { display: flex; align-items: center; gap: 6px; margin-top: 5px; font-size: 12px; color: var(--s); font-weight: 700; }
+.sb .lc .lcbar span { flex: 1; } .sb .lc .lcbar .kb { min-height: 38px !important; padding: 0 12px; font-size: 13px; }
+.sb .lc .lcbar > button[data-a="dirx"] { border: 2px solid var(--line); background: #fff; border-radius: 9px; min-height: 38px; padding: 0 10px; font-weight: 800; font-size: 13px; color: var(--navy); }
+/* 아이콘 도구 줄 · 기호 글자 버튼 (휴대폰 배치 시안) */
+.sb-tools.ic { grid-template-columns: 1.1fr 1fr 1fr 1fr 1.15fr 0.9fr; gap: 4px; }
+.sb-tools.ic button { min-height: 44px; padding: 2px 0; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; line-height: 1.05; border-radius: 10px; }
+.sb-tools.ic button b { font-size: 17px; line-height: 1.1; }
+.sb-tools.ic button.un { background: #fde047; border-color: #facc15; color: var(--navy); }
+.sb-msg { background: var(--navy); color: #fff; border-radius: 10px; padding: 6px 12px; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sb .kb .sy2 { display: block; font-size: 18px; font-weight: 900; line-height: 1; }
+.sb .kb .sy2 + small { display: block; font-size: 9.5px; font-weight: 700; opacity: .9; margin-top: 2px; }
+.sb-fin { border: 0; background: #facc15; color: #0b2240 !important; border-radius: 9px; height: 32px; padding: 0 10px; font-weight: 900; font-size: 13px; white-space: nowrap; }
