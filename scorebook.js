@@ -162,6 +162,7 @@
     // 우리 팀 타순 고르기 — 학년별로 (시안 A 학년 탭 · B 학년별 묶음 · C 학년 골라 보기)
     function pickBtn(q, used) { const n = used[q.no + '|' + q.name]; return `<button type="button" data-a="lnpick" data-no="${esc(q.no)}" data-name="${esc(q.name)}" class="${n ? 'on' : ''}">${n ? `<i>${n}</i>` : ''}<b>${esc(q.no)}</b>${esc(q.name)}</button>`; }
     const LAY = (typeof window !== 'undefined' && window.SB_LAY) || 'B';   // 11-22 하코 선택: B 자주 쓰는 9개 + 「기타」 (A 기호 글자 · C 방향 먼저도 코드에 남겨 둠)
+    const TAB = (typeof window !== 'undefined' && window.SB_TAB) || '3';   // 11-22 하코 선택: 3 방향 맞춤 (태블릿 세로 = 위아래, 가로 · PC = 좌우)
     const GV = 'B';   // 11-22 하코 선택: B 학년별 묶음 (A 학년 탭 · C 학년 골라 보기도 코드에 남겨 둠)
     function rosterPick(used) {
         const R = roster(), gs = grades(), gv = GV;
@@ -322,7 +323,7 @@
         if (ui.panel === 'sheet') over = `<div class="sb-over full"><div class="sb-panel full" data-stop="1"><h3>📋 기록표 <small>칸을 누르면 고쳐요</small></h3>${sheet}<button type="button" class="big" data-a="panel-x">닫기</button></div></div>`;
         const input = on ? `${nowLine()}${padHtml(m)}` : simpleThem();
         return `${topBar((G.title || '경기') + ' · vs ' + G.tm.them.name, `${G.done ? '' : `<button type="button" class="sb-fin" data-a="finish">🏁 경기 끝</button>`}<button type="button" class="sb-mode" data-a="menu" aria-label="설정">${LAY ? '⚙ 설정' : m + '안 ▾'}</button>`)}
-        <div class="sb-body m${m}${on ? '' : ' simple'}${LAY ? ' lay' + LAY : ''}"><div class="sb-main">${G.done ? `<button type="button" class="sb-donebar" data-a="finish">🏁 경기 끝 · 다 고쳤으면 여기를 눌러 보내기</button>` : ''}${statusHtml()}${m === 'B' && on ? sheet : ''}${input}${toolsHtml()}${m !== 'B' || !on ? `<button type="button" class="sb-sheetbtn" data-a="sheet">📋 기록표 보기 · 고치기</button>` : ''}</div><div class="sb-side">${boardHtml(false)}${sheet}</div></div>${over}`;
+        <div class="sb-body m${m}${on ? '' : ' simple'}${LAY ? ' lay' + LAY : ''}${TAB ? ' tab' + TAB : ''}"><div class="sb-main">${G.done ? `<button type="button" class="sb-donebar" data-a="finish">🏁 경기 끝 · 다 고쳤으면 여기를 눌러 보내기</button>` : ''}${statusHtml()}${m === 'B' && on ? sheet : ''}${input}${toolsHtml()}${m !== 'B' || !on ? `<button type="button" class="sb-sheetbtn" data-a="sheet">📋 기록표 보기 · 고치기</button>` : ''}</div><div class="sb-side">${boardHtml(false)}${sheet}</div></div>${over}`;
     }
     function whoPanel() {
         const w = ui.who, sl = slotOf(w.t, w.s), p = sl.ps[w.p] || {};
