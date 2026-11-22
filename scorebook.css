@@ -1,6 +1,8 @@
 /* ⚾ 경기 기록 (v2.153.0) — 휴대폰 먼저 · 야외 햇빛에서도 보이게 밝은 화면 한 가지 */
 html.sb-open, html.sb-open body { overflow: hidden !important; }
 html.sb-open .ui-zoom-ctrl, html.sb-open .bk-upd { display: none !important; }
+html.sb-open, html.sb-open body { overscroll-behavior: none; }
+.sb, .sb * { overscroll-behavior: contain; }
 .sb { --navy:#0b2240; --navy2:#163868; --red:#c8102e; --bg:#f4f6f9; --line:#dfe5ee; --t:#0f172a; --s:#5b6577; --hit:#15803d; --out:#475569; --walk:#2563eb; --err:#c2620a;
   position: fixed; inset: 0; z-index: 9000; background: var(--bg); color: var(--t); display: none; font-size: 15px; line-height: 1.35;
   padding: env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe-area-inset-bottom,0) env(safe-area-inset-left,0); color-scheme: light; }
@@ -190,3 +192,19 @@ html.sb-open .ui-zoom-ctrl, html.sb-open .bk-upd { display: none !important; }
 
 .sb .hint.warn { color: #b45309; font-weight: 700; }
 .sb-donebar { width: 100%; border: 0; border-radius: 12px; background: #facc15; color: #0b2240; font-weight: 900; font-size: 15px; padding: 11px; }
+/* v2.153.2 타순 고르기 학년별 */
+.sb-gtabs { display: flex; gap: 5px; overflow-x: auto; margin: 8px 0 4px; }
+.sb-gtabs button, .sb-gchips button { position: relative; flex: 1 0 auto; border: 2px solid var(--line); background: #fff; border-radius: 10px; min-height: 42px; padding: 0 12px; font-weight: 800; font-size: 14px; }
+.sb-gtabs button.on { background: var(--navy); border-color: var(--navy); color: #fff; }
+.sb-gtabs i, .sb-gchips i { position: absolute; right: -4px; top: -6px; background: var(--red); color: #fff; font-style: normal; font-size: 11px; font-weight: 900; border-radius: 9px; min-width: 18px; height: 18px; line-height: 18px; text-align: center; padding: 0 4px; }
+.sb-gchips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 8px 0 4px; }
+.sb-gchips > span { font-size: 12px; color: var(--s); font-weight: 700; margin-right: 2px; }
+.sb-gchips button { flex: 0 0 auto; min-height: 38px; padding: 0 11px; }
+.sb-gchips button.on { background: #e8eefb; border-color: var(--navy); color: var(--navy); }
+.sb-gsec { border: 1px solid var(--line); border-radius: 12px; margin: 6px 0; overflow: hidden; background: #fff; }
+.sb-gsec .gh { width: 100%; display: flex; align-items: center; gap: 6px; border: 0; background: #f1f5f9; min-height: 44px; padding: 0 12px; font-size: 14px; text-align: left; }
+.sb-gsec .gh.op { background: #e8eefb; }
+.sb-gsec .gh b { color: var(--navy); font-size: 15px; }
+.sb-gsec .gh em { color: var(--red); font-style: normal; font-weight: 800; }
+.sb-gsec .gh span { margin-left: auto; font-size: 12px; color: var(--s); }
+.sb-gsec .plist { padding: 0 8px 4px; }

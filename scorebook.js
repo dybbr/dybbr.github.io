@@ -155,7 +155,31 @@
     function setRun(t, i, n) { G.runs[t] = G.runs[t] || {}; G.runs[t][i] = Math.max(0, runs(t, i) + n); save(); draw(); }
 
     // ---------- 새 경기 ----------
-    function roster() { try { return (players || []).slice().sort((a, b) => (Number(b.grade) - Number(a.grade)) || (Number(a.no) - Number(b.no))); } catch (e) { return []; } }
+    function staffG(g) { g = String(g || ''); return /감독|코치|지도자/.test(g); }
+    function roster() { try { return (players || []).filter(q => q && q.name && q.visible !== false && !staffG(q.grade) && !(typeof isStaff === 'function' && isStaff(q.grade))).sort((a, b) => (Number(b.grade) - Number(a.grade)) || (Number(a.no) - Number(b.no))); } catch (e) { return []; } }
+    function grades() { const o = []; roster().forEach(q => { const g = String(q.grade || '?'); if (o.indexOf(g) === -1) o.push(g); }); return o; }
+    // 우리 팀 타순 고르기 — 학년별로 (시안 A 학년 탭 · B 학년별 묶음 · C 학년 골라 보기)
+    function pickBtn(q, used) { const n = used[q.no + '|' + q.name]; return `<button type="button" data-a="lnpick" data-no="${esc(q.no)}" data-name="${esc(q.name)}" class="${n ? 'on' : ''}">${n ? `<i>${n}</i>` : ''}<b>${esc(q.no)}</b>${esc(q.name)}</button>`; }
+    const GV = '';   // 하코가 시안을 고르면 'A' · 'B' · 'C' 중 하나로 (지금은 예전처럼 한 줄 목록)
+    function rosterPick(used) {
+        const R = roster(), gs = grades(), gv = lsGet('daeyeon_sb_gv') || GV;
+        if (!R.length) return '<p class="hint">선수 명단을 아직 못 받았어요. 앱을 한 번 새로고침해 주세요.</p>';
+        const cnt = g => R.filter(q => String(q.grade) === g && used[q.no + '|' + q.name]).length;
+        const gl = g => (g === '?' ? '학년 없음' : g + '학년');
+        if (gv === 'B') {
+            if (!ui.gOpen) ui.gOpen = gs.slice(0, 2);
+            return gs.map(g => { const L = R.filter(q => String(q.grade) === g), op = ui.gOpen.indexOf(g) !== -1 || cnt(g) > 0;
+                return `<div class="sb-gsec"><button type="button" class="gh${op ? ' op' : ''}" data-a="gopen" data-g="${esc(g)}"><b>${gl(g)}</b> ${L.length}명${cnt(g) ? ` · <em>${cnt(g)}명 골랐어요</em>` : ''}<span>${op ? '접기 ▴' : '펼치기 ▾'}</span></button>${op ? `<div class="plist pick">${L.map(q => pickBtn(q, used)).join('')}</div>` : ''}</div>`; }).join('');
+        }
+        if (gv === 'C') {
+            if (!ui.gOn) ui.gOn = gs.slice(0, 2);
+            const L = R.filter(q => ui.gOn.indexOf(String(q.grade)) !== -1);
+            return `<div class="sb-gchips"><span>보일 학년</span>${gs.map(g => `<button type="button" data-a="gchip" data-g="${esc(g)}" class="${ui.gOn.indexOf(g) !== -1 ? 'on' : ''}">${gl(g)}${cnt(g) ? `<i>${cnt(g)}</i>` : ''}</button>`).join('')}</div><div class="plist pick">${L.map(q => pickBtn(q, used)).join('') || '<p class="hint">위에서 학년을 눌러 주세요</p>'}</div>`;
+        }
+        if (gv !== 'A') return `<div class="plist pick">${R.map(q => pickBtn(q, used)).join('')}</div>`;
+        if (!ui.gTab || gs.indexOf(ui.gTab) === -1) ui.gTab = gs[0];
+        return `<div class="sb-gtabs">${gs.map(g => `<button type="button" data-a="gtab" data-g="${esc(g)}" class="${ui.gTab === g ? 'on' : ''}">${gl(g)}${cnt(g) ? `<i>${cnt(g)}</i>` : ''}</button>`).join('')}</div><div class="plist pick">${R.filter(q => String(q.grade) === ui.gTab).map(q => pickBtn(q, used)).join('')}</div>`;
+    }
     function newGame(ev) {
         const id = 'G' + (ev && ev.id ? String(ev.id).replace(/[^A-Za-z0-9_-]/g, '') : Date.now().toString(36));
         const d = new Date(), today = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -306,7 +330,7 @@
         <div class="seg"><span>우리 공격</span><button type="button" data-a="first" data-f="us" class="${G.first === 'us' ? 'on' : ''}">선공 (초)</button><button type="button" data-a="first" data-f="them" class="${G.first === 'them' ? 'on' : ''}">후공 (말)</button></div>
         <div class="seg"><span>상대 타자</span><button type="button" data-a="recthem" data-v="1" class="${G.recThem ? 'on' : ''}">타순별로 기록</button><button type="button" data-a="recthem" data-v="0" class="${G.recThem ? '' : 'on'}">숫자만</button></div></div>
         <div class="card"><h3>우리 팀 타순 <small>누르는 순서대로 1번, 2번… · 다시 누르면 빠져요</small></h3>${last ? `<button type="button" class="big" data-a="lastln">지난 경기 타순 불러오기</button>` : ''}
-        <div class="plist pick">${roster().map(q => { const n = used[q.no + '|' + q.name]; return `<button type="button" data-a="lnpick" data-no="${esc(q.no)}" data-name="${esc(q.name)}" class="${n ? 'on' : ''}">${n ? `<i>${n}</i>` : ''}<b>${esc(q.no)}</b>${esc(q.name)}<small>${esc(q.grade)}학년</small></button>`; }).join('') || '<p class="hint">선수 명단을 아직 못 받았어요. 앱을 한 번 새로고침해 주세요.</p>'}</div>
+        ${rosterPick(used)}
         ${G.tm.us.ln.length ? `<div class="lnlist">${G.tm.us.ln.map((sl, i) => `<div><i>${i + 1}</i><b>${esc(sl.ps[0].no)}</b> ${esc(sl.ps[0].name)}<select data-pos="${i}">${['', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'DH'].map(v => `<option value="${v}"${String(sl.ps[0].pos || '') === v ? ' selected' : ''}>${v ? v + ' ' + DIRPOS[v] : '수비'}</option>`).join('')}</select></div>`).join('')}</div>` : ''}</div>
         ${G.recThem ? oppSetupHtml() : ''}
         <p class="hint">${esc(ui.msg || '상대 팀 명단이 없으면 비워 두고, 경기 중에 타자가 나올 때 배번만 넣어도 돼요.')}</p>
@@ -392,6 +416,9 @@
         // 준비 화면
         if (a === 'first') { keepSetup(); G.first = d.f; draw(); return; }
         if (a === 'recthem') { keepSetup(); G.recThem = d.v === '1'; draw(); return; }
+        if (a === 'gtab') { keepSetup(); ui.gTab = d.g; draw(); return; }
+        if (a === 'gopen') { keepSetup(); const o = ui.gOpen || []; const k = o.indexOf(d.g); if (k === -1) o.push(d.g); else o.splice(k, 1); ui.gOpen = o; draw(); return; }
+        if (a === 'gchip') { keepSetup(); const o = ui.gOn || []; const k = o.indexOf(d.g); if (k === -1) o.push(d.g); else o.splice(k, 1); ui.gOn = o; draw(); return; }
         if (a === 'lastln') { keepSetup(); const l = lastLineup(); if (l && !G.begun) G.tm.us.ln = l; draw(); return; }
         if (a === 'lnpick') {
             keepSetup();
