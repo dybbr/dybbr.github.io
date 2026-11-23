@@ -29,7 +29,9 @@
     </script>
     <!-- 🎵 선수별 주제곡 (v2.92.0) — 곡 목록은 cheer-songs.json (그 파일만 고치면 됨) · cheer-songs.js 를 고칠 때만 아래 ?v= 숫자 올리기 -->
     <script src="cheer-songs.js?v=2.147.0"></script>
-    <script src="song-stat.js?v=2.124.0"></script>   <!-- 📊 v2.124.0: 주제곡 재생 세기 (6시간에 한 번 묶어 보냄) -->
+    <script src="song-stat.js?v=2.124.0"></script>
+    <link rel="stylesheet" href="player-stats.css?v=2.155.0">
+    <script src="player-stats.js?v=2.155.0"></script>   <!-- 📊 v2.155.0: 시즌 기록 카드 (타율 · OPS) -->   <!-- 📊 v2.124.0: 주제곡 재생 세기 (6시간에 한 번 묶어 보냄) -->
 
     <!-- 브라우저 캐시 원천 방지 메타태그 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -1578,8 +1580,10 @@
                         <span class="spec-value">대연초등학교 야구부</span>
                     </div>
                 </div>
+                <div id="psBox"></div>
             </div>
         `;
+        try { if (window.PS) PS.mountCard(document.getElementById('psBox'), p); } catch (e) {}   // 📊 v2.155.0: 시즌 기록 카드
         if (keepCheer && keepCheer.dataset.who === cheerWho(p)) card.querySelector('.profile-body').appendChild(keepCheer);
         else mountCheerSong(p);
         if (keepVid && keepVid.dataset.who === cheerWho(p)) card.querySelector('.profile-body').appendChild(keepVid);

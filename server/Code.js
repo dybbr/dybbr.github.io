@@ -1,5 +1,5 @@
 // ==========================================================
-// ⚾ 대연초 야구부 관리 시스템 통합 백엔드 API (v2.46.0)
+// ⚾ 대연초 야구부 관리 시스템 통합 백엔드 API (v2.47.0)
 // ==========================================================
 // ★ API_KEY 는 코드에 적지 않고 「프로젝트 설정 → 스크립트 속성」의 API_KEY 에 넣어 둡니다 (v2.36.0~).
 //   값은 index.html / player.html 의 API_KEY 와 "같은 값"이어야 합니다. 속성이 비어 있으면 모든 요청을 거절합니다.
@@ -1777,7 +1777,7 @@ function doGet(e) {
         try { bo.duty = dutyPublic(readDuty(ss)); } catch (eB4) {}   // 🧹 v2.31.0: 부실 청소 당번 (보호자 · 관리자만)
       }
       try { bo.pop = songPopList(ss); } catch (eB5) {}   // 📊 v2.44.0: 학부모 화면 인기곡 (곡 id 순서만)
-      try { if (canSeeBoard(role)) bo.gameRecs = gameRecIds(); } catch (eB6) {}   // ⚾ v2.46.0: 기록표가 있는 경기(일정 ID) 목록 — 시트 안 읽음(속성 한 칸)
+      try { if (canSeeBoard(role)) { bo.gameRecs = gameRecIds(); bo.gameRecVer = PropertiesService.getScriptProperties().getProperty("GAME_REC_VER") || ""; } } catch (eB6) {}   // v2.47.0: 기록이 바뀌면 번호가 바뀜 → 사이트가 선수 기록을 다시 받음   // ⚾ v2.46.0: 기록표가 있는 경기(일정 ID) 목록 — 시트 안 읽음(속성 한 칸)
       bo.bka = 1;   // 🦉 v2.45.0: 「못 알아들은 말 받기(bkaMiss)」를 아는 서버라는 표시 → 사이트가 이걸 본 뒤에만 보냄
       return json(bo);
     }
@@ -1786,6 +1786,11 @@ function doGet(e) {
     if (p.action === "oppTeams") {   // 상대 팀 선수 명단 — 대표님 · 개발자만 (다른 학교 아이들 이름이라 학부모 화면에는 안 보냄)
       if (!(role === "super" || role === "dev")) return json({ result: "error", message: "대표님만 볼 수 있어요." });
       return json({ result: "success", teams: readOppTeams(ss) });
+    }
+    // 📊 v2.47.0: 선수 기록(타율 등) 계산용 — 모든 경기의 우리 팀 타순 · 기록만 한 번에 (상대 팀 선수 이름은 안 보냄)
+    if (p.action === "gameStats") {
+      if (!session || !canSeeBoard(role)) return json({ result: "error", message: "로그인한 뒤에 볼 수 있어요." });
+      return json({ result: "success", ver: PropertiesService.getScriptProperties().getProperty("GAME_REC_VER") || "", recs: readGameStats(ss) });
     }
     if (p.action === "gameRecord") {
       if (!session || !canSeeBoard(role)) return json({ result: "error", message: "로그인한 뒤에 볼 수 있어요." });   // 학부모도 봄 (11-22 하코)
@@ -3395,6 +3400,7 @@ function handleSaveGameRecord(ss, data) {
   for (var i = 0; i < 4; i++) row.push(body.substring(i * 40000, (i + 1) * 40000));
   var at = findRowById(sh, id);
   writeRow(sh, at === -1 ? sh.getLastRow() + 1 : at, row);
+  PropertiesService.getScriptProperties().setProperty("GAME_REC_VER", stamp + "|" + id);   // v2.47.0: 선수 기록 다시 받기 신호
   if (evId) {
     var ids = gameRecIds();
     if (ids.indexOf(evId) === -1) { ids.push(evId); if (ids.length > 400) ids = ids.slice(ids.length - 400); PropertiesService.getScriptProperties().setProperty("GAME_REC_IDS", JSON.stringify(ids)); }
@@ -3427,6 +3433,20 @@ function readOppTeams(ss) {
   if (!sh || sh.getLastRow() < 2) return out;
   var vals = sh.getRange(2, 1, sh.getLastRow() - 1, 4).getValues();
   for (var i = 0; i < vals.length; i++) { var t = String(vals[i][0] || "").trim(); if (!t) continue; (out[t] = out[t] || []).push({ no: String(vals[i][1] || ""), name: String(vals[i][2] || ""), pos: String(vals[i][3] || "") }); }
+  return out;
+}
+function readGameStats(ss) {
+  var sh = ss.getSheetByName(GAMEREC_SHEET_NAME), out = [];
+  if (!sh || sh.getLastRow() < 2) return out;
+  var vals = sh.getRange(2, 1, sh.getLastRow() - 1, GAMEREC_HEADERS.length).getValues();
+  for (var i = 0; i < vals.length; i++) {
+    try {
+      var g = JSON.parse(String(vals[i][9]) + String(vals[i][10]) + String(vals[i][11]) + String(vals[i][12]));
+      var ln = ((g.tm && g.tm.us && g.tm.us.ln) || []).map(function (sl) { return { ps: (sl.ps || []).map(function (q) { return { no: String(q.no || ""), name: String(q.name || "") }; }) }; });
+      var log = (g.log || []).filter(function (e) { return e.t === "us" && e.y !== "end"; }).map(function (e) { var o = { y: e.y, i: e.i, s: e.s, p: e.p, k: e.k, d: e.d, r: e.r, w: e.w }; if (e.sc) o.sc = { s: e.sc.s, p: e.sc.p }; return o; });
+      out.push({ id: String(vals[i][0]), ev: String(vals[i][1]), date: String(vals[i][2]), title: String(vals[i][3]), opp: String(vals[i][4]), us: String(vals[i][5]), them: String(vals[i][6]), ln: ln, log: log });
+    } catch (eS) {}
+  }
   return out;
 }
 function readGameRecord(ss, id) {
