@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.153.6 · 경기 기록";
+        const APP_VERSION = "v2.153.7 · 경기 기록";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -117,8 +117,8 @@
     <!-- 🦈 부캉이 그림 (v2.98.0: 따로 뺌 — 그림을 바꿀 때만 아래 ?v= 숫자 올리기) -->
     <link rel="stylesheet" href="bk-img.css?v=2.98.0">
     <!-- ⚾ v2.153.0: 경기 기록 (대표님 · 개발자) — 경기 중엔 이 기기에만 저장, 끝나고 한 번 보냄 -->
-    <link rel="stylesheet" href="scorebook.css?v=2.153.6">
-    <script src="scorebook.js?v=2.153.6" defer></script>
+    <link rel="stylesheet" href="scorebook.css?v=2.153.7">
+    <script src="scorebook.js?v=2.153.7" defer></script>
 
     <style>
         :root {
@@ -5014,7 +5014,7 @@
         try { if (applySettings(r.settings)) updateUniformButtonVisibility(); } catch (e) {}
         if (Array.isArray(r.officers) && canViewSchedule()) setOfficers(r.officers);   // 📞 v2.81.0: 집행부 단축 버튼 (서버 v2.28.0)
         if (Array.isArray(r.pop)) { try { if (window.plPop) window.plPop(r.pop); } catch (e) {} }   // 🔥 v2.124.0: 인기곡 순서 (서버 v2.44.0 · 숫자 없음)
-        try { if (window.SB && Array.isArray(r.gameRecs)) SB.setRecIds(r.gameRecs); } catch (e) {}   // ⚾ v2.153.0: 기록표가 있는 경기 (서버 v2.46.0)
+        if (Array.isArray(r.gameRecs)) { window.SB_REC_IDS = r.gameRecs.slice(); try { if (window.SB) SB.setRecIds(r.gameRecs); } catch (e) {} }   // v2.153.7: 기록표 파일이 늦게 열려도 기억해 둠   // ⚾ v2.153.0: 기록표가 있는 경기 (서버 v2.46.0)
         if (r.duty && canViewSchedule()) setDuty(r.duty, true);   // 🧹 v2.84.0: 부실 청소 당번 (서버 v2.31.0) — 아래 일정 그리기 때 같이 그림
         if (Array.isArray(r.events) && canViewSchedule()) {
             schedEvents = r.events; if (Array.isArray(r.venues)) schedVenues = r.venues; schedLoaded = true; schedFetchedAt = t.sched || Date.now();

@@ -312,3 +312,6 @@ html.sb-open .ui-zoom-ctrl, html.sb-open .bk-upd { display: none !important; }
   .sb-body.tab1 .pb .kb, .sb-body.tab3 .pb .kb { min-height: 76px; font-size: 21px; }
   .sb-body.tab1 .sb-dirs button, .sb-body.tab3 .sb-dirs button { min-height: 72px; font-size: 24px; }
 }
+/* v2.153.7 덮어쓰기 막기 */
+.sb-panel .big.sbdanger { background: #c8102e; color: #fff; border-color: #c8102e; }
+.sb-panel .big.sbghost { background: transparent; color: #64748b; font-size: 13px; border-style: dashed; }

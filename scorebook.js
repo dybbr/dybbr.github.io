@@ -28,7 +28,7 @@
 
     let G = null;          // 지금 열린 경기
     let ui = { screen: '', pick: null, edit: null, sheetT: null, sheetOpen: false, panel: '', ro: false, msg: '' };
-    let recIds = [];       // 서버에 기록표가 있는 일정 ID (bootstrap 이 알려 줌)
+    let recIds = Array.isArray(window.SB_REC_IDS) ? window.SB_REC_IDS.slice() : [];       // 서버에 기록표가 있는 일정 ID (bootstrap 이 알려 줌)
 
     // ---------- 저장 ----------
     function index() { try { return JSON.parse(lsGet(LSI) || '[]'); } catch (e) { return []; } }
@@ -319,6 +319,8 @@
         if (ui.panel === 'menu') over = `<div class="sb-over" data-a="panel-x"><div class="sb-panel" data-stop="1"><h3>${LAY ? '⚙ 설정' : '더보기'}</h3><div class="lbl">입력 방식 (기록은 그대로 이어져요)</div><div class="modes">${Object.keys(MODES).map(k => `<button type="button" data-a="mode" data-m="${k}" class="${k === m ? 'on' : ''}"><b>${k}안</b>${MODES[k]}</button>`).join('')}</div><button type="button" class="row" data-a="run" data-t="${other(t)}">＋ ${esc(G.tm[other(t)].name)} 득점</button><button type="button" class="row" data-a="togthem">${G.recThem ? '상대 타자 기록 끄기 (숫자만 올리기)' : '상대 타자도 타순별로 기록하기'}</button><button type="button" class="row" data-a="lineup">타순 · 선수 고치기</button><button type="button" class="row pri" data-a="finish">🏁 경기 끝 · 확인하고 보내기</button><button type="button" class="big" data-a="panel-x">닫기</button></div></div>`;
         if (ui.panel === 'who') over = whoPanel();
         if (ui.panel === 'finish') over = finishPanel();
+        if (ui.panel === 'conflict') { let sv = null; try { sv = JSON.parse(ui.srv); } catch (e) {} const su = sv ? Object.values(sv.runs.us || {}).reduce((a, b) => a + (+b || 0), 0) : 0, st = sv ? Object.values(sv.runs.them || {}).reduce((a, b) => a + (+b || 0), 0) : 0;
+            over = `<div class="sb-over"><div class="sb-panel" data-stop="1"><h3>⚠ 서버에 더 자세한 기록이 있어요</h3><p class="fin">서버 기록: 타석 <b>${paCount(sv)}</b>개 · ${esc(G.tm.us.name)} ${su} : ${st}<br>이 휴대폰 기록: 타석 <b>${paCount(G)}</b>개 · ${total('us')} : ${total('them')}</p><p class="fin">다른 휴대폰(대표님 등)에서 먼저 보낸 기록이에요. 이대로 보내면 그 기록이 지워져요.</p><button type="button" class="big pri" data-a="srvtake">📥 서버 기록 가져오기 (권장)</button><button type="button" class="big" data-a="panel-x">취소</button>${ui.forceAsk ? `<button type="button" class="big sbdanger" data-a="srvforce">정말 덮어쓰기 — 서버 기록이 지워져요</button>` : `<button type="button" class="big sbghost" data-a="srvforce">그래도 이 기록으로 덮어쓰기</button>`}</div></div>`; }
         if (ui.panel === 'askend') { const pi = G.cur.i - 1; over = `<div class="sb-over"><div class="sb-panel" data-stop="1"><h3>🏁 ${pi}회말까지 끝났어요</h3><p class="fin">${esc(G.tm.us.name)} ${total('us')} : ${total('them')} ${esc(G.tm.them.name)}</p><p class="hint">경기가 끝났으면 확인하고 서버에 보내요. 연장이면 계속 기록하세요.</p><button type="button" class="big pri" data-a="finish">🏁 경기 끝 · 확인하고 보내기</button><button type="button" class="big" data-a="panel-x">연장 · 계속 기록</button></div></div>`; }
         if (ui.panel === 'sheet') over = `<div class="sb-over full"><div class="sb-panel full" data-stop="1"><h3>📋 기록표 <small>칸을 누르면 고쳐요</small></h3>${sheet}<button type="button" class="big" data-a="panel-x">닫기</button></div></div>`;
         const input = on ? `${nowLine()}${padHtml(m)}` : simpleThem();
@@ -429,6 +431,8 @@
         }
         if (a === 'lineup') { ui.panel = ''; ui.screen = 'setup'; draw(); return; }
         if (a === 'send') return send();
+        if (a === 'srvtake') { try { adopt(ui.srv); ui.srv = null; ui.forceAsk = false; ui.panel = G.done ? 'finish' : ''; ui.screen = 'game'; ui.msg = '서버 기록을 가져왔어요'; note('done', '서버 기록 가져왔캉! ✓'); draw(); } catch (e) { note('fail', '못 가져왔캉…', e.message); } return; }
+        if (a === 'srvforce') { if (!ui.forceAsk) { ui.forceAsk = true; draw(); return; } ui.forceAsk = false; ui.force = true; ui.panel = 'finish'; ui.srv = null; return send(); }
         if (a === 'resume') { G.done = false; ui.panel = ''; save(); draw(); return; }
         if (a === 'reopen') { ui.screen = 'game'; ui.panel = 'finish'; draw(); return; }
         // 준비 화면
@@ -462,8 +466,31 @@
     // ---------- 보내기 ----------
     function bodyOf() { return JSON.stringify({ v: G.v, id: G.id, ev: G.ev, date: G.date, title: G.title, place: G.place, start: G.start, first: G.first, recThem: G.recThem, tm: G.tm, log: G.log.map(e => { const o = Object.assign({}, e); delete o.pc; return o; }), runs: G.runs, adj: G.adj, cur: G.cur, nx: G.nx, seq: G.seq, begun: true, done: true }); }
     function sig(b) { let h = 0; for (let k = 0; k < b.length; k++) h = (h * 31 + b.charCodeAt(k)) | 0; return b.length + ':' + h; }
+    // 🛡 v2.153.7: 서버에 있는 기록을 다른 기기의 빈 기록으로 덮어쓰지 않게
+    function paCount(g) { return g && Array.isArray(g.log) ? g.log.filter(e => e.y === 'pa').length : 0; }
+    async function serverRec(id) {
+        const rj = await fetch(apiGetUrl('action=gameRecord&id=' + encodeURIComponent(id)), { cache: 'no-store' }).then(x => x.json());
+        if (rj && rj.result === 'success' && rj.json) return rj.json;
+        if (rj && rj.result === 'none') return '';
+        if (rj && rj.result === 'error' && /없/.test(rj.message || '')) return '';
+        throw new Error((rj && rj.message) || '서버 확인 실패');
+    }
+    function adopt(json) {
+        G = JSON.parse(json); G.sentAt = G.sentAt || 1; G.sentSig = sig(json); G.begun = true;
+        G.log.forEach(e => { e.pc = { cur: Object.assign({}, G.cur), nx: Object.assign({}, G.nx) }; });
+        save();
+    }
     async function send() {
         if (!G || ui.sending) return;
+        if (!ui.force) {   // 보내기 전에 서버 기록과 비교 — 서버 쪽 타석이 더 많으면 멈춤
+            ui.sending = true; note('saving', '서버 기록과 맞춰 보는 중이캉');
+            let sj = null;
+            try { sj = await serverRec(G.id); } catch (e) { ui.sending = false; note('fail', '서버 확인이 안 됐캉…', '인터넷을 확인하고 다시 보내 주세요. (기록은 휴대폰에 그대로 있어요)'); return; }
+            ui.sending = false;
+            let sv = null; try { sv = sj ? JSON.parse(sj) : null; } catch (e) {}
+            if (sv && paCount(sv) > paCount(G) && sig(sj) !== G.sentSig) { ui.srv = sj; ui.panel = 'conflict'; draw(); return; }
+        }
+        ui.force = false;
         G.done = true; save();
         const body = bodyOf(), us = total('us'), th = total('them');
         if (body.length > 150000) { note('fail', '기록이 너무 길어서 못 보냈캉…', '개발자에게 알려 주세요.'); return; }
@@ -496,21 +523,25 @@
         else G = newGame(ev);
         if (!G.begun && !G.tm.them.ln.length && oppList(G.tm.them.name).length === 0) { /* 명단 없음 — 서버에 있으면 가져옴 */ }
         draw(); oppFetch();
+        if (evId && paCount(G) === 0 && canRecord()) {   // 🛡 v2.153.7: 이 기기에 기록이 없으면 서버 기록부터 확인 (다른 기기에서 보낸 것)
+            const want = G;
+            serverRec(evId).then(sj => { if (!sj || G !== want) return; adopt(sj); ui.screen = 'game'; if (G.done) ui.panel = 'finish'; ui.msg = '서버에 저장된 기록을 불러왔어요'; note('done', '서버 기록 불러왔캉! ✓'); draw(); }).catch(() => {});
+        }
     }
     async function view(evId) {
         ui = { screen: 'view', pick: null, edit: null, sheetT: null, panel: '', msg: '', who: null, canEdit: false };
         const loc = localFor(evId);
-        if (loc && loc.bg && load(loc.id)) { G = load(loc.id); ui.canEdit = true; draw(); return; }
+        if (loc && loc.bg && load(loc.id) && paCount(load(loc.id)) > 0) { G = load(loc.id); ui.canEdit = true; draw(); return; }   // v2.153.7: 빈 기록이면 서버 것을 봄
         note('saving', '기록표 불러오는 중이캉');
         try {
             const rj = await fetch(apiGetUrl('action=gameRecord&id=' + encodeURIComponent(evId)), { cache: 'no-store' }).then(x => x.json());
             if (!rj || rj.result !== 'success') throw new Error('저장된 기록표가 없어요.');
-            G = JSON.parse(rj.json); G.sentAt = G.sentAt || 1; G.sentSig = sig(rj.json); G.begun = true;
-            if (canRecord()) { G.log.forEach(e => { e.pc = { cur: Object.assign({}, G.cur), nx: Object.assign({}, G.nx) }; }); save(); ui.canEdit = true; }
+            if (canRecord()) { adopt(rj.json); ui.canEdit = true; }
+            else { G = JSON.parse(rj.json); G.sentAt = G.sentAt || 1; G.sentSig = sig(rj.json); G.begun = true; }
             note('done', '기록표 가져왔캉! ✓'); draw();
         } catch (err) { note('fail', null, err.message); G = null; }
     }
-    function hasRecord(evId) { const l = localFor(evId); return !!(l && l.bg) || recIds.indexOf(evId) !== -1; }
+    function hasRecord(evId) { const l = localFor(evId); return !!(l && l.bg && paCount(load(l.id)) > 0) || recIds.indexOf(evId) !== -1 || (Array.isArray(window.SB_REC_IDS) && window.SB_REC_IDS.indexOf(evId) !== -1); }
     // 일정 상세 안 버튼
     function detailHtml(ev) {
         if (!ev || typeof isGameEvent !== 'function' || !isGameEvent(ev)) return '';
