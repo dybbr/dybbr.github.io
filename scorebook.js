@@ -280,9 +280,17 @@
         if (!r) { r = document.createElement('div'); r.id = 'sbRoot'; r.className = 'sb'; document.body.appendChild(r); bind(r); }
         return r;
     }
-    function close() { const r = document.getElementById('sbRoot'); if (r) { r.style.display = 'none'; r.innerHTML = ''; } document.documentElement.classList.remove('sb-open'); G = null; try { if (typeof renderSchedule === 'function') renderSchedule(); } catch (e) {} band(); }
+    // ⏳ v2.155.2: 기록하는 동안 30분 자동 잠금을 미루고(최대 5시간) 화면이 꺼지지 않게 (타석 모드와 같은 방식)
+    let holdAt = 0, wlock = null;
+    function recording() { let r = ''; try { r = currentRole; } catch (e) {} return !!(G && ui && ui.screen !== 'view' && (r === 'super' || r === 'dev') && document.documentElement.classList.contains('sb-open')); }   // 로그인 시간이 지나도 기록 화면은 계속 (보내기 때만 다시 로그인)
+    window.sbHold = function () { return recording() && holdAt > 0 && Date.now() - holdAt < 5 * 3600 * 1000; };
+    function wakeOn() { try { if (!wlock && navigator.wakeLock && document.visibilityState === 'visible' && recording()) navigator.wakeLock.request('screen').then(l => { wlock = l; l.addEventListener('release', () => { wlock = null; }); }).catch(() => {}); } catch (e) {} }
+    function wakeOff() { try { if (wlock) wlock.release(); } catch (e) {} wlock = null; }
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') wakeOn(); });
+    function close() { const r = document.getElementById('sbRoot'); if (r) { r.style.display = 'none'; r.innerHTML = ''; } document.documentElement.classList.remove('sb-open'); G = null; holdAt = 0; wakeOff(); try { if (window.dyLockIfDue) setTimeout(window.dyLockIfDue, 0); } catch (e) {} try { if (typeof renderSchedule === 'function') renderSchedule(); } catch (e) {} band(); }
     function draw() {
         const r = root(); r.style.display = 'block'; document.documentElement.classList.add('sb-open');
+        if (recording()) { if (!holdAt) holdAt = Date.now(); wakeOn(); }
         const keep = r.querySelector('.sb-sheetwrap'); const sx = keep ? keep.scrollLeft : null;
         r.innerHTML = ui.screen === 'setup' ? setupHtml() : ui.screen === 'view' ? viewHtml() : gameHtml();
         r.dataset.mode = G ? (lsGet(LSM) || 'B') : '';
@@ -584,6 +592,7 @@
     }
     async function send() {
         if (!G || ui.sending) return;
+        if (!canRecord()) { note('fail', '로그인 시간이 지났캉…', '기록은 휴대폰에 그대로 있어요. 다시 로그인한 뒤 「경기 기록 이어서 하기」에서 보내 주세요.'); return; }   // v2.155.2
         if (!ui.force) {   // 보내기 전에 서버 기록과 비교 — 서버 쪽 타석이 더 많으면 멈춤
             ui.sending = true; note('saving', '서버 기록과 맞춰 보는 중이캉');
             let sj = null;
@@ -625,6 +634,7 @@
         else G = newGame(ev);
         if (!G.begun && !G.tm.them.ln.length && oppList(G.tm.them.name).length === 0) { /* 명단 없음 — 서버에 있으면 가져옴 */ }
         draw(); oppFetch();
+        try { const left = parseInt(localStorage.getItem('daeyeon_auth_expire') || '0', 10) - Date.now(); if (canRecord() && left < 2 * 3600 * 1000) note('info', '로그인 시간이 ' + Math.max(1, Math.round(left / 60000)) + '분 남았캉', '경기 중에 끝나도 기록은 계속돼요. 보낼 때만 다시 로그인하면 돼요.'); } catch (e) {}
         if (evId && paCount(G) === 0 && canRecord()) {   // 🛡 v2.154.0: 이 기기에 기록이 없으면 서버 기록부터 확인 (다른 기기에서 보낸 것)
             const want = G;
             serverRec(evId).then(sj => { if (!sj || G !== want) return; adopt(sj); ui.screen = 'game'; if (G.done) ui.panel = 'finish'; ui.msg = '서버에 저장된 기록을 불러왔어요'; note('done', '서버 기록 불러왔캉! ✓'); draw(); }).catch(() => {});
