@@ -235,7 +235,8 @@
     function pickBtn(q, used) { const n = used[q.no + '|' + q.name]; return `<button type="button" data-a="lnpick" data-no="${esc(q.no)}" data-name="${esc(q.name)}" class="${n ? 'on' : ''}">${n ? `<i>${n}</i>` : ''}<b>${esc(q.no)}</b>${esc(q.name)}</button>`; }
     const LAY = (typeof window !== 'undefined' && window.SB_LAY) || 'B';   // 11-22 하코 선택: B 자주 쓰는 9개 + 「기타」 (A 기호 글자 · C 방향 먼저도 코드에 남겨 둠)
     const TAB = (typeof window !== 'undefined' && window.SB_TAB) || '3';   // 11-22 하코 선택: 3 방향 맞춤 (태블릿 세로 = 위아래, 가로 · PC = 좌우)
-    const RUN = (typeof window !== 'undefined' && window.SB_RUN) || 'B';   // 주자 기록 시안 (A 창에서 고르기 · B 주자 칩 · C 다이아몬드)
+    const RUN = (typeof window !== 'undefined' && window.SB_RUN) || 'B';
+    const DLAY = (typeof window !== 'undefined' && window.SB_DLAY) || 'B';   // v2.155.1 D안 바퀴 시안 (A 위아래 바꿈 · B 화면 안 맞춤 · C 가운데 고정)   // 주자 기록 시안 (A 창에서 고르기 · B 주자 칩 · C 다이아몬드)
     const GV = 'B';   // 11-22 하코 선택: B 학년별 묶음 (A 학년 탭 · C 학년 골라 보기도 코드에 남겨 둠)
     function rosterPick(used) {
         const R = roster(), gs = grades(), gv = GV;
@@ -350,7 +351,9 @@
     function fieldPad() { return `<div class="sb-field${ui.pick ? ' need' : ''}">${[['좌', 'lf'], ['좌중', 'lc'], ['중', 'cf'], ['우중', 'rc'], ['우', 'rf'], ['유', 'ss'], ['2', 'b2'], ['3', 'b3'], ['투', 'pp'], ['1', 'b1'], ['포', 'cc']].map(([d, a]) => `<button type="button" style="grid-area:${a}" data-a="d" data-d="${d}">${d}</button>`).join('')}</div>`; }
     function padHtml(m) {
         if (m === 'A') return `<div class="sb-pad pa"><div class="lbl">① 결과</div><div class="g3">${kb('H1')}${kb('H2')}${kb('H3')}${kb('BB')}${kb('HP')}${kb('K')}${kb('GO')}${kb('FO')}${kb('LO')}${kb('HR')}${kb('IHR')}${kb('E')}${kb('SF')}${kb('FF')}${kb('SH')}${kb('IH')}${kb('FC')}</div><div class="lbl">② 공이 간 곳${ui.pick ? ' — ' + KIND[ui.pick].n + ' 어디로?' : ''}</div>${fieldPad()}</div>`;
-        if (m === 'D') return `<div class="sb-pad pd"><div class="lbl">결과를 <b>누른 채</b> 공이 간 쪽으로 밀고 떼기 · 4구 · 사구 · K는 그냥 누르기</div><div class="g3 drag">${['H1', 'H2', 'H3', 'GO', 'FO', 'LO', 'E', 'HR', 'SF', 'IH', 'IHR', 'FF'].map(k => `<button type="button" class="kb ${KIND[k].c}" data-drag="${k}">${KIND[k].n}</button>`).join('')}${kb('BB')}${kb('HP')}${kb('K')}${kb('SH')}${kb('FC')}</div></div>`;
+        if (m === 'D') { const dk = k => `<button type="button" class="kb ${KIND[k].c}" data-drag="${k}">${KIND[k].n}</button>`;
+            if (DLAY === 'A') return `<div class="sb-pad pd da"><div class="g5 tap">${kb('BB')}${kb('HP')}${kb('K')}${kb('SH')}${kb('FC')}</div><div class="g3 drag">${['IHR', 'FF', 'SF', 'HR', 'E', 'LO', 'GO', 'FO', 'IH', 'H1', 'H2', 'H3'].map(dk).join('')}</div><div class="lbl">↑ 결과를 <b>누른 채</b> 공이 간 쪽으로 밀고 떼기 · 4구 · 사구 · K는 그냥 누르기</div></div>`;
+            return `<div class="sb-pad pd"><div class="lbl">결과를 <b>누른 채</b> 공이 간 쪽으로 밀고 떼기 · 4구 · 사구 · K는 그냥 누르기</div><div class="g3 drag">${['H1', 'H2', 'H3', 'GO', 'FO', 'LO', 'E', 'HR', 'SF', 'IH', 'IHR', 'FF'].map(dk).join('')}${kb('BB')}${kb('HP')}${kb('K')}${kb('SH')}${kb('FC')}</div></div>`; }
         if (m === 'E') {
             const cols = ['H1', 'H2', 'GO', 'FO', 'E'];
             return `<div class="sb-pad pe"><div class="q4">${kb('BB')}${kb('HP')}${kb('K')}${kb('SH')}</div><div class="mx"><span></span>${cols.map(k => `<span class="ch">${KIND[k].n}</span>`).join('')}${['좌', '좌중', '중', '우중', '우', '유', '2', '3', '1', '투', '포'].map(d => `<span class="rh">${DIRNAME[d]}</span>` + cols.map(k => { const dim = (/[좌중우]/.test(d) && k === 'GO') || (/[투포123유]/.test(d) && k === 'H2'); return `<button type="button" class="${KIND[k].c}${dim ? ' dim' : ''}" data-a="kd" data-k="${k}" data-d="${d}">${d}${KIND[k].s}</button>`; }).join('')).join('')}</div><div class="more">${['H3', 'HR', 'IHR', 'LO', 'SF', 'FF', 'IH'].map(k => kb(k, 'sm')).join('')}${kb('FC', 'sm')}</div>${ui.pick ? dirRow() : ''}</div>`;
@@ -466,7 +469,12 @@
             const b = e.target.closest('[data-drag]'); if (!b) return;
             e.preventDefault(); held = b; b.classList.add('held'); try { b.setPointerCapture(e.pointerId); } catch (x) {}
             const pad = b.closest('.sb-pad'), rc = pad.getBoundingClientRect();
-            let x = e.clientX - rc.left, y = e.clientY - rc.top; x = Math.max(165, Math.min(rc.width - 165, x));
+            // v2.155.1: 바퀴가 제목 줄 · 화면 밖으로 넘치지 않게 (떼는 곳은 손가락에서 가장 가까운 방향이라 바퀴가 옮겨져도 됨)
+            const tb = document.querySelector('.sb .sb-top'), topY = (tb ? tb.getBoundingClientRect().bottom : 0) + 8, vh = window.innerHeight || 800;
+            let cx = e.clientX, cy = e.clientY;
+            if (DLAY === 'C') { cx = rc.left + rc.width / 2; cy = topY + 222; }
+            else cy = Math.max(topY + 222, Math.min(vh - 90, cy));
+            let x = cx - rc.left, y = cy - rc.top; x = Math.max(165, Math.min(rc.width - 165, x));
             wh = document.createElement('div'); wh.className = 'sb-wheel'; wh.style.left = x + 'px'; wh.style.top = y + 'px';
             wh.innerHTML = '<i class="hub">' + esc(KIND[b.dataset.drag].n) + '</i>' + WH.map(w => '<span data-d="' + w[0] + '" style="left:' + w[1] + 'px;top:' + w[2] + 'px">' + w[0] + '</span>').join('') + '<em>밀어서 방향</em>';
             pad.appendChild(wh); pick = null;

@@ -344,3 +344,6 @@ html.sb-open .ui-zoom-ctrl, html.sb-open .bk-upd { display: none !important; }
 /* v2.154.0 「월」 */
 .sb-now .wol { margin-left: 6px; min-width: 52px; border: 2px solid var(--line); background: #fff; color: var(--navy); font-weight: 800; border-radius: 10px; padding: 6px 10px; }
 .sb-now .wol.on { background: #fde047; border-color: #ca8a04; }
+/* v2.155.1 D안 위아래 바꿈(A) — 그냥 누르는 5개는 위 한 줄, 끄는 버튼은 아래 */
+.sb-pad.pd.da .g5.tap { margin-bottom: 8px; } .sb-pad.pd.da .g5.tap .kb { min-height: 44px; font-size: 14px; }
+.sb-pad.pd.da .lbl { margin: 8px 0 0; }
