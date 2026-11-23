@@ -313,6 +313,34 @@ html.sb-open .ui-zoom-ctrl, html.sb-open .bk-upd { display: none !important; }
   .sb-body.tab1 .pb .kb, .sb-body.tab3 .pb .kb { min-height: 76px; font-size: 21px; }
   .sb-body.tab1 .sb-dirs button, .sb-body.tab3 .sb-dirs button { min-height: 72px; font-size: 24px; }
 }
+/* v2.154.0 대표님 피드백: 외야 5방향 · 주자(득점 · 도루) · 빠른 교체 */
+.sb-dirs.d11 { grid-template-columns: repeat(6, 1fr) repeat(5, 1.1fr); gap: 3px; }
+.sb-dirs.d11 button { font-size: 15px; letter-spacing: -1px; }
+.sb-dirs.d11 button.of { background: #ecfdf3; border-color: #bbe5c8; }
+.sb-dirs.d11.need button.of { background: #fff7d6; border-color: #f59e0b; }
+.sb-field { grid-template-areas: "lf lc cf rc rf" ". ss . b2 ." "b3 . pp . b1" ". . cc . ." !important; }
+.sb-field button[style*="lc"], .sb-field button[style*="rc"] { font-size: 16px; }
+.sb .ract { display: grid; gap: 6px; margin-bottom: 6px; }
+.sb .ract .big small { display: block; font-size: 11px; font-weight: 600; opacity: .85; }
+.sb .ract .sbb { background: #2563eb; color: #fff; border-color: #2563eb; } .sb .ract .csb { background: #fff; color: #c8102e; border-color: #c8102e; }
+.sb .plist.rn button { border-color: #2563eb; background: #eff6ff; }
+.sb .plist.rn button i, .sb-runners i { position: static; display: inline-block; width: auto; height: auto; border-radius: 6px; background: #2563eb; color: #fff; font-style: normal; font-size: 11px; font-weight: 900; padding: 1px 5px; margin-right: 5px; }
+.sb-runners { display: flex; align-items: center; gap: 5px; overflow-x: auto; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 4px 6px; }
+.sb-runners > span { font-size: 12px; font-weight: 800; color: #1d4ed8; white-space: nowrap; }
+.sb-runners button { flex: 0 0 auto; border: 1px solid #93c5fd; background: #fff; border-radius: 8px; min-height: 32px; padding: 0 8px; font-weight: 800; font-size: 13px; white-space: nowrap; }
+.sb-dia { position: relative; height: 74px; background: linear-gradient(#22c55e22, #d6a76b33); border: 1px solid var(--line); border-radius: 10px; }
+.sb-dia .bs { position: absolute; width: 33%; height: 28px; border: 2px solid #cbd5e1; background: #fff; border-radius: 8px; font-size: 12px; font-weight: 800; color: #94a3b8; padding: 0 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.sb-dia .bs.on { border-color: #2563eb; background: #2563eb; color: #fff; }
+.sb-dia .b2 { left: 33.5%; top: 5px; } .sb-dia .b3 { left: 4px; top: 38px; } .sb-dia .b1 { right: 4px; top: 38px; }
+.sb-dia .hp { position: absolute; left: 50%; bottom: 6px; width: 16px; height: 16px; margin-left: -8px; background: #fff; border: 2px solid #94a3b8; transform: rotate(45deg); }
+.sb-sheet .ro.rk-run { color: var(--red); font-weight: 800; } .sb-sheet .ro.rk-sb { color: #2563eb; font-weight: 800; } .sb-sheet .ro.rk-cs { color: #b45309; font-weight: 800; }
+.sb .plist.subs button.on { border-color: var(--red); background: #fff1f2; }
+.sb-panel .seg { display: flex; gap: 6px; margin-bottom: 6px; } .sb-panel .seg button { flex: 1; border: 2px solid var(--line); background: #fff; border-radius: 10px; min-height: 40px; font-weight: 800; }
+.sb-panel .seg button.on { background: var(--navy); color: #fff; border-color: var(--navy); }
+.sb .subman { margin: 6px 0; } .sb .subman summary { font-size: 13px; font-weight: 700; color: var(--navy2); padding: 6px 2px; cursor: pointer; }
 /* v2.153.7 덮어쓰기 막기 */
 .sb-panel .big.sbdanger { background: #c8102e; color: #fff; border-color: #c8102e; }
 .sb-panel .big.sbghost { background: transparent; color: #64748b; font-size: 13px; border-style: dashed; }
+/* v2.154.0 「월」 */
+.sb-now .wol { margin-left: 6px; min-width: 52px; border: 2px solid var(--line); background: #fff; color: var(--navy); font-weight: 800; border-radius: 10px; padding: 6px 10px; }
+.sb-now .wol.on { background: #fde047; border-color: #ca8a04; }

@@ -7,8 +7,8 @@
 (function () {
     'use strict';
     const LS = 'daeyeon_sb_', LSI = 'daeyeon_sb_index', LSM = 'daeyeon_sb_mode', LSO = 'daeyeon_sb_opp';
-    const DIRS = ['투', '포', '1', '2', '3', '유', '좌', '중', '우'];
-    const DIRNAME = { 투: '투수', 포: '포수', 1: '1루', 2: '2루', 3: '3루', 유: '유격', 좌: '좌익', 중: '중견', 우: '우익' };
+    const DIRS = ['투', '포', '1', '2', '3', '유', '좌', '좌중', '중', '우중', '우'];   // v2.154.0: 외야 5방향 (좌중 · 우중 추가)
+    const DIRNAME = { 투: '투수', 포: '포수', 1: '1루', 2: '2루', 3: '3루', 유: '유격', 좌: '좌익', 좌중: '좌중간', 중: '중견', 우중: '우중간', 우: '우익' };
     // s 붙는 글자 · d 방향 필요 · h 안타 · ab 타수 · o 아웃 · bb 4사구 · e 상대 실책 · c 색
     const KIND = {
         H1: { s: '안', n: '안타', d: 1, h: 1, ab: 1, c: 'h' }, IH: { s: '내안', n: '내야안타', d: 1, h: 1, ab: 1, c: 'h' },
@@ -16,10 +16,11 @@
         GO: { s: '땅', n: '땅볼', d: 1, ab: 1, o: 1, c: 'o' }, FO: { s: '플', n: '플라이', d: 1, ab: 1, o: 1, c: 'o' }, LO: { s: '직', n: '직선타', d: 1, ab: 1, o: 1, c: 'o' },
         E: { s: '실', n: '실책', d: 1, ab: 1, e: 1, c: 'e' }, SF: { s: '희플', n: '희생플', d: 1, o: 1, c: 'o' },
         BB: { s: '4구', n: '4구', bb: 1, c: 'w' }, HP: { s: '사구', n: '사구', bb: 1, c: 'w' }, K: { s: 'K', n: 'K', ab: 1, o: 1, c: 'k' },
-        SH: { s: '희번', n: '희생번트', o: 1, c: 'o' }, FC: { s: '야선', n: '야수선택', ab: 1, c: 'e' }
+        SH: { s: '희번', n: '희생번트', o: 1, c: 'o' }, FC: { s: '야선', n: '야수선택', ab: 1, c: 'e' },
+        IHR: { s: '그홈', n: '그라운드 홈런', d: 1, h: 1, ab: 1, c: 'h' }, FF: { s: '파플', n: '파울플라이', d: 1, ab: 1, o: 1, c: 'o' }   // v2.154.0 대표님 요청
     };
     const MODES = { B: '기록표 칸', A: '큰 버튼', D: '누른 채 밀기', E: '한 번 터치 표' };
-    const WH = [['좌', -92, -150], ['중', 0, -176], ['우', 92, -150], ['3', -118, -78], ['유', -46, -104], ['2', 46, -104], ['1', 118, -78], ['투', 0, -54], ['포', 0, 52]];
+    const WH = [['좌', -116, -128], ['좌중', -62, -176], ['중', 0, -192], ['우중', 62, -176], ['우', 116, -128], ['3', -118, -62], ['유', -50, -108], ['2', 50, -108], ['1', 118, -62], ['투', 0, -50], ['포', 0, 52]];
     const esc = v => (typeof escapeHtml === 'function' ? escapeHtml(v) : String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])));
     const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
     const lsSet = (k, v) => { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } };
@@ -67,8 +68,10 @@
     // ---------- 계산 ----------
     const other = t => (t === 'us' ? 'them' : 'us');
     const pas = (t) => G.log.filter(e => e.y === 'pa' && e.t === t);
-    function sym(e) { const k = KIND[e.k]; return k ? (k.d ? (e.d || '') + k.s : k.s) : (e.k || ''); }
-    function outs(t, inn) { return G.log.reduce((n, e) => n + ((e.t === t && e.i === inn && ((e.y === 'pa' && KIND[e.k] && KIND[e.k].o) || e.y === 'ro')) ? 1 : 0), 0); }
+    function sym(e) { const k = KIND[e.k]; return k ? (k.d ? (e.d || '') + (e.w ? '월' : '') + k.s : k.s) : (e.k || ''); }
+    const OFD = ['좌', '좌중', '중', '우중', '우'];   // v2.154.0 「월」: 외야수 키를 넘긴 안타 · 홈런 (예: 우월2 · 우월홈)
+    function wOK(k, d) { return !!(KIND[k] && KIND[k].h && OFD.indexOf(d) !== -1); }
+    function outs(t, inn) { return G.log.reduce((n, e) => n + ((e.t === t && e.i === inn && ((e.y === 'pa' && KIND[e.k] && KIND[e.k].o) || e.y === 'ro' || e.y === 'cs')) ? 1 : 0), 0); }
     function runs(t, inn) { return (G.runs[t] && G.runs[t][inn]) || 0; }
     function total(t) { let n = 0; for (const k in (G.runs[t] || {})) n += G.runs[t][k] || 0; return n; }
     function acted(t, i) { return runs(t, i) > 0 || G.log.some(e => e.t === t && e.i === i && e.y !== 'sub'); }
@@ -81,10 +84,32 @@
         return { R: total(t), H: h + (a.H || 0), E: e + (a.E || 0), B: b + (a.B || 0) };
     }
     function pstat(t, slot, pi) {
-        let ab = 0, h = 0, rbi = 0;
-        pas(t).forEach(x => { if (x.s === slot && x.p === pi) { const k = KIND[x.k]; if (k) { if (k.ab) ab++; if (k.h) h++; } rbi += x.r || 0; } });
-        return { ab, h, rbi };
+        let ab = 0, h = 0, rbi = 0, r = 0, sb = 0;
+        G.log.forEach(x => {
+            if (x.t !== t) return;
+            if (x.y === 'pa' && x.s === slot && x.p === pi) { const k = KIND[x.k]; if (k) { if (k.ab) ab++; if (k.h) h++; } rbi += x.r || 0; }
+            else if (x.y === 'run' && x.sc && x.sc.s === slot && x.sc.p === pi) r++;
+            else if (x.y === 'sb' && x.s === slot && x.p === pi) sb++;
+        });
+        return { ab, h, rbi, r, sb };
     }
+    // 지금 회에 나가 있는 주자 (타격 결과로 1 · 2 · 3루 · 앞 주자는 밀어 줌 · 도루로 한 루씩 · 득점 · 아웃 · 홈런이면 빠짐)
+    function onBase(t, i) {
+        let L = [];
+        G.log.forEach(e => {
+            if (e.t !== t || e.i !== i) return;
+            if (e.y === 'pa') { const K = KIND[e.k]; L = L.filter(x => !(x.s === e.s && x.p === e.p)); if (e.k === 'HR' || e.k === 'IHR') L = [];   // 홈런이면 주자 모두 들어옴
+                else if (K && (K.h || K.bb || K.e || e.k === 'FC')) {   // v2.154.0: 타자가 간 루까지 앞 주자를 밀어 줌 (세 번째 루에서 멈춤)
+                    let cur = e.k === 'H2' ? 2 : e.k === 'H3' ? 3 : 1; const nb = cur;
+                    L.slice().sort((x, y) => x.b - y.b).forEach(q => { if (q.b <= cur) { q.b = Math.min(3, cur + 1); } cur = Math.max(cur, q.b); });
+                    L.push({ s: e.s, p: e.p, b: nb });
+                } }
+            else if (e.y === 'sb') { const q = L.find(x => x.s === e.s && x.p === e.p); if (q) q.b = Math.min(3, q.b + 1); }
+            else if (e.y === 'ro' || e.y === 'cs' || (e.y === 'run' && e.sc)) { const w = e.y === 'run' ? e.sc : e; L = L.filter(x => !(x.s === w.s && x.p === w.p)); }
+        });
+        return L.reverse();
+    }
+    function pName(t, s, p) { const sl = slotOf(t, s), q = sl && sl.ps[p] ? sl.ps[p] : {}; return q.name || (q.no ? '#' + q.no : s + '번'); }
     function slotOf(t, s) { return G.tm[t].ln[s - 1]; }
     function curP(t, s) { const sl = slotOf(t, s); return sl && sl.ps.length ? sl.ps[sl.ps.length - 1] : { no: '', name: '' }; }
     function nSlots(t) { return G.tm[t].ln.length; }
@@ -110,17 +135,20 @@
         if (K.d && !d) { ui.pick = k; draw(); return; }
         if (ui.edit != null) {   // 고치기: 그 칸의 기호만 바꿈
             const e = G.log.find(x => x.id === ui.edit);
-            if (e) { e.k = k; e.d = K.d ? d : ''; ui.msg = '고쳤어요 · ' + sym(e); }
-            ui.edit = null; ui.pick = null; save(); draw(); return;
+            if (e) { e.k = k; e.d = K.d ? d : ''; if (ui.wol && wOK(k, d)) e.w = 1; else delete e.w; ui.msg = '고쳤어요 · ' + sym(e); }
+            ui.edit = null; ui.pick = null; ui.wol = false; save(); draw(); return;
         }
         const t = G.cur.t;
         if (!recOn(t)) return;
         const sl = slotOf(t, G.cur.s);
         const e = push({ y: 'pa', t: t, i: G.cur.i, s: G.cur.s, p: Math.max(0, sl.ps.length - 1), k: k, d: K.d ? d : '', r: 0 });
+        if (ui.wol && wOK(k, d)) e.w = 1;
+        ui.wol = false;
         const who = curP(t, e.s);
         ui.msg = '✔ ' + e.s + '번 ' + (who.name || (who.no ? '#' + who.no : '')) + ' 「' + sym(e) + '」';
         ui.pick = null; ui.more = false; ui.dir = null;
         advance();
+        if (k === 'HR' || k === 'IHR') { G.runs[t] = G.runs[t] || {}; G.runs[t][e.i] = runs(t, e.i) + 1; e.r = (e.r || 0) + 1; push({ y: 'run', t: t, i: e.i, sc: { s: e.s, p: e.p }, ref: e.id, auto: 1 }); ui.msg += ' · 득점 +1 (자동)'; }
         if (outs(t, e.i) >= 3) { endHalf(true); ui.msg += ' · 3아웃, 공수교대'; }
         save(); draw();
     }
@@ -129,7 +157,7 @@
         if (!e) { ui.msg = '되돌릴 기록이 없어요'; draw(); return; }
         if (e.y === 'end' && e.auto) { G.cur = e.pc.cur; G.nx = e.pc.nx; return undo(); }   // 자동 공수교대는 그 타석과 함께 되돌림
         if (e.y === 'sub') { const sl = slotOf(e.t, e.s); if (sl.ps.length > 1) sl.ps.pop(); }
-        if (e.y === 'run') { G.runs[e.t][e.i] = Math.max(0, runs(e.t, e.i) - 1); if (e.ref) { const pa = G.log.find(x => x.id === e.ref); if (pa) pa.r = Math.max(0, (pa.r || 0) - 1); } }
+        if (e.y === 'run') { G.runs[e.t][e.i] = Math.max(0, runs(e.t, e.i) - 1); if (e.ref) { const pa = G.log.find(x => x.id === e.ref); if (pa) pa.r = Math.max(0, (pa.r || 0) - 1); } if (e.auto) { G.cur = e.pc.cur; G.nx = e.pc.nx; return undo(); } }   // 홈런 자동 득점은 그 타석과 함께
         G.cur = e.pc.cur; G.nx = e.pc.nx;
         ui.msg = '↶ 되돌렸어요'; ui.edit = null; ui.pick = null; ui.sheetT = null;
         save(); draw();
@@ -142,6 +170,50 @@
         push({ y: 'run', t: t, i: i, ref: ref });
         ui.msg = '득점 +1 · ' + G.tm[t].name + ' ' + total(t) + '점';
         save(); draw();
+    }
+    // 주자 기록: 득점(타점 있음 · 없음) · 도루 · 도루 실패 · 주자 아웃 — 누가 했는지까지
+    function runnerAct(t, s, p, act) {
+        const i = G.cur.t === t ? G.cur.i : lastInn(t), nm = pName(t, s, p);
+        if (act === 'run' || act === 'run0') {
+            G.runs[t] = G.runs[t] || {}; G.runs[t][i] = runs(t, i) + 1;
+            let ref = 0;
+            if (act === 'run') { const last = [...G.log].reverse().find(x => x.y === 'pa' && x.t === t && x.i === i); if (last) { last.r = (last.r || 0) + 1; ref = last.id; } }
+            push({ y: 'run', t: t, i: i, sc: { s: s, p: p }, ref: ref });
+            ui.msg = '득점 +1 · ' + nm + (ref ? ' (타점 ' + pName(t, G.log.find(x => x.id === ref).s, G.log.find(x => x.id === ref).p) + ')' : ' (타점 없음)') + ' · ' + G.tm[t].name + ' ' + total(t) + '점';
+        } else {
+            push({ y: act, t: t, i: i, s: s, p: p });
+            ui.msg = (act === 'sb' ? '도루 · ' : act === 'cs' ? '도루 실패 · ' : '주자 아웃 · ') + nm;
+            if ((act === 'cs' || act === 'ro') && G.cur.t === t && outs(t, i) >= 3) { endHalf(true); ui.msg += ' · 3아웃, 공수교대'; }
+        }
+        ui.panel = ''; ui.rn = null; save(); draw();
+    }
+    function rbiBatter(t) { const i = G.cur.t === t ? G.cur.i : lastInn(t); return [...G.log].reverse().find(x => x.y === 'pa' && x.t === t && x.i === i) || null; }
+    function runnerPanel() {   // ① 누가? ② 무엇을?
+        const t = (ui.rn && ui.rn.t) || G.cur.t, i = G.cur.t === t ? G.cur.i : lastInn(t);
+        if (ui.rn && ui.rn.s) {
+            const r = ui.rn, lb = rbiBatter(t), lbn = lb ? pName(t, lb.s, lb.p) : '';
+            const self = lb && lb.s === r.s && lb.p === r.p;
+            return `<div class="sb-over" data-a="panel-x"><div class="sb-panel" data-stop="1"><h3>🏃 ${esc(pName(t, r.s, r.p))} <small>${r.s}번 · ${i}회</small></h3><div class="ract">
+            <button type="button" class="big pri" data-a="ract" data-x="run">⚾ 득점${lb && !self ? ` <small>타점 ${esc(lbn)}</small>` : ''}</button>
+            <button type="button" class="big" data-a="ract" data-x="run0">득점 <small>타점 없음 (도루 · 실책 · 폭투 · 보크)</small></button>
+            <div class="f2"><button type="button" class="big sbb" data-a="ract" data-x="sb">🏃 도루</button><button type="button" class="big csb" data-a="ract" data-x="cs">도루 실패</button></div>
+            <button type="button" class="big" data-a="ract" data-x="ro">주자 아웃 (견제 · 주루사)</button></div>
+            <button type="button" class="big" data-a="panel-x">취소</button></div></div>`;
+        }
+        const on = onBase(t, i), ln = G.tm[t].ln;
+        const btn = (s, p, lab) => `<button type="button" data-a="rpick" data-t="${t}" data-s="${s}" data-p="${p}">${lab}</button>`;
+        const all = ln.map((sl, k) => { const p = sl.ps.length - 1; return btn(k + 1, p, `<b>${k + 1}</b>${esc(pName(t, k + 1, p))}`); }).join('');
+        return `<div class="sb-over" data-a="panel-x"><div class="sb-panel" data-stop="1"><h3>🏃 어느 주자? <small>${esc(G.tm[t].name)} · ${i}회</small></h3>
+        ${on.length ? `<div class="lbl">지금 나가 있는 주자</div><div class="plist rn">${on.map(q => btn(q.s, q.p, `<i>${q.b}루</i>${esc(pName(t, q.s, q.p))}`)).join('')}</div><div class="lbl">다른 선수</div>` : `<div class="lbl">타순에서 고르기</div>`}
+        <div class="plist">${all}</div><button type="button" class="big" data-a="panel-x">취소</button></div></div>`;
+    }
+    function baseHtml() {   // 출루자 칩(B) · 다이아몬드(C)
+        const t = G.cur.t; if (!recOn(t)) return '';
+        const on = onBase(t, G.cur.i);
+        if (RUN === 'B') return on.length ? `<div class="sb-runners"><span>주자</span>${on.map(q => `<button type="button" data-a="rpick" data-t="${t}" data-s="${q.s}" data-p="${q.p}"><i>${q.b}루</i>${esc(pName(t, q.s, q.p))}</button>`).join('')}</div>` : '';
+        if (RUN === 'C') { const at = b => on.filter(q => q.b === b); const cell = b => { const q = at(b); return `<button type="button" class="bs b${b}${q.length ? ' on' : ''}" ${q.length ? `data-a="rpick" data-t="${t}" data-s="${q[0].s}" data-p="${q[0].p}"` : 'disabled'}><span>${q.length ? esc(pName(t, q[0].s, q[0].p)) + (q.length > 1 ? ' +' + (q.length - 1) : '') : b + '루'}</span></button>`; };
+            return `<div class="sb-dia">${cell(2)}${cell(3)}${cell(1)}<i class="hp"></i></div>`; }
+        return '';
     }
     function lastInn(t) { return G.cur.t === t ? G.cur.i : (G.first === t ? G.cur.i : Math.max(1, G.cur.i - 1)); }
     function runnerOut() {
@@ -163,6 +235,7 @@
     function pickBtn(q, used) { const n = used[q.no + '|' + q.name]; return `<button type="button" data-a="lnpick" data-no="${esc(q.no)}" data-name="${esc(q.name)}" class="${n ? 'on' : ''}">${n ? `<i>${n}</i>` : ''}<b>${esc(q.no)}</b>${esc(q.name)}</button>`; }
     const LAY = (typeof window !== 'undefined' && window.SB_LAY) || 'B';   // 11-22 하코 선택: B 자주 쓰는 9개 + 「기타」 (A 기호 글자 · C 방향 먼저도 코드에 남겨 둠)
     const TAB = (typeof window !== 'undefined' && window.SB_TAB) || '3';   // 11-22 하코 선택: 3 방향 맞춤 (태블릿 세로 = 위아래, 가로 · PC = 좌우)
+    const RUN = (typeof window !== 'undefined' && window.SB_RUN) || 'B';   // 주자 기록 시안 (A 창에서 고르기 · B 주자 칩 · C 다이아몬드)
     const GV = 'B';   // 11-22 하코 선택: B 학년별 묶음 (A 학년 탭 · C 학년 골라 보기도 코드에 남겨 둠)
     function rosterPick(used) {
         const R = roster(), gs = grades(), gv = GV;
@@ -244,7 +317,7 @@
     function sheetHtml(t, ro) {
         const n = maxInn(), ln = G.tm[t].ln;
         const cells = {};   // i|s|p → [entries]
-        G.log.forEach(e => { if (e.t !== t) return; if (e.y === 'pa' || e.y === 'ro') (cells[e.i + '|' + e.s + '|' + e.p] = cells[e.i + '|' + e.s + '|' + e.p] || []).push(e); });
+        G.log.forEach(e => { if (e.t !== t) return; let w = null; if (e.y === 'pa' || e.y === 'ro' || e.y === 'sb' || e.y === 'cs') w = e; else if (e.y === 'run' && e.sc && !e.auto) w = e.sc; if (w) (cells[e.i + '|' + w.s + '|' + w.p] = cells[e.i + '|' + w.s + '|' + w.p] || []).push(e); });
         const ends = {}; G.log.forEach(e => { if (e.y === 'end' && e.t === t) ends[e.i + '|' + e.s + '|' + (e.p || 0)] = 1; });
         let rows = '';
         ln.forEach((sl, si) => {
@@ -255,15 +328,16 @@
                 for (let i = 1; i <= n; i++) {
                     const es = cells[i + '|' + s + '|' + pi] || [];
                     const isCur = !ro && !G.done && last && G.cur.t === t && G.cur.i === i && G.cur.s === s && ui.edit == null;
-                    const inner = es.map(e => e.y === 'ro' ? `<i class="ro">(주자아웃)</i>` : `<span class="sy ${KIND[e.k] ? KIND[e.k].c : ''}${ui.edit === e.id ? ' ed' : ''}" data-a="cell" data-id="${e.id}">${esc(sym(e))}${e.r ? `<sup>${e.r}</sup>` : ''}</span>`).join('')
+                    const RL = { ro: '주자아웃', sb: '도루', cs: '도루실패', run: '득점' };
+                    const inner = es.map(e => RL[e.y] ? `<i class="ro rk-${e.y}"${ro ? '' : ` data-a="rmark" data-id="${e.id}"`}>(${RL[e.y]})</i>` : `<span class="sy ${KIND[e.k] ? KIND[e.k].c : ''}${ui.edit === e.id ? ' ed' : ''}" data-a="cell" data-id="${e.id}">${esc(sym(e))}${e.r ? `<sup>${e.r}</sup>` : ''}</span>`).join('')
                         + (es.length && ends[i + '|' + s + '|' + pi] ? `<span class="endm">//</span>` : '');
                     tds += `<td class="${isCur ? 'cur' : ''}"${ro ? '' : ` data-a="cellempty" data-t="${t}" data-i="${i}" data-s="${s}"`}>${inner}</td>`;
                 }
-                rows += `<tr class="${pi ? 'subrow' : ''}"><td class="od">${pi ? '' : s}</td><td class="nm"${ro ? '' : ` data-a="who" data-t="${t}" data-s="${s}" data-p="${pi}"`}><b>${esc(p.no)}</b> ${p.name ? esc(p.name) : (p.no === '' && !ro ? '<u>배번 넣기</u>' : '')}<small>${esc(p.pos || '')}</small></td>${tds}<td class="tt">${st.ab}</td><td class="tt">${st.h}</td><td class="tt">${st.rbi}</td></tr>`;
+                rows += `<tr class="${pi ? 'subrow' : ''}"><td class="od">${pi ? '' : s}</td><td class="nm"${ro ? '' : ` data-a="who" data-t="${t}" data-s="${s}" data-p="${pi}"`}><b>${esc(p.no)}</b> ${p.name ? esc(p.name) : (p.no === '' && !ro ? '<u>배번 넣기</u>' : '')}<small>${esc(p.pos || '')}</small></td>${tds}<td class="tt">${st.ab}</td><td class="tt">${st.h}</td><td class="tt">${st.rbi}</td><td class="tt">${st.r || 0}</td><td class="tt">${st.sb || 0}</td></tr>`;
             });
         });
         const head = Array.from({ length: n }, (_, k) => `<th>${k + 1}회</th>`).join('');
-        return `<div class="sb-sheetwrap"><table class="sb-sheet"><tr><th class="od">타순</th><th class="nm">배번 · 이름</th>${head}<th class="tt">타수</th><th class="tt">안타</th><th class="tt">타점</th></tr>${rows}</table></div>`;
+        return `<div class="sb-sheetwrap"><table class="sb-sheet"><tr><th class="od">타순</th><th class="nm">배번 · 이름</th>${head}<th class="tt">타수</th><th class="tt">안타</th><th class="tt">타점</th><th class="tt">득점</th><th class="tt">도루</th></tr>${rows}</table></div>`;
     }
     function sheetTabs(t) {
         return `<div class="sb-stabs"><button type="button" data-a="sheett" data-t="us" class="${t === 'us' ? 'on' : ''}">${esc(G.tm.us.name)}</button>${G.recThem ? `<button type="button" data-a="sheett" data-t="them" class="${t === 'them' ? 'on' : ''}">${esc(G.tm.them.name)}</button>` : ''}</div>`;
@@ -272,18 +346,18 @@
     // 입력 판 — 방식마다 모양만 다르고 모두 record(k, d) 를 부름
     const SHORTN = { H1: '안타', IH: '내야안타', H2: '2루타', H3: '3루타', HR: '홈런', GO: '땅볼', FO: '플라이', LO: '직선타', E: '실책', SF: '희생플', BB: '볼넷', HP: '몸에 맞음', K: '삼진', SH: '희생번트', FC: '야수선택' };
     function kb(k, cls, extra) { const K = KIND[k]; const lab = (LAY === 'A' && !extra) ? `<b class="sy2">${esc(K.s)}</b><small>${SHORTN[k]}</small>` : K.n + (extra || ''); return `<button type="button" class="kb ${K.c} ${cls || ''}${ui.pick === k ? ' sel' : ''}" data-a="k" data-k="${k}">${lab}</button>`; }
-    function dirRow() { return `<div class="sb-dirs${ui.pick ? ' need' : ''}">${DIRS.map(d => `<button type="button" data-a="d" data-d="${d}">${d}</button>`).join('')}</div>`; }
-    function fieldPad() { return `<div class="sb-field${ui.pick ? ' need' : ''}">${[['좌', 'lf'], ['중', 'cf'], ['우', 'rf'], ['유', 'ss'], ['2', 'b2'], ['3', 'b3'], ['투', 'pp'], ['1', 'b1'], ['포', 'cc']].map(([d, a]) => `<button type="button" style="grid-area:${a}" data-a="d" data-d="${d}">${d}</button>`).join('')}</div>`; }
+    function dirRow() { return `<div class="sb-dirs d11${ui.pick ? ' need' : ''}">${DIRS.map(d => `<button type="button"${d.length > 1 || /[좌중우]/.test(d) ? ' class="of"' : ''} data-a="d" data-d="${d}">${d}</button>`).join('')}</div>`; }
+    function fieldPad() { return `<div class="sb-field${ui.pick ? ' need' : ''}">${[['좌', 'lf'], ['좌중', 'lc'], ['중', 'cf'], ['우중', 'rc'], ['우', 'rf'], ['유', 'ss'], ['2', 'b2'], ['3', 'b3'], ['투', 'pp'], ['1', 'b1'], ['포', 'cc']].map(([d, a]) => `<button type="button" style="grid-area:${a}" data-a="d" data-d="${d}">${d}</button>`).join('')}</div>`; }
     function padHtml(m) {
-        if (m === 'A') return `<div class="sb-pad pa"><div class="lbl">① 결과</div><div class="g3">${kb('H1')}${kb('H2')}${kb('H3')}${kb('BB')}${kb('HP')}${kb('K')}${kb('GO')}${kb('FO')}${kb('LO')}${kb('HR')}${kb('E')}${kb('SF')}${kb('SH')}${kb('IH')}${kb('FC')}</div><div class="lbl">② 공이 간 곳${ui.pick ? ' — ' + KIND[ui.pick].n + ' 어디로?' : ''}</div>${fieldPad()}</div>`;
-        if (m === 'D') return `<div class="sb-pad pd"><div class="lbl">결과를 <b>누른 채</b> 공이 간 쪽으로 밀고 떼기 · 4구 · 사구 · K는 그냥 누르기</div><div class="g3 drag">${['H1', 'H2', 'H3', 'GO', 'FO', 'LO', 'E', 'HR', 'SF', 'IH'].map(k => `<button type="button" class="kb ${KIND[k].c}" data-drag="${k}">${KIND[k].n}</button>`).join('')}${kb('BB')}${kb('HP')}${kb('K')}${kb('SH')}${kb('FC')}</div></div>`;
+        if (m === 'A') return `<div class="sb-pad pa"><div class="lbl">① 결과</div><div class="g3">${kb('H1')}${kb('H2')}${kb('H3')}${kb('BB')}${kb('HP')}${kb('K')}${kb('GO')}${kb('FO')}${kb('LO')}${kb('HR')}${kb('IHR')}${kb('E')}${kb('SF')}${kb('FF')}${kb('SH')}${kb('IH')}${kb('FC')}</div><div class="lbl">② 공이 간 곳${ui.pick ? ' — ' + KIND[ui.pick].n + ' 어디로?' : ''}</div>${fieldPad()}</div>`;
+        if (m === 'D') return `<div class="sb-pad pd"><div class="lbl">결과를 <b>누른 채</b> 공이 간 쪽으로 밀고 떼기 · 4구 · 사구 · K는 그냥 누르기</div><div class="g3 drag">${['H1', 'H2', 'H3', 'GO', 'FO', 'LO', 'E', 'HR', 'SF', 'IH', 'IHR', 'FF'].map(k => `<button type="button" class="kb ${KIND[k].c}" data-drag="${k}">${KIND[k].n}</button>`).join('')}${kb('BB')}${kb('HP')}${kb('K')}${kb('SH')}${kb('FC')}</div></div>`;
         if (m === 'E') {
             const cols = ['H1', 'H2', 'GO', 'FO', 'E'];
-            return `<div class="sb-pad pe"><div class="q4">${kb('BB')}${kb('HP')}${kb('K')}${kb('SH')}</div><div class="mx"><span></span>${cols.map(k => `<span class="ch">${KIND[k].n}</span>`).join('')}${['좌', '중', '우', '유', '2', '3', '1', '투', '포'].map(d => `<span class="rh">${DIRNAME[d]}</span>` + cols.map(k => { const dim = (/[좌중우]/.test(d) && k === 'GO') || (/[투포123유]/.test(d) && k === 'H2'); return `<button type="button" class="${KIND[k].c}${dim ? ' dim' : ''}" data-a="kd" data-k="${k}" data-d="${d}">${d}${KIND[k].s}</button>`; }).join('')).join('')}</div><div class="more">${['H3', 'HR', 'LO', 'SF', 'IH'].map(k => kb(k, 'sm')).join('')}${kb('FC', 'sm')}</div>${ui.pick ? dirRow() : ''}</div>`;
+            return `<div class="sb-pad pe"><div class="q4">${kb('BB')}${kb('HP')}${kb('K')}${kb('SH')}</div><div class="mx"><span></span>${cols.map(k => `<span class="ch">${KIND[k].n}</span>`).join('')}${['좌', '좌중', '중', '우중', '우', '유', '2', '3', '1', '투', '포'].map(d => `<span class="rh">${DIRNAME[d]}</span>` + cols.map(k => { const dim = (/[좌중우]/.test(d) && k === 'GO') || (/[투포123유]/.test(d) && k === 'H2'); return `<button type="button" class="${KIND[k].c}${dim ? ' dim' : ''}" data-a="kd" data-k="${k}" data-d="${d}">${d}${KIND[k].s}</button>`; }).join('')).join('')}</div><div class="more">${['H3', 'HR', 'IHR', 'LO', 'SF', 'FF', 'IH'].map(k => kb(k, 'sm')).join('')}${kb('FC', 'sm')}</div>${ui.pick ? dirRow() : ''}</div>`;
         }
         // B: 기록표 칸 방식 — 기호 판은 작게, 기록표가 주인공
         if (LAY === 'B') {   // 자주 쓰는 10개 + 「기타」
-            const more = ui.more ? `<div class="sb-more">${['H3', 'HR', 'IH', 'LO', 'SF', 'FC'].map(k => kb(k)).join('')}<button type="button" class="kb x" data-a="more">닫기</button></div>` : '';
+            const more = ui.more ? `<div class="sb-more">${['H3', 'HR', 'IHR', 'IH', 'LO', 'FF', 'SF', 'FC'].map(k => kb(k)).join('')}<button type="button" class="kb x" data-a="more">닫기</button></div>` : '';
             return `<div class="sb-pad pb lb"><div class="g5">${kb('BB')}${kb('HP')}${kb('K')}${kb('H1')}${kb('H2')}${kb('GO')}${kb('FO')}${kb('E')}${kb('SH')}<button type="button" class="kb etc${ui.more ? ' sel' : ''}" data-a="more">기타 ▴</button></div>${dirRow()}${more}</div>`;
         }
         if (LAY === 'C') {   // 방향 먼저 → 그 방향의 결과 고르기 (기호를 쓰는 순서 그대로: 좌 → 좌안)
@@ -294,9 +368,10 @@
     }
     function nowLine() {
         const t = G.cur.t, p = curP(t, G.cur.s), st = pstat(t, G.cur.s, Math.max(0, slotOf(t, G.cur.s).ps.length - 1));
-        if (ui.edit != null) { const e = G.log.find(x => x.id === ui.edit); const q = e ? slotOf(e.t, e.s).ps[e.p] : null; return `<div class="sb-now ed"><span><b>고치는 중</b> · ${e ? e.s + '번 ' + esc(q && (q.name || q.no) || '') + ' ' + e.i + '회 「' + esc(sym(e)) + '」' : ''} → 새 기호를 누르세요</span><button type="button" data-a="del">지우기</button><button type="button" data-a="editoff">취소</button></div>`; }
-        return `<div class="sb-now"><span class="no">${esc(p.no || '?')}</span><span class="nm">${esc(p.name || (p.no ? '' : '배번 넣기'))}</span><span class="sub">${G.cur.s}번${p.pos ? ' · ' + esc(p.pos) : ''} · ${st.ab}타수 ${st.h}안타</span><button type="button" data-a="who" data-t="${t}" data-s="${G.cur.s}" data-p="${Math.max(0, slotOf(t, G.cur.s).ps.length - 1)}">선수</button></div>`;
+        if (ui.edit != null) { const e = G.log.find(x => x.id === ui.edit); const q = e ? slotOf(e.t, e.s).ps[e.p] : null; return `<div class="sb-now ed"><span><b>고치는 중</b> · ${e ? e.s + '번 ' + esc(q && (q.name || q.no) || '') + ' ' + e.i + '회 「' + esc(sym(e)) + '」' : ''} → 새 기호를 누르세요</span><button type="button" data-a="del">지우기</button>${wolBtn()}<button type="button" data-a="editoff">취소</button></div>`; }
+        return `<div class="sb-now"><span class="no">${esc(p.no || '?')}</span><span class="nm">${esc(p.name || (p.no ? '' : '배번 넣기'))}</span><span class="sub">${G.cur.s}번${p.pos ? ' · ' + esc(p.pos) : ''} · ${st.ab}타수 ${st.h}안타</span><button type="button" data-a="who" data-t="${t}" data-s="${G.cur.s}" data-p="${Math.max(0, slotOf(t, G.cur.s).ps.length - 1)}">선수</button>${wolBtn()}</div>`;
     }
+    function wolBtn() { return `<button type="button" class="wol${ui.wol ? ' on' : ''}" data-a="wol" title="외야수 키를 넘긴 타구">${ui.wol ? '✓ 월' : '월'}</button>`; }
     function statusHtml() {
         const t = G.cur.t, o = outs(t, G.cur.i);
         return `<div class="sb-status"><b class="inn">${halfLabel(t, G.cur.i)}</b><button type="button" class="sc" data-a="board"><span>${esc(G.tm.us.name)} <b class="us">${total('us')}</b> : <b>${total('them')}</b> ${esc(G.tm.them.name)}</span><i>점수판 ▾</i></button><span class="outs" aria-label="${o}아웃">${[0, 1, 2].map(k => `<i class="${k < o ? 'on' : ''}"></i>`).join('')}</span></div>`;
@@ -304,7 +379,7 @@
     function toolsHtml() {
         const t = G.cur.t;
         return `${LAY ? `<div class="sb-msg">${esc(ui.msg || '기록하면 여기에 표시돼요')}</div>` : `<div class="sb-undo"><span>${esc(ui.msg || '기록하면 여기에 표시돼요')}</span><button type="button" data-a="undo">↶ 되돌리기</button></div>`}
-        ${LAY ? `<div class="sb-tools ic"><button type="button" class="run" data-a="run" data-t="${t}"><b>＋</b>득점</button><button type="button" data-a="ro"><b>🏃</b>주자아웃</button><button type="button" data-a="sub"><b>🔁</b>교체</button><button type="button" data-a="end"><b>⇄</b>공수교대</button><button type="button" data-a="undo" class="un"><b>↶</b>되돌리기</button><button type="button" data-a="menu"><b>⋯</b>더보기</button></div>` : `<div class="sb-tools"><button type="button" class="run" data-a="run" data-t="${t}">＋ 득점</button><button type="button" data-a="ro">🏃 주자아웃</button><button type="button" data-a="sub">🔁 교체</button><button type="button" data-a="end">공수교대</button><button type="button" data-a="menu">⋯ 더보기</button></div>`}`;
+        ${LAY ? `<div class="sb-tools ic"><button type="button" class="run" data-a="run" data-t="${t}"><b>＋</b>득점</button><button type="button" data-a="ro"><b>🏃</b>주자 · 도루</button><button type="button" data-a="sub"><b>🔁</b>교체</button><button type="button" data-a="end"><b>⇄</b>공수교대</button><button type="button" data-a="undo" class="un"><b>↶</b>되돌리기</button><button type="button" data-a="menu"><b>⋯</b>더보기</button></div>` : `<div class="sb-tools"><button type="button" class="run" data-a="run" data-t="${t}">＋ 득점</button><button type="button" data-a="ro">🏃 주자아웃</button><button type="button" data-a="sub">🔁 교체</button><button type="button" data-a="end">공수교대</button><button type="button" data-a="menu">⋯ 더보기</button></div>`}`;
     }
     function simpleThem() {   // 상대 타자를 안 적는 경기: 숫자만
         const st = stat('them');
@@ -318,19 +393,30 @@
         if (ui.panel === 'board') over = `<div class="sb-over" data-a="panel-x"><div class="sb-panel" data-stop="1"><h3>점수판 <small>＋ − 로 이닝 점수를 고쳐요</small></h3>${boardHtml(true)}<div class="adjs">${['us', 'them'].map(x => `<div><b>${esc(G.tm[x].name)}</b> ${['H', 'E', 'B'].map(k => `<span>${k} <button type="button" data-a="adj2" data-t="${x}" data-k="${k}" data-n="-1">−</button>${stat(x)[k]}<button type="button" data-a="adj2" data-t="${x}" data-k="${k}" data-n="1">＋</button></span>`).join('')}</div>`).join('')}</div><button type="button" class="big" data-a="panel-x">닫기</button></div></div>`;
         if (ui.panel === 'menu') over = `<div class="sb-over" data-a="panel-x"><div class="sb-panel" data-stop="1"><h3>${LAY ? '⚙ 설정' : '더보기'}</h3><div class="lbl">입력 방식 (기록은 그대로 이어져요)</div><div class="modes">${Object.keys(MODES).map(k => `<button type="button" data-a="mode" data-m="${k}" class="${k === m ? 'on' : ''}"><b>${k}안</b>${MODES[k]}</button>`).join('')}</div><button type="button" class="row" data-a="run" data-t="${other(t)}">＋ ${esc(G.tm[other(t)].name)} 득점</button><button type="button" class="row" data-a="togthem">${G.recThem ? '상대 타자 기록 끄기 (숫자만 올리기)' : '상대 타자도 타순별로 기록하기'}</button><button type="button" class="row" data-a="lineup">타순 · 선수 고치기</button><button type="button" class="row pri" data-a="finish">🏁 경기 끝 · 확인하고 보내기</button><button type="button" class="big" data-a="panel-x">닫기</button></div></div>`;
         if (ui.panel === 'who') over = whoPanel();
+        if (ui.panel === 'runner') over = runnerPanel();
+        if (ui.panel === 'rdel') { const e = G.log.find(x => x.id === ui.rdel); const w = e && (e.y === 'run' ? e.sc : e); over = `<div class="sb-over" data-a="panel-x"><div class="sb-panel" data-stop="1"><h3>주자 기록 지우기</h3><p class="fin">${e && w ? esc(pName(e.t, w.s, w.p)) + ' · ' + e.i + '회 · ' + ({ ro: '주자아웃', sb: '도루', cs: '도루실패', run: '득점' })[e.y] : ''}</p><button type="button" class="big pri" data-a="rdel" data-id="${ui.rdel}">지우기</button><button type="button" class="big" data-a="panel-x">취소</button></div></div>`; }
         if (ui.panel === 'finish') over = finishPanel();
         if (ui.panel === 'conflict') { let sv = null; try { sv = JSON.parse(ui.srv); } catch (e) {} const su = sv ? Object.values(sv.runs.us || {}).reduce((a, b) => a + (+b || 0), 0) : 0, st = sv ? Object.values(sv.runs.them || {}).reduce((a, b) => a + (+b || 0), 0) : 0;
             over = `<div class="sb-over"><div class="sb-panel" data-stop="1"><h3>⚠ 서버에 더 자세한 기록이 있어요</h3><p class="fin">서버 기록: 타석 <b>${paCount(sv)}</b>개 · ${esc(G.tm.us.name)} ${su} : ${st}<br>이 휴대폰 기록: 타석 <b>${paCount(G)}</b>개 · ${total('us')} : ${total('them')}</p><p class="fin">다른 휴대폰(대표님 등)에서 먼저 보낸 기록이에요. 이대로 보내면 그 기록이 지워져요.</p><button type="button" class="big pri" data-a="srvtake">📥 서버 기록 가져오기 (권장)</button><button type="button" class="big" data-a="panel-x">취소</button>${ui.forceAsk ? `<button type="button" class="big sbdanger" data-a="srvforce">정말 덮어쓰기 — 서버 기록이 지워져요</button>` : `<button type="button" class="big sbghost" data-a="srvforce">그래도 이 기록으로 덮어쓰기</button>`}</div></div>`; }
         if (ui.panel === 'askend') { const pi = G.cur.i - 1; over = `<div class="sb-over"><div class="sb-panel" data-stop="1"><h3>🏁 ${pi}회말까지 끝났어요</h3><p class="fin">${esc(G.tm.us.name)} ${total('us')} : ${total('them')} ${esc(G.tm.them.name)}</p><p class="hint">경기가 끝났으면 확인하고 서버에 보내요. 연장이면 계속 기록하세요.</p><button type="button" class="big pri" data-a="finish">🏁 경기 끝 · 확인하고 보내기</button><button type="button" class="big" data-a="panel-x">연장 · 계속 기록</button></div></div>`; }
         if (ui.panel === 'sheet') over = `<div class="sb-over full"><div class="sb-panel full" data-stop="1"><h3>📋 기록표 <small>칸을 누르면 고쳐요</small></h3>${sheet}<button type="button" class="big" data-a="panel-x">닫기</button></div></div>`;
-        const input = on ? `${nowLine()}${padHtml(m)}` : simpleThem();
+        const input = on ? `${nowLine()}${baseHtml()}${padHtml(m)}` : simpleThem();
         return `${topBar((G.title || '경기') + ' · vs ' + G.tm.them.name, `${G.done ? '' : `<button type="button" class="sb-fin" data-a="finish">🏁 경기 끝</button>`}<button type="button" class="sb-mode" data-a="menu" aria-label="설정">${LAY ? '⚙ 설정' : m + '안 ▾'}</button>`)}
         <div class="sb-body m${m}${on ? '' : ' simple'}${LAY ? ' lay' + LAY : ''}${TAB ? ' tab' + TAB : ''}"><div class="sb-main">${G.done ? `<button type="button" class="sb-donebar" data-a="finish">🏁 경기 끝 · 다 고쳤으면 여기를 눌러 보내기</button>` : ''}${statusHtml()}${m === 'B' && on ? sheet : ''}${input}${toolsHtml()}${m !== 'B' || !on ? `<button type="button" class="sb-sheetbtn" data-a="sheet">📋 기록표 보기 · 고치기</button>` : ''}</div><div class="sb-side">${boardHtml(false)}${sheet}</div></div>${over}`;
     }
     function whoPanel() {
         const w = ui.who, sl = slotOf(w.t, w.s), p = sl.ps[w.p] || {};
         const posSel = `<select id="sbPos">${['', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'DH'].map(v => `<option value="${v}"${String(p.pos || '') === v ? ' selected' : ''}>${v ? v + (DIRPOS[v] ? ' ' + DIRPOS[v] : '') : '수비 위치'}</option>`).join('')}</select>`;
-        const src = w.t === 'us' ? roster() : oppList(G.tm.them.name);
+        const src0 = w.t === 'us' ? roster() : oppList(G.tm.them.name);
+        const inLn = {}; G.tm[w.t].ln.forEach(x => { const q = x.ps[x.ps.length - 1]; inLn[q.no + '|' + q.name] = 1; });
+        const src = w.sub ? src0.filter(q => !inLn[q.no + '|' + q.name]) : src0;   // 교체: 지금 뛰는 선수는 빼고 (벤치만)
+        if (w.sub) {   // v2.154.0 빠른 교체: 팀 · 타순 고르고 선수를 한 번 누르면 바로 교체
+            const chips = G.tm[w.t].ln.map((x, k) => `<button type="button" data-a="subslot" data-s="${k + 1}" class="${w.s === k + 1 ? 'on' : ''}"><b>${k + 1}</b>${esc(pName(w.t, k + 1, x.ps.length - 1))}</button>`).join('');
+            const tsw = G.recThem ? `<div class="seg"><button type="button" data-a="subteam" data-t="us" class="${w.t === 'us' ? 'on' : ''}">${esc(G.tm.us.name)}</button><button type="button" data-a="subteam" data-t="them" class="${w.t === 'them' ? 'on' : ''}">${esc(G.tm.them.name)}</button></div>` : '';
+            return `<div class="sb-over" data-a="panel-x"><div class="sb-panel" data-stop="1"><h3>🔁 선수 교체 <small>대타 · 대주자 · 수비 교체 모두</small></h3>${tsw}<div class="lbl">① 누구를 바꿀까요? (타순)</div><div class="plist subs">${chips}</div><div class="lbl">② 들어갈 선수를 누르면 바로 바뀌어요</div><div class="plist">${src.map(q => `<button type="button" data-a="subnow" data-no="${esc(q.no)}" data-name="${esc(q.name)}"><b>${esc(q.no)}</b>${esc(q.name)}${q.grade ? `<small>${esc(q.grade)}학년</small>` : ''}</button>`).join('') || '<p class="hint">벤치 선수가 없어요. 아래에 배번 · 이름을 넣어 주세요.</p>'}</div>
+            <details class="subman"><summary>명단에 없는 선수 직접 넣기</summary><div class="f2"><label>배번<input id="sbNo" inputmode="numeric" maxlength="3"></label><label>이름<input id="sbName" maxlength="10"></label></div>${posSel}<button type="button" class="big pri" data-a="whosave">교체하기</button></details>
+            <button type="button" class="big" data-a="panel-x">닫기</button></div></div>`;
+        }
         const list = src.length ? `<div class="lbl">${w.sub ? '바꿔 들어갈 선수' : '선수 고르기'}</div><div class="plist">${src.map(q => `<button type="button" data-a="whopick" data-no="${esc(q.no)}" data-name="${esc(q.name)}"><b>${esc(q.no)}</b>${esc(q.name)}${q.grade ? `<small>${esc(q.grade)}학년</small>` : ''}</button>`).join('')}</div>` : '';
         return `<div class="sb-over" data-a="panel-x"><div class="sb-panel" data-stop="1"><h3>${w.s}번 타자 ${w.sub ? '교체' : '정보'} <small>${esc(G.tm[w.t].name)}</small></h3><div class="f2"><label>배번<input id="sbNo" inputmode="numeric" maxlength="3" value="${w.sub ? '' : esc(p.no || '')}"></label><label>이름<input id="sbName" maxlength="10" value="${w.sub ? '' : esc(p.name || '')}"></label></div>${posSel}${list}<button type="button" class="big pri" data-a="whosave">${w.sub ? '교체하기' : '저장'}</button><button type="button" class="big" data-a="panel-x">취소</button></div></div>`;
     }
@@ -362,7 +448,7 @@
         <div class="f2" style="margin-top:6px"><button type="button" class="big" data-a="oppadd">명단에 더하기</button><button type="button" class="big" data-a="oppclear">명단 비우기</button></div></div>`;
     }
     function viewHtml() {
-        return `${topBar('📋 ' + (G.title || '경기') + ' · vs ' + G.tm.them.name)}<div class="sb-view"><p class="hint">${esc(G.date)}${G.place ? ' · ' + esc(G.place) : ''}</p>${boardHtml(false)}<h3>${esc(G.tm.us.name)}</h3>${sheetHtml('us', true)}${G.recThem ? `<h3>${esc(G.tm.them.name)}</h3>${sheetHtml('them', true)}` : ''}<p class="hint">초록 안타 · 파랑 4구·사구 · 빨강 삼진 · 회색 아웃 · // 이닝 끝 · 작은 숫자는 타점</p>${canRecord() && ui.canEdit ? `<button type="button" class="big" data-a="reopen">✏️ 이 기록 고치기</button>` : ''}</div>`;
+        return `${topBar('📋 ' + (G.title || '경기') + ' · vs ' + G.tm.them.name)}<div class="sb-view"><p class="hint">${esc(G.date)}${G.place ? ' · ' + esc(G.place) : ''}</p>${boardHtml(false)}<h3>${esc(G.tm.us.name)}</h3>${sheetHtml('us', true)}${G.recThem ? `<h3>${esc(G.tm.them.name)}</h3>${sheetHtml('them', true)}` : ''}<p class="hint">초록 안타 · 파랑 4구·사구 · 빨강 삼진 · 회색 아웃 · // 이닝 끝 · 작은 숫자는 타점 · 홈 = 라인(라바콘) 넘긴 홈런 · 그홈 = 그라운드 홈런 · 파플 = 파울플라이 · 월 = 외야수 키를 넘긴 타구 (우월2 = 우익수 키 넘긴 2루타)</p>${canRecord() && ui.canEdit ? `<button type="button" class="big" data-a="reopen">✏️ 이 기록 고치기</button>` : ''}</div>`;
     }
 
     // ---------- 누르기 ----------
@@ -404,8 +490,11 @@
         if (a === 'dfirst') { ui.dir = d.d; draw(); return; }
         if (a === 'dirx') { ui.dir = null; draw(); return; }
         if (a === 'undo') return undo();
-        if (a === 'run') return addRun(d.t);
-        if (a === 'ro') return runnerOut();
+        if (a === 'run') { if (!recOn(d.t) || d.t !== G.cur.t) return addRun(d.t); ui.rn = { t: d.t }; ui.panel = 'runner'; draw(); return; }
+        if (a === 'ro') { ui.rn = { t: G.cur.t }; ui.panel = 'runner'; draw(); return; }
+        if (a === 'rpick') { ui.rn = { t: d.t, s: +d.s, p: +d.p }; ui.panel = 'runner'; draw(); return; }
+        if (a === 'ract') { const r = ui.rn; if (r && r.s) runnerAct(r.t, r.s, r.p, d.x); return; }
+        if (a === 'rdel') { ui.panel = ''; const ix = G.log.findIndex(x => x.id === +d.id); if (ix >= 0) { const e = G.log[ix]; if (e.y === 'run') { G.runs[e.t][e.i] = Math.max(0, runs(e.t, e.i) - 1); if (e.ref) { const pa = G.log.find(x => x.id === e.ref); if (pa) pa.r = Math.max(0, (pa.r || 0) - 1); } } G.log.splice(ix, 1); ui.msg = '그 주자 기록을 지웠어요'; save(); draw(); } return; }
         if (a === 'end') { endHalf(false); ui.msg = '공수교대 · ' + halfLabel(G.cur.t, G.cur.i); save(); draw(); return; }
         if (a === 'run+' || a === 'run-') return setRun(d.t, +d.i, a === 'run+' ? 1 : -1);
         if (a === 'adj') return adj('them', d.k, +d.n);
@@ -414,12 +503,16 @@
         if (a === 'mode') { lsSet(LSM, d.m); ui.panel = ''; ui.pick = null; draw(); return; }
         if (a === 'togthem') { G.recThem = !G.recThem; if (G.recThem && !G.tm.them.ln.length) G.tm.them.ln = Array.from({ length: 9 }, () => ({ ps: [{ no: '', name: '', pos: '' }] })); ui.panel = ''; save(); draw(); return; }
         if (a === 'sheett') { ui.sheetT = d.t; draw(); return; }
-        if (a === 'cell') { ui.edit = +d.id; ui.pick = null; if (ui.panel === 'sheet') ui.panel = ''; const e = G.log.find(x => x.id === ui.edit); if (e && !ui.sheetT) ui.sheetT = e.t; draw(); return; }
+        if (a === 'cell') { ui.edit = +d.id; ui.pick = null; if (ui.panel === 'sheet') ui.panel = ''; const e = G.log.find(x => x.id === ui.edit); ui.wol = !!(e && e.w); if (e && !ui.sheetT) ui.sheetT = e.t; draw(); return; }
         if (a === 'cellempty') { if (el.querySelector('.sy')) return; if (d.t !== G.cur.t) return; G.cur.i = +d.i; G.cur.s = +d.s; G.nx[d.t] = G.cur.s; ui.edit = null; ui.msg = d.i + '회 ' + d.s + '번 칸부터 기록해요'; if (ui.panel === 'sheet') ui.panel = ''; save(); draw(); return; }
         if (a === 'editoff') { ui.edit = null; ui.pick = null; draw(); return; }
         if (a === 'del') { const ix = G.log.findIndex(x => x.id === ui.edit); if (ix >= 0) G.log.splice(ix, 1); ui.edit = null; ui.msg = '그 칸을 지웠어요'; save(); draw(); return; }
         if (a === 'who') { ui.who = { t: d.t, s: +d.s, p: +d.p, sub: false }; ui.panel = 'who'; draw(); return; }
         if (a === 'sub') { const t = G.cur.t; ui.who = { t: t, s: G.cur.s, p: slotOf(t, G.cur.s).ps.length - 1, sub: true }; ui.panel = 'who'; draw(); return; }
+        if (a === 'subslot') { ui.who.s = +d.s; ui.who.p = slotOf(ui.who.t, ui.who.s).ps.length - 1; draw(); return; }
+        if (a === 'subteam') { ui.who = { t: d.t, s: 1, p: slotOf(d.t, 1).ps.length - 1, sub: true }; draw(); return; }
+        if (a === 'subnow') { const w = ui.who, sl = slotOf(w.t, w.s), q = { no: d.no, name: d.name, pos: (sl.ps[sl.ps.length - 1] || {}).pos || '' }; sl.ps.push(q); push({ y: 'sub', t: w.t, s: w.s }); ui.msg = '🔁 ' + w.s + '번 교체 · ' + (q.name || '#' + q.no); ui.panel = ''; ui.who = null; save(); draw(); return; }
+        if (a === 'rmark') { const e = G.log.find(x => x.id === +d.id); if (!e) return; ui.rdel = e.id; ui.panel = 'rdel'; draw(); return; }
         if (a === 'whopick') { const n = document.getElementById('sbNo'), m = document.getElementById('sbName'); if (n) n.value = d.no; if (m) m.value = d.name; return; }
         if (a === 'whosave') {
             const w = ui.who, sl = slotOf(w.t, w.s);
@@ -431,6 +524,7 @@
         }
         if (a === 'lineup') { ui.panel = ''; ui.screen = 'setup'; draw(); return; }
         if (a === 'send') return send();
+        if (a === 'wol') { ui.wol = !ui.wol; ui.msg = ui.wol ? '「월」 켜짐 · 다음 안타 · 홈런을 외야 방향으로 넣으면 「우월2」처럼 적혀요' : ''; draw(); return; }
         if (a === 'srvtake') { try { adopt(ui.srv); ui.srv = null; ui.forceAsk = false; ui.panel = G.done ? 'finish' : ''; ui.screen = 'game'; ui.msg = '서버 기록을 가져왔어요'; note('done', '서버 기록 가져왔캉! ✓'); draw(); } catch (e) { note('fail', '못 가져왔캉…', e.message); } return; }
         if (a === 'srvforce') { if (!ui.forceAsk) { ui.forceAsk = true; draw(); return; } ui.forceAsk = false; ui.force = true; ui.panel = 'finish'; ui.srv = null; return send(); }
         if (a === 'resume') { G.done = false; ui.panel = ''; save(); draw(); return; }
@@ -466,7 +560,7 @@
     // ---------- 보내기 ----------
     function bodyOf() { return JSON.stringify({ v: G.v, id: G.id, ev: G.ev, date: G.date, title: G.title, place: G.place, start: G.start, first: G.first, recThem: G.recThem, tm: G.tm, log: G.log.map(e => { const o = Object.assign({}, e); delete o.pc; return o; }), runs: G.runs, adj: G.adj, cur: G.cur, nx: G.nx, seq: G.seq, begun: true, done: true }); }
     function sig(b) { let h = 0; for (let k = 0; k < b.length; k++) h = (h * 31 + b.charCodeAt(k)) | 0; return b.length + ':' + h; }
-    // 🛡 v2.153.7: 서버에 있는 기록을 다른 기기의 빈 기록으로 덮어쓰지 않게
+    // 🛡 v2.154.0: 서버에 있는 기록을 다른 기기의 빈 기록으로 덮어쓰지 않게
     function paCount(g) { return g && Array.isArray(g.log) ? g.log.filter(e => e.y === 'pa').length : 0; }
     async function serverRec(id) {
         const rj = await fetch(apiGetUrl('action=gameRecord&id=' + encodeURIComponent(id)), { cache: 'no-store' }).then(x => x.json());
@@ -523,7 +617,7 @@
         else G = newGame(ev);
         if (!G.begun && !G.tm.them.ln.length && oppList(G.tm.them.name).length === 0) { /* 명단 없음 — 서버에 있으면 가져옴 */ }
         draw(); oppFetch();
-        if (evId && paCount(G) === 0 && canRecord()) {   // 🛡 v2.153.7: 이 기기에 기록이 없으면 서버 기록부터 확인 (다른 기기에서 보낸 것)
+        if (evId && paCount(G) === 0 && canRecord()) {   // 🛡 v2.154.0: 이 기기에 기록이 없으면 서버 기록부터 확인 (다른 기기에서 보낸 것)
             const want = G;
             serverRec(evId).then(sj => { if (!sj || G !== want) return; adopt(sj); ui.screen = 'game'; if (G.done) ui.panel = 'finish'; ui.msg = '서버에 저장된 기록을 불러왔어요'; note('done', '서버 기록 불러왔캉! ✓'); draw(); }).catch(() => {});
         }
@@ -531,7 +625,7 @@
     async function view(evId) {
         ui = { screen: 'view', pick: null, edit: null, sheetT: null, panel: '', msg: '', who: null, canEdit: false };
         const loc = localFor(evId);
-        if (loc && loc.bg && load(loc.id) && paCount(load(loc.id)) > 0) { G = load(loc.id); ui.canEdit = true; draw(); return; }   // v2.153.7: 빈 기록이면 서버 것을 봄
+        if (loc && loc.bg && load(loc.id) && paCount(load(loc.id)) > 0) { G = load(loc.id); ui.canEdit = true; draw(); return; }   // v2.154.0: 빈 기록이면 서버 것을 봄
         note('saving', '기록표 불러오는 중이캉');
         try {
             const rj = await fetch(apiGetUrl('action=gameRecord&id=' + encodeURIComponent(evId)), { cache: 'no-store' }).then(x => x.json());
