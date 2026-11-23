@@ -306,6 +306,7 @@ html.sb-open .ui-zoom-ctrl, html.sb-open .bk-upd { display: none !important; }
   .sb-body.tab3 .sb-tools.ic button { min-height: 64px; font-size: 13px; } .sb-body.tab3 .sb-tools.ic button b { font-size: 22px; }
   .sb-body.tab3 .sb-sheet { font-size: 15px; } .sb-body.tab3 .sb-sheet td { height: 44px; } .sb-body.tab3 .sb-sheet .nm { min-width: 120px; }
   .sb-body.tab3 .sb-more .kb { min-height: 64px !important; font-size: 19px; }
+  .sb-body.tab3 .sb-more { top: calc(100% + 4px); bottom: auto; box-shadow: 0 6px 18px rgba(0,0,0,.18); }   /* v2.153.8: 가로 화면은 판이 위에 있어 「기타」를 아래로 펼침 (위로 펴면 제목 줄에 가려짐) */
 }
 @media (min-width: 760px) and (orientation: portrait) and (min-height: 1000px) {
   .sb-body.tab1 .sb-sheet td, .sb-body.tab3 .sb-sheet td { height: 56px; }
