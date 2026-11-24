@@ -347,3 +347,18 @@ html.sb-open .ui-zoom-ctrl, html.sb-open .bk-upd { display: none !important; }
 /* v2.155.1 D안 위아래 바꿈(A) — 그냥 누르는 5개는 위 한 줄, 끄는 버튼은 아래 */
 .sb-pad.pd.da .g5.tap { margin-bottom: 8px; } .sb-pad.pd.da .g5.tap .kb { min-height: 44px; font-size: 14px; }
 .sb-pad.pd.da .lbl { margin: 8px 0 0; }
+/* v2.156.0 낫아웃 · 병살타 · 10~12번 타자 (대표님 요청) */
+.sb-sheet .sy.lg { font-size: 11px; letter-spacing: -.3px; line-height: 1.15; white-space: normal; max-width: 64px; }
+.sb .g5.g6 { grid-template-columns: repeat(6, 1fr); }
+.sb .g5.g6 .etc { grid-column: span 2; }
+.sb-sheet tr.addrow td { text-align: left; padding: 6px; background: #f8fafc; }
+.sb-sheet tr.addrow button { border: 1.5px dashed var(--navy2); background: #fff; color: var(--navy2); border-radius: 9px; padding: 7px 12px; font-weight: 800; font-size: 13px; margin-right: 6px; }
+.sb-sheet tr.addrow button small { font-weight: 600; color: var(--s); margin-left: 4px; }
+.sb-sheet tr.addrow button.dim { border-style: solid; border-color: var(--line); color: var(--s); }
+.sb-now.ask { background: #eef6ff; border-color: #3b82f6; font-size: 13px; flex-wrap: wrap; }
+.sb-now.ask span { flex: 1; min-width: 150px; }
+.sb-now.ask button.pri, .sb-now.ask button[data-k] { background: var(--navy); color: #fff; border-color: var(--navy); }
+.sb-now.ask button[data-k="KR"] { background: var(--red); border-color: var(--red); }
+.sb .kpick { display: grid; gap: 8px; margin: 6px 0 10px; }
+.sb .kpick .big { text-align: left; display: flex; flex-direction: column; gap: 2px; font-size: 13px; font-weight: 600; }
+.sb .kpick .big b { font-size: 20px; color: var(--red); }

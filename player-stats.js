@@ -9,7 +9,7 @@
     'use strict';
     const LS = 'daeyeon_ps_cache';
     const HIT = { H1: 1, IH: 1, H2: 2, H3: 3, HR: 4, IHR: 4 }, NOAB = { BB: 1, HP: 1, SF: 1, SH: 1 };
-    const SY = { H1: '안', IH: '내안', H2: '2', H3: '3', HR: '홈', IHR: '그홈', BB: '4구', HP: '사구', K: 'K', GO: '땅', FO: '플', LO: '직', E: '실', SF: '희플', SH: '희번', FC: '야선', FF: '파플' };
+    const SY = { H1: '안', IH: '내안', H2: '2', H3: '3', HR: '홈', IHR: 'GH', BB: '4구', HP: '사구', K: 'K', GO: '땅', FO: '플', LO: '직', E: '실', SF: '희플', SH: '희번', FC: '야선', FF: '파플', KN: 'K(낫아웃)', KR: 'K(낫아웃 출루)', DP: '병살' };
     const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
     const f3 = x => x >= 1 ? x.toFixed(3) : x.toFixed(3).slice(1);
     function role() { try { return localStorage.getItem('daeyeon_admin_role') || sessionStorage.getItem('daeyeon_admin_role') || ''; } catch (e) { return ''; } }
@@ -53,8 +53,8 @@
                     x.pa++; x.rbi += e.r || 0; G.rbi += e.r || 0;
                     if (!NOAB[k]) { x.ab++; G.ab++; }
                     if (HIT[k]) { x.h++; G.h++; x.tb += HIT[k]; if (k === 'H2') x.h2++; if (k === 'H3') x.h3++; if (k === 'HR') x.hr++; if (k === 'IHR') x.ihr++; if (e.d) x.dirs[e.d] = (x.dirs[e.d] || 0) + 1; }
-                    if (k === 'BB') x.bb++; if (k === 'HP') x.hp++; if (k === 'K') x.k++; if (k === 'SF') x.sf++;
-                    G.res.push({ t: (SY[k] && ['BB', 'HP', 'K'].indexOf(k) === -1 ? (e.d || '') + (e.w ? '월' : '') : '') + (SY[k] || k), h: !!HIT[k] });
+                    if (k === 'BB') x.bb++; if (k === 'HP') x.hp++; if (k === 'K' || k === 'KN' || k === 'KR') x.k++; if (k === 'SF') x.sf++;
+                    G.res.push({ t: (SY[k] && ['BB', 'HP', 'K', 'KN', 'KR'].indexOf(k) === -1 ? (e.d || '') + (e.w ? '월' : '') : '') + (SY[k] || k), h: !!HIT[k] });
                 } else if (e.y === 'run' && e.sc) { const q = who(e.sc.s, e.sc.p); if (q) { get(q).r++; gm(q).r++; } }
                 else if (e.y === 'sb' || e.y === 'cs') { const q = who(e.s, e.p); if (q) get(q)[e.y]++; }
             });
@@ -80,7 +80,7 @@
         const gl = q.games.slice().reverse().map(g => `<tr><td>${esc(String(g.date).slice(5).replace('-', '.'))}</td><td>${esc(g.opp)}</td><td class="n">${g.ab}-${g.h}</td><td class="n">${g.rbi}</td><td class="rs">${g.res.map(r => `<span class="${r.h ? 'h' : ''}">${esc(r.t)}</span>`).join('')}</td></tr>`).join('');
         return `<div class="ps-card"><div class="ps-h">📊 시즌 기록 <small>${q.games.length}경기 · ${q.pa}타석</small></div>
             <div class="ps-big"><div class="m"><span>타율</span><b>${f3(q.avg)}</b></div><div><span>출루율</span><b>${f3(q.obp)}</b></div><div><span>장타율</span><b>${f3(q.slg)}</b></div><div><span>OPS</span><b>${f3(q.ops)}</b></div></div>
-            <div class="ps-cnt"><div><b>${q.h}</b>안타</div><div><b>${q.h2}</b>2루타</div><div><b>${q.h3}</b>3루타</div><div><b>${q.hrAll}</b>홈런${q.ihr ? `<i>그홈 ${q.ihr}</i>` : ''}</div><div><b>${q.rbi}</b>타점</div><div><b>${q.r}</b>득점</div><div><b>${q.sb}</b>도루</div><div><b>${q.bb + q.hp}</b>4사구</div></div>
+            <div class="ps-cnt"><div><b>${q.h}</b>안타</div><div><b>${q.h2}</b>2루타</div><div><b>${q.h3}</b>3루타</div><div><b>${q.hrAll}</b>홈런${q.ihr ? `<i>GH ${q.ihr}</i>` : ''}</div><div><b>${q.rbi}</b>타점</div><div><b>${q.r}</b>득점</div><div><b>${q.sb}</b>도루</div><div><b>${q.bb + q.hp}</b>4사구</div></div>
             <div class="ps-sub">타구 방향</div>${field(q.dirs)}
             <div class="ps-sub">경기별 기록</div><div class="ps-tw"><table class="ps-gl"><tr><th>날짜</th><th>상대</th><th>타수-안타</th><th>타점</th><th>타석 결과</th></tr>${gl}</table></div>
             <p class="ps-note">타율 = 안타 ÷ 타수 · OPS = 출루율 + 장타율. 득점 · 도루는 11월 23일 이후 기록부터 세요.</p></div>`;
