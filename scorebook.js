@@ -166,10 +166,10 @@
         ui.dpr = null; ui.dpk = null;
         const ended = outs(t, e.i) >= 3;
         if (ended) { endHalf(true); ui.msg += ' · 3아웃, 공수교대'; }
-        if (NEW === 'C') {   // C안: 기록한 뒤 한 줄로 물어보기 (안 누르면 그대로)
-            if (k === 'K') ui.ask = { y: 'K', id: e.id };
-            else if (k === 'GO' && runnersBefore && outsBefore < 2 && !ended) ui.ask = { y: 'GO', id: e.id };
-            else if (t === 'them' && !ended && G.cur.t === t && G.cur.s === 1 && e.s === nSlots(t) && nSlots(t) < 12 && G.slotAsked !== nSlots(t)) { G.slotAsked = nSlots(t); ui.ask = { y: 'slot' }; }
+        if (NEW === 'C' && k === 'K') ui.ask = { y: 'K', id: e.id };   // C안: 기록한 뒤 한 줄로 물어보기 (안 누르면 그대로)
+        else if (NEW === 'C' && k === 'GO' && runnersBefore && outsBefore < 2 && !ended) ui.ask = { y: 'GO', id: e.id };
+        else if (NEW !== 'B') {   // A · C안: 상대 9번이 치면 「10번 타자 있나요?」
+            if (t === 'them' && !ended && G.cur.t === t && G.cur.s === 1 && e.s === nSlots(t) && nSlots(t) < 12 && G.slotAsked !== nSlots(t)) { G.slotAsked = nSlots(t); ui.ask = { y: 'slot' }; }
         }
         save(); draw();
     }
@@ -447,7 +447,7 @@
         const t = G.cur.t, p = curP(t, G.cur.s), st = pstat(t, G.cur.s, Math.max(0, slotOf(t, G.cur.s).ps.length - 1));
         if (ui.edit != null) { const e = G.log.find(x => x.id === ui.edit); const q = e ? slotOf(e.t, e.s).ps[e.p] : null; return `<div class="sb-now ed"><span><b>고치는 중</b> · ${e ? e.s + '번 ' + esc(q && (q.name || q.no) || '') + ' ' + e.i + '회 「' + esc(sym(e)) + '」' : ''} → 새 기호를 누르세요</span><button type="button" data-a="del">지우기</button>${wolBtn()}<button type="button" data-a="editoff">취소</button></div>`; }
         if (ui.ask) { const a = ui.ask, e = a.id ? G.log.find(x => x.id === a.id) : null;
-            if (a.y === 'slot') return `<div class="sb-now ask"><span><b>${esc(G.tm.them.name)}</b> 다음 타자가 10번인가요? <small>연습경기</small></span><button type="button" class="pri" data-a="slot+" data-t="them">＋ ${nSlots('them') + 1}번 추가</button><button type="button" data-a="askx">아니요, 1번</button></div>`;
+            if (a.y === 'slot') return `<div class="sb-now ask"><span><b>${esc(G.tm.them.name)}</b> 다음 타자가 ${nSlots('them') + 1}번인가요? <small>연습경기</small></span><button type="button" class="pri" data-a="slot+" data-t="them">＋ ${nSlots('them') + 1}번 추가</button><button type="button" data-a="askx">아니요, 1번</button></div>`;
             if (e && a.y === 'K') return `<div class="sb-now ask"><span>방금 <b>K</b> · ${e.s}번 ${esc(pName(e.t, e.s, e.p))} — 낫아웃이었나요?</span><button type="button" data-a="conv" data-k="KN">K(낫아웃)</button><button type="button" data-a="conv" data-k="KR">출루</button><button type="button" data-a="askx">✕</button></div>`;
             if (e && a.y === 'GO') return `<div class="sb-now ask"><span>방금 <b>${esc(sym(e))}</b> · ${esc(pName(e.t, e.s, e.p))} — 병살타였나요?</span><button type="button" class="pri" data-a="conv" data-k="DP">병살타</button><button type="button" data-a="askx">✕</button></div>`; }
         return `<div class="sb-now"><span class="no">${esc(p.no || '?')}</span><span class="nm">${esc(p.name || (p.no ? '' : '배번 넣기'))}</span><span class="sub">${G.cur.s}번${p.pos ? ' · ' + esc(p.pos) : ''} · ${st.ab}타수 ${st.h}안타</span><button type="button" data-a="who" data-t="${t}" data-s="${G.cur.s}" data-p="${Math.max(0, slotOf(t, G.cur.s).ps.length - 1)}">선수</button>${wolBtn()}</div>`;
