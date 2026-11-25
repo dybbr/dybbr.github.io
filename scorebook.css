@@ -362,3 +362,5 @@ html.sb-open .ui-zoom-ctrl, html.sb-open .bk-upd { display: none !important; }
 .sb .kpick { display: grid; gap: 8px; margin: 6px 0 10px; }
 .sb .kpick .big { text-align: left; display: flex; flex-direction: column; gap: 2px; font-size: 13px; font-weight: 600; }
 .sb .kpick .big b { font-size: 20px; color: var(--red); }
+.sb-now .wol.sen { margin-left: 4px; }
+@media (max-width: 600px) { .sb .g5.g6 .kb { font-size: 14px; letter-spacing: -.5px; padding-left: 2px; padding-right: 2px; white-space: nowrap; } }

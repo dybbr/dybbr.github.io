@@ -54,7 +54,7 @@
                     if (!NOAB[k]) { x.ab++; G.ab++; }
                     if (HIT[k]) { x.h++; G.h++; x.tb += HIT[k]; if (k === 'H2') x.h2++; if (k === 'H3') x.h3++; if (k === 'HR') x.hr++; if (k === 'IHR') x.ihr++; if (e.d) x.dirs[e.d] = (x.dirs[e.d] || 0) + 1; }
                     if (k === 'BB') x.bb++; if (k === 'HP') x.hp++; if (k === 'K' || k === 'KN' || k === 'KR') x.k++; if (k === 'SF') x.sf++;
-                    G.res.push({ t: (SY[k] && ['BB', 'HP', 'K', 'KN', 'KR'].indexOf(k) === -1 ? (e.d || '') + (e.w ? '월' : '') : '') + (SY[k] || k), h: !!HIT[k] });
+                    G.res.push({ t: (SY[k] && ['BB', 'HP', 'K', 'KN', 'KR'].indexOf(k) === -1 ? (e.d || '') + (e.w ? '월' : '') + (e.n ? '선' : '') : '') + (SY[k] || k), h: !!HIT[k] });
                 } else if (e.y === 'run' && e.sc) { const q = who(e.sc.s, e.sc.p); if (q) { get(q).r++; gm(q).r++; } }
                 else if (e.y === 'sb' || e.y === 'cs') { const q = who(e.s, e.p); if (q) get(q)[e.y]++; }
             });
