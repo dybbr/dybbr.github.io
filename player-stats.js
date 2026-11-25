@@ -22,20 +22,20 @@
     // 예전 서버: 경기마다 받아서 같은 모양으로
     function slim(id, j) {
         const g = JSON.parse(j);
-        return { id: g.id || id, ev: g.ev, date: g.date, title: g.title, opp: (g.tm && g.tm.them && g.tm.them.name) || '', ln: ((g.tm && g.tm.us && g.tm.us.ln) || []).map(sl => ({ ps: (sl.ps || []).map(q => ({ no: q.no, name: q.name })) })), log: (g.log || []).filter(e => e.t === 'us' && e.y !== 'end') };
+        return { id: g.id || id, ev: g.ev, date: g.date, title: g.title, opp: (g.tm && g.tm.them && g.tm.them.name) || '', ln: ((g.tm && g.tm.us && g.tm.us.ln) || []).map(sl => ({ ps: (sl.ps || []).map(q => ({ no: q.no, name: q.name })) })), log: (g.log || []).filter(e => e.t === 'us' && e.y !== 'end'), pit: g.pit || [] };
     }
     let loading = null;
     function load(force) {
         const v = curVer(), c = lsGet();
-        if (!force && c && Array.isArray(c.recs) && (v.ver ? c.ver === v.ver : (c.ids || []).join() === v.ids.join() && c.recs.length)) return Promise.resolve(c.recs);
+        if (!force && c && Array.isArray(c.recs) && (c.pv || !c.recs.length) && (v.ver ? c.ver === v.ver : (c.ids || []).join() === v.ids.join() && c.recs.length)) return Promise.resolve(c.recs);
         if (loading) return loading;
         loading = apiGetJson('action=gameStats').then(r => {
-            if (r && r.result === 'success' && Array.isArray(r.recs)) { lsSet({ ver: r.ver || v.ver, ids: v.ids, recs: r.recs }); return r.recs; }
+            if (r && r.result === 'success' && Array.isArray(r.recs)) { lsSet({ ver: r.ver || v.ver, ids: v.ids, recs: r.recs, pv: r.recs.some(g => 'pit' in g) ? 2 : 0 }); return r.recs; }   // pv: 투수 기록(서버 v2.48.0)이 들어 있는 저장본
             if (r && r.result === 'error' && /로그인|권한|인증/.test(r.message || '')) throw new Error(r.message);   // 일반 열람자 등
             // 서버 v2.46.0 — 경기마다
             const ids = v.ids.slice(), old = (c && c.recs) || [];
             return Promise.all(ids.map(id => apiGetJson('action=gameRecord&id=' + encodeURIComponent(id)).then(x => (x && x.result === 'success') ? slim(id, x.json) : null).catch(() => old.find(o => o.ev === id) || null)))
-                .then(list => { const recs = list.filter(Boolean); lsSet({ ver: v.ver, ids: ids, recs: recs }); return recs; });
+                .then(list => { const recs = list.filter(Boolean); lsSet({ ver: v.ver, ids: ids, recs: recs, pv: 2 }); return recs; });
         }).finally(() => { loading = null; });
         return loading;
     }
@@ -94,9 +94,62 @@
             .catch(() => { box.innerHTML = ''; });
     }
 
+
+    // ---------- ⚾ v2.158.0 투수 · 쉬는 날 (투구 수를 넣었으면 그 수로, 안 넣었으면 상대 타자 수 × 4 · 이닝 × 16 으로 짐작) ----------
+    //   대한유소년야구연맹 · KBSA 초등부 공식 투구 수 규정이 없어(2026 기준) 기준은 고칠 수 있게 — 처음 값은 리틀야구(9~12세) 표를 참고
+    const LSR = 'daeyeon_pit_rule';
+    const RULE0 = { b: [20, 35, 50, 65], max: 75, ppa: 4, pin: 16 };
+    function rule() { try { const r = JSON.parse(localStorage.getItem(LSR) || 'null'); if (r && Array.isArray(r.b) && r.b.length === 4) return Object.assign({}, RULE0, r); } catch (e) {} return Object.assign({}, RULE0); }
+    function restDays(n, R) { for (let i = 0; i < 4; i++) if (n <= R.b[i]) return i; return 4; }
+    const ymd = t => t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
+    function addDays(d, n) { const t = new Date(String(d).slice(0, 10) + 'T00:00:00'); if (isNaN(t)) return ''; t.setDate(t.getDate() + n); return ymd(t); }
+    const today = () => ymd(new Date());
+    const md = d => String(d || '').slice(5, 10).replace('-', '.');
+    function pitchers(recs) {
+        const R = rule(), P = {};
+        recs.slice().sort((a, b) => String(a.date).localeCompare(String(b.date))).forEach(g => (g.pit || []).forEach(p => {
+            const key = String(p.no || '') + '|' + String(p.name || '');
+            const x = P[key] = P[key] || { no: p.no || '', name: p.name || '', apps: [], days: {}, outs: 0, bf: 0, h: 0, bb: 0, k: 0, r: 0, pcs: 0, bfKnown: true };
+            const est = !(p.pc > 0), n = p.pc > 0 ? +p.pc : (p.bf != null ? p.bf * R.ppa : Math.round((p.outs || 0) / 3 * R.pin));
+            x.apps.push({ date: String(g.date).slice(0, 10), opp: g.opp, outs: p.outs || 0, bf: p.bf, r: p.r || 0, pc: p.pc || 0, n, est });
+            const d = String(g.date).slice(0, 10); x.days[d] = x.days[d] || { n: 0, est: false }; x.days[d].n += n; x.days[d].est = x.days[d].est || est;
+            x.outs += p.outs || 0; x.r += p.r || 0; x.pcs += n;
+            if (p.bf == null) x.bfKnown = false; else { x.bf += p.bf; x.h += p.h || 0; x.bb += p.bb || 0; x.k += p.k || 0; }
+        }));
+        const td = today();
+        return Object.values(P).map(x => {
+            const last = Object.keys(x.days).sort().pop(), dd = x.days[last], rest = restDays(dd.n, R), next = addDays(last, rest + 1);
+            return Object.assign(x, { last, lastN: dd.n, lastEst: dd.est, rest, next, wait: next > td, left: Math.max(0, Math.round((new Date(next + 'T00:00:00') - new Date(td + 'T00:00:00')) / 864e5)), over: dd.n > R.max });
+        }).sort((a, b) => b.last.localeCompare(a.last) || a.name.localeCompare(b.name));
+    }
+    // 경기 기록 화면(투수 고르기)에서 바로 씀 — 기기에 저장된 기록만 (서버에 안 물음)
+    function pitRest(q, onDate) {
+        const c = lsGet(); if (!c || !Array.isArray(c.recs)) return null;
+        const x = pitchers(c.recs).find(p => String(p.no) === String(q.no || '') && p.name === (q.name || ''));
+        if (!x) return null;
+        const d = String(onDate || today()).slice(0, 10);
+        return { last: x.last, n: x.lastN, est: x.lastEst, next: x.next, wait: x.next > d && x.last < d };
+    }
+    const ipT = o => Math.floor(o / 3) + (o % 3 ? ' ' + (o % 3) + '/3' : '');
+    function pitHtml() {
+        const L = pitchers(rk.recs || []), R = rule();
+        const card = x => `<div class="pt-card ${x.wait ? 'wait' : 'ok'}"><div class="pt-h"><b>${esc(x.no)}</b> ${esc(x.name)}<span class="pt-st">${x.wait ? `${md(x.next)}부터 · ${x.left}일 남음` : '오늘 가능'}</span></div>
+            <div class="pt-l">마지막 ${md(x.last)} · <b>${x.lastN}구</b>${x.lastEst ? '<i>짐작</i>' : ''} → ${x.rest}일 쉬기${x.over ? ` <em>하루 ${R.max}구 넘음</em>` : ''}</div></div>`;
+        const rows = L.map(x => `<tr><td class="st">${esc(x.no)} ${esc(x.name)}</td><td>${x.apps.length}</td><td>${ipT(x.outs)}</td><td>${x.pcs}${x.apps.some(a => a.est) ? '<i>*</i>' : ''}</td><td>${x.bfKnown ? x.bf : '-'}</td><td>${x.bfKnown ? x.h : '-'}</td><td>${x.bfKnown ? x.bb : '-'}</td><td>${x.bfKnown ? x.k : '-'}</td><td>${x.r}</td><td>${x.outs ? (x.r / (x.outs / 3)).toFixed(2) : '-'}</td></tr>`).join('');
+        const rl = ['1', String(R.b[0] + 1), String(R.b[1] + 1), String(R.b[2] + 1), String(R.b[3] + 1)];
+        return `<div class="pt-sec">⚾ 투수 쉬는 날 <small>오늘 ${md(today())} 기준</small></div>
+            ${L.length ? `<div class="pt-grid">${L.map(card).join('')}</div>` : '<p class="ps-empty">아직 투수 기록이 없어요. 경기 기록 화면에서 상대 공격 때 「이번 회 투수」를 고르면 여기에 쌓여요.</p>'}
+            ${L.length ? `<div class="pt-sec">시즌 투수 기록</div><div class="ps-tw"><table class="ps-rk pt-rk"><tr><th class="st">투수</th><th>경기</th><th>이닝</th><th>투구 수</th><th>상대 타자</th><th>안타</th><th>4사구</th><th>삼진</th><th>실점</th><th>이닝당 실점</th></tr>${rows}</table></div>` : ''}
+            <details class="pt-rule"><summary>쉬는 날 기준 보기 · 고치기</summary>
+            <div class="pt-rt">${[0, 1, 2, 3, 4].map(i => `<div><span>${i < 4 ? `<input data-pr="${i}" inputmode="numeric" value="${R.b[i]}">구까지` : `${rl[4]}구 이상`}</span><b>${i}일</b></div>`).join('')}</div>
+            <div class="pt-rt2"><label>하루 최대 <input data-pr="max" inputmode="numeric" value="${R.max}">구</label><label>투구 수 모를 때 타자 1명 = <input data-pr="ppa" inputmode="numeric" value="${R.ppa}">구</label></div>
+            <div class="pt-btns"><button type="button" data-ps-rule="save">이 기준으로 저장</button><button type="button" data-ps-rule="reset">처음 값으로</button></div>
+            <p class="ps-note">대한유소년야구연맹 · KBSA 초등부는 투구 수 · 휴식일 공식 규정이 아직 없어요. 처음 값은 리틀야구(9~12세) 표를 참고했어요. 기준은 이 휴대폰에만 저장돼요. 투구 수를 안 넣은 경기는 상대 타자 수 × ${R.ppa}구(타자 기록도 없으면 이닝 × ${R.pin}구)로 짐작해서 「짐작」 · * 표시가 붙어요.</p></details>`;
+    }
+
     // ---------- B: 팀 순위표 (운영진) ----------
     const SORTS = [['avg', '타율', 1], ['ops', 'OPS', 1], ['rbi', '타점', 0], ['h', '안타', 0], ['obp', '출루율', 1], ['r', '득점', 0], ['sb', '도루', 0], ['hrAll', '홈런', 0]];
-    let rk = { sort: 'avg', st: null, open: null };
+    let rk = { sort: 'avg', st: null, open: null, tab: 'bat', recs: null };
     function rankHtml() {
         const st = rk.st, reg = st.nGames * 2, sd = SORTS.find(x => x[0] === rk.sort) || SORTS[0];
         const rate = sd[2];
@@ -107,10 +160,10 @@
         const rows = L.map(q => { const ok = !rate || q.pa >= reg; if (ok) n++; return `<tr class="${ok ? '' : 'low'}" data-ps="${esc(q.no + '|' + q.name)}"><td class="rn">${ok ? n : '-'}</td><td class="st">${esc(q.no)} ${esc(q.name)}</td>${cols.map(c => `<td class="${c[0] === rk.sort ? 'srt' : ''}">${val(q, c)}</td>`).join('')}</tr>`; }).join('');
         const open = rk.open ? st.players.find(q => q.no + '|' + q.name === rk.open) : null;
         return `<div class="ps-top"><button type="button" data-ps-x="1" aria-label="닫기">✕</button><b>📊 선수 기록</b><small>${st.nGames}경기 · 운영진만 보여요</small></div>
-            <div class="ps-body"><div class="ps-tabs">${SORTS.map(s => `<button type="button" class="${s[0] === rk.sort ? 'on' : ''}" data-ps-s="${s[0]}">${s[1]}</button>`).join('')}</div>
+            <div class="ps-body"><div class="ps-seg"><button type="button" class="${rk.tab === 'bat' ? 'on' : ''}" data-ps-tab="bat">🏏 타자</button><button type="button" class="${rk.tab === 'pit' ? 'on' : ''}" data-ps-tab="pit">⚾ 투수 · 쉬는 날</button></div>${rk.tab === 'pit' ? pitHtml() + '</div>' : `<div class="ps-tabs">${SORTS.map(s => `<button type="button" class="${s[0] === rk.sort ? 'on' : ''}" data-ps-s="${s[0]}">${s[1]}</button>`).join('')}</div>
             ${st.players.length ? `<div class="ps-tw"><table class="ps-rk"><tr><th></th><th class="st">선수</th>${cols.map(c => `<th class="${c[0] === rk.sort ? 'srt' : ''}">${c[1]}${c[0] === rk.sort ? ' ▼' : ''}</th>`).join('')}</tr>${rows}</table></div>` : '<p class="ps-empty">아직 보낸 경기 기록이 없어요.</p>'}
             <p class="ps-note">${rate ? `비율 기록(타율 · 출루율 · OPS)은 경기당 2타석 이상(${reg}타석)인 선수만 순위를 매기고, 나머지는 흐리게 보여요. ` : ''}이름을 누르면 그 선수 카드가 열려요. 학부모님 화면에는 순위표가 없고, 선수 화면에 우리 아이 카드만 보여요.</p>
-            ${open ? `<div class="ps-pop" data-ps-c="1"><div class="ps-popin"><div class="ps-poph"><b>${esc(open.no)} ${esc(open.name)}</b><button type="button" data-ps-c="1">닫기</button></div>${cardHtml(open, st.nGames)}</div></div>` : ''}</div>`;
+            `}${open ? `<div class="ps-pop" data-ps-c="1"><div class="ps-popin"><div class="ps-poph"><b>${esc(open.no)} ${esc(open.name)}</b><button type="button" data-ps-c="1">닫기</button></div>${cardHtml(open, st.nGames)}</div></div>` : ''}</div>`;
     }
     function drawRank() { const el = document.getElementById('psRank'); if (el && rk.st) el.innerHTML = rankHtml(); }
     function openRank() {
@@ -118,8 +171,17 @@
         if (!el) {
             el = document.createElement('div'); el.id = 'psRank'; el.className = 'ps-rank'; document.body.appendChild(el);
             el.addEventListener('click', ev => {
-                const t = ev.target.closest('[data-ps-x],[data-ps-s],[data-ps-c],tr[data-ps]');
+                const t = ev.target.closest('[data-ps-x],[data-ps-s],[data-ps-c],[data-ps-tab],[data-ps-rule],tr[data-ps]');
                 if (!t) return;
+                if (t.dataset.psTab) { rk.tab = t.dataset.psTab; drawRank(); return; }
+                if (t.dataset.psRule) {
+                    if (t.dataset.psRule === 'reset') { try { localStorage.removeItem(LSR); } catch (e) {} drawRank(); return; }
+                    const v = k => parseInt((el.querySelector('[data-pr="' + k + '"]') || {}).value, 10);
+                    const b = [0, 1, 2, 3].map(v), R = { b, max: v('max'), ppa: v('ppa') };
+                    if (b.some(x => !(x > 0)) || b.some((x, i) => i && x <= b[i - 1]) || !(R.max > 0) || !(R.ppa > 0)) { try { bkNotify('fail', '숫자를 작은 수부터 차례로 넣어 주세요'); } catch (e) {} return; }
+                    try { localStorage.setItem(LSR, JSON.stringify(R)); } catch (e) {}
+                    drawRank(); return;
+                }
                 if (t.dataset.psX) { el.remove(); document.body.classList.remove('ps-open'); return; }
                 if (t.dataset.psS) { rk.sort = t.dataset.psS; drawRank(); return; }
                 if (t.dataset.psC) { if (t.classList.contains('ps-pop') && ev.target.closest('.ps-popin') && !ev.target.closest('button')) return; rk.open = null; drawRank(); return; }
@@ -128,9 +190,9 @@
         }
         document.body.classList.add('ps-open');
         el.innerHTML = '<div class="ps-top"><button type="button" data-ps-x="1">✕</button><b>📊 선수 기록</b></div><div class="ps-body"><p class="ps-empty">불러오는 중…</p></div>';
-        load(false).then(recs => { rk.st = calc(recs); rk.open = null; drawRank(); })
+        load(false).then(recs => { rk.st = calc(recs); rk.recs = recs; rk.open = null; drawRank(); })
             .catch(err => { el.querySelector('.ps-body').innerHTML = '<p class="ps-empty">기록을 못 받았어요. 인터넷을 확인하고 다시 열어 주세요.</p>'; });
     }
 
-    window.PS = { load, calc, mountCard, openRank, isStaff, _cardHtml: cardHtml };
+    window.PS = { load, calc, mountCard, openRank, isStaff, pitRest, pitchers, _cardHtml: cardHtml };
 })();

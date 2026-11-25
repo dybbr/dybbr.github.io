@@ -369,3 +369,42 @@ html.sb-open .ui-zoom-ctrl, html.sb-open .bk-upd { display: none !important; }
 .sb-imgbox { max-height: 58vh; overflow: auto; border: 1px solid var(--line); border-radius: 10px; background: #e9edf3; margin: 6px 0 10px; text-align: center; }
 .sb-imgbox img { width: auto; max-width: 100%; max-height: 56vh; height: auto; display: block; margin: 0 auto; }
 .sb-imgp .f3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 8px; margin-bottom: 8px; }
+/* ⚾ v2.158.0 투수 관리 — A 회 시작 한 줄 · B 점수 줄 칩 · C 회 시작 팝업 */
+.sb-status .pitchip { flex: 0 1 auto; min-width: 0; max-width: 46%; border: 1.5px solid #93c5fd; background: #eff6ff; color: #1e3a8a; border-radius: 999px; padding: 4px 9px; font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sb-status .pitchip b { font-weight: 900; }
+.sb-status .pitchip.need { background: #fef3c7; border-color: #f59e0b; color: #92400e; font-weight: 900; animation: sbPitBlink 1.4s ease-in-out infinite; }
+@keyframes sbPitBlink { 50% { box-shadow: 0 0 0 4px rgba(245,158,11,.25); } }
+.sb-now.pitask { background: #eff6ff; border-color: #60a5fa; }
+.sb-now.pitask span { flex: 1; font-size: 14px; }
+.sb-now.pitask .pri { background: var(--navy); color: #fff; border-color: var(--navy); font-size: 13px; padding: 8px 10px; }
+.sb .big.pitsub { background: #eff6ff; border-color: #93c5fd; color: #1e3a8a; margin: 0 0 8px; }
+.sb-panel.pitp .plist.pits { max-height: none; }
+.sb .plist.pits button { padding-right: 4px; }
+.sb .plist button em.rest { display: block; font-style: normal; font-size: 10.5px; font-weight: 800; margin-top: 2px; color: var(--s); }
+.sb .plist button em.rest.ok { color: var(--hit); }
+.sb .plist button em.rest.no { color: var(--red); }
+.sb .pitcur { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; background: #f1f5f9; border-radius: 12px; padding: 8px 10px; margin-bottom: 4px; }
+.sb .pitcur > div { flex: 1 1 140px; min-width: 0; }
+.sb .pitcur small { display: block; font-size: 11px; color: var(--s); font-weight: 700; }
+.sb .pitcur b { font-size: 18px; font-weight: 900; color: var(--navy); }
+.sb .pitcur span { display: block; font-size: 12px; color: var(--s); }
+.sb .pcbox { display: flex; flex-direction: column; font-size: 12px; font-weight: 800; color: var(--navy); }
+.sb .pcbox small { display: inline; font-size: 10.5px; color: var(--s); font-weight: 500; margin-left: 4px; }
+.sb .pcbox span { display: flex; gap: 4px; margin-top: 3px; }
+.sb .pcbox button { width: 44px; height: 40px; border-radius: 10px; border: 1.5px solid var(--line); background: #fff; font-weight: 900; color: var(--navy); font-size: 14px; }
+.sb .pcbox input, .sb .pitt input { width: 62px; height: 40px; border: 1.5px solid var(--line); border-radius: 10px; text-align: center; font-size: 17px; font-weight: 900; color: var(--t); box-sizing: border-box; }
+.sb .pitt { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 8px; margin-top: 8px; overflow-x: auto; }
+.sb .pitt .lbl small { font-weight: 500; }
+.sb .pitt table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.sb .pitt th, .sb .pitt td { padding: 5px 4px; border-bottom: 1px solid #eef1f6; text-align: center; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.sb .pitt th { font-size: 11px; color: var(--s); }
+.sb .pitt td.nm { text-align: left; font-weight: 700; }
+.sb .pitt td.nm b { color: var(--navy); }
+.sb .pitt input { width: 58px; height: 36px; font-size: 15px; }
+.sb-status .pitchip i { font-style: normal; }
+@media (max-width: 560px) {
+  .sb-status.haspit { gap: 6px; padding: 6px 8px; }
+  .sb-status.haspit .sc i, .sb-status .pitchip .pl, .sb-status .pitchip .pn { display: none; }
+  .sb-status .pitchip:not(.need)::before { content: '⚾ '; }
+  .sb-status .pitchip { max-width: 34%; padding: 4px 8px; }
+}

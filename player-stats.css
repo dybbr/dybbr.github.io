@@ -51,3 +51,26 @@ body.ps-open { overflow: hidden; }
 .ps-poph button { border: 1px solid #dfe4ee; background: #fff; border-radius: 10px; padding: 6px 12px; font-weight: 700; }
 .ps-popin .ps-card { margin-top: 8px; }
 @media (min-width: 760px) { .ps-big b { font-size: 24px; } .ps-big .m b { font-size: 36px; } .ps-pop { align-items: center; } .ps-popin { border-radius: 18px; } }
+/* ⚾ v2.158.0 투수 · 쉬는 날 */
+.ps-seg { display: flex; gap: 6px; background: #e6eaf2; padding: 4px; border-radius: 12px; }
+.ps-seg button { flex: 1; border: 0; background: none; border-radius: 9px; padding: 9px 6px; font-weight: 800; font-size: 14px; color: #475069; }
+.ps-seg button.on { background: #fff; color: #0f2244; box-shadow: 0 1px 3px rgba(15,34,68,.15); }
+.pt-sec { font-weight: 900; font-size: 15px; margin-top: 4px; } .pt-sec small { font-weight: 500; font-size: 12px; color: #64708a; margin-left: 6px; }
+.pt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 8px; }
+.pt-card { background: #fff; border: 1px solid #dfe4ee; border-left: 5px solid #15803d; border-radius: 12px; padding: 10px 12px; }
+.pt-card.wait { border-left-color: #c8102e; }
+.pt-h { display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: 16px; } .pt-h > b { color: #0f2244; }
+.pt-st { margin-left: auto; font-size: 12px; font-weight: 900; border-radius: 999px; padding: 3px 9px; background: #dcfce7; color: #157f3c; white-space: nowrap; }
+.pt-card.wait .pt-st { background: #fee2e2; color: #b91c1c; }
+.pt-l { font-size: 12.5px; color: #475069; margin-top: 5px; } .pt-l i { font-style: normal; font-size: 10.5px; background: #f1f5f9; border-radius: 5px; padding: 1px 4px; margin-left: 3px; color: #64708a; } .pt-l em { font-style: normal; color: #b91c1c; font-weight: 800; }
+.pt-rk { min-width: 640px; } .pt-rk td i { font-style: normal; color: #94a3b8; }
+.pt-rule { background: #fff; border: 1px solid #dfe4ee; border-radius: 12px; padding: 10px 12px; }
+.pt-rule summary { font-weight: 800; font-size: 14px; cursor: pointer; }
+.pt-rt { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 10px; }
+.pt-rt div { background: #f3f5f9; border-radius: 10px; padding: 7px 4px; text-align: center; font-size: 12px; color: #475069; }
+.pt-rt b { display: block; font-size: 17px; color: #0f2244; margin-top: 3px; }
+.pt-rule input { width: 46px; height: 32px; border: 1px solid #cbd5e1; border-radius: 8px; text-align: center; font-size: 15px; font-weight: 800; }
+.pt-rt2 { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 10px; font-size: 13px; }
+.pt-btns { display: flex; gap: 6px; margin-top: 10px; } .pt-btns button { flex: 1; min-height: 42px; border-radius: 10px; border: 1px solid #dfe4ee; background: #fff; font-weight: 800; }
+.pt-btns button:first-child { background: #0f2244; color: #fff; border-color: #0f2244; }
+@media (max-width: 520px) { .pt-rt { grid-template-columns: repeat(3, 1fr); } }
