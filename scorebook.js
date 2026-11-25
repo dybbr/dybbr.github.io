@@ -168,7 +168,7 @@
         if (ended) { endHalf(true); ui.msg += ' · 3아웃, 공수교대'; }
         if (NEW === 'C' && k === 'K') ui.ask = { y: 'K', id: e.id };   // C안: 기록한 뒤 한 줄로 물어보기 (안 누르면 그대로)
         else if (NEW === 'C' && k === 'GO' && runnersBefore && outsBefore < 2 && !ended) ui.ask = { y: 'GO', id: e.id };
-        else if (NEW !== 'B') {   // A · C안: 상대 9번이 치면 「10번 타자 있나요?」
+        else if (NEW === 'A' || NEW === 'C') {   // A(추천) · C안: 상대 9번이 치면 「10번 타자 있나요?」
             if (t === 'them' && !ended && G.cur.t === t && G.cur.s === 1 && e.s === nSlots(t) && nSlots(t) < 12 && G.slotAsked !== nSlots(t)) { G.slotAsked = nSlots(t); ui.ask = { y: 'slot' }; }
         }
         save(); draw();
