@@ -483,6 +483,7 @@
         if (ui.panel === 'runner') over = runnerPanel();
         if (ui.panel === 'rdel') { const e = G.log.find(x => x.id === ui.rdel); const w = e && (e.y === 'run' ? e.sc : e); over = `<div class="sb-over" data-a="panel-x"><div class="sb-panel" data-stop="1"><h3>주자 기록 지우기</h3><p class="fin">${e && w ? esc(pName(e.t, w.s, w.p)) + ' · ' + e.i + '회 · ' + ({ ro: '주자아웃', sb: '도루', cs: '도루실패', run: '득점' })[e.y] : ''}</p><button type="button" class="big pri" data-a="rdel" data-id="${ui.rdel}">지우기</button><button type="button" class="big" data-a="panel-x">취소</button></div></div>`; }
         if (ui.panel === 'finish') over = finishPanel();
+        if (ui.img) over += imgPanel();
         if (ui.panel === 'conflict') { let sv = null; try { sv = JSON.parse(ui.srv); } catch (e) {} const su = sv ? Object.values(sv.runs.us || {}).reduce((a, b) => a + (+b || 0), 0) : 0, st = sv ? Object.values(sv.runs.them || {}).reduce((a, b) => a + (+b || 0), 0) : 0;
             over = `<div class="sb-over"><div class="sb-panel" data-stop="1"><h3>⚠ 서버에 더 자세한 기록이 있어요</h3><p class="fin">서버 기록: 타석 <b>${paCount(sv)}</b>개 · ${esc(G.tm.us.name)} ${su} : ${st}<br>이 휴대폰 기록: 타석 <b>${paCount(G)}</b>개 · ${total('us')} : ${total('them')}</p><p class="fin">다른 휴대폰(대표님 등)에서 먼저 보낸 기록이에요. 이대로 보내면 그 기록이 지워져요.</p><button type="button" class="big pri" data-a="srvtake">📥 서버 기록 가져오기 (권장)</button><button type="button" class="big" data-a="panel-x">취소</button>${ui.forceAsk ? `<button type="button" class="big sbdanger" data-a="srvforce">정말 덮어쓰기 — 서버 기록이 지워져요</button>` : `<button type="button" class="big sbghost" data-a="srvforce">그래도 이 기록으로 덮어쓰기</button>`}</div></div>`; }
         if (ui.panel === 'askend') { const pi = G.cur.i - 1; over = `<div class="sb-over"><div class="sb-panel" data-stop="1"><h3>🏁 ${pi}회말까지 끝났어요</h3><p class="fin">${esc(G.tm.us.name)} ${total('us')} : ${total('them')} ${esc(G.tm.them.name)}</p><p class="hint">경기가 끝났으면 확인하고 서버에 보내요. 연장이면 계속 기록하세요.</p><button type="button" class="big pri" data-a="finish">🏁 경기 끝 · 확인하고 보내기</button><button type="button" class="big" data-a="panel-x">연장 · 계속 기록</button></div></div>`; }
@@ -510,7 +511,7 @@
     const DIRPOS = { 1: '투수', 2: '포수', 3: '1루수', 4: '2루수', 5: '3루수', 6: '유격수', 7: '좌익수', 8: '중견수', 9: '우익수', DH: '지명' };
     function finishPanel() {
         const us = total('us'), th = total('them'), r = us > th ? '승' : us < th ? '패' : '무';
-        return `<div class="sb-over"><div class="sb-panel" data-stop="1"><h3>🏁 경기 끝</h3><p class="fin"><b>${r === '승' ? '승리' : r === '패' ? '패배' : '무승부'}</b> ${esc(G.tm.us.name)} ${us} : ${th} ${esc(G.tm.them.name)}</p>${boardHtml(false)}<p class="hint">틀린 칸이 있으면 「기록표 고치기」에서 먼저 고친 뒤 보내세요. 보낸 뒤에 다시 고쳐서 또 보내도 돼요(덮어써요).</p><button type="button" class="big" data-a="sheet">📋 기록표 고치기</button><button type="button" class="big" data-a="board">점수판 고치기</button><button type="button" class="big pri" data-a="send">📤 서버에 보내기 (저장)</button>${G.sentAt ? (G.sentSig && G.sentSig !== sig(bodyOf()) ? `<p class="hint warn">보낸 뒤에 고친 내용이 있어요. 한 번 더 보내 주세요.</p>` : `<p class="hint ok">✔ ${G.sentAt > 1 ? new Date(G.sentAt).toLocaleString('ko-KR') + ' 에 ' : '서버에 '}보냈어요</p>`) : ''}<div class="f2"><button type="button" class="big" data-a="resume">경기로 돌아가기</button><button type="button" class="big" data-a="close">닫기</button></div></div></div>`;
+        return `<div class="sb-over"><div class="sb-panel" data-stop="1"><h3>🏁 경기 끝</h3><p class="fin"><b>${r === '승' ? '승리' : r === '패' ? '패배' : '무승부'}</b> ${esc(G.tm.us.name)} ${us} : ${th} ${esc(G.tm.them.name)}</p>${boardHtml(false)}<p class="hint">틀린 칸이 있으면 「기록표 고치기」에서 먼저 고친 뒤 보내세요. 보낸 뒤에 다시 고쳐서 또 보내도 돼요(덮어써요).</p><button type="button" class="big" data-a="sheet">📋 기록표 고치기</button><button type="button" class="big" data-a="board">점수판 고치기</button><button type="button" class="big pri" data-a="send">📤 서버에 보내기 (저장)</button><button type="button" class="big" data-a="img">🖼 기록표 이미지 · 인쇄</button>${G.sentAt ? (G.sentSig && G.sentSig !== sig(bodyOf()) ? `<p class="hint warn">보낸 뒤에 고친 내용이 있어요. 한 번 더 보내 주세요.</p>` : `<p class="hint ok">✔ ${G.sentAt > 1 ? new Date(G.sentAt).toLocaleString('ko-KR') + ' 에 ' : '서버에 '}보냈어요</p>`) : ''}<div class="f2"><button type="button" class="big" data-a="resume">경기로 돌아가기</button><button type="button" class="big" data-a="close">닫기</button></div></div></div>`;
     }
     function setupHtml() {
         const used = {}; G.tm.us.ln.forEach((sl, i) => { used[sl.ps[0].no + '|' + sl.ps[0].name] = i + 1; });
@@ -534,8 +535,147 @@
         <label>명단 넣기 — 한 줄에 한 명 「배번 이름」<textarea id="sbOppText" rows="4" placeholder="9 박태윤&#10;14 임시호&#10;20 구하준"></textarea></label>
         <div class="f2" style="margin-top:6px"><button type="button" class="big" data-a="oppadd">명단에 더하기</button><button type="button" class="big" data-a="oppclear">명단 비우기</button></div></div>`;
     }
+    // ---------- 🖼 v2.157.0 기록표 이미지 · 인쇄 (캔버스로 그림 · 서버 안 씀) ----------
+    //   시안 window.SB_IMG: A 종이 기록표(가로) · B 공유 카드(남색) · C 선수별 요약표
+    const IMG = (typeof window !== 'undefined' && window.SB_IMG) || 'A';
+    function teamRows(t) {
+        const cells = {}, ends = {};
+        G.log.forEach(e => { if (e.t !== t) return; let w = null; if (e.y === 'pa' || e.y === 'ro' || e.y === 'sb' || e.y === 'cs') w = e; else if (e.y === 'run' && e.sc && !e.auto) w = e.sc; if (w) (cells[e.i + '|' + w.s + '|' + w.p] = cells[e.i + '|' + w.s + '|' + w.p] || []).push(e); if (e.y === 'end') ends[e.i + '|' + e.s + '|' + (e.p || 0)] = 1; });
+        const RL = { ro: '주자아웃', sb: '도루', cs: '도루실패', run: '득점' }, out = [];
+        G.tm[t].ln.forEach((sl, si) => sl.ps.forEach((p, pi) => {
+            const s = si + 1, st = pstat(t, s, pi), cs = {};
+            for (let i = 1; i <= maxInn(); i++) { const es = cells[i + '|' + s + '|' + pi] || []; cs[i] = { m: es.filter(e => !RL[e.y]).map(e => ({ t: sym(e) + (e.r ? '·' + e.r : ''), c: KIND[e.k] ? KIND[e.k].c : '' })), r: es.filter(e => RL[e.y]).map(e => e.dp ? '병살' : RL[e.y]), end: !!(es.length && ends[i + '|' + s + '|' + pi]) }; }
+            out.push({ s: pi ? '' : s, sub: !!pi, no: p.no || '', name: t === 'them' ? '' : (p.name || ''), pos: p.pos || '', cs, st });
+        }));
+        if (t === 'them') while (out.length > 1 && !out[out.length - 1].no && !Object.values(out[out.length - 1].cs).some(c => c.m.length || c.r.length)) out.pop();   // 상대 팀: 안 친 빈 타순은 뺌
+        return out;
+    }
+    function imgCanvas(style) {
+        const n = maxInn(), us = total('us'), th = total('them'), res = G.done ? (us > th ? '승' : us < th ? '패' : '무') : '';
+        const teams = ['us'].concat(G.recThem ? ['them'] : []), rows = {}; teams.forEach(t => { rows[t] = teamRows(t); });
+        const F = '"Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif';
+        const dark = style === 'B';
+        const P = dark ? { bg: '#0b1a33', card: '#122647', ink: '#ffffff', sub: '#b9c6dc', line: 'rgba(255,255,255,.14)', head: '#1b3563', h: '#4ade80', o: '#cbd5e1', w: '#7cb3ff', k: '#ff6b81', e: '#fdba74', gold: '#f5c542', r: '#ff6b81' }
+            : { bg: '#ffffff', card: '#ffffff', ink: '#0f172a', sub: '#5b6577', line: '#b8c3d3', head: '#eef2f7', h: '#15803d', o: '#475569', w: '#2563eb', k: '#c8102e', e: '#c2620a', gold: '#0b2240', r: '#c8102e' };
+        const W = style === 'A' ? 1754 : 1080;
+        const cv = document.createElement('canvas'), x = cv.getContext('2d');
+        const font = (w, s) => { x.font = `${w} ${s}px ${F}`; };
+        const text = (t, X, Y, col, al, w, s) => { if (w) font(w, s); x.fillStyle = col; x.textAlign = al || 'left'; x.fillText(String(t), X, Y); };
+        const fitf = (t, w, s, mx) => { font(w, s); while (s > 9 && x.measureText(t).width > mx) { s -= 1; font(w, s); } return s; };
+        const line = (x1, y1, x2, y2, c, lw) => { x.strokeStyle = c; x.lineWidth = lw || 1; x.beginPath(); x.moveTo(x1, y1); x.lineTo(x2, y2); x.stroke(); };
+        const M = style === 'A' ? 44 : 36;
+        // 높이 계산 (먼저 한 번 재고 그림)
+        const RH = style === 'A' ? 50 : style === 'B' ? 46 : 58, HDR = style === 'A' ? 150 : 250, BOARD = 130;
+        let H = M + HDR + BOARD + 30;
+        teams.forEach(t => { H += 56 + 40 + rows[t].length * RH + 24; });
+        H += 80 + M;
+        cv.width = W; cv.height = H;
+        x.fillStyle = P.bg; x.fillRect(0, 0, W, H); x.textBaseline = 'middle';
+        // ── 머리
+        let y = M;
+        const title = (G.title || '경기') + '  vs ' + G.tm.them.name, meta = [G.date, G.start, G.place].filter(Boolean).join(' · ');
+        if (style === 'A') {
+            text('경기 기록표', M, y + 22, P.sub, 'left', 700, 24);
+            fitf(title, 900, 46, W - 2 * M - 420); text(title, M, y + 70, P.ink, 'left');
+            text(meta, M, y + 118, P.sub, 'left', 600, 26);
+            const sc = `${G.tm.us.name} ${us} : ${th} ${G.tm.them.name}${res ? '  ' + (res === '승' ? '승리' : res === '패' ? '패배' : '무승부') : ''}`;
+            fitf(sc, 900, 44, 420); text(sc, W - M, y + 70, res === '패' ? P.o : P.r, 'right');
+            y += HDR;
+        } else {
+            if (dark) { x.strokeStyle = 'rgba(245,197,66,.55)'; x.lineWidth = 3; x.strokeRect(18, 18, W - 36, H - 36); }
+            fitf(G.title || '경기', 900, 48, W - 2 * M); text(G.title || '경기', W / 2, y + 40, dark ? P.gold : P.ink, 'center');
+            text(meta + ' · 경기 기록', W / 2, y + 92, P.sub, 'center', 600, 26);
+            font(900, 92); const a = String(us), b = String(th);
+            text(a, W / 2 - 40, y + 175, res === '패' ? P.o : (dark ? '#fff' : P.r), 'right'); text(':', W / 2, y + 168, P.sub, 'center', 900, 60); text(b, W / 2 + 40, y + 175, res === '승' ? P.o : P.ink, 'left', 900, 92);
+            fitf(G.tm.us.name, 900, 34, 300); text(G.tm.us.name, W / 2 - 170, y + 175, P.ink, 'right'); fitf(G.tm.them.name, 900, 34, 300); text(G.tm.them.name, W / 2 + 170, y + 175, P.sub, 'left');
+            if (res) { const lb = res === '승' ? '승리' : res === '패' ? '패배' : '무승부'; text(lb, W / 2, y + 232, res === '승' ? P.r : P.sub, 'center', 900, 30); }
+            y += HDR;
+        }
+        // ── 점수판
+        {
+            const order = [G.first, other(G.first)], cols = n + 5, nameW = style === 'A' ? 260 : 190, cw = (W - 2 * M - nameW) / (n + 4), bh = 40;
+            x.fillStyle = P.head; x.fillRect(M, y, W - 2 * M, bh);
+            text('팀', M + 14, y + bh / 2, P.sub, 'left', 700, 22);
+            for (let i = 1; i <= n; i++) text(i, M + nameW + (i - .5) * cw, y + bh / 2, P.sub, 'center', 700, 22);
+            ['R', 'H', 'E', 'B'].forEach((k, j) => text(k, M + nameW + (n + j + .5) * cw, y + bh / 2, k === 'R' ? P.r : P.sub, 'center', 800, 22));
+            order.forEach((t, r) => { const yy = y + bh * (r + 1), st = stat(t); line(M, yy, W - M, yy, P.line);
+                fitf(G.tm[t].name, 800, 24, nameW - 20); text(G.tm[t].name, M + 14, yy + bh / 2, P.ink, 'left');
+                for (let i = 1; i <= n; i++) { const pl = acted(t, i) || runs(t, i) > 0; text(pl ? runs(t, i) : '', M + nameW + (i - .5) * cw, yy + bh / 2, P.ink, 'center', 700, 24); }
+                [st.R, st.H, st.E, st.B].forEach((v, j) => text(v, M + nameW + (n + j + .5) * cw, yy + bh / 2, j ? P.ink : P.r, 'center', 900, 24)); });
+            x.strokeStyle = P.line; x.lineWidth = 1.5; x.strokeRect(M, y, W - 2 * M, bh * 3);
+            y += bh * 3 + 30 + (BOARD - bh * 3 - 30 > 0 ? BOARD - bh * 3 - 30 : 0) + 20;
+        }
+        const colOf = c => ({ h: P.h, o: P.o, w: P.w, k: P.k, e: P.e })[c] || P.ink;
+        // ── 팀 기록표
+        teams.forEach(t => {
+            const R = rows[t];
+            text(G.tm[t].name + (t === 'them' ? '  (배번만)' : ''), M, y + 26, dark ? P.gold : P.ink, 'left', 900, 30); y += 56;
+            if (style === 'C') {   // 선수별 요약: 결과를 순서대로 한 줄 + 타수 안타 타점 득점 도루
+                const sx = W - M - 5 * 70, hd = ['타수', '안타', '타점', '득점', '도루'];
+                x.fillStyle = P.head; x.fillRect(M, y, W - 2 * M, 40);
+                text('타순 · 선수', M + 12, y + 20, P.sub, 'left', 700, 21); text('타석 결과 (회 순서)', M + 290, y + 20, P.sub, 'left', 700, 21);
+                hd.forEach((h, j) => text(h, sx + (j + .5) * 70, y + 20, P.sub, 'center', 700, 21)); y += 40;
+                R.forEach(r => { line(M, y, W - M, y, P.line);
+                    text(r.s, M + 22, y + RH / 2, P.sub, 'center', 800, 24);
+                    const nm = (r.no ? r.no + ' ' : '') + r.name; fitf(nm, r.sub ? 600 : 800, 26, 200); text(nm, M + 48, y + RH / 2, P.ink, 'left');
+                    let xx = M + 290; for (let i = 1; i <= n; i++) r.cs[i].m.forEach(m => { const s0 = fitf(m.t, 800, 24, 140); const w = x.measureText(m.t).width; if (xx + w > sx - 10) return; text(m.t, xx, y + RH / 2, colOf(m.c), 'left'); xx += w + 18; });
+                    [r.st.ab, r.st.h, r.st.rbi, r.st.r || 0, r.st.sb || 0].forEach((v, j) => text(v, sx + (j + .5) * 70, y + RH / 2, j === 1 && v ? P.h : P.ink, 'center', 800, 26));
+                    y += RH; });
+                x.strokeStyle = P.line; x.lineWidth = 1.5; x.strokeRect(M, y - R.length * RH - 40, W - 2 * M, R.length * RH + 40); y += 24; return;
+            }
+            const stc = style === 'A' ? ['타수', '안타', '타점', '득점', '도루'] : ['타수', '안타', '타점'];
+            const odW = 44, nmW = style === 'A' ? 250 : 170, stW = style === 'A' ? 64 : 58, cw = (W - 2 * M - odW - nmW - stc.length * stW) / n;
+            const top = y;
+            x.fillStyle = P.head; x.fillRect(M, y, W - 2 * M, 40);
+            text('타순', M + odW / 2, y + 20, P.sub, 'center', 700, 19); text('배번 · 이름', M + odW + 10, y + 20, P.sub, 'left', 700, 20);
+            for (let i = 1; i <= n; i++) text(i + '회', M + odW + nmW + (i - .5) * cw, y + 20, P.sub, 'center', 700, 20);
+            stc.forEach((h, j) => text(h, W - M - (stc.length - j - .5) * stW, y + 20, P.sub, 'center', 700, 19)); y += 40;
+            R.forEach(r => {
+                line(M, y, W - M, y, r.sub ? P.line : P.line, r.sub ? .6 : 1);
+                text(r.s, M + odW / 2, y + RH / 2, P.sub, 'center', 800, 22);
+                const nm = (r.no ? r.no + ' ' : '') + r.name; fitf(nm, r.sub ? 600 : 800, 23, nmW - 30); text(nm, M + odW + 10, y + RH / 2 - (r.pos ? 6 : 0), P.ink, 'left');
+                if (r.pos) text(r.pos, M + odW + 10, y + RH - 9, P.sub, 'left', 600, 14);
+                for (let i = 1; i <= n; i++) { const c = r.cs[i], cx = M + odW + nmW + (i - .5) * cw; const ms = c.m.map(m => m.t);
+                    if (ms.length) { const ln1 = c.m; let yy = y + RH / 2 - (c.r.length ? 7 : 0) - (ln1.length - 1) * 9; ln1.forEach(m => { fitf(m.t, 800, 22, cw - 10); text(m.t, cx, yy, colOf(m.c), 'center'); yy += 18; }); }
+                    if (c.r.length) { const rt = '(' + c.r.join(',') + ')'; fitf(rt, 600, 13, cw - 6); text(rt, cx, y + RH - 9, P.sub, 'center'); }
+                    if (c.end) { line(cx + cw / 2 - 16, y + RH - 6, cx + cw / 2 - 8, y + 6, P.r, 2); line(cx + cw / 2 - 9, y + RH - 6, cx + cw / 2 - 1, y + 6, P.r, 2); } }
+                [r.st.ab, r.st.h, r.st.rbi, r.st.r || 0, r.st.sb || 0].slice(0, stc.length).forEach((v, j) => text(v, W - M - (stc.length - j - .5) * stW, y + RH / 2, j === 1 && v ? P.h : P.ink, 'center', 800, 23));
+                y += RH;
+            });
+            // 세로줄
+            line(M + odW, top, M + odW, y, P.line); line(M + odW + nmW, top, M + odW + nmW, y, P.line, 2);
+            for (let i = 1; i < n; i++) line(M + odW + nmW + i * cw, top, M + odW + nmW + i * cw, y, P.line, .8);
+            line(W - M - stc.length * stW, top, W - M - stc.length * stW, y, P.line, 2);
+            x.strokeStyle = P.line; x.lineWidth = 1.5; x.strokeRect(M, top, W - 2 * M, y - top); y += 24;
+        });
+        // ── 아래 설명 · 학교
+        const lg = '초록 안타 · 파랑 4사구 · 빨강 삼진 · 회색 아웃 · // 이닝 끝 · 「우선2·1」의 ·1 = 타점 · GH 그라운드 홈런 · 월 외야수 키 넘김 · 선 라인 선상';
+        fitf(lg, 600, 18, W - 2 * M); text(lg, M, y + 18, P.sub, 'left');
+        text('대연초등학교 야구부 · dybbr.github.io', W - M, y + 54, P.sub, 'right', 700, 22);
+        return cv;
+    }
+    function imgBlob(style) { return new Promise((res, rej) => { try { imgCanvas(style).toBlob(b => b ? res(b) : rej(new Error('blob')), 'image/png'); } catch (e) { rej(e); } }); }
+    function imgName() { return `daeyeon-scoresheet-${G.date || 'game'}${G.tm && G.tm.them ? '-' + G.tm.them.name : ''}.png`; }
+    let imgUrl = '';
+    function imgOpen() { ui.img = { url: '' }; draw(); imgBlob(IMG).then(b => { if (imgUrl) URL.revokeObjectURL(imgUrl); imgUrl = URL.createObjectURL(b); if (ui.img) { ui.img.url = imgUrl; ui.img.blob = b; draw(); } }).catch(() => note('fail', '이미지를 못 만들었캉', '잠시 후 다시 해 주세요')); }
+    function imgPanel() {
+        const u = ui.img && ui.img.url, canShare = !!(navigator.canShare && navigator.share);
+        return `<div class="sb-over" data-a="imgx"><div class="sb-panel wide sb-imgp" data-stop="1"><h3>🖼 기록표 이미지 <small>상대 팀은 배번만 들어가요</small></h3><div class="sb-imgbox">${u ? `<img src="${u}" alt="기록표 이미지">` : '<p class="hint">만드는 중…</p>'}</div>
+        <div class="f3"><button type="button" class="big pri" data-a="imgsave"${u ? '' : ' disabled'}>💾 저장</button>${canShare ? `<button type="button" class="big" data-a="imgshare"${u ? '' : ' disabled'}>📤 공유</button>` : ''}<button type="button" class="big" data-a="imgprint"${u ? '' : ' disabled'}>🖨 인쇄</button></div><button type="button" class="big" data-a="imgx">닫기</button></div></div>`;
+    }
+    function imgSave() { const b = ui.img && ui.img.blob; if (!b) return; const url = URL.createObjectURL(b), a = document.createElement('a'); a.href = url; a.download = imgName(); document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 30000); note('done', '기록표 이미지 저장했캉! 🖼️', '안 보이면 이미지를 길게 눌러 저장해 주세요'); }
+    async function imgShare() { const b = ui.img && ui.img.blob; if (!b) return; const f = new File([b], imgName(), { type: 'image/png' }); try { if (navigator.canShare && navigator.canShare({ files: [f] })) await navigator.share({ files: [f], text: (G.title || '경기') + ' 기록표 · 대연초 야구부' }); else imgSave(); } catch (e) {} }
+    function imgPrint() {   // 인쇄: 이미지 한 장만 종이에 (가로 기록표는 A4 가로)
+        const u = ui.img && ui.img.url; if (!u) return;
+        let box = document.getElementById('sbPrint'); if (!box) { box = document.createElement('div'); box.id = 'sbPrint'; document.body.appendChild(box); }
+        let st = document.getElementById('sbPrintCss'); if (!st) { st = document.createElement('style'); st.id = 'sbPrintCss'; document.head.appendChild(st); }
+        st.textContent = `#sbPrint{display:none}@media print{@page{size:A4 ${IMG === 'A' ? 'landscape' : 'portrait'};margin:8mm}html,body{height:auto!important;overflow:visible!important;background:#fff!important}body>*:not(#sbPrint){display:none!important}#sbPrint{display:block!important}#sbPrint img{width:100%;height:auto;max-height:${IMG === 'A' ? '190mm' : '277mm'};object-fit:contain;display:block;margin:0 auto}}`;
+        box.innerHTML = `<img src="${u}" alt="">`;
+        const im = box.querySelector('img'), go = () => { try { window.print(); } catch (e) { note('fail', '이 기기는 인쇄가 안 되캉', '이미지를 저장해서 인쇄해 주세요'); } };
+        if (im.complete) setTimeout(go, 50); else im.onload = () => setTimeout(go, 50);
+    }
     function viewHtml() {
-        return `${topBar('📋 ' + (G.title || '경기') + ' · vs ' + G.tm.them.name)}<div class="sb-view"><p class="hint">${esc(G.date)}${G.place ? ' · ' + esc(G.place) : ''}</p>${boardHtml(false)}<h3>${esc(G.tm.us.name)}</h3>${sheetHtml('us', true)}${G.recThem ? `<h3>${esc(G.tm.them.name)}</h3>${sheetHtml('them', true)}` : ''}<p class="hint">초록 안타 · 파랑 4구·사구 · 빨강 삼진 · 회색 아웃 · // 이닝 끝 · 작은 숫자는 타점 · 홈 = 라인(라바콘) 넘긴 홈런 · GH = 그라운드 홈런 · K(낫아웃) = 낫아웃 아웃 · K(낫아웃 출루) = 낫아웃으로 1루 출루 (둘 다 삼진) · 병살 = 병살타 · 파플 = 파울플라이 · 월 = 외야수 키를 넘긴 타구 (우월2 = 우익수 키 넘긴 2루타) · 선 = 파울 라인 따라 간 타구 (좌선2 = 좌익선상 2루타)</p>${canRecord() && ui.canEdit ? `<button type="button" class="big" data-a="reopen">✏️ 이 기록 고치기</button>` : ''}</div>`;
+        return `${topBar('📋 ' + (G.title || '경기') + ' · vs ' + G.tm.them.name)}<div class="sb-view"><p class="hint">${esc(G.date)}${G.place ? ' · ' + esc(G.place) : ''}</p>${boardHtml(false)}<h3>${esc(G.tm.us.name)}</h3>${sheetHtml('us', true)}${G.recThem ? `<h3>${esc(G.tm.them.name)}</h3>${sheetHtml('them', true)}` : ''}<p class="hint">초록 안타 · 파랑 4구·사구 · 빨강 삼진 · 회색 아웃 · // 이닝 끝 · 작은 숫자는 타점 · 홈 = 라인(라바콘) 넘긴 홈런 · GH = 그라운드 홈런 · K(낫아웃) = 낫아웃 아웃 · K(낫아웃 출루) = 낫아웃으로 1루 출루 (둘 다 삼진) · 병살 = 병살타 · 파플 = 파울플라이 · 월 = 외야수 키를 넘긴 타구 (우월2 = 우익수 키 넘긴 2루타) · 선 = 파울 라인 따라 간 타구 (좌선2 = 좌익선상 2루타)</p><button type="button" class="big pri" data-a="img">🖼 기록표 이미지 · 인쇄</button>${canRecord() && ui.canEdit ? `<button type="button" class="big" data-a="reopen">✏️ 이 기록 고치기</button>` : ''}</div>${ui.img ? imgPanel() : ''}`;
     }
 
     // ---------- 누르기 ----------
@@ -544,6 +684,7 @@
             const el = e.target.closest('[data-a]'); if (!el || !r.contains(el)) return;
             const a = el.dataset.a;
             if (a === 'panel-x') { if (e.target.closest('[data-stop]') && !e.target.closest('button[data-a="panel-x"]')) return; ui.panel = (G && G.done && (ui.panel === 'sheet' || ui.panel === 'board')) ? 'finish' : ''; ui.who = null; ui.dpr = null; ui.dpk = null; draw(); return; }
+            if (a === 'imgx' && e.target.closest('[data-stop]') && !e.target.closest('button[data-a="imgx"]')) return;
             act(a, el);
         });
         r.addEventListener('change', e => { const s = e.target.closest('select[data-pos]'); if (s && G) { G.tm.us.ln[+s.dataset.pos].ps[0].pos = s.value; save(); } });
@@ -623,6 +764,11 @@
         }
         if (a === 'lineup') { ui.panel = ''; ui.screen = 'setup'; draw(); return; }
         if (a === 'send') return send();
+        if (a === 'img') return imgOpen();
+        if (a === 'imgx') { ui.img = null; draw(); return; }
+        if (a === 'imgsave') return imgSave();
+        if (a === 'imgshare') return imgShare();
+        if (a === 'imgprint') return imgPrint();
         if (a === 'sen') { ui.sen = !ui.sen; if (ui.sen) ui.wol = false; ui.msg = ui.sen ? '「선」 켜짐 · 다음 안타를 좌 · 우 방향으로 넣으면 「우선2」 「좌선3」처럼 적혀요' : ''; draw(); return; }
         if (a === 'wol') { ui.wol = !ui.wol; if (ui.wol) ui.sen = false; ui.msg = ui.wol ? '「월」 켜짐 · 다음 안타 · 홈런을 외야 방향으로 넣으면 「우월2」처럼 적혀요' : ''; draw(); return; }
         if (a === 'srvtake') { try { adopt(ui.srv); ui.srv = null; ui.forceAsk = false; ui.panel = G.done ? 'finish' : ''; ui.screen = 'game'; ui.msg = '서버 기록을 가져왔어요'; note('done', '서버 기록 가져왔캉! ✓'); draw(); } catch (e) { note('fail', '못 가져왔캉…', e.message); } return; }

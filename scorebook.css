@@ -364,3 +364,8 @@ html.sb-open .ui-zoom-ctrl, html.sb-open .bk-upd { display: none !important; }
 .sb .kpick .big b { font-size: 20px; color: var(--red); }
 .sb-now .wol.sen { margin-left: 4px; }
 @media (max-width: 600px) { .sb .g5.g6 .kb { font-size: 14px; letter-spacing: -.5px; padding-left: 2px; padding-right: 2px; white-space: nowrap; } }
+/* v2.157.0 기록표 이미지 · 인쇄 */
+.sb-panel.sb-imgp { max-width: 980px; width: calc(100vw - 24px); }
+.sb-imgbox { max-height: 58vh; overflow: auto; border: 1px solid var(--line); border-radius: 10px; background: #e9edf3; margin: 6px 0 10px; text-align: center; }
+.sb-imgbox img { width: auto; max-width: 100%; max-height: 56vh; height: auto; display: block; margin: 0 auto; }
+.sb-imgp .f3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 8px; margin-bottom: 8px; }
