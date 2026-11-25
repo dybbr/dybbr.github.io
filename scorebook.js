@@ -547,7 +547,7 @@
         G.tm[t].ln.forEach((sl, si) => sl.ps.forEach((p, pi) => {
             const s = si + 1, st = pstat(t, s, pi), cs = {};
             for (let i = 1; i <= maxInn(); i++) { const es = cells[i + '|' + s + '|' + pi] || []; cs[i] = { m: es.filter(e => !RL[e.y]).map(e => ({ t: sym(e) + (e.r ? '·' + e.r : ''), c: KIND[e.k] ? KIND[e.k].c : '' })), r: es.filter(e => RL[e.y]).map(e => e.dp ? '병살' : RL[e.y]), end: !!(es.length && ends[i + '|' + s + '|' + pi]) }; }
-            out.push({ s: pi ? '' : s, sub: !!pi, no: p.no || '', name: t === 'them' ? '' : (p.name || ''), pos: p.pos || '', cs, st });
+            out.push({ s: pi ? '' : s, sub: !!pi, no: p.no || '', name: t === 'them' && !(ui.img && ui.img.nm) ? '' : (p.name || ''), pos: p.pos || '', cs, st });
         }));
         if (t === 'them') while (out.length > 1 && !out[out.length - 1].no && !Object.values(out[out.length - 1].cs).some(c => c.m.length || c.r.length)) out.pop();   // 상대 팀: 안 친 빈 타순은 뺌
         return out;
@@ -610,7 +610,7 @@
         // ── 팀 기록표
         teams.forEach(t => {
             const R = rows[t];
-            text(G.tm[t].name + (t === 'them' ? '  (배번만)' : ''), M, y + 26, dark ? P.gold : P.ink, 'left', 900, 30); y += 56;
+            text(G.tm[t].name + (t === 'them' && !(ui.img && ui.img.nm) ? '  (배번만)' : ''), M, y + 26, dark ? P.gold : P.ink, 'left', 900, 30); y += 56;
             if (style === 'C') {   // 선수별 요약: 결과를 순서대로 한 줄 + 타수 안타 타점 득점 도루
                 const sx = W - M - 5 * 70, hd = ['타수', '안타', '타점', '득점', '도루'];
                 x.fillStyle = P.head; x.fillRect(M, y, W - 2 * M, 40);
@@ -664,13 +664,13 @@
     function imgBlob(style, orient) { return new Promise((res, rej) => { try { imgCanvas(style, orient).toBlob(b => b ? res(b) : rej(new Error('blob')), 'image/png'); } catch (e) { rej(e); } }); }
     function imgName() { const im = ui.img || {}; return `daeyeon-scoresheet-${G.date || 'game'}-${im.s === 'B' ? 'card' : 'paper'}-${im.o === 'P' ? 'portrait' : 'landscape'}${G.tm && G.tm.them ? '-' + G.tm.them.name : ''}.png`; }
     let imgUrl = '';
-    function imgOpen() { const pf = imgPref(); ui.img = { url: '', s: pf.s, o: pf.o }; imgMake(); }
+    function imgOpen() { const pf = imgPref(); ui.img = { url: '', s: pf.s, o: pf.o, nm: '' }; imgMake(); }
     function imgMake() { const want = ui.img; if (!want) return; want.url = ''; want.blob = null; draw();
         imgBlob(want.s, want.o).then(b => { if (ui.img !== want) return; if (imgUrl) URL.revokeObjectURL(imgUrl); imgUrl = URL.createObjectURL(b); want.url = imgUrl; want.blob = b; draw(); }).catch(() => note('fail', '이미지를 못 만들었캉', '잠시 후 다시 해 주세요')); }
     function imgPanel() {
         const im = ui.img, u = im && im.url, canShare = !!(navigator.canShare && navigator.share);
         const seg = (lab, key, opts) => `<div class="seg"><span>${lab}</span>${opts.map(([v, t]) => `<button type="button" data-a="imgopt" data-k="${key}" data-v="${v}" class="${im[key] === v ? 'on' : ''}">${t}</button>`).join('')}</div>`;
-        return `<div class="sb-over" data-a="imgx"><div class="sb-panel wide sb-imgp" data-stop="1"><h3>🖼 기록표 이미지 <small>상대 팀은 배번만 들어가요</small></h3>${seg('모양', 's', [['A', '📄 종이 기록표'], ['B', '🌙 남색 카드']])}${seg('A4', 'o', [['L', '가로'], ['P', '세로']])}<div class="sb-imgbox ${im.o === 'P' ? 'pt' : 'ls'}">${u ? `<img src="${u}" alt="기록표 이미지">` : '<p class="hint">만드는 중…</p>'}</div>
+        return `<div class="sb-over" data-a="imgx"><div class="sb-panel wide sb-imgp" data-stop="1"><h3>🖼 기록표 이미지 <small>${im.nm ? '상대 팀 이름도 들어가요 · 단톡방에 올릴 땐 꺼 주세요' : '상대 팀은 배번만 들어가요'}</small></h3>${seg('모양', 's', [['A', '📄 종이 기록표'], ['B', '🌙 남색 카드']])}${seg('A4', 'o', [['L', '가로'], ['P', '세로']])}${G.recThem && canRecord() ? seg('상대 이름', 'nm', [['', '빼기'], ['1', '넣기 (보관용)']]) : ''}<div class="sb-imgbox ${im.o === 'P' ? 'pt' : 'ls'}">${u ? `<img src="${u}" alt="기록표 이미지">` : '<p class="hint">만드는 중…</p>'}</div>
         <div class="f3"><button type="button" class="big pri" data-a="imgsave"${u ? '' : ' disabled'}>💾 저장</button>${canShare ? `<button type="button" class="big" data-a="imgshare"${u ? '' : ' disabled'}>📤 공유</button>` : ''}<button type="button" class="big" data-a="imgprint"${u ? '' : ' disabled'}>🖨 인쇄</button></div><button type="button" class="big" data-a="imgx">닫기</button></div></div>`;
     }
     function imgSave() { const b = ui.img && ui.img.blob; if (!b) return; const url = URL.createObjectURL(b), a = document.createElement('a'); a.href = url; a.download = imgName(); document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 30000); note('done', '기록표 이미지 저장했캉! 🖼️', '안 보이면 이미지를 길게 눌러 저장해 주세요'); }
@@ -775,7 +775,7 @@
         if (a === 'lineup') { ui.panel = ''; ui.screen = 'setup'; draw(); return; }
         if (a === 'send') return send();
         if (a === 'img') return imgOpen();
-        if (a === 'imgopt') { if (!ui.img) return; ui.img[d.k] = d.v; lsSet(LSIMG, JSON.stringify({ s: ui.img.s, o: ui.img.o })); return imgMake(); }
+        if (a === 'imgopt') { if (!ui.img) return; if (d.k === 'nm' && !canRecord()) return; ui.img[d.k] = d.v; lsSet(LSIMG, JSON.stringify({ s: ui.img.s, o: ui.img.o })); return imgMake(); }
         if (a === 'imgx') { ui.img = null; draw(); return; }
         if (a === 'imgsave') return imgSave();
         if (a === 'imgshare') return imgShare();
