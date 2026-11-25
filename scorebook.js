@@ -537,7 +537,9 @@
     }
     // ---------- 🖼 v2.157.0 기록표 이미지 · 인쇄 (캔버스로 그림 · 서버 안 씀) ----------
     //   시안 window.SB_IMG: A 종이 기록표(가로) · B 공유 카드(남색) · C 선수별 요약표
-    const IMG = (typeof window !== 'undefined' && window.SB_IMG) || 'A';
+    // 11-25 하코: 종이 기록표(A) · 남색 카드(B) 두 모양 × A4 가로 · 세로 — 이미지 창에서 고름 (마지막 고른 것 기억)
+    const LSIMG = 'daeyeon_sb_img';
+    function imgPref() { let v = {}; try { v = JSON.parse(lsGet(LSIMG) || '{}') || {}; } catch (e) {} return { s: v.s === 'B' ? 'B' : 'A', o: v.o === 'P' ? 'P' : 'L' }; }
     function teamRows(t) {
         const cells = {}, ends = {};
         G.log.forEach(e => { if (e.t !== t) return; let w = null; if (e.y === 'pa' || e.y === 'ro' || e.y === 'sb' || e.y === 'cs') w = e; else if (e.y === 'run' && e.sc && !e.auto) w = e.sc; if (w) (cells[e.i + '|' + w.s + '|' + w.p] = cells[e.i + '|' + w.s + '|' + w.p] || []).push(e); if (e.y === 'end') ends[e.i + '|' + e.s + '|' + (e.p || 0)] = 1; });
@@ -550,14 +552,14 @@
         if (t === 'them') while (out.length > 1 && !out[out.length - 1].no && !Object.values(out[out.length - 1].cs).some(c => c.m.length || c.r.length)) out.pop();   // 상대 팀: 안 친 빈 타순은 뺌
         return out;
     }
-    function imgCanvas(style) {
+    function imgCanvas(style, orient) {
         const n = maxInn(), us = total('us'), th = total('them'), res = G.done ? (us > th ? '승' : us < th ? '패' : '무') : '';
         const teams = ['us'].concat(G.recThem ? ['them'] : []), rows = {}; teams.forEach(t => { rows[t] = teamRows(t); });
         const F = '"Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif';
         const dark = style === 'B';
         const P = dark ? { bg: '#0b1a33', card: '#122647', ink: '#ffffff', sub: '#b9c6dc', line: 'rgba(255,255,255,.14)', head: '#1b3563', h: '#4ade80', o: '#cbd5e1', w: '#7cb3ff', k: '#ff6b81', e: '#fdba74', gold: '#f5c542', r: '#ff6b81' }
             : { bg: '#ffffff', card: '#ffffff', ink: '#0f172a', sub: '#5b6577', line: '#b8c3d3', head: '#eef2f7', h: '#15803d', o: '#475569', w: '#2563eb', k: '#c8102e', e: '#c2620a', gold: '#0b2240', r: '#c8102e' };
-        const W = style === 'A' ? 1754 : 1080;
+        const W = orient === 'P' ? 1240 : 1754;
         const cv = document.createElement('canvas'), x = cv.getContext('2d');
         const font = (w, s) => { x.font = `${w} ${s}px ${F}`; };
         const text = (t, X, Y, col, al, w, s) => { if (w) font(w, s); x.fillStyle = col; x.textAlign = al || 'left'; x.fillText(String(t), X, Y); };
@@ -582,7 +584,6 @@
             fitf(sc, 900, 44, 420); text(sc, W - M, y + 70, res === '패' ? P.o : P.r, 'right');
             y += HDR;
         } else {
-            if (dark) { x.strokeStyle = 'rgba(245,197,66,.55)'; x.lineWidth = 3; x.strokeRect(18, 18, W - 36, H - 36); }
             fitf(G.title || '경기', 900, 48, W - 2 * M); text(G.title || '경기', W / 2, y + 40, dark ? P.gold : P.ink, 'center');
             text(meta + ' · 경기 기록', W / 2, y + 92, P.sub, 'center', 600, 26);
             font(900, 92); const a = String(us), b = String(th);
@@ -636,7 +637,8 @@
                 const nm = (r.no ? r.no + ' ' : '') + r.name; fitf(nm, r.sub ? 600 : 800, 23, nmW - 30); text(nm, M + odW + 10, y + RH / 2 - (r.pos ? 6 : 0), P.ink, 'left');
                 if (r.pos) text(r.pos, M + odW + 10, y + RH - 9, P.sub, 'left', 600, 14);
                 for (let i = 1; i <= n; i++) { const c = r.cs[i], cx = M + odW + nmW + (i - .5) * cw; const ms = c.m.map(m => m.t);
-                    if (ms.length) { const ln1 = c.m; let yy = y + RH / 2 - (c.r.length ? 7 : 0) - (ln1.length - 1) * 9; ln1.forEach(m => { fitf(m.t, 800, 22, cw - 10); text(m.t, cx, yy, colOf(m.c), 'center'); yy += 18; }); }
+                    if (ms.length) { const ln1 = []; c.m.forEach(m => { font(800, 22); const k = m.t.indexOf('('); if (k > 0 && x.measureText(m.t).width > cw - 10) { ln1.push({ t: m.t.slice(0, k), c: m.c }); ln1.push({ t: m.t.slice(k), c: m.c }); } else ln1.push(m); });   // 「K(낫아웃 출루)」처럼 긴 기호는 두 줄로
+                        let yy = y + RH / 2 - (c.r.length ? 7 : 0) - (ln1.length - 1) * 9; ln1.forEach(m => { fitf(m.t, 800, 22, cw - 10); text(m.t, cx, yy, colOf(m.c), 'center'); yy += 18; }); }
                     if (c.r.length) { const rt = '(' + c.r.join(',') + ')'; fitf(rt, 600, 13, cw - 6); text(rt, cx, y + RH - 9, P.sub, 'center'); }
                     if (c.end) { line(cx + cw / 2 - 16, y + RH - 6, cx + cw / 2 - 8, y + 6, P.r, 2); line(cx + cw / 2 - 9, y + RH - 6, cx + cw / 2 - 1, y + 6, P.r, 2); } }
                 [r.st.ab, r.st.h, r.st.rbi, r.st.r || 0, r.st.sb || 0].slice(0, stc.length).forEach((v, j) => text(v, W - M - (stc.length - j - .5) * stW, y + RH / 2, j === 1 && v ? P.h : P.ink, 'center', 800, 23));
@@ -652,15 +654,23 @@
         const lg = '초록 안타 · 파랑 4사구 · 빨강 삼진 · 회색 아웃 · // 이닝 끝 · 「우선2·1」의 ·1 = 타점 · GH 그라운드 홈런 · 월 외야수 키 넘김 · 선 라인 선상';
         fitf(lg, 600, 18, W - 2 * M); text(lg, M, y + 18, P.sub, 'left');
         text('대연초등학교 야구부 · dybbr.github.io', W - M, y + 54, P.sub, 'right', 700, 22);
-        return cv;
+        // A4 비율 종이에 맞춤 (넘치면 통째로 줄이고, 남으면 아래를 비움)
+        const AH = Math.round(orient === 'P' ? W * 1.4142 : W / 1.4142), out = document.createElement('canvas'), o = out.getContext('2d');
+        out.width = W; out.height = AH; o.fillStyle = P.bg; o.fillRect(0, 0, W, AH);
+        const k = Math.min(1, AH / H); o.drawImage(cv, (W - W * k) / 2, 0, W * k, H * k);
+        if (dark) { o.strokeStyle = 'rgba(245,197,66,.55)'; o.lineWidth = 3; o.strokeRect(18, 18, W - 36, AH - 36); }
+        return out;
     }
-    function imgBlob(style) { return new Promise((res, rej) => { try { imgCanvas(style).toBlob(b => b ? res(b) : rej(new Error('blob')), 'image/png'); } catch (e) { rej(e); } }); }
-    function imgName() { return `daeyeon-scoresheet-${G.date || 'game'}${G.tm && G.tm.them ? '-' + G.tm.them.name : ''}.png`; }
+    function imgBlob(style, orient) { return new Promise((res, rej) => { try { imgCanvas(style, orient).toBlob(b => b ? res(b) : rej(new Error('blob')), 'image/png'); } catch (e) { rej(e); } }); }
+    function imgName() { const im = ui.img || {}; return `daeyeon-scoresheet-${G.date || 'game'}-${im.s === 'B' ? 'card' : 'paper'}-${im.o === 'P' ? 'portrait' : 'landscape'}${G.tm && G.tm.them ? '-' + G.tm.them.name : ''}.png`; }
     let imgUrl = '';
-    function imgOpen() { ui.img = { url: '' }; draw(); imgBlob(IMG).then(b => { if (imgUrl) URL.revokeObjectURL(imgUrl); imgUrl = URL.createObjectURL(b); if (ui.img) { ui.img.url = imgUrl; ui.img.blob = b; draw(); } }).catch(() => note('fail', '이미지를 못 만들었캉', '잠시 후 다시 해 주세요')); }
+    function imgOpen() { const pf = imgPref(); ui.img = { url: '', s: pf.s, o: pf.o }; imgMake(); }
+    function imgMake() { const want = ui.img; if (!want) return; want.url = ''; want.blob = null; draw();
+        imgBlob(want.s, want.o).then(b => { if (ui.img !== want) return; if (imgUrl) URL.revokeObjectURL(imgUrl); imgUrl = URL.createObjectURL(b); want.url = imgUrl; want.blob = b; draw(); }).catch(() => note('fail', '이미지를 못 만들었캉', '잠시 후 다시 해 주세요')); }
     function imgPanel() {
-        const u = ui.img && ui.img.url, canShare = !!(navigator.canShare && navigator.share);
-        return `<div class="sb-over" data-a="imgx"><div class="sb-panel wide sb-imgp" data-stop="1"><h3>🖼 기록표 이미지 <small>상대 팀은 배번만 들어가요</small></h3><div class="sb-imgbox">${u ? `<img src="${u}" alt="기록표 이미지">` : '<p class="hint">만드는 중…</p>'}</div>
+        const im = ui.img, u = im && im.url, canShare = !!(navigator.canShare && navigator.share);
+        const seg = (lab, key, opts) => `<div class="seg"><span>${lab}</span>${opts.map(([v, t]) => `<button type="button" data-a="imgopt" data-k="${key}" data-v="${v}" class="${im[key] === v ? 'on' : ''}">${t}</button>`).join('')}</div>`;
+        return `<div class="sb-over" data-a="imgx"><div class="sb-panel wide sb-imgp" data-stop="1"><h3>🖼 기록표 이미지 <small>상대 팀은 배번만 들어가요</small></h3>${seg('모양', 's', [['A', '📄 종이 기록표'], ['B', '🌙 남색 카드']])}${seg('A4', 'o', [['L', '가로'], ['P', '세로']])}<div class="sb-imgbox ${im.o === 'P' ? 'pt' : 'ls'}">${u ? `<img src="${u}" alt="기록표 이미지">` : '<p class="hint">만드는 중…</p>'}</div>
         <div class="f3"><button type="button" class="big pri" data-a="imgsave"${u ? '' : ' disabled'}>💾 저장</button>${canShare ? `<button type="button" class="big" data-a="imgshare"${u ? '' : ' disabled'}>📤 공유</button>` : ''}<button type="button" class="big" data-a="imgprint"${u ? '' : ' disabled'}>🖨 인쇄</button></div><button type="button" class="big" data-a="imgx">닫기</button></div></div>`;
     }
     function imgSave() { const b = ui.img && ui.img.blob; if (!b) return; const url = URL.createObjectURL(b), a = document.createElement('a'); a.href = url; a.download = imgName(); document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 30000); note('done', '기록표 이미지 저장했캉! 🖼️', '안 보이면 이미지를 길게 눌러 저장해 주세요'); }
@@ -669,7 +679,7 @@
         const u = ui.img && ui.img.url; if (!u) return;
         let box = document.getElementById('sbPrint'); if (!box) { box = document.createElement('div'); box.id = 'sbPrint'; document.body.appendChild(box); }
         let st = document.getElementById('sbPrintCss'); if (!st) { st = document.createElement('style'); st.id = 'sbPrintCss'; document.head.appendChild(st); }
-        st.textContent = `#sbPrint{display:none}@media print{@page{size:A4 ${IMG === 'A' ? 'landscape' : 'portrait'};margin:8mm}html,body{height:auto!important;overflow:visible!important;background:#fff!important}body>*:not(#sbPrint){display:none!important}#sbPrint{display:block!important}#sbPrint img{width:100%;height:auto;max-height:${IMG === 'A' ? '190mm' : '277mm'};object-fit:contain;display:block;margin:0 auto}}`;
+        st.textContent = `#sbPrint{display:none}@media print{@page{size:A4 ${ui.img.o === 'P' ? 'portrait' : 'landscape'};margin:8mm}html,body{height:auto!important;overflow:visible!important;background:#fff!important}body>*:not(#sbPrint){display:none!important}#sbPrint{display:block!important}#sbPrint img{width:100%;height:auto;max-height:${ui.img.o === 'P' ? '277mm' : '190mm'};object-fit:contain;display:block;margin:0 auto}}`;
         box.innerHTML = `<img src="${u}" alt="">`;
         const im = box.querySelector('img'), go = () => { try { window.print(); } catch (e) { note('fail', '이 기기는 인쇄가 안 되캉', '이미지를 저장해서 인쇄해 주세요'); } };
         if (im.complete) setTimeout(go, 50); else im.onload = () => setTimeout(go, 50);
@@ -765,6 +775,7 @@
         if (a === 'lineup') { ui.panel = ''; ui.screen = 'setup'; draw(); return; }
         if (a === 'send') return send();
         if (a === 'img') return imgOpen();
+        if (a === 'imgopt') { if (!ui.img) return; ui.img[d.k] = d.v; lsSet(LSIMG, JSON.stringify({ s: ui.img.s, o: ui.img.o })); return imgMake(); }
         if (a === 'imgx') { ui.img = null; draw(); return; }
         if (a === 'imgsave') return imgSave();
         if (a === 'imgshare') return imgShare();
