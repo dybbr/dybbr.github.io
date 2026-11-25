@@ -1,11 +1,11 @@
 // ==========================================================
-// ⚾ 대연초 야구부 관리 시스템 통합 백엔드 API (v2.48.0)
+// ⚾ 대연초 야구부 관리 시스템 통합 백엔드 API (v2.49.0)
 // ==========================================================
 // ★ API_KEY 는 코드에 적지 않고 「프로젝트 설정 → 스크립트 속성」의 API_KEY 에 넣어 둡니다 (v2.36.0~).
 //   값은 index.html / player.html 의 API_KEY 와 "같은 값"이어야 합니다. 속성이 비어 있으면 모든 요청을 거절합니다.
 var API_KEY = PropertiesService.getScriptProperties().getProperty("API_KEY") || null;
 
-var ALLOWED_POST_ACTIONS = ["login", "logout", "uploadPhoto", "deletePhoto", "submitOrder", "cancelOrder", "registerContact", "setUniformActive", "setJerseyColors", "changeAdminPw", "updatePlayerInfo", "setHiddenSongs", "songPlays", "bkaMiss", "saveEvents", "deleteEvent", "saveNotice", "deleteNotice", "saveVenue", "deleteVenue", "saveGameRecord"];   // v2.14.0: 실시간 접속 알림(presence) 없앰 · v2.15.0: 보안 활동 로그(logActivity) 없앰 · v2.20.0: 공지 읽음(viewNotice) 없앰
+var ALLOWED_POST_ACTIONS = ["login", "logout", "uploadPhoto", "deletePhoto", "submitOrder", "cancelOrder", "registerContact", "setUniformActive", "setJerseyColors", "changeAdminPw", "updatePlayerInfo", "setHiddenSongs", "songPlays", "bkaMiss", "saveEvents", "deleteEvent", "saveNotice", "deleteNotice", "saveVenue", "deleteVenue", "saveGameRecord", "saveAttend", "saveCarplan"];   // v2.14.0: 실시간 접속 알림(presence) 없앰 · v2.15.0: 보안 활동 로그(logActivity) 없앰 · v2.20.0: 공지 읽음(viewNotice) 없앰
 var ALLOWED_ORDER_ITEMS = ["모자", "바지 (허리)", "바지 (기장)", "유니폼상의", "여름훈련티", "겨울훈련티", "바람막이", "풀오버", "겨울점퍼", "응원복"];   // v2.41.0: 📣 응원복 (학부모 응원용)
 
 // ★ 1. 드라이브 권한 및 폴더 생성 테스트 함수
@@ -1070,6 +1070,10 @@ function doPost(e) {
       if (!canEditScheduleRole(role)) return json({ result: "error", message: "일정/공지를 수정할 권한이 없습니다." });
     } else if (a === "saveVenue" || a === "deleteVenue") {   // v2.7.0: 🏟️ 구장 정보는 대표님 · 개발자만
       if (!(role === "super" || role === "dev")) return json({ result: "error", message: "구장 정보는 대표님만 수정할 수 있습니다." });
+    } else if (a === "saveAttend") {   // 🙋 v2.49.0: 참석 · 이동 응답 — 학부모는 내 아이만(handleSaveAttend 가 검사), 운영진은 대신 입력 가능
+      if (!session || !canSeeBoard(role)) return json({ result: "error", message: "로그인한 뒤에 응답할 수 있어요." });
+    } else if (a === "saveCarplan") {   // 🚗 v2.49.0: 차량 배정은 운영진만
+      if (!isAdminRole(role)) return json({ result: "error", message: "차량 배정은 운영진만 할 수 있어요." });
     } else if (a === "saveGameRecord") {   // ⚾ v2.46.0: 경기 기록은 대표님 · 개발자만
       if (!(role === "super" || role === "dev")) return json({ result: "error", message: "경기 기록은 대표님만 저장할 수 있습니다." });
     } else if (a === "setUniformActive" || a === "setJerseyColors") {
@@ -1101,6 +1105,8 @@ function doPost(e) {
       case "saveVenue":         return handleSaveVenue(ss, data);     // v2.6.0: 📍 구장 등록/수정
       case "deleteVenue":       return handleDeleteVenue(ss, data);
       case "saveGameRecord":    return handleSaveGameRecord(ss, data);   // ⚾ v2.46.0
+      case "saveAttend":        return handleSaveAttend(ss, data, session);   // 🙋 v2.49.0
+      case "saveCarplan":       return handleSaveCarplan(ss, data);           // 🚗 v2.49.0
       case "saveNotice":        return handleSaveNotice(ss, data);
       case "deleteNotice":      return handleDeleteNotice(ss, data);
       case "submitOrder":       return handleSubmitOrder(ss, data, session);
@@ -1791,6 +1797,13 @@ function doGet(e) {
     if (p.action === "gameStats") {
       if (!session || !canSeeBoard(role)) return json({ result: "error", message: "로그인한 뒤에 볼 수 있어요." });
       return json({ result: "success", ver: PropertiesService.getScriptProperties().getProperty("GAME_REC_VER") || "", recs: readGameStats(ss) });
+    }
+    // 🙋 v2.49.0: 참석 체크 · 카풀 — 일정 상세를 열 때만 (여러 날 대회는 ids 로 한 번에)
+    if (p.action === "attend") {
+      if (!session || !canSeeBoard(role)) return json({ result: "error", message: "로그인한 뒤에 볼 수 있어요." });
+      var aIds = String(p.ids || "").split(",").map(function (x) { return cleanId(x, 30); }).filter(String).slice(0, 7);
+      if (!aIds.length) return json({ result: "error", message: "일정 ID가 없습니다." });
+      return json({ result: "success", admin: isAdminRole(role), ev: readAttend(ss, aIds, session) });
     }
     if (p.action === "gameRecord") {
       if (!session || !canSeeBoard(role)) return json({ result: "error", message: "로그인한 뒤에 볼 수 있어요." });   // 학부모도 봄 (11-22 하코)
@@ -3461,4 +3474,93 @@ function readGameRecord(ss, id) {
     }
   }
   return { result: "none" };
+}
+
+// ==========================================================
+// 🙋 v2.49.0: 일정 참석 체크 · 🚗 카풀(차량지원) 배정 (사이트 v2.159.0, 하코 11-26 A안 + C안 일부)
+//   · 시트 「참석응답」 — 일정 · 선수마다 한 줄 (참석 ok · 늦게 late · 불참 no / 이동 car 제 차로 · ride 태워 주세요 · self 따로)
+//   · 시트 「차량배정」 — 일정마다 한 줄 (운영진이 정한 차 · 아이 배정 JSON)
+//   · 학부모: 내 아이 줄 + 인원 숫자 + 차량 모집 목록(단톡방 릴레이처럼 이름 · 자리 수) + 내 아이가 탄 차만
+//     (불참 · 늦게 사유와 다른 아이 응답은 운영진만)
+//   · 「일정」 탭은 건드리지 않음
+// ==========================================================
+var ATT_SHEET_NAME = "참석응답";
+var ATT_HEADERS = ["일정ID", "배번", "이름", "참석", "메모", "이동", "좌석", "방향", "짐", "수정일시"];
+var CAR_SHEET_NAME = "차량배정";
+var CAR_HEADERS = ["일정ID", "배정", "수정일시"];
+function attPick(v, list, def) { v = String(v == null ? "" : v); return list.indexOf(v) !== -1 ? v : def; }
+function handleSaveAttend(ss, data, session) {
+  var items = Array.isArray(data.items) ? data.items.slice(0, 30) : [];
+  if (!items.length) return json({ result: "error", message: "보낼 응답이 없습니다." });
+  var admin = isAdminRole(session && session.role);
+  var sh = ensureSheet(ss, ATT_SHEET_NAME, ATT_HEADERS);
+  var last = sh.getLastRow();
+  var vals = last >= 2 ? sh.getRange(2, 1, last - 1, 3).getValues() : [];
+  var stamp = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm");
+  var saved = 0;
+  for (var i = 0; i < items.length; i++) {
+    var it = items[i] || {};
+    var ev = cleanId(it.ev, 30), no = Math.max(0, Math.min(999, parseInt(it.no, 10) || 0)), nm = cleanText(it.name, 20);
+    if (!ev || (!no && !nm)) continue;
+    if (!admin && !scopeHasPlayer(session, no, nm)) continue;   // 학부모는 내 아이만
+    var st = attPick(it.st, ["ok", "late", "no"], ""), mv = attPick(it.mv, ["car", "ride", "self"], "");
+    var seats = mv === "car" ? String(Math.max(1, Math.min(9, parseInt(it.seats, 10) || 1))) : "";
+    var dir = mv === "car" ? attPick(it.dir, ["both", "go", "back"], "both") : "";
+    var row = [ev, no ? String(no) : "", nm, st, cleanText(it.memo, 40), st === "no" ? "" : mv, st === "no" ? "" : seats, st === "no" ? "" : dir, (mv === "car" && st !== "no" && (it.bag === true || it.bag === "true")) ? "Y" : "", stamp];
+    var at = -1;
+    for (var r = 0; r < vals.length; r++) {
+      if (String(vals[r][0]) !== ev) continue;
+      if (no ? String(vals[r][1]) === String(no) : String(vals[r][2]) === nm) { at = r + 2; break; }
+    }
+    if (at === -1) { at = sh.getLastRow() + 1; vals.push([ev, row[1], nm]); }
+    writeRow(sh, at, row);
+    saved++;
+  }
+  if (!saved) return json({ result: "error", message: "본인 자녀 응답만 보낼 수 있어요." });
+  return json({ result: "success", saved: saved, updated: stamp });
+}
+function handleSaveCarplan(ss, data) {
+  var ev = cleanId(data.ev, 30), body = String(data.plan || "");
+  if (!ev) return json({ result: "error", message: "일정 ID가 없습니다." });
+  if (body.length > 40000) return json({ result: "error", message: "배정이 너무 깁니다." });
+  try { JSON.parse(body || "{}"); } catch (e) { return json({ result: "error", message: "배정 형식이 올바르지 않습니다." }); }
+  var sh = ensureSheet(ss, CAR_SHEET_NAME, CAR_HEADERS);
+  var stamp = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm");
+  var at = findRowById(sh, ev);
+  writeRow(sh, at === -1 ? sh.getLastRow() + 1 : at, [ev, body, stamp]);
+  return json({ result: "success", updated: stamp });
+}
+// GET attend&ids=a,b,c — 여러 날 대회도 한 번에 (최대 7개)
+function readAttend(ss, ids, session) {
+  var role = session && session.role, admin = isAdminRole(role), out = {};
+  ids.forEach(function (id) { out[id] = { rows: [], cnt: { ok: 0, late: 0, no: 0 }, cars: [], plan: "", planAt: "" }; });
+  var sh = ss.getSheetByName(ATT_SHEET_NAME);
+  if (sh && sh.getLastRow() >= 2) {
+    var vals = sh.getRange(2, 1, sh.getLastRow() - 1, ATT_HEADERS.length).getValues();
+    for (var i = 0; i < vals.length; i++) {
+      var v = vals[i].map(String), o = out[v[0]];
+      if (!o) continue;
+      var row = { no: v[1], name: v[2], st: v[3], memo: v[4], mv: v[5], seats: v[6], dir: v[7], bag: v[8] === "Y", at: v[9] };
+      if (o.cnt[row.st] != null) o.cnt[row.st]++;
+      var mine = scopeHasPlayer(session, parseInt(row.no, 10) || 0, row.name);
+      if (admin || mine) o.rows.push(row);
+      if (!admin && row.mv === "car" && row.st !== "no") o.cars.push({ no: row.no, name: row.name, seats: row.seats, dir: row.dir, bag: row.bag });   // 단톡방 릴레이처럼 이름 · 자리 수만
+    }
+  }
+  var cs = ss.getSheetByName(CAR_SHEET_NAME);
+  if (cs && cs.getLastRow() >= 2) {
+    var cv = cs.getRange(2, 1, cs.getLastRow() - 1, CAR_HEADERS.length).getValues();
+    for (var j = 0; j < cv.length; j++) { var oo = out[String(cv[j][0])]; if (oo) { oo.plan = String(cv[j][1] || ""); oo.planAt = String(cv[j][2] || ""); } }
+  }
+  if (!admin) {   // 학부모: 내 아이가 탄 차만 남김
+    ids.forEach(function (id) {
+      var o = out[id]; if (!o.plan) return;
+      try {
+        var pl = JSON.parse(o.plan), keep = { go: [], back: [] };
+        ["go", "back"].forEach(function (k) { (pl[k] || []).forEach(function (car) { if ((car.kids || []).some(function (kd) { return scopeHasPlayer(session, parseInt(kd.no, 10) || 0, kd.name); })) keep[k].push(car); }); });
+        keep.done = !!pl.done; o.plan = JSON.stringify(keep);
+      } catch (e) { o.plan = ""; }
+    });
+  }
+  return out;
 }
