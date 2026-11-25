@@ -14,7 +14,7 @@
         H1: { s: '안', n: '안타', d: 1, h: 1, ab: 1, c: 'h' }, IH: { s: '내안', n: '내야안타', d: 1, h: 1, ab: 1, c: 'h' },
         H2: { s: '2', n: '2루타', d: 1, h: 1, ab: 1, c: 'h' }, H3: { s: '3', n: '3루타', d: 1, h: 1, ab: 1, c: 'h' }, HR: { s: '홈', n: '홈런', d: 1, h: 1, ab: 1, c: 'h' },
         GO: { s: '땅', n: '땅볼', d: 1, ab: 1, o: 1, c: 'o' }, FO: { s: '플', n: '플라이', d: 1, ab: 1, o: 1, c: 'o' }, LO: { s: '직', n: '직선타', d: 1, ab: 1, o: 1, c: 'o' },
-        E: { s: '실', n: '실책', d: 1, ab: 1, e: 1, c: 'e' }, SF: { s: '희플', n: '희생플', d: 1, o: 1, c: 'o' },
+        E: { s: '실', n: '실책', d: 1, ab: 1, e: 1, c: 'e' }, SF: { s: '희플', n: '희생플라이', d: 1, o: 1, c: 'o' },
         BB: { s: '4구', n: '4구', bb: 1, c: 'w' }, HP: { s: '사구', n: '사구', bb: 1, c: 'w' }, K: { s: 'K', n: 'K', ab: 1, o: 1, c: 'k' },
         SH: { s: '희번', n: '희생번트', o: 1, c: 'o' }, FC: { s: '야선', n: '야수선택', ab: 1, c: 'e' },
         IHR: { s: 'GH', n: '그라운드 홈런', d: 1, h: 1, ab: 1, c: 'h' }, FF: { s: '파플', n: '파울플라이', d: 1, ab: 1, o: 1, c: 'o' },   // v2.154.0 대표님 요청
@@ -420,7 +420,7 @@
     }
 
     // 입력 판 — 방식마다 모양만 다르고 모두 record(k, d) 를 부름
-    const SHORTN = { KN: '낫아웃 아웃', KR: '낫아웃 출루', DP: '병살타', IHR: '그라운드홈런', FF: '파울플라이', H1: '안타', IH: '내야안타', H2: '2루타', H3: '3루타', HR: '홈런', GO: '땅볼', FO: '플라이', LO: '직선타', E: '실책', SF: '희생플', BB: '볼넷', HP: '몸에 맞음', K: '삼진', SH: '희생번트', FC: '야수선택' };
+    const SHORTN = { KN: '낫아웃 아웃', KR: '낫아웃 출루', DP: '병살타', IHR: '그라운드 홈런', FF: '파울플라이', H1: '안타', IH: '내야안타', H2: '2루타', H3: '3루타', HR: '홈런', GO: '땅볼', FO: '플라이', LO: '직선타', E: '실책', SF: '희생플라이', BB: '볼넷', HP: '몸에 맞는 공', K: '삼진', SH: '희생번트', FC: '야수선택' };
     function kb(k, cls, extra) { const K = KIND[k]; const lab = (LAY === 'A' && !extra) ? `<b class="sy2">${esc(K.s)}</b><small>${SHORTN[k]}</small>` : K.n + (extra || ''); return `<button type="button" class="kb ${K.c} ${cls || ''}${ui.pick === k ? ' sel' : ''}" data-a="k" data-k="${k}">${lab}</button>`; }
     function dirRow() { return `<div class="sb-dirs d11${ui.pick ? ' need' : ''}">${DIRS.map(d => `<button type="button"${d.length > 1 || /[좌중우]/.test(d) ? ' class="of"' : ''} data-a="d" data-d="${d}">${d}</button>`).join('')}</div>`; }
     function fieldPad() { return `<div class="sb-field${ui.pick ? ' need' : ''}">${[['좌', 'lf'], ['좌중', 'lc'], ['중', 'cf'], ['우중', 'rc'], ['우', 'rf'], ['유', 'ss'], ['2', 'b2'], ['3', 'b3'], ['투', 'pp'], ['1', 'b1'], ['포', 'cc']].map(([d, a]) => `<button type="button" style="grid-area:${a}" data-a="d" data-d="${d}">${d}</button>`).join('')}</div>`; }
