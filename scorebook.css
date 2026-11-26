@@ -409,3 +409,17 @@ html.sb-open .ui-zoom-ctrl, html.sb-open .bk-upd { display: none !important; }
   .sb-status .pitchip { max-width: 34%; padding: 4px 8px; }
 }
 .sb .simple .cnt span small { display: block; font-size: 11px; color: var(--s); font-weight: 500; }   /* v2.160.0 이번 회 · 경기 합계 */
+/* ⏱ v2.161.0 타순 없이 시작 · 타석마다 선수 고르기 */
+.sb .big.lnlater { background: #fff7e6; border: 2px dashed #f59e0b; color: #92400e; line-height: 1.2; padding: 8px; }
+.sb .big.lnlater small { display: block; font-size: 12px; font-weight: 600; color: #a16207; margin-top: 2px; }
+.sb-now.lnask { background: #fff7e6; border-color: #f59e0b; }
+.sb-now.lnask span { flex: 1; font-size: 15px; }
+.sb-now.lnask .pri { background: #b45309; border-color: #b45309; color: #fff; font-size: 14px; padding: 9px 12px; }
+.sb-lnchips { background: #fff7e6; border: 1.5px solid #f59e0b; border-radius: 12px; padding: 6px 8px; }
+.sb-lnchips .h { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.sb-lnchips .h b { font-size: 16px; color: #92400e; } .sb-lnchips .h small { flex: 1; font-size: 11px; color: #a16207; }
+.sb-lnchips .h button { border: 1px solid #f59e0b; background: #fff; border-radius: 8px; padding: 5px 9px; font-size: 12px; font-weight: 700; color: #92400e; }
+.sb-lnchips .row { display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
+.sb-lnchips .row button { flex: 0 0 auto; border: 2px solid #fcd34d; background: #fff; border-radius: 10px; min-height: 44px; padding: 4px 10px; font-size: 14px; font-weight: 700; white-space: nowrap; }
+.sb-lnchips .row button b { color: var(--navy); margin-right: 4px; }
+@media (min-width: 900px) { .sb-lnchips .row { flex-wrap: wrap; overflow: visible; } }
