@@ -156,6 +156,7 @@
         });
         if (!order.length) return [];
         for (const i in (g.runs.them || {})) { const d = (g.runs.them[i] || 0) - (logR[i] || 0); if (d > 0) (startP[i] || P[order[0]]).r += d; }
+        if (!g.recThem) for (const i in ((g.adjI || {}).them || {})) { const a = g.adjI.them[i], w = startP[i] || P[order[0]]; w.h += a.H || 0; w.bb += a.B || 0; w.hb = 1; }   // 숫자만 경기: 회마다 넣은 안타 · 4사구를 그 회 투수에게
         const pc = g.pcnt || {};
         return order.map(k => Object.assign(P[k], { pc: pc[k] > 0 ? pc[k] : 0, recBf: !!g.recThem }));
     }
@@ -369,6 +370,13 @@
         save(); draw();
     }
     function adj(t, key, n) { G.adj[t] = G.adj[t] || {}; G.adj[t][key] = (G.adj[t][key] || 0) + n; save(); draw(); }
+    // v2.160.0 대표님 요청: 「숫자만」 화면의 안타 · 4사구 · 실책도 득점처럼 이번 회만 세기 (경기 합계 G.adj 에도 같이 더함 → 점수판 · 기록표 그대로)
+    function adjInn(t, i) { return ((G.adjI || {})[t] || {})[i] || {}; }
+    function adjI(t, i, key, n) {
+        G.adjI = G.adjI || {}; G.adjI[t] = G.adjI[t] || {}; const r = G.adjI[t][i] = G.adjI[t][i] || {};
+        if (n < 0 && !(r[key] > 0)) { ui.msg = i + '회에 넣은 ' + ({ H: '안타가', B: '4사구가', E: '실책이' })[key] + ' 없어요 · 다른 회 숫자는 점수판에서 고쳐요'; draw(); return; }
+        r[key] = (r[key] || 0) + n; adj(t, key, n);
+    }
     function setRun(t, i, n) { G.runs[t] = G.runs[t] || {}; G.runs[t][i] = Math.max(0, runs(t, i) + n); save(); draw(); }
 
     // ---------- 새 경기 ----------
@@ -545,8 +553,9 @@
     }
     function simpleThem() {   // 상대 타자를 안 적는 경기: 숫자만
         const st = stat('them');
-        const c = (lab, key, v) => `<div class="cnt"><span>${lab}</span><button type="button" data-a="adj" data-k="${key}" data-n="-1">−</button><b>${v}</b><button type="button" data-a="adj" data-k="${key}" data-n="1">＋</button></div>`;
-        return `<div class="sb-pad simple"><div class="lbl">${esc(G.tm.them.name)} 공격 — 숫자만 올려요</div><div class="cnt"><span>이번 회 득점</span><button type="button" data-a="run-" data-t="them" data-i="${G.cur.i}">−</button><b>${runs('them', G.cur.i)}</b><button type="button" data-a="run+" data-t="them" data-i="${G.cur.i}">＋</button></div>${c('안타', 'H', st.H)}${c('4사구', 'B', st.B)}${c('실책', 'E', st.E)}<button type="button" class="big" data-a="end">${esc(G.tm.them.name)} 공격 끝 ▶</button></div>`;
+        const ai = adjInn('them', G.cur.i);
+        const c = (lab, key) => `<div class="cnt"><span>이번 회 ${lab}<small>경기 합계 ${st[key]}</small></span><button type="button" data-a="adj" data-k="${key}" data-n="-1">−</button><b>${ai[key] || 0}</b><button type="button" data-a="adj" data-k="${key}" data-n="1">＋</button></div>`;
+        return `<div class="sb-pad simple"><div class="lbl">${esc(G.tm.them.name)} 공격 — 숫자만 올려요</div><div class="cnt"><span>이번 회 득점</span><button type="button" data-a="run-" data-t="them" data-i="${G.cur.i}">−</button><b>${runs('them', G.cur.i)}</b><button type="button" data-a="run+" data-t="them" data-i="${G.cur.i}">＋</button></div>${c('안타', 'H')}${c('4사구', 'B')}${c('실책', 'E')}<button type="button" class="big" data-a="end">${esc(G.tm.them.name)} 공격 끝 ▶</button></div>`;
     }
     function gameHtml() {
         const m = mode(), t = G.cur.t, on = recOn(t), st = ui.sheetT || t;
@@ -831,7 +840,7 @@
         if (a === 'rdel') { ui.panel = ''; const ix = G.log.findIndex(x => x.id === +d.id); if (ix >= 0) { const e = G.log[ix]; if (e.y === 'run') { G.runs[e.t][e.i] = Math.max(0, runs(e.t, e.i) - 1); if (e.ref) { const pa = G.log.find(x => x.id === e.ref); if (pa) pa.r = Math.max(0, (pa.r || 0) - 1); } } G.log.splice(ix, 1); ui.msg = '그 주자 기록을 지웠어요'; save(); draw(); } return; }
         if (a === 'end') { endHalf(false); ui.msg = '공수교대 · ' + halfLabel(G.cur.t, G.cur.i); save(); draw(); return; }
         if (a === 'run+' || a === 'run-') return setRun(d.t, +d.i, a === 'run+' ? 1 : -1);
-        if (a === 'adj') return adj('them', d.k, +d.n);
+        if (a === 'adj') return adjI('them', G.cur.i, d.k, +d.n);
         if (a === 'adj2') return adj(d.t, d.k, +d.n);
         if (a === 'board' || a === 'menu' || a === 'sheet' || a === 'finish') { if (a === 'finish') { G.done = true; save(); } ui.panel = a; draw(); return; }
         if (a === 'mode') { lsSet(LSM, d.m); ui.panel = ''; ui.pick = null; draw(); return; }
@@ -899,7 +908,7 @@
     function keepSetup() { const t = document.getElementById('sbTitle'), o = document.getElementById('sbOpp'); if (t) G.title = t.value.trim().slice(0, 40); if (o) { const nn = o.value.trim().slice(0, 20) || '상대'; if (nn !== G.tm.them.name) { G.tm.them.name = nn; if (!G.begun) G.tm.them.ln = []; } } }
 
     // ---------- 보내기 ----------
-    function bodyOf() { return JSON.stringify({ v: G.v, id: G.id, ev: G.ev, date: G.date, title: G.title, place: G.place, start: G.start, first: G.first, recThem: G.recThem, tm: G.tm, log: G.log.map(e => { const o = Object.assign({}, e); delete o.pc; return o; }), runs: G.runs, adj: G.adj, cur: G.cur, nx: G.nx, seq: G.seq, pcnt: G.pcnt || {}, pit: pitStats().map(q => ({ no: q.no, name: q.name, outs: q.outs, bf: q.recBf ? q.bf : null, h: q.recBf ? q.h : null, bb: q.recBf ? q.bb : null, k: q.recBf ? q.k : null, r: q.r, pc: q.pc || 0, inn: q.inn })), begun: true, done: true }); }
+    function bodyOf() { return JSON.stringify({ v: G.v, id: G.id, ev: G.ev, date: G.date, title: G.title, place: G.place, start: G.start, first: G.first, recThem: G.recThem, tm: G.tm, log: G.log.map(e => { const o = Object.assign({}, e); delete o.pc; return o; }), runs: G.runs, adj: G.adj, adjI: G.adjI || {}, cur: G.cur, nx: G.nx, seq: G.seq, pcnt: G.pcnt || {}, pit: pitStats().map(q => ({ no: q.no, name: q.name, outs: q.outs, bf: q.recBf ? q.bf : null, h: q.recBf || q.hb ? q.h : null, bb: q.recBf || q.hb ? q.bb : null, k: q.recBf ? q.k : null, r: q.r, pc: q.pc || 0, inn: q.inn })), begun: true, done: true }); }
     function sig(b) { let h = 0; for (let k = 0; k < b.length; k++) h = (h * 31 + b.charCodeAt(k)) | 0; return b.length + ':' + h; }
     // 🛡 v2.154.0: 서버에 있는 기록을 다른 기기의 빈 기록으로 덮어쓰지 않게
     function paCount(g) { return g && Array.isArray(g.log) ? g.log.filter(e => e.y === 'pa').length : 0; }

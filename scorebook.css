@@ -408,3 +408,4 @@ html.sb-open .ui-zoom-ctrl, html.sb-open .bk-upd { display: none !important; }
   .sb-status .pitchip:not(.need)::before { content: '⚾ '; }
   .sb-status .pitchip { max-width: 34%; padding: 4px 8px; }
 }
+.sb .simple .cnt span small { display: block; font-size: 11px; color: var(--s); font-weight: 500; }   /* v2.160.0 이번 회 · 경기 합계 */
