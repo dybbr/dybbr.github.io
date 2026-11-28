@@ -452,3 +452,7 @@ html.sb-open .ui-zoom-ctrl, html.sb-open .bk-upd { display: none !important; }
 .errfix button.ue.on { background: #fde2e2; border-color: #e57373; color: #9b1c1c; font-weight: 700; }
 .errfix .uest { font-size: 13px; display: inline-flex; align-items: center; gap: 4px; }
 .errfix .uest button { width: 30px; height: 30px; border-radius: 8px; border: 1px solid #cbd5e1; background: #fff; }
+.sb .ract .advs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.sb .ract .advs button { min-height: 46px; border: 1px solid #cbd5e1; border-radius: 10px; background: #fff; font-weight: 800; font-size: 15px; color: #101a30; }
+.sb .ract .advs button:last-child { grid-column: 1 / -1; }
+.sb .ract .lbl { margin-top: 4px; }
