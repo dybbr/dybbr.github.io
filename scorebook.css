@@ -456,3 +456,8 @@ html.sb-open .ui-zoom-ctrl, html.sb-open .bk-upd { display: none !important; }
 .sb .ract .advs button { min-height: 46px; border: 1px solid #cbd5e1; border-radius: 10px; background: #fff; font-weight: 800; font-size: 15px; color: #101a30; }
 .sb .ract .advs button:last-child { grid-column: 1 / -1; }
 .sb .ract .lbl { margin-top: 4px; }
+/* 11-28 상대 명단 한 명씩 빼기 ✕ */
+.sb .plist .oppc { display: flex; gap: 3px; min-width: 0; }
+.sb .plist .oppc > button:first-child { flex: 1; min-width: 0; }
+.sb .plist .oppc > button.x { flex: 0 0 34px; min-height: 46px; padding: 0; text-align: center; font-size: 15px; color: #9b1c1c; border-color: #f1c4c4; background: #fff6f6; }
+.sb .plist.pick:has(.oppc) { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }

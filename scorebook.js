@@ -733,7 +733,7 @@
         const name = G.tm.them.name, list = oppList(name), used = {};
         G.tm.them.ln.forEach((sl, i) => { used[sl.ps[0].no + '|' + sl.ps[0].name] = i + 1; });
         return `<div class="card"><h3>${esc(name)} 선수 명단 <small>저장해 두면 다음에 같은 팀을 만날 때 자동으로 불러와요</small></h3>
-        ${list.length ? `<div class="plist pick">${list.map(q => { const n = used[q.no + '|' + q.name]; return `<button type="button" data-a="lnpick" data-t="them" data-no="${esc(q.no)}" data-name="${esc(q.name)}" class="${n ? 'on' : ''}">${n ? `<i>${n}</i>` : ''}<b>${esc(q.no)}</b>${esc(q.name)}</button>`; }).join('')}</div><p class="hint">누르는 순서대로 상대 타순이 돼요. 타순을 모르면 그냥 두고 경기 중에 넣어도 돼요.</p>` : ''}
+        ${list.length ? `<div class="plist pick">${list.map(q => { const n = used[q.no + '|' + q.name]; return `<span class="oppc"><button type="button" data-a="lnpick" data-t="them" data-no="${esc(q.no)}" data-name="${esc(q.name)}" class="${n ? 'on' : ''}">${n ? `<i>${n}</i>` : ''}<b>${esc(q.no)}</b>${esc(q.name)}</button><button type="button" class="x" data-a="oppdel" data-no="${esc(q.no)}" data-name="${esc(q.name)}" aria-label="${esc(q.name || q.no)} 명단에서 빼기">✕</button></span>`; }).join('')}</div><p class="hint">누르는 순서대로 상대 타순이 돼요. ✕ 를 누르면 그 선수만 명단에서 빠져요. 한 명 넣기는 아래 칸에 「배번 이름」 한 줄.</p>` : ''}
         <label>명단 넣기 — 한 줄에 한 명 「배번 이름」<textarea id="sbOppText" rows="4" placeholder="9 박태윤&#10;14 임시호&#10;20 구하준"></textarea></label>
         <div class="f2" style="margin-top:6px"><button type="button" class="big" data-a="oppadd">명단에 더하기</button><button type="button" class="big" data-a="oppclear">명단 비우기</button></div></div>`;
     }
@@ -1026,6 +1026,12 @@
             const cur = oppList(G.tm.them.name); add.forEach(q => { if (!cur.some(c => c.no === q.no && c.name === q.name)) cur.push(q); });
             cur.sort((x, y) => (Number(x.no) || 999) - (Number(y.no) || 999)); oppSet(G.tm.them.name, cur); G.oppDirty = true;
             ui.msg = G.tm.them.name + ' 선수 ' + cur.length + '명 저장했어요'; draw(); return;
+        }
+        if (a === 'oppdel') {   // 11-28 하코: 상대 명단에서 한 명씩 빼기
+            keepSetup(); const nm = G.tm.them.name, key = q => q.no === (d.no || '') && q.name === (d.name || '');
+            oppSet(nm, oppList(nm).filter(q => !key(q)));
+            if (!G.begun) G.tm.them.ln = G.tm.them.ln.filter(sl => !key(sl.ps[0] || {}));
+            G.oppDirty = true; ui.msg = (d.name || '#' + d.no) + ' 선수를 명단에서 뺐어요'; draw(); return;
         }
         if (a === 'oppclear') { keepSetup(); oppSet(G.tm.them.name, []); if (!G.begun) G.tm.them.ln = []; G.oppDirty = true; ui.msg = '명단을 비웠어요'; draw(); return;
         }
