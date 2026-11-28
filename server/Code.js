@@ -1,5 +1,5 @@
 // ==========================================================
-// ⚾ 대연초 야구부 관리 시스템 통합 백엔드 API (v2.51.0)
+// ⚾ 대연초 야구부 관리 시스템 통합 백엔드 API (v2.52.0)
 // ==========================================================
 // ★ API_KEY 는 코드에 적지 않고 「프로젝트 설정 → 스크립트 속성」의 API_KEY 에 넣어 둡니다 (v2.36.0~).
 //   값은 index.html / player.html 의 API_KEY 와 "같은 값"이어야 합니다. 속성이 비어 있으면 모든 요청을 거절합니다.
@@ -507,9 +507,57 @@ function saveOfficer(ss, session, p) {
   props.setProperty("OFFICERS", JSON.stringify(out));
   props.setProperty("OFFICERS_AT", JSON.stringify({ at: Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm"), by: roleName(session.role), slot: slot[1] }));
   dropDataCache(["C_OFFICERS"]);
+  dropJoinInfo();   // 🌐 v2.52.0: 모집 페이지 「학부모 대표」 번호도 바로
   var view = officerAdminView(ss);
   view.officers = readOfficers(ss);
   return view;
+}
+
+// 🌐 v2.52.0: 신입 모집 공개 페이지(/join/) 연락처 · 연도 — 하코 11-28
+//   · 학부모 대표 = 집행부 「대표님」 자리 번호 그대로 (인수인계 때 그 자리만 바꾸면 모집 페이지도 따라감)
+//   · 감독님 번호 · 연도 바뀌는 달(cut: 이 달부터 「다음 해」 신입 모집) = Script Properties 「JOIN_CFG」 (대표님 · 개발자가 관리 탭에서)
+//   · joinInfo 는 로그인 없이 부름 → 모집 페이지에 이미 공개된 두 번호 + 기준 달만 보냄 (10분 보관본)
+var JOIN_DEFAULT = { coach: "010-3835-3052", cut: 11 };
+var JOIN_CACHE_KEY = "JOIN_INFO_V1";
+function joinCfg() {
+  var c = { coach: JOIN_DEFAULT.coach, cut: JOIN_DEFAULT.cut, at: null };
+  try {
+    var raw = PropertiesService.getScriptProperties().getProperty("JOIN_CFG");
+    if (raw) {
+      var o = JSON.parse(raw);
+      if (o && okPhone(o.coach)) c.coach = fmtPhone(o.coach);
+      var n = parseInt(o && o.cut, 10); if (n >= 1 && n <= 12) c.cut = n;
+      if (o && o.at) c.at = { at: o.at, by: o.by || "" };
+    }
+  } catch (e) {}
+  return c;
+}
+function joinRepPhone(ss) {
+  var rep = "";
+  try { (readOfficers(ss) || []).forEach(function (o) { if (o.key === "super" && o.phone) rep = o.phone; }); } catch (e) {}
+  return rep;
+}
+function joinInfo(ss) {
+  var ch = null;
+  try { ch = CacheService.getScriptCache(); var h = ch.get(JOIN_CACHE_KEY); if (h) return JSON.parse(h); } catch (e) {}
+  var c = joinCfg();
+  var out = { result: "success", coach: c.coach, rep: joinRepPhone(ss), cut: c.cut };
+  try { if (ch) ch.put(JOIN_CACHE_KEY, JSON.stringify(out), 600); } catch (e2) {}
+  return out;
+}
+function dropJoinInfo() { try { CacheService.getScriptCache().remove(JOIN_CACHE_KEY); } catch (e) {} }
+function joinAdminView(ss) {
+  var c = joinCfg(), sup = null;
+  try { officerConfig().forEach(function (o) { if (o.key === "super") sup = o; }); } catch (e) {}
+  return { result: "success", coach: c.coach, cut: c.cut, rep: joinRepPhone(ss), repWho: sup && !sup.empty ? (sup.player + " " + sup.rel) : "", changed: c.at };
+}
+function saveJoinCfg(ss, session, p) {
+  var coach = fmtPhone(p.coach), cut = parseInt(p.cut, 10);
+  if (!/^01[016789]-\d{3,4}-\d{4}$/.test(coach)) return { result: "error", message: "감독님 휴대폰 번호를 확인해 주세요 (예: 010-1234-5678)" };
+  if (!(cut >= 1 && cut <= 12)) return { result: "error", message: "연도가 바뀌는 달을 골라 주세요." };
+  PropertiesService.getScriptProperties().setProperty("JOIN_CFG", JSON.stringify({ coach: coach, cut: cut, at: Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm"), by: roleName(session.role) }));
+  dropJoinInfo();
+  return joinAdminView(ss);
 }
 
 // 토큰의 자녀범위(scope)에 해당 선수가 있는지 (대표/개발자는 항상 true)
@@ -1711,6 +1759,9 @@ function doGet(e) {
       try { var rgOut = handleRegisterContact(ss, p); dropDataCache(DATA_DROP.registerContact || []); return rgOut; } finally { rgLock.releaseLock(); }
     }
 
+    // 🌐 v2.52.0: 신입 모집 페이지(/join/) — 로그인 없이: 감독님 · 학부모 대표 번호 + 연도 바뀌는 달만
+    if (p.action === "joinInfo") return json(joinInfo(ss));
+
     // 🔐 토큰(세션)으로 역할 확인 — 아래 모든 조회는 로그인(토큰)이 있어야 하고 역할에 따라 걸러진다.
     var session = resolveSession(p.token);
     var role = session ? session.role : null;
@@ -1718,7 +1769,7 @@ function doGet(e) {
     // [0] 공용 설정 (유니폼 접수 ON/OFF) — 로그인한 사람만
     if (p.action === "getSettings") {
       if (!session) return json({ error: "auth", uniformActive: false });
-      return json({ uniformActive: getUniformActive(), jerseyColors: getJerseyColors() });
+      return json({ uniformActive: getUniformActive(), jerseyColors: getJerseyColors(), joinCut: joinCfg().cut });
     }
 
     // [0-0] 👕 v2.41.0: 유니폼 내 신청 조회 · 신청/수정 · 취소 — 앱이 답을 읽도록 GET 으로 받음 (쓰기는 잠금)
@@ -1773,7 +1824,7 @@ function doGet(e) {
       if (!session) return json({ result: "error", message: "인증이 필요합니다." });
       prefetchData(DATA_KEYS);   // ⚡ v2.16.0: 보관본 6칸을 한 번에
       waitForWarm(DATA_KEYS);    // ⏳ v2.17.0: 미리 데우기가 읽는 중이면 기다렸다 씀
-      var bo = { result: "success", role: role, settings: { uniformActive: getUniformActive(), jerseyColors: getJerseyColors() }, ver: {}, same: [] };
+      var bo = { result: "success", role: role, settings: { uniformActive: getUniformActive(), jerseyColors: getJerseyColors(), joinCut: joinCfg().cut }, ver: {}, same: [] };
       // 🔢 v2.23.0: 사이트 저장본과 번호가 같은 묶음은 빼고 보냄 (same)
       verGroup(bo, p, "roster", "vr", { players: buildRosterPayload(ss, session), grads: buildGradPayload(ss, session), season: seasonCurrent() });
       if (canSeeBoard(role)) {   // 🔒 v2.24.0: 일반 열람자에게는 일정 · 공지를 보내지 않음
@@ -1850,6 +1901,14 @@ function doGet(e) {
       var oLock = LockService.getScriptLock();
       if (!oLock.tryLock(10000)) return json({ result: "error", message: "서버가 바쁩니다. 잠시 후 다시 시도해 주세요." });
       try { return json(saveOfficer(ss, session, p)); } finally { oLock.releaseLock(); }
+    }
+    // 🌐 v2.52.0: 모집 페이지 연락처 · 연도 보기 · 바꾸기 — 대표님 · 개발자만
+    if (p.action === "getJoinCfg" || p.action === "saveJoinCfg") {
+      if (!(role === "super" || role === "dev")) return json({ result: "error", message: "대표님만 바꿀 수 있습니다." });
+      if (p.action === "getJoinCfg") return json(joinAdminView(ss));
+      var jLock = LockService.getScriptLock();
+      if (!jLock.tryLock(10000)) return json({ result: "error", message: "서버가 바쁩니다. 잠시 후 다시 시도해 주세요." });
+      try { return json(saveJoinCfg(ss, session, p)); } finally { jLock.releaseLock(); }
     }
     if (p.action === "getOfficers") {   // 📞 v2.28.0: 집행부 단축 버튼 번호만 (앱이 저장본으로 켜져 bootstrap 을 건너뛴 경우)
       if (!session) return json({ result: "error", message: "인증이 필요합니다." });

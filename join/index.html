@@ -237,7 +237,7 @@ button.btn{font-family:inherit}
 
 <section class="hero"><div class="wrap g">
  <div>
-  <div class="tag"><i class="hot">특별 모집 · 12월까지 선착순</i><i>2027 신입 선수 모집</i></div>
+  <div class="tag"><i class="hot" data-jsp>특별 모집 · 12월까지 선착순</i><i><span data-jy>2027</span> 신입 선수 모집</i></div>
   <h1 class="h">기본기부터,<br><em>함께</em></h1>
   <p class="lead">감독님 모토 「바른 인성」 위에 탄탄한 기본기를 쌓는 곳. 1969년 창단, 레전드 프로야구 선수를 많이 키워 낸 대연초 야구부가 새 친구를 기다려요.</p>
   <div class="btns"><a class="btn p" href="tel:01038353052">📞 전화로 문의하기</a><a class="btn s" href="#why">왜 대연초일까요?</a></div>
@@ -258,7 +258,7 @@ button.btn{font-family:inherit}
 </div></section>
 
 <section class="why" id="why"><div class="wrap">
- <div class="eye">2027 신입 선수 모집</div>
+ <div class="eye"><span data-jy>2027</span> 신입 선수 모집</div>
  <h2 class="h sec-h">대연초 야구부를 고르는 <em>6가지 이유</em></h2>
  <div class="cards">
   <div class="card"><img src="../icons/bk/uniform.webp" alt=""><div><div class="n">01</div><b>기본기부터 체계적으로</b><span>던지기·받기·치기·달리기, 단계별 훈련으로 차근차근 실력을 쌓아요.</span></div></div>
@@ -294,9 +294,9 @@ button.btn{font-family:inherit}
 
 <section class="train" id="train"><div class="wrap">
  <div class="eye">모집 안내</div>
- <h2 class="h sec-h">2027 신입 선수 <em>모집 안내</em></h2>
+ <h2 class="h sec-h"><span data-jy>2027</span> 신입 선수 <em>모집 안내</em></h2>
  <div class="info">
-  <div class="row"><b>모집 기간</b><span><strong style="color:#c8102e">특별 모집 · 12월까지 선착순</strong></span></div>
+  <div class="row"><b>모집 기간</b><span><strong style="color:#c8102e" data-jsp data-jalt="연락처로 문의해 주세요">특별 모집 · 12월까지 선착순</strong></span></div>
   <div class="row"><b>대상</b><span>대연초 <span class="ph">○~○</span>학년 남학생 · 야구를 처음 해도 괜찮아요</span></div>
   <div class="row"><b>훈련</b><span><span class="ph">○요일 ○시 ~ ○시</span></span></div>
   <div class="row"><b>장소</b><span>대연초 인조잔디 운동장 (2호선 대연역 도보 약 8분)</span></div>
@@ -380,6 +380,50 @@ button.btn{font-family:inherit}
  <button type="button" onclick="JQ.open()">🔳 QR<small>크게 보기</small></button>
  <a href="#visit">📍 오시는 길<small>대연역 8분</small></a>
 </nav>
+<script>
+// 🌐 v2.173.0: 모집 연도 · 연락처 자동 (하코 11-28)
+//   · 연도: 기준 달(관리 탭에서 고름, 기본 11월)부터 「다음 해」 신입 모집 → 2026년 11월 = 2027, 2027년 11월 = 2028
+//   · 「특별 모집 · 12월까지 선착순」은 기준 달 ~ 12월에만 보이고, 그 밖엔 숨김(모집 기간 줄은 「연락처로 문의해 주세요」)
+//   · 감독님 · 학부모 대표 번호: 서버 joinInfo(로그인 없이, 10분 보관본) → 학부모 대표 = 관리 탭 집행부 「대표님」 자리 번호
+//     못 받으면 이 기기에 저장해 둔 번호 → 없으면 페이지에 적힌 번호 그대로
+(function () {
+  var API = 'https://script.google.com/macros/s/AKfycbwAdnLPVvTMIUGt538hM18pS_upBZt8FhKRTESjWXNonKFHOH5e59Vxi0hjDqYend-IHg/exec', KEY = 'dybbr2026hacohadrone';
+  var DEF = { coach: '010-3835-3052', rep: '010-2870-0899', cut: 11 }, SK = 'dy_join_info';
+  var cur = { coach: DEF.coach, rep: DEF.rep, cut: DEF.cut };
+  try { var sv = JSON.parse(localStorage.getItem(SK) || 'null'); if (sv) merge(sv); } catch (e) {}
+  function okP(p) { return /^01[016789]-\d{3,4}-\d{4}$/.test(String(p || '')); }
+  function merge(o) { if (!o) return; if (okP(o.coach)) cur.coach = o.coach; if (okP(o.rep)) cur.rep = o.rep; var n = parseInt(o.cut, 10); if (n >= 1 && n <= 12) cur.cut = n; }
+  function kst() { var d = new Date(Date.now() + 9 * 3600000); return { y: d.getUTCFullYear(), m: d.getUTCMonth() + 1 }; }
+  window.JY = function () { var t = kst(), c = cur.cut; return { y: t.m >= c ? t.y + 1 : t.y, sp: t.m >= c }; };
+  var shown = { coach: DEF.coach, rep: DEF.rep };
+  function swapPhone(from, to) {
+    if (!to || from === to) return;
+    var fd = from.replace(/-/g, ''), td = to.replace(/-/g, '');
+    document.querySelectorAll('a[href*="' + fd + '"]').forEach(function (a) { a.setAttribute('href', a.getAttribute('href').split(fd).join(td)); });
+    var w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT), n;
+    while ((n = w.nextNode())) if (n.nodeValue.indexOf(from) !== -1) n.nodeValue = n.nodeValue.split(from).join(to);
+  }
+  function apply() {
+    var j = window.JY();
+    document.querySelectorAll('[data-jy]').forEach(function (e) { e.textContent = j.y; });
+    document.querySelectorAll('[data-jsp]').forEach(function (e) {
+      if (e.hasAttribute('data-jalt')) { if (!e.dataset.jorig) e.dataset.jorig = e.textContent; e.textContent = j.sp ? e.dataset.jorig : e.getAttribute('data-jalt'); }
+      else e.hidden = !j.sp;
+    });
+    document.title = document.title.replace(/20\d\d/g, j.y);
+    document.querySelectorAll('meta[name="description"],meta[property="og:description"],meta[property="og:title"]').forEach(function (m) { m.setAttribute('content', String(m.getAttribute('content')).replace(/20\d\d/g, j.y)); });
+    ['coach', 'rep'].forEach(function (k) { if (shown[k] !== cur[k]) { swapPhone(shown[k], cur[k]); shown[k] = cur[k]; } });
+  }
+  apply();
+  try {
+    fetch(API + '?key=' + KEY + '&action=joinInfo&_t=' + Math.floor(Date.now() / 600000)).then(function (r) { return r.json(); }).then(function (o) {
+      if (!o || o.result !== 'success') return;
+      merge(o); try { localStorage.setItem(SK, JSON.stringify({ coach: cur.coach, rep: cur.rep, cut: cur.cut })); } catch (e) {}
+      apply();
+    }).catch(function () {});
+  } catch (e) {}
+})();
+</script>
 <script>window.JQ_BASE='../';
 // 🔳 신입 모집 QR 크게 보기 (v2.166.0) — 모집 페이지 dybbr.github.io/join/ 로 가는 QR
 window.JQ = (function () {
@@ -387,7 +431,8 @@ window.JQ = (function () {
   function el() {
     var o = document.getElementById('jqOv'); if (o) return o;
     o = document.createElement('div'); o.id = 'jqOv'; o.className = 'jq-ov'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-modal', 'true');
-    o.innerHTML = '<div class="jq-card"><div class="t">2027 대연초 야구부<br><em>신입 선수 모집</em></div><div class="s">특별 모집 · 12월까지 선착순</div>'
+    var jy = window.JY ? JY() : { y: 2027, sp: true };
+    o.innerHTML = '<div class="jq-card"><div class="t">' + jy.y + ' 대연초 야구부<br><em>신입 선수 모집</em></div>' + (jy.sp ? '<div class="s">특별 모집 · 12월까지 선착순</div>' : '')
       + '<img class="jq-qr" src="' + B + 'join/img/qr-join.svg" alt="신입 모집 페이지 QR 코드">'
       + '<div class="jq-url">dybbr.github.io/join</div><div class="jq-tip">휴대폰 카메라로 찍으면 모집 안내가 열려요</div>'
       + '<div class="jq-btns">' + (IN ? '' : '<a class="p" href="' + B + 'join/" target="_blank" rel="noopener">🌐 모집 페이지 열기</a>')

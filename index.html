@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.172.0 · 모집 페이지 프로 선배 사진";
+        const APP_VERSION = "v2.173.0 · 모집 페이지 연락처·연도 자동";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -857,6 +857,17 @@
         .ofa-row.empty { border-style: dashed; background: #fff; } .ofa-row.empty .who span { color: #94a3b8; }
         .ofa-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; color: #64748b; margin-top: 8px; font-weight: 600; }
         .ofa-foot button { flex: 0 0 auto; border: 1px solid #cbd5e1; background: #fff; border-radius: 8px; padding: 6px 10px; font: inherit; font-size: 12px; font-weight: 800; color: #0f2340; cursor: pointer; }
+        /* 🌐 v2.173.0: 관리 탭 「모집 페이지 연락처 · 연도」 */
+        .jst-in { width: 100%; box-sizing: border-box; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 10px; font: inherit; font-size: 14px; font-weight: 800; color: #0f172a; margin-top: 4px; }
+        .jst-cut { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
+        .jst-cut button { border: 1px solid #cbd5e1; background: #fff; color: #0f2340; border-radius: 99px; padding: 6px 11px; font: inherit; font-size: 12.5px; font-weight: 800; cursor: pointer; }
+        .jst-cut button.on { background: #0b2240; border-color: #0b2240; color: #fff; }
+        .jst-prev { margin-top: 8px; padding: 9px 11px; border-radius: 10px; background: #fff7d6; font-size: 12.5px; font-weight: 700; color: #5b4500; line-height: 1.5; }
+        .jst-prev b { color: #0b2240; }
+        .jst-save { display: flex; gap: 6px; justify-content: flex-end; margin-top: 8px; }
+        .jst-save button, .jst-save a { border: 0; border-radius: 8px; padding: 9px 14px; font: inherit; font-size: 13px; font-weight: 900; background: #0b2240; color: #fff; cursor: pointer; text-decoration: none; }
+        .jst-save a { background: #fff; color: #0b2240; border: 1px solid #cbd5e1; }
+        .jst-save button[disabled] { opacity: .45; cursor: default; }
         .ofa-msg { font-size: 12.5px; color: #64748b; font-weight: 700; padding: 6px 2px; }
         #ofaModal .modal-content { max-width: 420px; }
         /* v2.87.0: 접는 묶음 */
@@ -3505,7 +3516,7 @@
         <button type="button" class="main-tab" data-tab="venue" id="tabBtnVenue" onclick="showMainTab('venue')"><span class="tab-ico">🏟️</span><span class="tab-txt">구장</span></button>
         <button type="button" class="main-tab admin-tab" data-tab="admin" id="tabBtnAdmin" style="display: none;" onclick="showMainTab('admin')"><span class="tab-ico">⚙️</span><span class="tab-txt">관리</span></button>
     </nav>
-    <div class="jq-band" id="jqBand" role="button" tabindex="0" hidden onclick="JQ.open()" onkeydown="if (event.key === 'Enter') JQ.open()"><img src="join/img/qr-join.svg" alt="" width="64" height="64"><div class="tx"><b>2027 신입 선수 <em>모집 중</em></b><span>친구 부모님께 QR을 보여 주세요 · 12월까지 선착순</span></div><div class="go">QR 크게</div></div>   <!-- 🔳 v2.166.0: 신입 모집 QR 띠 (모든 탭 위 · 2027-01-01부터 저절로 숨김) -->
+    <div class="jq-band" id="jqBand" role="button" tabindex="0" hidden onclick="JQ.open()" onkeydown="if (event.key === 'Enter') JQ.open()"><img src="join/img/qr-join.svg" alt="" width="64" height="64"><div class="tx"><b><span data-jy>2027</span> 신입 선수 <em>모집 중</em></b><span>친구 부모님께 QR을 보여 주세요 · 12월까지 선착순</span></div><div class="go">QR 크게</div></div>   <!-- 🔳 v2.166.0: 신입 모집 QR 띠 (모든 탭 위 · 2027-01-01부터 저절로 숨김) -->
     <div class="next-event-banner" id="nextEventBanner"></div>
     <div class="duty-band" id="dutyMineBand" role="button" tabindex="0" onclick="openDutyModal()"></div>   <!-- 🧹 v2.84.0: 우리 집 청소 차례가 1주 안이면 (명단 탭) -->
 
@@ -3647,6 +3658,19 @@
                     <p class="admin-role-desc" style="margin-bottom: 8px;">맨 위 유니폼 버튼 양옆에 보이는 버튼이에요. 집행부가 바뀌면 <b>맡는 분만 골라</b> 주세요 — 번호는 비상연락망에서 자동으로 가져와요.</p>
                     <div class="ofa-list" id="ofaList"><div class="ofa-msg">불러오는 중…</div></div>
                     <div class="ofa-foot"><span id="ofaChanged"></span><button type="button" onclick="openPasswordManageModal()">🔑 비번 관리</button></div>
+                </div>
+            </div>
+
+            <!-- 🌐 v2.173.0: 모집 페이지(/join/) 연락처 · 연도 — 대표님 · 개발자만 -->
+            <div class="admin-group" id="adminGroupJoin" style="display: none;">
+                <button type="button" class="admin-fold" id="jstFoldBtn" aria-expanded="false" aria-controls="jstBody" onclick="jstToggle()"><span class="admin-group-title">🌐 모집 페이지 연락처 · 연도</span><span class="fold-r"><span id="jstFoldLbl">펼치기</span> <span class="fold-ar">▾</span></span></button>
+                <div class="ofa-sum" id="jstSum"></div>
+                <div id="jstBody" style="display: none;">
+                    <p class="admin-role-desc" style="margin-bottom: 8px;">로그인 없이 보는 신입 모집 페이지(dybbr.github.io/join)에 나오는 연락처와 연도예요. 바꾸면 10분 안에 페이지에 반영돼요.</p>
+                    <div class="ofa-list" id="jstList"><div class="ofa-msg">불러오는 중…</div></div>
+                    <div class="jst-prev" id="jstPrev"></div>
+                    <div class="jst-save"><a href="join/" target="_blank" rel="noopener">🌐 모집 페이지 보기</a><button type="button" id="jstSaveBtn" onclick="jstSave()" disabled>저장</button></div>
+                    <div class="ofa-foot"><span id="jstChanged"></span></div>
                 </div>
             </div>
 
@@ -4699,6 +4723,7 @@
     }
     async function ofaRefresh(force, noFetch) {
         try { if (window.MEAL) MEAL.refresh(); } catch (e) {}   // 🍱 v2.162.0: 관리 탭 「급식당번」 묶음
+        try { jstRefresh(false); } catch (e) {}   // 🌐 v2.173.0: 모집 페이지 연락처 · 연도
         const grp = document.getElementById('adminGroupOfc');
         if (!grp) return;
         grp.style.display = ofaCan() ? '' : 'none';
@@ -4720,6 +4745,76 @@
             if (ofaData) ofaRender();
         })();
         return ofaReq;
+    }
+    // ==========================================================
+    // 🌐 v2.173.0: 관리 탭 「모집 페이지 연락처 · 연도」 (하코 11-28) — 대표님 · 개발자만 · 서버 v2.52.0
+    //   · 학부모 대표 = 위 「집행부 연락 버튼」 대표님 자리 번호 그대로 (여기선 못 바꿈 → 인수인계 때 대표님 자리만 바꾸면 됨)
+    //   · 감독님 번호 · 연도 바뀌는 달(기본 11월: 그 달부터 「다음 해」 신입 모집, 「12월까지 선착순」 은 그 달 ~ 12월에만)
+    //   · 접어 두고 펼칠 때만 서버에 물음
+    // ==========================================================
+    var jstData = null, jstOpenSt = false, jstReq = null, jstEdit = null;
+    function joinCutNow() { const n = parseInt(localStorage.getItem('daeyeon_join_cut') || '', 10); return n >= 1 && n <= 12 ? n : 11; }
+    function joinYearOf(cut, at) { const d = new Date((at || Date.now()) + 9 * 3600000), y = d.getUTCFullYear(), m = d.getUTCMonth() + 1; return { y: m >= cut ? y + 1 : y, sp: m >= cut, m: m }; }
+    window.JY = function () { return joinYearOf(joinCutNow()); };
+    function jstToggle() { jstOpenSt = !jstOpenSt; jstFold(); if (jstOpenSt) jstRefresh(true); }
+    function jstFold() {
+        const b = document.getElementById('jstFoldBtn'), body = document.getElementById('jstBody'), sum = document.getElementById('jstSum'), lbl = document.getElementById('jstFoldLbl');
+        if (!b || !body) return;
+        b.setAttribute('aria-expanded', jstOpenSt ? 'true' : 'false');
+        body.style.display = jstOpenSt ? '' : 'none';
+        if (lbl) lbl.textContent = jstOpenSt ? '접기' : '펼치기';
+        if (sum) { sum.style.display = jstOpenSt ? 'none' : ''; const j = joinYearOf(jstData ? jstData.cut : joinCutNow()); sum.textContent = `지금 모집 페이지: ${j.y} 신입 선수 모집 · ${jstData ? jstData.cut : joinCutNow()}월부터 다음 해로 바뀜`; }
+    }
+    async function jstRefresh(force) {
+        const grp = document.getElementById('adminGroupJoin');
+        if (!grp) return;
+        const can = isSuperOrDev();
+        grp.style.display = can ? '' : 'none';
+        if (!can) return;
+        jstFold();
+        if (!jstOpenSt || (jstData && !force) || jstReq) { if (jstData && jstOpenSt) jstRender(); return; }
+        if (!jstData) document.getElementById('jstList').innerHTML = '<div class="ofa-msg">불러오는 중…</div>';
+        jstReq = (async () => {
+            try {
+                const r = await apiGetJson('action=getJoinCfg');
+                if (!r || r.result !== 'success') throw new Error((r && r.message) || '못 불러왔어요');
+                jstData = r; jstEdit = { coach: r.coach, cut: r.cut };
+                try { localStorage.setItem('daeyeon_join_cut', String(r.cut)); } catch (e) {}
+            } catch (e) { if (!jstData) document.getElementById('jstList').innerHTML = `<div class="ofa-msg">못 불러왔캉… (${escapeHtml(e.message)}) · 접었다가 다시 펼쳐 주세요</div>`; }
+            finally { jstReq = null; }
+            if (jstData) jstRender();
+        })();
+    }
+    function jstPhone(v) { const d = String(v || '').replace(/[^0-9]/g, ''); return d.length === 11 ? d.slice(0, 3) + '-' + d.slice(3, 7) + '-' + d.slice(7) : d.length === 10 ? d.slice(0, 3) + '-' + d.slice(3, 6) + '-' + d.slice(6) : String(v || '').trim(); }
+    function jstRender() {
+        const box = document.getElementById('jstList'), d = jstData, e = jstEdit;
+        if (!box || !d || !e) return;
+        const rep = d.rep ? `<span>${escapeHtml(d.rep)}</span><small>${escapeHtml(d.repWho || '')} · 집행부 대표님 자리 번호 그대로</small>` : `<span>⚠️ 대표님 자리가 비어 있어요</span><small>위 「집행부 연락 버튼」에서 대표님을 지정해 주세요 (그동안은 예전 번호가 보여요)</small>`;
+        box.innerHTML = `<div class="ofa-row"><span class="ic">👑</span><div class="who"><b>학부모 대표</b>${rep}</div><button type="button" onclick="jstToOfc()">대표님 자리</button></div>`
+            + `<div class="ofa-row" style="display:block"><div class="who"><b>🧢 감독님 번호</b><input class="jst-in" id="jstCoach" type="tel" inputmode="tel" autocomplete="off" value="${escapeHtml(e.coach)}" oninput="jstEdit.coach=this.value;jstDirty()"></div></div>`
+            + `<div class="ofa-row" style="display:block"><div class="who"><b>📅 연도가 바뀌는 달</b><small>이 달 1일부터 「다음 해 신입 선수 모집」으로 바뀌고, 「특별 모집 · 12월까지 선착순」이 12월까지 보여요</small><div class="jst-cut">${[9, 10, 11, 12].map(m => `<button type="button" class="${e.cut === m ? 'on' : ''}" onclick="jstEdit.cut=${m};jstRender();jstDirty()">${m}월</button>`).join('')}</div></div></div>`;
+        const j = joinYearOf(e.cut), nx = joinYearOf(e.cut, Date.UTC(new Date().getFullYear() + (j.m >= e.cut ? 1 : 0), e.cut - 1, 1, 0, 0, 0));
+        document.getElementById('jstPrev').innerHTML = `지금 모집 페이지: <b>${j.y} 신입 선수 모집</b>${j.sp ? ' · 「12월까지 선착순」 보임' : ' · 「12월까지 선착순」 숨김'}<br>다음 바뀌는 날: ${nx.y - 1}년 ${e.cut}월 1일 → <b>${nx.y} 신입 선수 모집</b>`;
+        const c = d.changed;
+        document.getElementById('jstChanged').textContent = c && c.at ? `🕘 마지막 변경: ${String(c.at).slice(5).replace('-', '/')} · ${c.by || ''}` : '🕘 아직 바꾼 적 없음 (처음 설정 그대로)';
+        jstDirty();
+    }
+    function jstDirty() { const b = document.getElementById('jstSaveBtn'); if (b && jstData && jstEdit) b.disabled = jstPhone(jstEdit.coach) === jstData.coach && jstEdit.cut === jstData.cut; }
+    function jstToOfc() { if (!ofaOpenSt) ofaToggle(); const g = document.getElementById('adminGroupOfc'); if (g) g.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    async function jstSave() {
+        if (!jstEdit || !jstData) return;
+        const coach = jstPhone(jstEdit.coach);
+        if (!/^01[016789]-\d{3,4}-\d{4}$/.test(coach)) { try { bkNotify('sad', '감독님 휴대폰 번호를 확인해 주세요', '예: 010-1234-5678'); } catch (e) {} return; }
+        const b = document.getElementById('jstSaveBtn'); if (b) { b.disabled = true; b.textContent = '저장 중…'; }
+        try {
+            const r = await apiGetJson('action=saveJoinCfg&coach=' + encodeURIComponent(coach) + '&cut=' + jstEdit.cut);
+            if (!r || r.result !== 'success') throw new Error((r && r.message) || '저장하지 못했어요');
+            jstData = r; jstEdit = { coach: r.coach, cut: r.cut };
+            try { localStorage.setItem('daeyeon_join_cut', String(r.cut)); } catch (e) {}
+            try { bkNotify('win', '모집 페이지 연락처 · 연도를 저장했어요', '10분 안에 모집 페이지에 반영돼요'); } catch (e) {}
+            try { jqBandSync(); } catch (e) {}
+        } catch (e) { try { bkNotify('sad', '저장하지 못했어요', e.message); } catch (e2) {} }
+        finally { if (b) b.textContent = '저장'; jstRender(); }
     }
     function ofaWho(sl) { return sl.player ? `${sl.player} ${sl.rel}` : ''; }
     function ofaRender() {
@@ -8952,6 +9047,7 @@
         {
             if (json && typeof json.uniformActive === 'boolean') {
                 isUniformActive = json.uniformActive;
+                try { const jc = parseInt(json.joinCut, 10); if (jc >= 1 && jc <= 12 && String(jc) !== localStorage.getItem('daeyeon_join_cut')) { localStorage.setItem('daeyeon_join_cut', String(jc)); jqBandSync(); } } catch (e) {}   // 🌐 v2.173.0
                 localStorage.setItem('daeyeon_uniform_active', isUniformActive ? 'true' : 'false');
                 if (json.jerseyColors) { const before = JSON.stringify(jerseyColors); applyJerseyColors(json.jerseyColors); if (JSON.stringify(jerseyColors) !== before && players.length) render(); renderJerseyPanel(); try { if (window.plJerseySync) window.plJerseySync(); } catch (e) {} }   // 🎧 v2.145.0: 음악 탭 등번호 색도 같이
                 return json;
@@ -11834,7 +11930,8 @@ window.JQ = (function () {
   function el() {
     var o = document.getElementById('jqOv'); if (o) return o;
     o = document.createElement('div'); o.id = 'jqOv'; o.className = 'jq-ov'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-modal', 'true');
-    o.innerHTML = '<div class="jq-card"><div class="t">2027 대연초 야구부<br><em>신입 선수 모집</em></div><div class="s">특별 모집 · 12월까지 선착순</div>'
+    var jy = window.JY ? JY() : { y: 2027, sp: true };
+    o.innerHTML = '<div class="jq-card"><div class="t">' + jy.y + ' 대연초 야구부<br><em>신입 선수 모집</em></div>' + (jy.sp ? '<div class="s">특별 모집 · 12월까지 선착순</div>' : '')
       + '<img class="jq-qr" src="' + B + 'join/img/qr-join.svg" alt="신입 모집 페이지 QR 코드">'
       + '<div class="jq-url">dybbr.github.io/join</div><div class="jq-tip">휴대폰 카메라로 찍으면 모집 안내가 열려요</div>'
       + '<div class="jq-btns">' + (IN ? '' : '<a class="p" href="' + B + 'join/" target="_blank" rel="noopener">🌐 모집 페이지 열기</a>')
@@ -11858,7 +11955,9 @@ window.JQ = (function () {
   function close() { var o = document.getElementById('jqOv'); if (o) o.classList.remove('on'); document.removeEventListener('keydown', esc); }
   return { open: open, close: close };
 })();
-(function () { var b = document.getElementById('jqBand'); if (b && Date.now() < new Date('2027-01-01T00:00:00+09:00').getTime()) b.hidden = false; })();   // 모집 마감(12월) 뒤엔 띠 숨김
+// 🌐 v2.173.0: 띠는 연도가 바뀌는 달(관리 탭, 기본 11월) ~ 12월에만 · 글자 연도도 자동 (예전: 2027-01-01 부터 숨김 고정)
+function jqBandSync() { var b = document.getElementById('jqBand'); if (!b || !window.JY) return; var j = JY(); b.hidden = !j.sp; b.querySelectorAll('[data-jy]').forEach(function (e) { e.textContent = j.y; }); var o = document.getElementById('jqOv'); if (o && !o.classList.contains('on')) o.remove(); }
+jqBandSync();
 </script>
 </body>
 </html>
