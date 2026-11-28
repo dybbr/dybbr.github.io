@@ -169,9 +169,7 @@
     function pitRest(q) { try { return window.PS && window.PS.pitRest ? window.PS.pitRest(q, G && G.date) : null; } catch (e) { return null; } }
     function pitBadge(q) {
         const today = (G.pcnt || {})[pkey(q)];
-        const r = pitRest(q);
-        if (r && r.wait) return `<em class="rest no">${esc(r.next.slice(5).replace('-', '.'))}부터</em>`;
-        if (r && r.last) return `<em class="rest ok">가능</em>`;
+        // 11-28 하코: 쉬는 날 표시 뺌 (우리 팀은 필요 없음)
         return today ? `<em class="rest">${today}구</em>` : '';
     }
     function pitChip() {   // B · C: 점수 줄 옆 투수 칩
@@ -198,7 +196,6 @@
             ${ask ? `<button type="button" class="big pri" data-a="pitsame">${esc(pitLabel(p))} 그대로 던져요 ▶</button>` : ''}` : '';
         return `<div class="sb-over" data-a="panel-x"><div class="sb-panel pitp" data-stop="1"><h3>⚾ ${halfLabel('them', G.cur.i)} 우리 투수 <small>${p ? '바뀌면 새 투수를 누르세요' : '누르면 바로 정해져요'}</small></h3>${cur}
             ${sec('오늘 투수 (수비 1번)', lnPit)}${sec('오늘 타순', lnOther)}${sec('벤치', bench)}
-            <p class="hint">「가능」 · 「11.27부터」는 지난 경기 투구 수(모르면 상대 타자 수로 짐작)로 계산한 쉬는 날이에요. 기준은 📊 선수 기록 → ⚾ 투수에서 바꿔요.</p>
             <button type="button" class="big" data-a="panel-x">${ask ? '나중에 · 그대로 두기' : '닫기'}</button></div></div>`;
     }
     function pitTable(ro) {   // 경기 끝 · 기록 보기: 투수별 이닝 · 투구 수
