@@ -203,7 +203,7 @@
     }
     function pitTable(ro) {   // 경기 끝 · 기록 보기: 투수별 이닝 · 투구 수
         const L = pitStats(); if (!L.length) return ro ? '' : `<p class="hint">⚾ 투수를 안 골랐어요. 투수 기록이 필요하면 「경기로 돌아가기」 → 상대 공격 때 투수를 골라 주세요.</p>`;
-        return `<div class="pitt"><div class="lbl">⚾ 우리 투수 ${ro ? '' : '<small>투구 수는 알면 넣고, 모르면 비워 두세요</small>'}</div><table><tr><th>투수</th><th>이닝</th>${G.recThem ? '<th>타자</th><th>안타</th><th>4사구</th><th>삼진</th>' : ''}<th>실점</th><th>투구 수</th></tr>${L.map(q => `<tr><td class="nm"><b>${esc(q.no)}</b> ${esc(q.name)}</td><td>${ipTxt(q.outs)}</td>${G.recThem ? `<td>${q.bf}</td><td>${q.h}</td><td>${q.bb}</td><td>${q.k}</td>` : ''}<td>${q.r}${q.ue ? `<small> (비자책 ${q.ue})</small>` : ''}</td><td>${ro ? (q.pc || '-') : `<input data-pc="${esc(pkey(q))}" inputmode="numeric" maxlength="3" placeholder="모름" value="${q.pc || ''}">`}</td></tr>`).join('')}</table></div>`;
+        return `<div class="pitt"><div class="lbl">⚾ 우리 투수 ${ro ? '' : '<small>투구 수는 알면 넣고, 모르면 비워 두세요</small>'}</div><table><tr><th>투수</th><th>이닝</th>${G.recThem ? '<th>타자</th><th>안타</th><th>4사구</th><th>삼진</th>' : ''}<th>실점</th><th>자책</th><th>투구 수</th></tr>${L.map(q => `<tr><td class="nm"><b>${esc(q.no)}</b> ${esc(q.name)}</td><td>${ipTxt(q.outs)}</td>${G.recThem ? `<td>${q.bf}</td><td>${q.h}</td><td>${q.bb}</td><td>${q.k}</td>` : ''}<td>${q.r}</td><td><b>${q.r - (q.ue || 0)}</b></td><td>${ro ? (q.pc || '-') : `<input data-pc="${esc(pkey(q))}" inputmode="numeric" maxlength="3" placeholder="모름" value="${q.pc || ''}">`}</td></tr>`).join('')}</table></div>`;
     }
 
     // ---------- ⏱ v2.161.0 타순 없이 시작 → 타석에 들어설 때 선수 고르기 (하코 · 대표님: 경기 직전 선발을 알기 어려움) ----------

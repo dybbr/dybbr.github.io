@@ -3467,7 +3467,7 @@ function readGameStats(ss) {
     try {
       var g = JSON.parse(String(vals[i][9]) + String(vals[i][10]) + String(vals[i][11]) + String(vals[i][12]));
       var ln = ((g.tm && g.tm.us && g.tm.us.ln) || []).map(function (sl) { return { ps: (sl.ps || []).map(function (q) { return { no: String(q.no || ""), name: String(q.name || "") }; }) }; });
-      var pit = (g.pit || []).slice(0, 12).map(function (q) { return { no: String(q.no || ""), name: String(q.name || ""), outs: +q.outs || 0, bf: q.bf == null ? null : +q.bf, h: q.h == null ? null : +q.h, bb: q.bb == null ? null : +q.bb, k: q.k == null ? null : +q.k, r: +q.r || 0, pc: +q.pc || 0 }; });   // ⚾ v2.48.0: 우리 투수 (투구 수는 비어 있을 수 있음)
+      var pit = (g.pit || []).slice(0, 12).map(function (q) { return { no: String(q.no || ""), name: String(q.name || ""), outs: +q.outs || 0, bf: q.bf == null ? null : +q.bf, h: q.h == null ? null : +q.h, bb: q.bb == null ? null : +q.bb, k: q.k == null ? null : +q.k, r: +q.r || 0, ue: +q.ue || 0, pc: +q.pc || 0 }; });   // ⚾ v2.48.0 · v2.51.0 ue = 비자책 실점: 우리 투수 (투구 수는 비어 있을 수 있음)
       var log = (g.log || []).filter(function (e) { return e.t === "us" && e.y !== "end"; }).map(function (e) { var o = { y: e.y, i: e.i, s: e.s, p: e.p, k: e.k, d: e.d, r: e.r, w: e.w, n: e.n }; if (e.sc) o.sc = { s: e.sc.s, p: e.sc.p }; return o; });
       out.push({ id: String(vals[i][0]), ev: String(vals[i][1]), date: String(vals[i][2]), title: String(vals[i][3]), opp: String(vals[i][4]), us: String(vals[i][5]), them: String(vals[i][6]), ln: ln, log: log, pit: pit });
     } catch (eS) {}

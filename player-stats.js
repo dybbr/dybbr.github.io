@@ -91,14 +91,14 @@
     }
     function pitCard(x) {
         if (!x) return '';
-        const ip = x.outs / 3, era = x.outs ? (x.r * 9 / ip).toFixed(2) : '-', hbI = x.hbOuts / 3, kI = x.kOuts / 3;
+        const ip = x.outs / 3, era = x.outs ? ((x.er || 0) * 9 / ip).toFixed(2) : '-', hbI = x.hbOuts / 3, kI = x.kOuts / 3;
         const whip = x.hbOuts ? ((x.hS + x.bbS) / hbI).toFixed(2) : '-', k9 = x.kOuts ? (x.kS * 9 / kI).toFixed(1) : '-', bb9 = x.hbOuts ? (x.bbS * 9 / hbI).toFixed(1) : '-';
         const oav = x.bfS - x.bfBB > 0 ? f3(x.bfH / (x.bfS - x.bfBB)) : '-', ppa = x.pcBf ? (x.pcN / x.pcBf).toFixed(1) : '-';
         return `<div class="ps-sub">⚾ 투수 기록 <small>${x.apps.length}경기 · ${ipT(x.outs)} 이닝</small></div>
-            <div class="ps-big"><div class="m"><span>평균자책*</span><b>${era}</b></div><div><span>WHIP</span><b>${whip}</b></div><div><span>피안타율</span><b>${oav}</b></div><div><span>9이닝 삼진</span><b>${k9}</b></div></div>
+            <div class="ps-big"><div class="m"><span>평균자책</span><b>${era}</b></div><div><span>WHIP</span><b>${whip}</b></div><div><span>피안타율</span><b>${oav}</b></div><div><span>9이닝 삼진</span><b>${k9}</b></div></div>
             <div class="ps-cnt ps-adv">${ad(ipT(x.outs), '이닝', '아웃 3개 = 1이닝')}${ad(x.pcK ? x.pcK : '-', '투구 수', x.pcK ? '넣은 경기만' : '아직 안 넣음')}${ad(x.bfS || '-', '상대 타자', '마주한 타자 수')}${ad(x.kOuts ? x.kS : '-', '삼진', '잡아낸 삼진')}
-            ${ad(x.hbOuts ? x.bbS : '-', '4사구', '볼넷 + 몸에 맞는 공')}${ad(x.hbOuts ? x.hS : '-', '피안타', '맞은 안타')}${ad(x.r, '실점', '내준 점수')}${ad(bb9, '9이닝 4사구', '적을수록 제구 좋음')}</div>
-            <p class="ps-note">평균자책* = 9이닝 동안 내줄 점수. 실책으로 난 점수를 아직 따로 안 적어서 모든 실점으로 계산해요. WHIP = 이닝마다 내보낸 주자(안타 + 4사구) · 1.30 아래면 좋은 편. 피안타율 = 상대 타자가 친 타율. 9이닝 삼진 = 9이닝 동안 잡을 삼진 수.${ppa !== '-' ? ` 타자 1명에 평균 ${ppa}구.` : ''}</p>`;
+            ${ad(x.hbOuts ? x.bbS : '-', '4사구', '볼넷 + 몸에 맞는 공')}${ad(x.hbOuts ? x.hS : '-', '피안타', '맞은 안타')}${ad(x.r + ' / ' + (x.er || 0), '실점 / 자책', '자책 = 투수 책임 점수')}${ad(bb9, '9이닝 4사구', '적을수록 제구 좋음')}</div>
+            <p class="ps-note">평균자책 = 9이닝 동안 내줄 자책점(실책 때문에 난 점수는 뺌). 11월 28일 전 경기는 실책 구분이 없어 모든 실점으로 셌어요. WHIP = 이닝마다 내보낸 주자(안타 + 4사구) · 1.30 아래면 좋은 편. 피안타율 = 상대 타자가 친 타율. 9이닝 삼진 = 9이닝 동안 잡을 삼진 수.${ppa !== '-' ? ` 타자 1명에 평균 ${ppa}구.` : ''}</p>`;
     }
     function cardHtml(q, nG, recs) {
         const pp = recs ? (q ? pitchers(recs).find(x => String(x.no) === String(q.no) && x.name === q.name) : null) : null;
@@ -140,7 +140,7 @@
             const est = !(p.pc > 0), n = p.pc > 0 ? +p.pc : (p.bf != null ? p.bf * R.ppa : Math.round((p.outs || 0) / 3 * R.pin));
             x.apps.push({ date: String(g.date).slice(0, 10), opp: g.opp, outs: p.outs || 0, bf: p.bf, r: p.r || 0, pc: p.pc || 0, n, est });
             const d = String(g.date).slice(0, 10); x.days[d] = x.days[d] || { n: 0, est: false }; x.days[d].n += n; x.days[d].est = x.days[d].est || est;
-            x.outs += p.outs || 0; x.r += p.r || 0; x.pcs += n;
+            x.outs += p.outs || 0; x.r += p.r || 0; x.er = (x.er || 0) + Math.max(0, (p.r || 0) - (p.ue || 0)); x.pcs += n;
             if (p.bf == null) x.bfKnown = false; else { x.bf += p.bf; x.h += p.h || 0; x.bb += p.bb || 0; x.k += p.k || 0; }
             if (p.h != null && p.bb != null) { x.hbOuts += p.outs || 0; x.hS += p.h; x.bbS += p.bb; }
             if (p.k != null) { x.kOuts += p.outs || 0; x.kS += p.k; }
@@ -166,16 +166,16 @@
         const L = pitchers(rk.recs || []), R = rule();
         const card = x => `<div class="pt-card ${x.wait ? 'wait' : 'ok'}"><div class="pt-h"><b>${esc(x.no)}</b> ${esc(x.name)}<span class="pt-st">${x.wait ? `${md(x.next)}부터 · ${x.left}일 남음` : '오늘 가능'}</span></div>
             <div class="pt-l">마지막 ${md(x.last)} · <b>${x.lastN}구</b>${x.lastEst ? '<i>짐작</i>' : ''} → ${x.rest}일 쉬기${x.over ? ` <em>하루 ${R.max}구 넘음</em>` : ''}</div></div>`;
-        const rows = L.map(x => `<tr><td class="st">${esc(x.no)} ${esc(x.name)}</td><td>${x.apps.length}</td><td>${ipT(x.outs)}</td><td>${x.pcs}${x.apps.some(a => a.est) ? '<i>*</i>' : ''}</td><td>${x.bfS || '-'}${x.bfS && !x.bfKnown ? '<i>*</i>' : ''}</td><td>${x.hbOuts ? x.hS : '-'}</td><td>${x.hbOuts ? x.bbS : '-'}</td><td>${x.kOuts ? x.kS : '-'}</td><td>${x.r}</td><td>${x.outs ? (x.r * 27 / x.outs).toFixed(2) : '-'}</td><td>${x.hbOuts ? ((x.hS + x.bbS) * 3 / x.hbOuts).toFixed(2) : '-'}</td><td>${x.bfS - x.bfBB > 0 ? f3(x.bfH / (x.bfS - x.bfBB)) : '-'}</td><td>${x.kOuts ? (x.kS * 27 / x.kOuts).toFixed(1) : '-'}</td><td>${x.hbOuts ? (x.bbS * 27 / x.hbOuts).toFixed(1) : '-'}</td></tr>`).join('');
+        const rows = L.map(x => `<tr><td class="st">${esc(x.no)} ${esc(x.name)}</td><td>${x.apps.length}</td><td>${ipT(x.outs)}</td><td>${x.pcs}${x.apps.some(a => a.est) ? '<i>*</i>' : ''}</td><td>${x.bfS || '-'}${x.bfS && !x.bfKnown ? '<i>*</i>' : ''}</td><td>${x.hbOuts ? x.hS : '-'}</td><td>${x.hbOuts ? x.bbS : '-'}</td><td>${x.kOuts ? x.kS : '-'}</td><td>${x.r}</td><td>${x.er || 0}</td><td>${x.outs ? ((x.er || 0) * 27 / x.outs).toFixed(2) : '-'}</td><td>${x.hbOuts ? ((x.hS + x.bbS) * 3 / x.hbOuts).toFixed(2) : '-'}</td><td>${x.bfS - x.bfBB > 0 ? f3(x.bfH / (x.bfS - x.bfBB)) : '-'}</td><td>${x.kOuts ? (x.kS * 27 / x.kOuts).toFixed(1) : '-'}</td><td>${x.hbOuts ? (x.bbS * 27 / x.hbOuts).toFixed(1) : '-'}</td></tr>`).join('');
         const rl = ['1', String(R.b[0] + 1), String(R.b[1] + 1), String(R.b[2] + 1), String(R.b[3] + 1)];
         return `<div class="pt-sec">⚾ 투수 쉬는 날 <small>오늘 ${md(today())} 기준</small></div>
             ${L.length ? `<div class="pt-grid">${L.map(card).join('')}</div>` : '<p class="ps-empty">아직 투수 기록이 없어요. 경기 기록 화면에서 상대 공격 때 「이번 회 투수」를 고르면 여기에 쌓여요.</p>'}
-            ${L.length ? `<div class="pt-sec">시즌 투수 기록</div><div class="ps-tw"><table class="ps-rk pt-rk"><tr><th class="st">투수</th><th>경기</th><th>이닝</th><th>투구 수</th><th>상대 타자</th><th>안타</th><th>4사구</th><th>삼진</th><th>실점</th><th>평균자책*</th><th>WHIP</th><th>피안타율</th><th>9이닝 삼진</th><th>9이닝 4사구</th></tr>${rows}</table></div>` : ''}
+            ${L.length ? `<div class="pt-sec">시즌 투수 기록</div><div class="ps-tw"><table class="ps-rk pt-rk"><tr><th class="st">투수</th><th>경기</th><th>이닝</th><th>투구 수</th><th>상대 타자</th><th>안타</th><th>4사구</th><th>삼진</th><th>실점</th><th>자책</th><th>평균자책</th><th>WHIP</th><th>피안타율</th><th>9이닝 삼진</th><th>9이닝 4사구</th></tr>${rows}</table></div>` : ''}
             <details class="pt-rule"><summary>쉬는 날 기준 보기 · 고치기</summary>
             <div class="pt-rt">${[0, 1, 2, 3, 4].map(i => `<div><span>${i < 4 ? `<input data-pr="${i}" inputmode="numeric" value="${R.b[i]}">구까지` : `${rl[4]}구 이상`}</span><b>${i}일</b></div>`).join('')}</div>
             <div class="pt-rt2"><label>하루 최대 <input data-pr="max" inputmode="numeric" value="${R.max}">구</label><label>투구 수 모를 때 타자 1명 = <input data-pr="ppa" inputmode="numeric" value="${R.ppa}">구</label></div>
             <div class="pt-btns"><button type="button" data-ps-rule="save">이 기준으로 저장</button><button type="button" data-ps-rule="reset">처음 값으로</button></div>
-            <p class="ps-note">대한유소년야구연맹 · KBSA 초등부는 투구 수 · 휴식일 공식 규정이 아직 없어요. 처음 값은 리틀야구(9~12세) 표를 참고했어요. 기준은 이 휴대폰에만 저장돼요. 투구 수를 안 넣은 경기는 상대 타자 수 × ${R.ppa}구(타자 기록도 없으면 이닝 × ${R.pin}구)로 짐작해서 「짐작」 · * 표시가 붙어요. 상대 타자 * = 숫자만 화면으로 기록한 경기는 빠진 수예요. 평균자책* = 9이닝 동안 내줄 점수(실책 점수도 포함) · WHIP = 이닝마다 내보낸 주자 · 피안타율 = 상대 타자 타율.</p></details>`;
+            <p class="ps-note">대한유소년야구연맹 · KBSA 초등부는 투구 수 · 휴식일 공식 규정이 아직 없어요. 처음 값은 리틀야구(9~12세) 표를 참고했어요. 기준은 이 휴대폰에만 저장돼요. 투구 수를 안 넣은 경기는 상대 타자 수 × ${R.ppa}구(타자 기록도 없으면 이닝 × ${R.pin}구)로 짐작해서 「짐작」 · * 표시가 붙어요. 상대 타자 * = 숫자만 화면으로 기록한 경기는 빠진 수예요. 평균자책 = 9이닝 동안 내줄 자책점 · WHIP = 이닝마다 내보낸 주자 · 피안타율 = 상대 타자 타율.</p></details>`;
     }
 
     // ---------- B: 팀 순위표 (운영진) ----------
