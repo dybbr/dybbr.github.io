@@ -79,3 +79,4 @@ body.ps-open { overflow: hidden; }
 .ps-adv div { padding: 6px 4px 7px; }
 .ps-adv i { color: #8a93a8 !important; font-size: 10px !important; line-height: 1.3; margin-top: 2px; word-break: keep-all; }
 .ps-card .ps-big + .ps-adv { margin-top: 6px; }
+.ps-big .ps-abh { display: block; font-style: normal; font-size: 13px; font-weight: 800; color: #101a30; margin-top: 2px; }

@@ -107,8 +107,8 @@
         const pp = recs ? (q ? pitchers(recs).find(x => String(x.no) === String(q.no) && x.name === q.name) : null) : null;
         if (!q || !q.pa) return `<div class="ps-card"><div class="ps-h">📊 시즌 기록</div><p class="ps-empty">아직 기록된 타석이 없어요. 대표님이 경기 기록을 보내면 여기에 저절로 쌓여요.</p>${pitCard(pp)}</div>`;
         const gl = q.games.slice().reverse().map(g => `<tr><td>${esc(String(g.date).slice(5).replace('-', '.'))}</td><td>${esc(g.opp)}</td><td class="n">${g.ab}-${g.h}</td><td class="n">${g.rbi}</td><td class="rs">${g.res.map(r => `<span class="${r.h ? 'h' : ''}">${esc(r.t)}</span>`).join('')}</td></tr>`).join('');
-        return `<div class="ps-card"><div class="ps-h">📊 시즌 기록 <small>${q.games.length}경기 · ${q.pa}타석 · ${q.ab}타수 · 출루 ${q.ob}</small></div>
-            <div class="ps-big"><div class="m"><span>타율</span><b>${f3(q.avg)}</b></div><div><span>출루율</span><b>${f3(q.obp)}</b></div><div><span>장타율</span><b>${f3(q.slg)}</b></div><div><span>OPS</span><b>${f3(q.ops)}</b></div></div>
+        return `<div class="ps-card"><div class="ps-h">📊 시즌 기록 <small>${q.games.length}경기 · ${q.pa}타석 · 출루 ${q.ob}</small></div>
+            <div class="ps-big"><div class="m"><span>타율</span><b>${f3(q.avg)}</b><em class="ps-abh">${q.ab}타수 ${q.h}안타</em></div><div><span>출루율</span><b>${f3(q.obp)}</b></div><div><span>장타율</span><b>${f3(q.slg)}</b></div><div><span>OPS</span><b>${f3(q.ops)}</b></div></div>
             <div class="ps-cnt"><div><b>${q.h}</b>안타<i>1루타 ${q.h1}</i></div><div><b>${q.h2}</b>2루타</div><div><b>${q.h3}</b>3루타</div><div><b>${q.hrAll}</b>홈런${q.ihr ? `<i>GH ${q.ihr}</i>` : ''}</div><div><b>${q.rbi}</b>타점</div><div><b>${q.r}</b>득점</div><div><b>${q.sb}</b>도루</div><div><b>${q.k}</b>삼진</div><div><b>${q.bb}</b>볼넷</div><div><b>${q.hp}</b>사구<i>몸에 맞는 공</i></div><div><b>${q.sh}</b>희생번트</div><div><b>${q.sf}</b>희생플라이</div></div>
             ${advHtml(q)}${pitCard(pp)}
             <div class="ps-sub">타구 방향</div>${field(q.dirs)}
