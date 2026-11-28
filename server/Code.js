@@ -1,5 +1,5 @@
 // ==========================================================
-// ⚾ 대연초 야구부 관리 시스템 통합 백엔드 API (v2.49.0)
+// ⚾ 대연초 야구부 관리 시스템 통합 백엔드 API (v2.50.0)
 // ==========================================================
 // ★ API_KEY 는 코드에 적지 않고 「프로젝트 설정 → 스크립트 속성」의 API_KEY 에 넣어 둡니다 (v2.36.0~).
 //   값은 index.html / player.html 의 API_KEY 와 "같은 값"이어야 합니다. 속성이 비어 있으면 모든 요청을 거절합니다.
@@ -1781,6 +1781,7 @@ function doGet(e) {
         try { verGroup(bo, p, "notice", "vn", { notices: readNotices(ss) }); } catch (eB2) {}
         try { bo.officers = readOfficers(ss); } catch (eB3) {}   // 📞 v2.28.0: 집행부 단축 버튼 (보호자 · 관리자만)
         try { bo.duty = dutyPublic(readDuty(ss)); } catch (eB4) {}   // 🧹 v2.31.0: 부실 청소 당번 (보호자 · 관리자만)
+        try { bo.meal = mealPublic(mealCfg()); } catch (eB7) {}   // 🍱 v2.50.0: 급식당번 설정 (속성 한 칸 · 시트 안 읽음)
       }
       try { bo.pop = songPopList(ss); } catch (eB5) {}   // 📊 v2.44.0: 학부모 화면 인기곡 (곡 id 순서만)
       try { if (canSeeBoard(role)) { bo.gameRecs = gameRecIds(); bo.gameRecVer = PropertiesService.getScriptProperties().getProperty("GAME_REC_VER") || ""; } } catch (eB6) {}   // v2.47.0: 기록이 바뀌면 번호가 바뀜 → 사이트가 선수 기록을 다시 받음   // ⚾ v2.46.0: 기록표가 있는 경기(일정 ID) 목록 — 시트 안 읽음(속성 한 칸)
@@ -1804,6 +1805,16 @@ function doGet(e) {
       var aIds = String(p.ids || "").split(",").map(function (x) { return cleanId(x, 30); }).filter(String).slice(0, 7);
       if (!aIds.length) return json({ result: "error", message: "일정 ID가 없습니다." });
       return json({ result: "success", admin: isAdminRole(role), ev: readAttend(ss, aIds, session) });
+    }
+    // 🍱 v2.50.0: 동계훈련 급식당번 — 화면을 열 때 읽기 1번 · 누를 때 쓰기 1번 (답에 최신 칸을 실어 보냄)
+    if (p.action === "mealBoard" || p.action === "mealApply" || p.action === "mealCancel" || p.action === "mealCfg") {
+      if (!session || !canSeeBoard(role)) return json({ result: "error", auth: true, message: "로그인한 뒤에 볼 수 있어요." });
+      if (p.action === "mealCfg") return handleMealCfg(ss, session, p);
+      var mc = mealCfg();
+      if (!mc) return json({ result: "success", cfg: null, days: [], rows: [], now: mealNow(), phase: "off", admin: isAdminRole(role), edit: canEditScheduleRole(role) });
+      if (p.action === "mealApply") return handleMealApply(ss, session, p);
+      if (p.action === "mealCancel") return handleMealCancel(ss, session, p);
+      return mealBoard(ss, session, mc, null);
     }
     if (p.action === "gameRecord") {
       if (!session || !canSeeBoard(role)) return json({ result: "error", message: "로그인한 뒤에 볼 수 있어요." });   // 학부모도 봄 (11-22 하코)
@@ -3563,4 +3574,179 @@ function readAttend(ss, ids, session) {
     });
   }
   return out;
+}
+
+// ==========================================================
+// 🍱 v2.50.0: 동계훈련 급식당번 (사이트 v2.162.0, 하코 11-28 A안 「공연장 좌석표」)
+//   · 배식차가 오고 학부모 3팀이 배식을 도움 → 날짜마다 신청 칸 N개(기본 3) + 후보 칸(기본 1)
+//   · 1팀 = 선수 1명의 학부모님 · 대상 학년만 (기본 5·4·3·2학년, 6학년 빼기)
+//   · 설정은 스크립트 속성 MEAL_CFG 한 칸(JSON) → 앱을 켤 때(bootstrap) 시트를 안 읽고 같이 보냄
+//   · 시트 「급식당번」 — 채운 칸마다 한 줄 (날짜 · 칸 1~N 또는 「후보」 · 배번 · 이름 · 학년 · 신청일시 · 넣은사람)
+//   · 신청 · 취소는 GET (답을 읽어야 「방금 찼어요」를 알려 줌) + 스크립트 잠금으로 한 줄 세우기 → 먼저 온 신청만 들어감
+//   · 신청 칸을 취소하면 그날 후보가 자동으로 그 칸에 올라감
+//   · 「일정」 · 「당번」 탭은 건드리지 않음
+// ==========================================================
+var MEAL_SHEET_NAME = "급식당번";
+var MEAL_HEADERS = ["날짜", "칸", "배번", "이름", "학년", "신청일시", "넣은사람"];
+var MEAL_HOO = "후보";
+function mealNow() { return Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm"); }
+function mealYmd(s) { s = String(s || "").trim(); return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : ""; }
+function mealDt(s) { s = String(s || "").trim(); return /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(s) ? s : ""; }
+function mealCfg() {
+  try { var c = JSON.parse(PropertiesService.getScriptProperties().getProperty("MEAL_CFG") || "null"); return (c && c.start && c.end) ? c : null; } catch (e) { return null; }
+}
+function mealClean(d) {
+  d = d || {};
+  var n = function (v, lo, hi, def) { v = parseInt(v, 10); return isNaN(v) ? def : Math.max(lo, Math.min(hi, v)); };
+  var start = mealYmd(d.start), end = mealYmd(d.end);
+  if (!start || !end || end < start) return null;
+  var grades = (Array.isArray(d.grades) ? d.grades : String(d.grades || "").split(",")).map(function (g) { return String(g).replace(/[^0-9]/g, ""); })
+    .filter(function (g, i, a) { return g && g.length === 1 && a.indexOf(g) === i; });
+  var off = (Array.isArray(d.off) ? d.off : []).map(mealYmd).filter(String).slice(0, 40);
+  return {
+    on: d.on !== false && d.on !== "false", title: cleanText(d.title, 30) || "동계훈련 급식당번",
+    start: start, end: end, skipWe: d.skipWe !== false && d.skipWe !== "false", off: off,
+    per: n(d.per, 1, 6, 3), hoo: n(d.hoo, 0, 2, 1), max: n(d.max, 1, 6, 2), hooMax: n(d.hooMax, 0, 6, 1), extraDays: n(d.extraDays, 0, 14, 3),
+    open: mealDt(d.open), close: mealDt(d.close), gather: /^\d{1,2}:\d{2}$/.test(String(d.gather || "")) ? String(d.gather) : "",
+    grades: grades.length ? grades : ["5", "4", "3", "2"], names: d.names !== false && d.names !== "false", info: cleanText(d.info, 80)
+  };
+}
+function mealDays(c) {
+  var out = [];
+  if (!c) return out;
+  var a = c.start.split("-").map(Number), b = c.end.split("-").map(Number);
+  var d = new Date(a[0], a[1] - 1, a[2]), e = new Date(b[0], b[1] - 1, b[2]);
+  for (var i = 0; d <= e && i < 92; i++) {
+    var s = Utilities.formatDate(d, "Asia/Seoul", "yyyy-MM-dd"), w = d.getDay();
+    if (!(c.skipWe && (w === 0 || w === 6)) && c.off.indexOf(s) === -1) out.push(s);
+    d.setDate(d.getDate() + 1);
+  }
+  return out;
+}
+function mealExtraFrom(c) {   // 마감 N일 전부터 「한 번 더」 (남은 칸이 있을 때)
+  if (!c || !c.close || !c.extraDays) return "";
+  var p = c.close.split(/[- :]/).map(Number), d = new Date(p[0], p[1] - 1, p[2], p[3], p[4]);
+  d.setDate(d.getDate() - c.extraDays);
+  return Utilities.formatDate(d, "Asia/Seoul", "yyyy-MM-dd HH:mm");
+}
+function mealPhase(c, now) {
+  if (!c || !c.on) return "off";
+  if (c.open && now < c.open) return "soon";
+  if (c.close && now >= c.close) return "closed";
+  return "open";
+}
+function mealPublic(c) {   // bootstrap 에 얹는 가벼운 설정 (시트 안 읽음)
+  if (!c) return null;
+  var o = JSON.parse(JSON.stringify(c));
+  o.extraFrom = mealExtraFrom(c);
+  return o;
+}
+function mealRows(ss) {
+  var sh = ss.getSheetByName(MEAL_SHEET_NAME);
+  if (!sh || sh.getLastRow() < 2) return [];
+  var v = sh.getRange(2, 1, sh.getLastRow() - 1, MEAL_HEADERS.length).getValues(), out = [];
+  for (var i = 0; i < v.length; i++) {
+    var d = v[i][0] instanceof Date ? Utilities.formatDate(v[i][0], "Asia/Seoul", "yyyy-MM-dd") : String(v[i][0] || "").trim();
+    if (!d) continue;
+    out.push({ r: i + 2, d: d, s: String(v[i][1] || "").trim(), no: parseInt(v[i][2], 10) || 0, name: String(v[i][3] || ""), g: String(v[i][4] || ""), at: String(v[i][5] || ""), by: String(v[i][6] || "") });
+  }
+  return out;
+}
+function mealBoard(ss, session, c, rows, extra) {
+  var role = session && session.role, admin = isAdminRole(role), now = mealNow();
+  rows = rows || mealRows(ss);
+  var list = rows.map(function (x) {
+    if (admin) return { d: x.d, s: x.s, no: x.no, name: x.name, g: x.g, at: x.at, by: x.by };
+    var mine = scopeHasPlayer(session, x.no, x.name);
+    if (c.names || mine) return { d: x.d, s: x.s, no: x.no, name: x.name, g: x.g, mine: mine };
+    return { d: x.d, s: x.s, taken: true };
+  });
+  var out = { result: "success", cfg: mealPublic(c), days: mealDays(c), rows: list, now: now, phase: mealPhase(c, now), admin: admin, edit: canEditScheduleRole(role) };
+  if (extra) for (var k in extra) out[k] = extra[k];
+  return out;
+}
+function mealFindPlayer(ss, no, name) {
+  var raw = readRosterRaw(ss);
+  for (var i = 0; i < raw.length; i++) {
+    var r = raw[i];
+    if ((no > 0 && Number(r.no) > 0) ? Number(r.no) === no : (name && r.name === name)) return r;
+  }
+  return null;
+}
+function mealGrade(g) { return String(g || "").replace(/[^0-9]/g, "").slice(0, 1); }
+// GET mealApply&d=2027-01-07&s=3|후보&no=30&name=김하늘 — 잠금 안에서 시트를 다시 읽고 빈 칸일 때만 씀
+function handleMealApply(ss, session, p) {
+  var c = mealCfg();
+  if (!c) return json({ result: "error", message: "급식당번 신청이 아직 없어요." });
+  var role = session.role, edit = canEditScheduleRole(role), now = mealNow(), ph = mealPhase(c, now);
+  if (!edit && ph !== "open") return json({ result: "error", message: ph === "soon" ? "아직 신청 시작 전이에요." : "신청이 마감됐어요. 바꾸려면 운영진에게 말씀해 주세요." });
+  var d = mealYmd(p.d), s = String(p.s || "").trim(), no = Math.max(0, Math.min(999, parseInt(p.no, 10) || 0)), nm = cleanText(p.name, 20);
+  if (mealDays(c).indexOf(d) === -1) return json({ result: "error", message: "신청할 수 없는 날짜예요." });
+  var isHoo = s === MEAL_HOO;
+  if (isHoo ? c.hoo < 1 : !(parseInt(s, 10) >= 1 && parseInt(s, 10) <= c.per)) return json({ result: "error", message: "없는 칸이에요." });
+  if (!isHoo) s = String(parseInt(s, 10));
+  if (!edit && !scopeHasPlayer(session, no, nm)) return json({ result: "error", message: "우리 아이 이름으로만 신청할 수 있어요." });
+  var pl = mealFindPlayer(ss, no, nm);
+  if (!pl) return json({ result: "error", message: "명단에서 선수를 못 찾았어요." });
+  var g = mealGrade(pl.grade);
+  if (!edit && c.grades.indexOf(g) === -1) return json({ result: "error", message: c.grades.join("·") + "학년 학부모님만 신청할 수 있어요." });
+  no = Number(pl.no) || 0; nm = pl.name;
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(20000)) return json({ result: "error", message: "신청이 몰려 있어요. 잠시 후 다시 눌러 주세요." });
+  try {
+    var sh = ensureSheet(ss, MEAL_SHEET_NAME, MEAL_HEADERS);
+    var rows = mealRows(ss), same = function (x) { return no > 0 && x.no > 0 ? x.no === no : x.name === nm; };
+    var hoos = 0;   // 후보 칸 번호: 한 날에 후보가 2칸이면 「후보」 줄이 2개
+    for (var i = 0; i < rows.length; i++) if (rows[i].d === d && rows[i].s === MEAL_HOO) hoos++;
+    var taken = isHoo ? hoos >= c.hoo : rows.some(function (x) { return x.d === d && x.s === s; });
+    if (taken) return mealBoard(ss, session, c, rows, { result: "taken", message: "방금 다른 가족이 먼저 신청했어요." });
+    if (rows.some(function (x) { return x.d === d && same(x); })) return mealBoard(ss, session, c, rows, { result: "error", message: "이 날은 이미 신청했어요." });
+    if (!edit) {
+      var mineN = rows.filter(function (x) { return same(x) && x.s !== MEAL_HOO; }).length, hooN = rows.filter(function (x) { return same(x) && x.s === MEAL_HOO; }).length;
+      var ef = mealExtraFrom(c), lim = c.max + (ef && now >= ef ? 1 : 0);
+      if (isHoo && hooN >= c.hooMax) return mealBoard(ss, session, c, rows, { result: "error", message: "후보는 " + c.hooMax + "번까지예요." });
+      if (!isHoo && mineN >= lim) return mealBoard(ss, session, c, rows, { result: "error", message: "신청은 " + lim + "번까지예요." + (ef && now < ef ? " 남은 칸은 " + ef.slice(5, 10).replace("-", "/") + "부터 1번 더 신청할 수 있어요." : "") });
+    }
+    var stamp = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm:ss");
+    var row = [d, s, no ? String(no) : "", nm, g, stamp, edit && !scopeHasPlayer({ role: "parent", scope: session.scope }, no, nm) ? roleName(role) : ""];
+    writeRow(sh, sh.getLastRow() + 1, row);
+    rows.push({ r: sh.getLastRow(), d: d, s: s, no: no, name: nm, g: g, at: stamp, by: row[6] });
+    return mealBoard(ss, session, c, rows, { done: { d: d, s: s } });
+  } finally { lock.releaseLock(); }
+}
+// GET mealCancel&d=...&s=...&no=... — 신청 칸을 비우면 그날 후보가 그 칸으로 올라감
+function handleMealCancel(ss, session, p) {
+  var c = mealCfg();
+  if (!c) return json({ result: "error", message: "급식당번 신청이 아직 없어요." });
+  var role = session.role, edit = canEditScheduleRole(role), now = mealNow();
+  if (!edit && mealPhase(c, now) !== "open") return json({ result: "error", message: "마감 뒤에는 운영진에게 말씀해 주세요." });
+  var d = mealYmd(p.d), s = String(p.s || "").trim(), no = Math.max(0, Math.min(999, parseInt(p.no, 10) || 0)), nm = cleanText(p.name, 20);
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(20000)) return json({ result: "error", message: "서버가 바빠요. 잠시 후 다시 눌러 주세요." });
+  try {
+    var sh = ss.getSheetByName(MEAL_SHEET_NAME);
+    var rows = sh ? mealRows(ss) : [];
+    var hit = rows.filter(function (x) { return x.d === d && x.s === s && (no > 0 && x.no > 0 ? x.no === no : x.name === nm); })[0];
+    if (!hit) return mealBoard(ss, session, c, rows, { result: "error", message: "이미 비어 있는 칸이에요." });
+    if (!edit && !scopeHasPlayer(session, hit.no, hit.name)) return json({ result: "error", message: "우리 아이 칸만 취소할 수 있어요." });
+    var up = null;
+    if (s !== MEAL_HOO) {   // 후보 → 빈 신청 칸으로
+      up = rows.filter(function (x) { return x.d === d && x.s === MEAL_HOO; }).sort(function (a, b) { return a.at < b.at ? -1 : 1; })[0] || null;
+      if (up) sh.getRange(up.r, 2).setNumberFormat("@").setValue(s);
+    }
+    sh.deleteRow(hit.r);
+    rows = mealRows(ss);
+    return mealBoard(ss, session, c, rows, { done: { d: d, s: s, cancel: true }, promoted: up ? { d: d, s: s, no: up.no, name: up.name } : null });
+  } finally { lock.releaseLock(); }
+}
+function handleMealCfg(ss, session, p) {
+  if (!canEditScheduleRole(session && session.role)) return json({ result: "error", message: "대표님 · 총무님만 바꿀 수 있어요." });
+  var d = null;
+  try { d = JSON.parse(String(p.cfg || "")); } catch (e) {}
+  if (p.op === "clear") { PropertiesService.getScriptProperties().deleteProperty("MEAL_CFG"); return json({ result: "success", cfg: null }); }
+  var c = mealClean(d);
+  if (!c) return json({ result: "error", message: "시작일 · 끝날을 확인해 주세요." });
+  if (mealDays(c).length > 62) return json({ result: "error", message: "기간이 너무 길어요 (최대 62일)." });
+  PropertiesService.getScriptProperties().setProperty("MEAL_CFG", JSON.stringify(c));
+  return mealBoard(ss, session, c, null);
 }

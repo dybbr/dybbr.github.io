@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.161.0 · 타순 없이 시작";
+        const APP_VERSION = "v2.162.0 · 급식당번 신청";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -123,6 +123,8 @@
     <script src="player-stats.js?v=2.158.0" defer></script>   <!-- 📊 v2.155.0: 선수 기록 순위표 (운영진) -->
     <link rel="stylesheet" href="attend.css?v=2.159.0">
     <script src="attend.js?v=2.159.0" defer></script>   <!-- 🙋 v2.159.0: 일정 참석 체크 · 🚗 카풀 배정 -->
+    <link rel="stylesheet" href="meal.css?v=2.162.0">
+    <script src="meal.js?v=2.162.0" defer></script>   <!-- 🍱 v2.162.0: 동계훈련 급식당번 신청 (공연장 좌석표) -->
 
     <style>
         :root {
@@ -4673,6 +4675,7 @@
             + (no.length ? ` <span class="no">· 비어 있음: ${no.map(lab).join(', ')}</span>` : '');
     }
     async function ofaRefresh(force, noFetch) {
+        try { if (window.MEAL) MEAL.refresh(); } catch (e) {}   // 🍱 v2.162.0: 관리 탭 「급식당번」 묶음
         const grp = document.getElementById('adminGroupOfc');
         if (!grp) return;
         grp.style.display = ofaCan() ? '' : 'none';
@@ -5021,6 +5024,7 @@
         if (Array.isArray(r.pop)) { try { if (window.plPop) window.plPop(r.pop); } catch (e) {} }   // 🔥 v2.124.0: 인기곡 순서 (서버 v2.44.0 · 숫자 없음)
         if (Array.isArray(r.gameRecs)) { window.SB_REC_IDS = r.gameRecs.slice(); try { if (window.SB) SB.setRecIds(r.gameRecs); } catch (e) {} }   // v2.153.7: 기록표 파일이 늦게 열려도 기억해 둠   // ⚾ v2.153.0: 기록표가 있는 경기 (서버 v2.46.0)
         if (r.duty && canViewSchedule()) setDuty(r.duty, true);   // 🧹 v2.84.0: 부실 청소 당번 (서버 v2.31.0) — 아래 일정 그리기 때 같이 그림
+        if (r.meal !== undefined && canViewSchedule()) { window.MEAL_CFG_EARLY = r.meal; try { if (window.MEAL) MEAL.setCfg(r.meal); } catch (e) {} }   // 🍱 v2.162.0: 동계훈련 급식당번 설정 (서버 v2.50.0 · 시트 안 읽음)
         if (Array.isArray(r.events) && canViewSchedule()) {
             schedEvents = r.events; if (Array.isArray(r.venues)) schedVenues = r.venues; schedLoaded = true; schedFetchedAt = t.sched || Date.now();
             if (currentMainTab === 'schedule') renderSchedule();
@@ -5230,6 +5234,7 @@
     }
     // 📅 일정 탭 맨 위 — 다음 부실 청소 (우리 집 차례면 노랗게)
     function renderDutyBanner() {
+        try { if (window.MEAL) MEAL.refresh(); } catch (e) {}   // 🍱 v2.162.0: 급식당번 띠도 같이 (명단이 늦게 와도 우리 아이를 찾게)
         const el = document.getElementById('dutyBanner');
         if (!el) return;
         const up = dutyUp(), next = up.find(u => !u.s);
