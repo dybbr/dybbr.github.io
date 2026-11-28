@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.165.0 · 모집 페이지 QR";
+        const APP_VERSION = "v2.166.0 · 신입 모집 QR 띠";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -3262,6 +3262,28 @@
         @media (max-width: 600px) { html.is-authenticated .main-tabs { box-shadow: 0 -4px 16px rgba(0,0,0,0.4); } }
         @media (min-width: 601px) { html.is-authenticated .main-tabs { box-shadow: 0 -4px 16px rgba(0,0,0,0.4); } }
     }
+/* 🔳 신입 모집 QR (v2.166.0 · 하코 선택 B안) */
+.jq-ov{position:fixed;inset:0;z-index:2147483000;background:rgba(7,23,48,.9);display:none;align-items:center;justify-content:center;padding:16px;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.jq-ov.on{display:flex}
+.jq-card{background:#fff;color:#0b2240;border-radius:26px;padding:22px 20px 18px;width:100%;max-width:480px;max-height:100%;overflow:auto;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.jq-card .t{font-weight:900;font-size:21px;line-height:1.3}
+.jq-card .t em{font-style:normal;color:#e0182d}
+.jq-card .s{font-size:14px;color:#4a5870;margin-top:4px}
+.jq-qr{display:block;width:min(76vw,52vh,380px);height:auto;aspect-ratio:1;margin:14px auto 8px;border-radius:14px}
+.jq-url{font-weight:900;font-size:19px;letter-spacing:.01em}
+.jq-tip{font-size:13px;color:#6b7a90;margin-top:2px}
+.jq-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.jq-btns a,.jq-btns button{display:flex;align-items:center;justify-content:center;gap:6px;min-height:48px;border-radius:14px;font:800 15px "Noto Sans KR",sans-serif;border:2px solid #d6deea;background:#fff;color:#0b2240;cursor:pointer;text-decoration:none;white-space:nowrap}
+.jq-btns .p{background:#0b2240;border-color:#0b2240;color:#fff;grid-column:1/-1}
+.jq-btns .x{grid-column:1/-1;border-color:transparent;color:#6b7a90;min-height:40px}
+.jq-done{font-size:14px;font-weight:700;color:#1a7f37;margin-top:8px}
+.jq-band{display:flex;align-items:center;gap:14px;margin:0 0 12px;padding:12px 14px;border-radius:16px;background:linear-gradient(135deg,#0b2240,#1d4a8a);color:#fff;cursor:pointer;box-shadow:0 4px 14px rgba(11,34,64,.2)}
+.jq-band[hidden],html:not(.is-authenticated) .jq-band{display:none}
+.jq-band img{width:64px;height:64px;border-radius:10px;background:#fff;padding:4px;flex:none}
+.jq-band .tx{flex:1;min-width:0}.jq-band b{display:block;font-size:16px;font-weight:900}.jq-band b em{font-style:normal;color:#ffd23f}
+.jq-band span{display:block;font-size:13px;opacity:.85;line-height:1.4}
+.jq-band .go{flex:none;background:#ffd23f;color:#0b2240;font-weight:900;font-size:13px;padding:9px 12px;border-radius:12px;white-space:nowrap}
+
     </style>
 </head>
 <body>
@@ -3483,6 +3505,7 @@
         <button type="button" class="main-tab" data-tab="venue" id="tabBtnVenue" onclick="showMainTab('venue')"><span class="tab-ico">🏟️</span><span class="tab-txt">구장</span></button>
         <button type="button" class="main-tab admin-tab" data-tab="admin" id="tabBtnAdmin" style="display: none;" onclick="showMainTab('admin')"><span class="tab-ico">⚙️</span><span class="tab-txt">관리</span></button>
     </nav>
+    <div class="jq-band" id="jqBand" role="button" tabindex="0" hidden onclick="JQ.open()" onkeydown="if (event.key === 'Enter') JQ.open()"><img src="join/img/qr-join.svg" alt="" width="64" height="64"><div class="tx"><b>2027 신입 선수 <em>모집 중</em></b><span>친구 부모님께 QR을 보여 주세요 · 12월까지 선착순</span></div><div class="go">QR 크게</div></div>   <!-- 🔳 v2.166.0: 신입 모집 QR 띠 (모든 탭 위 · 2027-01-01부터 저절로 숨김) -->
     <div class="next-event-banner" id="nextEventBanner"></div>
     <div class="duty-band" id="dutyMineBand" role="button" tabindex="0" onclick="openDutyModal()"></div>   <!-- 🧹 v2.84.0: 우리 집 청소 차례가 1주 안이면 (명단 탭) -->
 
@@ -11803,6 +11826,39 @@
     try { document.getElementById('lockPasswordInput').addEventListener('focus', warmServer); } catch (e) {}   // 잠금화면을 오래 켜 뒀다가 비번 칸을 누를 때도
     lockAutoFocus(); setTimeout(lockAutoFocus, 300);   // ⌨️ v2.107.1 · v2.115.0: 처음 열었을 때 비번 칸에 바로 커서 (모든 기기) — 첫 화면 그림이 걷힌 뒤 한 번 더
     window.addEventListener('focus', () => setTimeout(lockAutoFocus, 0));   // 다른 창 · 탭에 갔다가 돌아와도
+</script>
+<script>
+// 🔳 신입 모집 QR 크게 보기 (v2.166.0) — 모집 페이지 dybbr.github.io/join/ 로 가는 QR
+window.JQ = (function () {
+  var U = 'https://dybbr.github.io/join/', B = (window.JQ_BASE || ''), IN = /\/join\/?$/.test(location.pathname);
+  function el() {
+    var o = document.getElementById('jqOv'); if (o) return o;
+    o = document.createElement('div'); o.id = 'jqOv'; o.className = 'jq-ov'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-modal', 'true');
+    o.innerHTML = '<div class="jq-card"><div class="t">2027 대연초 야구부<br><em>신입 선수 모집</em></div><div class="s">특별 모집 · 12월까지 선착순</div>'
+      + '<img class="jq-qr" src="' + B + 'join/img/qr-join.svg" alt="신입 모집 페이지 QR 코드">'
+      + '<div class="jq-url">dybbr.github.io/join</div><div class="jq-tip">휴대폰 카메라로 찍으면 모집 안내가 열려요</div>'
+      + '<div class="jq-btns">' + (IN ? '' : '<a class="p" href="' + B + 'join/" target="_blank" rel="noopener">🌐 모집 페이지 열기</a>')
+      + '<a href="' + B + 'join/img/qr-join.png" download="대연초야구부_신입모집_QR.png">⬇ QR 그림 받기</a><button type="button" data-a="share">🔗 주소 보내기</button>'
+      + '<button type="button" class="x" data-a="x">닫기</button></div><div class="jq-done" hidden>주소를 복사했어요. 카톡에 붙여 넣어 주세요.</div></div>';
+    o.addEventListener('click', function (e) {
+      var a = e.target.closest('[data-a]');
+      if (e.target === o || (a && a.getAttribute('data-a') === 'x')) return close();
+      if (a && a.getAttribute('data-a') === 'share') share(o);
+    });
+    document.body.appendChild(o); return o;
+  }
+  function share(o) {
+    var d = { title: '대연초 야구부 신입 선수 모집', text: '기본기부터, 함께 · 대연초 야구부 신입 선수 모집 (12월까지 선착순)', url: U };
+    if (navigator.share) { navigator.share(d).catch(function () {}); return; }
+    var m = o.querySelector('.jq-done'); function ok() { m.hidden = false; setTimeout(function () { m.hidden = true; }, 4000); }
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(U).then(ok, function () {});
+  }
+  function esc(e) { if (e.key === 'Escape') close(); }
+  function open() { el().classList.add('on'); document.addEventListener('keydown', esc); }
+  function close() { var o = document.getElementById('jqOv'); if (o) o.classList.remove('on'); document.removeEventListener('keydown', esc); }
+  return { open: open, close: close };
+})();
+(function () { var b = document.getElementById('jqBand'); if (b && Date.now() < new Date('2027-01-01T00:00:00+09:00').getTime()) b.hidden = false; })();   // 모집 마감(12월) 뒤엔 띠 숨김
 </script>
 </body>
 </html>

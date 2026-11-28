@@ -50,6 +50,11 @@ section{padding:72px 0;scroll-margin-top:64px}
 .hero .note{margin-top:16px;font-size:14px;color:var(--sub)}
 .hero .note b{color:var(--fg)}
 .mas{position:relative;aspect-ratio:1;border-radius:50%;background:url(img/bukang-field.webp) center 20%/cover;max-width:440px;margin:0 auto;width:100%}
+.heroR{position:relative}
+.hqr{position:absolute;left:-10px;bottom:-14px;display:flex;align-items:center;gap:12px;background:#fff;border:0;border-radius:20px;padding:10px 16px 10px 10px;box-shadow:0 10px 24px rgba(11,34,64,.2);cursor:pointer;font-family:inherit;color:#0b2240;text-align:left;transform:rotate(-2deg)}
+.hqr img{width:96px;height:96px}
+.hqr b{display:block;font-size:16px;font-weight:900}
+.hqr span{font-size:13px;color:#4a5870;line-height:1.4}
 /* 가치 */
 .value .q{font-size:clamp(34px,6vw,60px)}
 .value .three{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:30px}
@@ -83,10 +88,25 @@ section{padding:72px 0;scroll-margin-top:64px}
 /* QR 나누기 */
 .share{background:#fff7d6}
 .sharebox{display:flex;gap:28px;align-items:center;margin-top:24px;background:#fff;border-radius:var(--r);padding:26px;box-shadow:0 6px 0 rgba(11,34,64,.07)}
-.sharebox .qr{width:220px;height:220px;flex:none;border-radius:16px;border:1px solid var(--cline)}
+.sharebox .qr{width:280px;height:280px;cursor:pointer;flex:none;border-radius:16px;border:1px solid var(--cline)}
 .sharebox .url{font-weight:900;font-size:22px;margin:10px 0 16px;letter-spacing:.01em}
 .sharebox .done{margin-top:10px;font-weight:700;color:#1a7f37;font-size:15px}
 button.btn{font-family:inherit}
+/* 🔳 신입 모집 QR (v2.166.0) */
+.jq-ov{position:fixed;inset:0;z-index:2147483000;background:rgba(7,23,48,.9);display:none;align-items:center;justify-content:center;padding:16px;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.jq-ov.on{display:flex}
+.jq-card{background:#fff;color:#0b2240;border-radius:26px;padding:22px 20px 18px;width:100%;max-width:480px;max-height:100%;overflow:auto;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.jq-card .t{font-weight:900;font-size:21px;line-height:1.3}
+.jq-card .t em{font-style:normal;color:#e0182d}
+.jq-card .s{font-size:14px;color:#4a5870;margin-top:4px}
+.jq-qr{display:block;width:min(76vw,52vh,380px);height:auto;aspect-ratio:1;margin:14px auto 8px;border-radius:14px}
+.jq-url{font-weight:900;font-size:19px;letter-spacing:.01em}
+.jq-tip{font-size:13px;color:#6b7a90;margin-top:2px}
+.jq-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.jq-btns a,.jq-btns button{display:flex;align-items:center;justify-content:center;gap:6px;min-height:48px;border-radius:14px;font:800 15px "Noto Sans KR",sans-serif;border:2px solid #d6deea;background:#fff;color:#0b2240;cursor:pointer;text-decoration:none;white-space:nowrap}
+.jq-btns .p{background:#0b2240;border-color:#0b2240;color:#fff;grid-column:1/-1}
+.jq-btns .x{grid-column:1/-1;border-color:transparent;color:#6b7a90;min-height:40px}
+.jq-done{font-size:14px;font-weight:700;color:#1a7f37;margin-top:8px}
 /* 즐거움 */
 .fun .g{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:30px}
 .fun .f{border-radius:var(--r);overflow:hidden;background:var(--card);color:var(--cfg);border:1px solid var(--cline)}
@@ -149,7 +169,7 @@ button.btn{font-family:inherit}
 .vB .story{background:#e6f6ff}
 .vB .value .q em{color:#e0182d}
 .vB .dock{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:30;display:flex;gap:8px;max-width:560px;margin:0 auto;background:#0b2240;padding:8px;border-radius:22px;box-shadow:0 12px 30px rgba(11,34,64,.35)}
-.vB .dock a{flex:1;text-align:center;color:#fff;font-weight:800;font-size:15px;padding:12px 6px;border-radius:16px}
+.vB .dock a,.vB .dock button{flex:1;border:0;background:none;font-family:inherit;cursor:pointer;text-align:center;color:#fff;font-weight:800;font-size:15px;padding:12px 6px;border-radius:16px}
 .vB .dock a.p{background:#ffd23f;color:#0b2240;flex:1.2}
 .vB .dock small{display:block;font-size:11px;font-weight:700;opacity:.8}
 .vB .top nav{display:none}
@@ -170,7 +190,7 @@ button.btn{font-family:inherit}
  .stats{grid-template-columns:repeat(3,1fr);gap:8px}
  .stat{padding:18px 8px}.stat .v{font-size:30px}.stat .v small{font-size:14px}.stat .l{font-size:13px}
  .cards,.fun .g,.visit .g,.pros{grid-template-columns:1fr}
- .sharebox{flex-direction:column;text-align:center;padding:22px 16px}.sharebox .qr{width:200px;height:200px}.sharebox .btns{justify-content:center}.sharebox .btn{flex:1 1 140px}
+ .sharebox{flex-direction:column;text-align:center;padding:22px 16px}.sharebox .qr{width:min(76vw,300px);height:auto}.sharebox .btns{justify-content:center}.sharebox .btn{flex:1 1 140px}
  .pg{padding:18px 14px}.pg ul{gap:6px}
  .vB .cards{grid-template-columns:1fr 1fr;gap:12px}
  .vB .card{padding:16px 12px}.vB .card img{width:80px;height:80px}.vB .card b{font-size:16px}.vB .card span{font-size:14px}
@@ -179,6 +199,8 @@ button.btn{font-family:inherit}
  .hero .btns .btn{flex:1 1 auto;padding:14px 16px;font-size:15px}
  .top .nm{font-size:15px}
  .vB .hero .btns,.vB .hero .note{display:none}
+ .heroR{order:-1}.hqr{display:none}
+ .vB .dock{gap:4px;padding:6px;left:8px;right:8px}.vB .dock a,.vB .dock button{white-space:nowrap;font-size:13px;padding:10px 2px;letter-spacing:-.02em}.vB .dock a.p{flex:1.25}
  .lead{font-size:16px}
 }
 </style>
@@ -202,7 +224,7 @@ button.btn{font-family:inherit}
   <div class="btns"><a class="btn p" href="tel:01028700899">📞 전화로 문의하기</a><a class="btn s" href="#why">왜 대연초일까요?</a></div>
   <p class="note">방문 문의는 <b>학부모 대표 010-2870-0899</b> · <b>감독님 010-3835-3052</b>로 연락 주세요.</p>
  </div>
- <div class="mas" role="img" aria-label="대연초 야구부 캐릭터 부캉이"></div>
+ <div class="heroR"><div class="mas" role="img" aria-label="대연초 야구부 캐릭터 부캉이"></div><button type="button" class="hqr" onclick="JQ.open()"><img src="img/qr-join.svg" alt="모집 페이지 QR 코드"><span><b>QR로 나눠 주세요</b>누르면 크게 보여요</span></button></div>
 </div></section>
 
 <section class="value" id="value"><div class="wrap">
@@ -316,13 +338,14 @@ button.btn{font-family:inherit}
  <div class="eye">이 페이지 알리기</div>
  <h2 class="h sec-h">QR로 <em>함께 나눠요</em></h2>
  <div class="sharebox">
-  <img class="qr" src="img/qr-join.svg" alt="dybbr.github.io/join 으로 가는 QR 코드" width="220" height="220">
+  <img class="qr" onclick="JQ.open()" src="img/qr-join.svg" alt="dybbr.github.io/join 으로 가는 QR 코드" width="220" height="220">
   <div class="st">
    <p class="lead">휴대폰 카메라로 찍으면 이 페이지가 바로 열려요. 야구에 관심 있는 친구 부모님께 보내 주세요.</p>
    <div class="url">dybbr.github.io/join</div>
    <div class="btns">
     <a class="btn p" href="img/qr-join.png" download="대연초야구부_신입모집_QR.png">⬇ QR 그림 받기</a>
     <button class="btn s" type="button" id="shareBtn">🔗 주소 보내기</button>
+    <button class="btn s" type="button" onclick="JQ.open()">🔳 QR 크게 보기</button>
    </div>
    <p class="done" id="shareMsg" hidden>주소를 복사했어요. 카톡에 붙여 넣어 보내 주세요.</p>
   </div>
@@ -339,8 +362,42 @@ button.btn{font-family:inherit}
 <nav class="dock" aria-label="빠른 문의">
  <a class="p" href="tel:01028700899">📞 학부모 대표<small>방문 문의</small></a>
  <a class="p" href="tel:01038353052">📞 감독님<small>방문 문의</small></a>
+ <button type="button" onclick="JQ.open()">🔳 QR<small>크게 보기</small></button>
  <a href="#visit">📍 오시는 길<small>대연역 8분</small></a>
 </nav>
+<script>window.JQ_BASE='../';
+// 🔳 신입 모집 QR 크게 보기 (v2.166.0) — 모집 페이지 dybbr.github.io/join/ 로 가는 QR
+window.JQ = (function () {
+  var U = 'https://dybbr.github.io/join/', B = (window.JQ_BASE || ''), IN = /\/join\/?$/.test(location.pathname);
+  function el() {
+    var o = document.getElementById('jqOv'); if (o) return o;
+    o = document.createElement('div'); o.id = 'jqOv'; o.className = 'jq-ov'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-modal', 'true');
+    o.innerHTML = '<div class="jq-card"><div class="t">2027 대연초 야구부<br><em>신입 선수 모집</em></div><div class="s">특별 모집 · 12월까지 선착순</div>'
+      + '<img class="jq-qr" src="' + B + 'join/img/qr-join.svg" alt="신입 모집 페이지 QR 코드">'
+      + '<div class="jq-url">dybbr.github.io/join</div><div class="jq-tip">휴대폰 카메라로 찍으면 모집 안내가 열려요</div>'
+      + '<div class="jq-btns">' + (IN ? '' : '<a class="p" href="' + B + 'join/" target="_blank" rel="noopener">🌐 모집 페이지 열기</a>')
+      + '<a href="' + B + 'join/img/qr-join.png" download="대연초야구부_신입모집_QR.png">⬇ QR 그림 받기</a><button type="button" data-a="share">🔗 주소 보내기</button>'
+      + '<button type="button" class="x" data-a="x">닫기</button></div><div class="jq-done" hidden>주소를 복사했어요. 카톡에 붙여 넣어 주세요.</div></div>';
+    o.addEventListener('click', function (e) {
+      var a = e.target.closest('[data-a]');
+      if (e.target === o || (a && a.getAttribute('data-a') === 'x')) return close();
+      if (a && a.getAttribute('data-a') === 'share') share(o);
+    });
+    document.body.appendChild(o); return o;
+  }
+  function share(o) {
+    var d = { title: '대연초 야구부 신입 선수 모집', text: '기본기부터, 함께 · 대연초 야구부 신입 선수 모집 (12월까지 선착순)', url: U };
+    if (navigator.share) { navigator.share(d).catch(function () {}); return; }
+    var m = o.querySelector('.jq-done'); function ok() { m.hidden = false; setTimeout(function () { m.hidden = true; }, 4000); }
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(U).then(ok, function () {});
+  }
+  function esc(e) { if (e.key === 'Escape') close(); }
+  function open() { el().classList.add('on'); document.addEventListener('keydown', esc); }
+  function close() { var o = document.getElementById('jqOv'); if (o) o.classList.remove('on'); document.removeEventListener('keydown', esc); }
+  return { open: open, close: close };
+})();
+
+</script>
 <script>
 (function(){var b=document.getElementById('shareBtn'),m=document.getElementById('shareMsg'),u='https://dybbr.github.io/join/';
 if(!b)return;b.addEventListener('click',function(){
