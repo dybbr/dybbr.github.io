@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.173.0 · 모집 페이지 연락처·연도 자동";
+        const APP_VERSION = "v2.174.0 · 급식당번 사전접수";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -123,8 +123,8 @@
     <script src="player-stats.js?v=2.170.2" defer></script>   <!-- 📊 v2.155.0: 선수 기록 순위표 (운영진) -->
     <link rel="stylesheet" href="attend.css?v=2.159.0">
     <script src="attend.js?v=2.159.0" defer></script>   <!-- 🙋 v2.159.0: 일정 참석 체크 · 🚗 카풀 배정 -->
-    <link rel="stylesheet" href="meal.css?v=2.162.0">
-    <script src="meal.js?v=2.162.0" defer></script>   <!-- 🍱 v2.162.0: 동계훈련 급식당번 신청 (공연장 좌석표) -->
+    <link rel="stylesheet" href="meal.css?v=2.174.0">
+    <script src="meal.js?v=2.174.0" defer></script>   <!-- 🍱 v2.162.0: 동계훈련 급식당번 신청 (공연장 좌석표) -->
 
     <style>
         :root {

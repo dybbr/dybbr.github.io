@@ -1,5 +1,6 @@
 // ==========================================================
 // 🍱 동계훈련 급식당번 신청 (v2.162.0 · 하코 11-28 선택: A안 「공연장 좌석표」)
+//   v2.174.0 [6-01]: 신청 열기~마감을 「사전접수」로 부르고 위에 3단계 막대(사전접수 → 남은 칸 3번째 → 동계훈련) + D-day
 //   · 배식차가 오고 학부모 3팀이 배식을 도움 → 날짜마다 신청 칸 3개 + 후보 칸 1개 (운영진이 바꿀 수 있음)
 //   · 1팀 = 선수 1명의 학부모님 · 대상 학년만 신청 (기본 5·4·3·2학년, 6학년 빼기)
 //   · 달력 격자(주 × 요일)에서 빈 칸을 눌러 고르고 「신청하기」 · 우리 칸을 누르면 취소
@@ -60,6 +61,22 @@
         const h = S.rows.filter(r => r.s === HOO && (k ? same(k, r) : isMineRow(r)));
         return { main: m, hoo: h };
     }
+    // ---------- 사전접수 단계 막대 (v2.174.0 · 하코 11-28 선택 A안) ----------
+    //   사전접수(신청 열기 ~ 마감) → 남은 칸 3번째(마감 며칠 전부터) → 동계훈련(당번 나가는 날) · 지금 단계는 흰 칸 + D-day
+    function dleft(dt) { return Math.round((dOf(String(dt).slice(0, 10)) - dOf(nowLocal().slice(0, 10))) / 864e5); }
+    function dday(dt) { const n = dleft(dt); return n > 0 ? 'D-' + n : n === 0 ? '오늘' : ''; }
+    function phaseOf(c, now) { return c.open && now < c.open ? 'soon' : c.close && now >= c.close ? 'closed' : 'open'; }
+    function steps(c, ph, now) {
+        const extra = !!(c.extraFrom && c.close && c.extraFrom < c.close), inExtra = extra && ph === 'open' && now >= c.extraFrom;
+        const train = now.slice(0, 10) >= c.start;
+        const a = [{ t: '사전접수', d: `${c.open ? mdw(c.open.slice(0, 10)) : '지금'} ~ ${c.close ? mdw(c.close.slice(0, 10)) : '마감 없음'}<br>미리 날짜 고르기`,
+            st: ph === 'soon' ? 'next' : ph === 'open' && !inExtra ? 'now' : 'done',
+            now: ph === 'soon' ? dday(c.open) + ' 시작' : ph === 'open' && !inExtra && c.close ? dday(c.close) + ' 마감' : '' }];
+        if (extra) a.push({ t: '남은 칸 3번째', d: `${mdw(c.extraFrom.slice(0, 10))}부터<br>남은 칸 1번 더`, st: inExtra ? 'now' : ph === 'closed' ? 'done' : '', now: inExtra ? dday(c.close) + ' 마감' : '' });
+        a.push({ t: '동계훈련', d: `${mdw(c.start)} ~ ${mdw(c.end)}<br>당번 나가는 날`, st: ph === 'closed' && train ? 'now' : '', now: ph === 'closed' && !train ? dday(c.start) + ' 시작' : '' });
+        return a;
+    }
+    function tl(c, ph, now) { return `<div class="ml-tl">${steps(c, ph, now).map((x, i) => `<div class="ml-ts ${x.st}"><div class="ml-tn"><i>${x.st === 'done' ? '✓' : i + 1}</i>${x.t}${x.now ? `<em>${x.now}</em>` : ''}</div><small>${x.d}</small></div>`).join('<span class="ml-tar" aria-hidden="true">›</span>')}</div>`; }
     function limitNow() { const c = S.cfg; return c.max + (c.extraFrom && S.now >= c.extraFrom ? 1 : 0); }
 
     // ---------- 일정 탭 배너 · 관리 탭 묶음 ----------
@@ -85,14 +102,14 @@
         const c = CFG;
         let ok = false; try { ok = typeof canViewSchedule !== 'function' || canViewSchedule(); } catch (e) {}
         if (!c || !c.on || !ok || c.end < todayStr()) { el.style.display = 'none'; return; }
-        const now = nowLocal(), ph = c.open && now < c.open ? 'soon' : c.close && now >= c.close ? 'closed' : 'open';
+        const now = nowLocal(), ph = phaseOf(c, now);
         const kids = myKids(c), staff = isAdmin();
         if (!kids.length && !staff) { el.style.display = 'none'; return; }
         const when = `${md(c.start)} ~ ${md(c.end)}`;
-        const sub = ph === 'soon' ? `${dtTxt(c.open)} 신청 시작` : ph === 'open' ? (c.close ? `${dtTxt(c.close)} 마감` : '신청 받는 중') : '신청 마감 · 당번표 보기';
+        const sub = ph === 'soon' ? `사전접수 ${dtTxt(c.open)} 시작` : ph === 'open' ? (c.close ? `${dtTxt(c.close)} 마감 · ${dday(c.close)}` : '사전접수 받는 중') : '접수 마감 · 당번표 보기';
         el.classList.toggle('hot', ph === 'open');
-        el.innerHTML = `<span class="ml-bi" aria-hidden="true">🍱</span><div class="ml-bb"><div class="ml-bt">${esc(c.title || '동계훈련 급식당번')} ${ph === 'open' ? '<em>신청 중</em>' : ph === 'soon' ? '<em class="q">곧 시작</em>' : ''}</div>
-            <div class="ml-bs">${when} · 하루 ${c.per}팀${c.hoo ? ' + 후보 ' + c.hoo : ''} · ${esc(sub)}</div></div><span class="ml-ba">›</span>`;
+        el.innerHTML = `<span class="ml-bi" aria-hidden="true">🍱</span><div class="ml-bb"><div class="ml-bt">${esc(c.title || '동계훈련 급식당번')} ${ph === 'open' ? '<em>사전접수 중</em>' : ph === 'soon' ? `<em class="q">사전접수 ${dday(c.open) || '곧 시작'}</em>` : ''}</div>
+            <div class="ml-bs">훈련 ${when} · ${esc(sub)}</div></div><span class="ml-ba">›</span>`;
         el.style.display = 'flex';
     }
     function nowLocal() { const d = new Date(); return ymd(d) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()); }
@@ -172,8 +189,8 @@
     }
     function hero() {
         const c = S.cfg, n = S.days.length;
-        const ph = S.phase === 'soon' ? `⏰ ${dtTxt(c.open)}부터 신청할 수 있어요` : S.phase === 'open' ? `⏰ 신청 마감 ${c.close ? dtTxt(c.close) : '없음'} · 마감 뒤 바꾸기는 운영진에게` : S.phase === 'closed' ? '✅ 신청이 마감됐어요 · 바꾸기는 운영진에게' : '⏸ 신청을 잠시 닫아 두었어요';
-        return `<div class="ml-hero"><div class="ml-hk">${dOf(c.start).getFullYear()} 동계훈련</div><div class="ml-ht">🍱 급식당번 신청</div>
+        const ph = S.phase === 'soon' ? `⏰ ${dtTxt(c.open)}부터 사전접수를 받아요 · 훈련 전에 미리 날짜를 골라 두세요` : S.phase === 'open' ? `⏰ 지금은 사전접수 기간이에요 · 훈련 전에 미리 날짜를 골라 두세요${c.close ? ' · 마감 ' + dtTxt(c.close) : ''}` : S.phase === 'closed' ? '✅ 사전접수가 마감됐어요 · 바꾸기는 운영진에게' : '⏸ 신청을 잠시 닫아 두었어요';
+        return `<div class="ml-hero"><div class="ml-hk">${dOf(c.start).getFullYear()} 동계훈련</div><div class="ml-ht">🍱 ${S.phase === 'closed' ? '급식당번표' : '급식당번 사전접수'}</div>${S.phase === 'off' ? '' : tl(c, S.phase, S.now)}
             <div class="ml-hm"><span>📅 ${mdw(c.start)} ~ ${mdw(c.end)} · ${n}일</span><span>🚚 배식차 점심 · 하루 학부모 ${c.per}팀 배식 도우미${c.gather ? ' · ' + esc(c.gather) + ' 집합' : ''}</span>
             <span>🎓 ${c.grades.join('·')}학년 학부모님 (선수 1명 = 1팀)</span><span>✋ 신청 1팀 ${c.max}번${c.hoo && c.hooMax ? ' + 후보 ' + c.hooMax + '번' : ''}</span></div>
             ${c.info ? `<div class="ml-hi">${esc(c.info)}</div>` : ''}<div class="ml-hd">${ph}</div></div>`;
@@ -236,7 +253,7 @@
     }
     function selCard() {
         const how = `<div class="ml-how"><b>둘이 동시에 누르면?</b> 서버가 한 줄로 세워서 먼저 도착한 신청만 받아요. 늦은 쪽은 「방금 찼어요」 창과 가까운 빈 칸을 바로 보여 줘요.</div>`;
-        if (!S.sel) return `<div class="ml-card"><div class="ml-h2">🎟 고른 칸</div><div class="ml-note">${S.phase === 'open' || S.edit ? '좌석표에서 빈 칸을 눌러 주세요. 우리 칸을 누르면 취소할 수 있어요.' : S.phase === 'soon' ? '신청이 시작되면 칸을 고를 수 있어요.' : '신청이 끝났어요.'}</div>${how}</div>`;
+        if (!S.sel) return `<div class="ml-card"><div class="ml-h2">🎟 고른 칸</div><div class="ml-note">${S.phase === 'open' || S.edit ? '좌석표에서 빈 칸을 눌러 주세요. 우리 칸을 누르면 취소할 수 있어요.' : S.phase === 'soon' ? '사전접수가 시작되면 칸을 고를 수 있어요.' : '신청이 끝났어요.'}</div>${how}</div>`;
         const x = S.sel, others = S.rows.filter(r => r.d === x.d && r.name).map(r => esc(r.name) + (r.s === HOO ? '(후보)' : '')).join(' · ');
         return `<div class="ml-card"><div class="ml-h2">🎟 고른 칸</div><div class="ml-big">${mdw(x.d)} · ${x.s === HOO ? '후보 칸' : x.s + '번 칸'}</div>
             <div class="ml-note">${others ? '같은 날: ' + others : '이날 첫 신청이에요'}${S.cfg.gather ? ' · ' + esc(S.cfg.gather) + ' 집합' : ''}</div>
@@ -273,7 +290,7 @@
     }
     function copyNone() {
         const c = S.cfg, el = eligible(c), none = el.filter(p => !S.rows.some(r => r.s !== HOO && same(p, r)));
-        const t = `[${c.title}] 아직 신청 안 하신 학부모님\n${none.map(p => p.name).join(', ')}\n사이트 일정 탭 맨 위 「급식당번」에서 빈 칸을 골라 신청해 주세요.${c.close ? '\n마감: ' + dtTxt(c.close) : ''}`;
+        const t = `[${c.title}] 사전접수 아직 안 하신 학부모님\n${none.map(p => p.name).join(', ')}\n사이트 일정 탭 맨 위 「급식당번」에서 빈 칸을 골라 신청해 주세요.${c.close ? '\n마감: ' + dtTxt(c.close) : ''}`;
         try { copyText(t, '미신청 알림 글을 복사했어요', '단톡방에 붙여 넣어 주세요'); } catch (e) {}
     }
     function copyAll() {
@@ -325,7 +342,7 @@
             <div class="ml-row"><span class="l">대상 학년</span><span class="ml-gr">${['6', '5', '4', '3', '2', '1'].map(g => `<button type="button" data-act="grade" data-v="${g}" class="${f.grades.indexOf(g) !== -1 ? 'on' : ''}">${g}</button>`).join('')}</span></div>
             <div class="ml-note" style="margin:-4px 0 6px">${gradeCount(f)}</div>
             <div class="ml-row"><span class="l">집합 시간</span><input type="time" class="ml-in" data-k="gather" value="${esc(f.gather || '')}"></div>
-            ${dt('open', '신청 열기 (비우면 바로)')}${dt('close', '신청 마감 (비우면 없음)')}
+            ${dt('open', '사전접수 시작 (비우면 바로)')}${dt('close', '사전접수 마감 (비우면 없음)')}
             <div class="ml-row"><span class="l">안내 한 줄</span><input class="ml-in" data-k="info" maxlength="80" placeholder="예: 배식차 11:30 도착 · 앞치마 챙겨 주세요" value="${esc(f.info || '')}"></div>
             ${tg('names', '학부모 화면에 다른 팀 이름 보이기')}${tg('on', '신청 화면 켜기')}
             <div class="ml-btns"><button type="button" class="ml-btn o" data-act="save"${S.busy ? ' disabled' : ''}>${S.busy ? '저장하는 중…' : '저장'}</button></div>
@@ -369,7 +386,7 @@
             return;
         }
         if (S.edit) return askAssign(d, s);   // 대표님 · 총무님 · 개발자: 아무 선수나 넣기 (우리 아이 포함)
-        if (S.phase !== 'open') { note('info', S.phase === 'soon' ? '아직 신청 시작 전이에요' : '신청이 마감됐어요', S.phase === 'soon' && S.cfg.open ? dtTxt(S.cfg.open) + '부터 신청할 수 있어요' : '바꾸려면 운영진에게 말씀해 주세요'); return; }
+        if (S.phase !== 'open') { note('info', S.phase === 'soon' ? '아직 사전접수 시작 전이에요' : '신청이 마감됐어요', S.phase === 'soon' && S.cfg.open ? dtTxt(S.cfg.open) + '부터 사전접수를 받아요' : '바꾸려면 운영진에게 말씀해 주세요'); return; }
         if (!S.kid) { note('info', '신청 대상 선수가 없어요', S.cfg.grades.join('·') + '학년 학부모님만 신청할 수 있어요'); return; }
         if (S.rows.some(q => q.d === d && same(S.kid, q))) { note('info', '이 날은 이미 신청했어요', '다른 날을 골라 주세요'); return; }
         const mc = mineCount(S.kid), lim = limitNow();

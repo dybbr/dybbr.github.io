@@ -156,3 +156,16 @@ html.ml-lock .ui-zoom-ctrl { display: none !important; }
   .ml-tip{background:#2a2113;border-color:#5b4417;color:#fcd34d}.ml-good{color:#bbf7d0}
   .ml-rng button.on,.ml-alt button.best{background:#2a1a0e}.ml-cal button.in{background:#5b3417;color:#fdba74}.ml-cal button.off{background:#1a2436}
 }
+
+/* v2.174.0 사전접수 단계 막대 */
+.ml-tl{display:flex;align-items:stretch;gap:4px;margin:10px 0 8px}
+.ml-ts{flex:1;min-width:0;background:rgba(255,255,255,.1);border-radius:10px;padding:7px 8px;word-break:keep-all}
+.ml-ts small{display:block;font-size:11px;opacity:.85;margin-top:2px;line-height:1.35}
+.ml-tn{font-size:12.5px;font-weight:900;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.ml-tn i{font-style:normal;width:17px;height:17px;border-radius:50%;background:rgba(255,255,255,.25);font-size:10.5px;display:inline-flex;align-items:center;justify-content:center}
+.ml-tn em{font-style:normal;font-size:10.5px;background:#ea580c;color:#fff;border-radius:6px;padding:1px 5px}
+.ml-ts.now{background:#fff;color:var(--navy)}.ml-ts.now .ml-tn i{background:var(--navy);color:#fff}
+.ml-ts.next{border:1px dashed rgba(255,255,255,.55)}
+.ml-ts.done{opacity:.6}
+.ml-tar{align-self:center;opacity:.6;font-weight:900}
+@media(max-width:480px){.ml-tar{display:none}.ml-ts{padding:6px}.ml-tn{font-size:11.5px}.ml-ts small{font-size:10.5px}}
