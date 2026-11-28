@@ -144,9 +144,9 @@
     }
     function pitStats(g) {
         g = g || G;
-        const P = {}, order = [], pend = { outs: 0, bf: 0, h: 0, bb: 0, k: 0, r: 0 }, startP = {}, logR = {};
+        const P = {}, order = [], pend = { outs: 0, bf: 0, h: 0, bb: 0, k: 0, r: 0, ue: 0 }, startP = {}, logR = {};
         let cur = null;
-        const get = e => { const k = pkey(e); if (!P[k]) { P[k] = { no: e.no || '', name: e.name || '', outs: 0, bf: 0, h: 0, bb: 0, k: 0, r: 0, inn: [] }; order.push(k); } return P[k]; };
+        const get = e => { const k = pkey(e); if (!P[k]) { P[k] = { no: e.no || '', name: e.name || '', outs: 0, bf: 0, h: 0, bb: 0, k: 0, r: 0, ue: 0, inn: [] }; order.push(k); } return P[k]; };
         const halfOuts = (i) => g.log.reduce((n, e) => n + ((e.t === 'them' && e.i === i && ((e.y === 'pa' && KIND[e.k] && KIND[e.k].o) || e.y === 'ro' || e.y === 'cs')) ? 1 : 0), 0);
         g.log.forEach(e => {
             if (e.t !== 'them') return;
@@ -155,11 +155,11 @@
             const w = cur || pend;
             if (e.y === 'pa') { const K = KIND[e.k] || {}; w.bf++; if (K.h) w.h++; if (K.bb) w.bb++; if (K.c === 'k') w.k++; if (K.o) w.outs++; if (cur && cur.inn.indexOf(e.i) === -1) cur.inn.push(e.i); }
             else if (e.y === 'ro' || e.y === 'cs') w.outs++;
-            else if (e.y === 'run') { w.r++; logR[e.i] = (logR[e.i] || 0) + 1; }
+            else if (e.y === 'run') { w.r++; if (isUE(e, g)) w.ue++; logR[e.i] = (logR[e.i] || 0) + 1; }
             else if (e.y === 'end') { w.outs += Math.max(0, 3 - halfOuts(e.i)); if (cur && cur.inn.indexOf(e.i) === -1) cur.inn.push(e.i); }
         });
         if (!order.length) return [];
-        for (const i in (g.runs.them || {})) { const d = (g.runs.them[i] || 0) - (logR[i] || 0); if (d > 0) (startP[i] || P[order[0]]).r += d; }
+        for (const i in (g.runs.them || {})) { const d = (g.runs.them[i] || 0) - (logR[i] || 0); if (d > 0) { const w = startP[i] || P[order[0]]; w.r += d; w.ue += Math.min(d, (g.ueI || {})[i] || 0); } }
         if (!g.recThem) for (const i in ((g.adjI || {}).them || {})) { const a = g.adjI.them[i], w = startP[i] || P[order[0]]; w.h += a.H || 0; w.bb += a.B || 0; w.hb = 1; }   // 숫자만 경기: 회마다 넣은 안타 · 4사구를 그 회 투수에게
         const pc = g.pcnt || {};
         return order.map(k => Object.assign(P[k], { pc: pc[k] > 0 ? pc[k] : 0, recBf: !!g.recThem }));
@@ -202,7 +202,7 @@
     }
     function pitTable(ro) {   // 경기 끝 · 기록 보기: 투수별 이닝 · 투구 수
         const L = pitStats(); if (!L.length) return ro ? '' : `<p class="hint">⚾ 투수를 안 골랐어요. 투수 기록이 필요하면 「경기로 돌아가기」 → 상대 공격 때 투수를 골라 주세요.</p>`;
-        return `<div class="pitt"><div class="lbl">⚾ 우리 투수 ${ro ? '' : '<small>투구 수는 알면 넣고, 모르면 비워 두세요</small>'}</div><table><tr><th>투수</th><th>이닝</th>${G.recThem ? '<th>타자</th><th>안타</th><th>4사구</th><th>삼진</th>' : ''}<th>실점</th><th>투구 수</th></tr>${L.map(q => `<tr><td class="nm"><b>${esc(q.no)}</b> ${esc(q.name)}</td><td>${ipTxt(q.outs)}</td>${G.recThem ? `<td>${q.bf}</td><td>${q.h}</td><td>${q.bb}</td><td>${q.k}</td>` : ''}<td>${q.r}</td><td>${ro ? (q.pc || '-') : `<input data-pc="${esc(pkey(q))}" inputmode="numeric" maxlength="3" placeholder="모름" value="${q.pc || ''}">`}</td></tr>`).join('')}</table></div>`;
+        return `<div class="pitt"><div class="lbl">⚾ 우리 투수 ${ro ? '' : '<small>투구 수는 알면 넣고, 모르면 비워 두세요</small>'}</div><table><tr><th>투수</th><th>이닝</th>${G.recThem ? '<th>타자</th><th>안타</th><th>4사구</th><th>삼진</th>' : ''}<th>실점</th><th>투구 수</th></tr>${L.map(q => `<tr><td class="nm"><b>${esc(q.no)}</b> ${esc(q.name)}</td><td>${ipTxt(q.outs)}</td>${G.recThem ? `<td>${q.bf}</td><td>${q.h}</td><td>${q.bb}</td><td>${q.k}</td>` : ''}<td>${q.r}${q.ue ? `<small> (비자책 ${q.ue})</small>` : ''}</td><td>${ro ? (q.pc || '-') : `<input data-pc="${esc(pkey(q))}" inputmode="numeric" maxlength="3" placeholder="모름" value="${q.pc || ''}">`}</td></tr>`).join('')}</table></div>`;
     }
 
     // ---------- ⏱ v2.161.0 타순 없이 시작 → 타석에 들어설 때 선수 고르기 (하코 · 대표님: 경기 직전 선발을 알기 어려움) ----------
@@ -271,7 +271,89 @@
         else if (NEW === 'A' || NEW === 'C') {   // A(추천) · C안: 상대 9번이 치면 「10번 타자 있나요?」
             if (t === 'them' && !ended && G.cur.t === t && G.cur.s === 1 && e.s === nSlots(t) && nSlots(t) < 12 && G.slotAsked !== nSlots(t)) { G.slotAsked = nSlots(t); ui.ask = { y: 'slot' }; }
         }
+        if (t === 'them' && k === 'E') errAsk({ id: e.id, i: e.i, d: e.d });   // 🧤 v2.169.0
         save(); draw();
+    }
+
+    // ---------- 🧤 v2.169.0 실책 선수 · 비자책 실점 (하코 요청 · 시안 window.SB_ERR) ----------
+    //   A 바로 묻기 창 · B 한 줄로 묻기(안 막음) · C 경기 끝에 한 번에 — 넷(A · B · D · E) 입력 방식 모두 같은 record() 를 지나서 똑같이 붙음
+    //   실책: 상대 타석 「실책」 기록에 ef {no,name,pos} · 숫자만 화면은 {y:'err'} 기록 · 비자책: 득점 기록에 ue (안 정하면 「실책으로 나간 주자가 들어온 점수」 = 비자책)
+    const ERRV = (typeof window !== 'undefined' && window.SB_ERR) || 'A';
+    const D2P = { 투: ['1'], 포: ['2'], 1: ['3'], 2: ['4'], 3: ['5'], 유: ['6'], 좌: ['7'], 중: ['8'], 우: ['9'], 좌중: ['7', '8'], 우중: ['8', '9'] };
+    const PNM = { 1: '투수', 2: '포수', 3: '1루수', 4: '2루수', 5: '3루수', 6: '유격수', 7: '좌익수', 8: '중견수', 9: '우익수' };
+    function fielders() {   // 지금 우리 수비: 타순 마지막 선수 + 수비 위치, 지금 투수는 1
+        const L = []; G.tm.us.ln.forEach(sl => { const q = sl.ps[sl.ps.length - 1]; if (q && (q.no || q.name)) L.push({ no: q.no || '', name: q.name || '', pos: String(q.pos || '') }); });
+        const p = curPit();
+        if (p) { const h = L.find(q => pkey(q) === pkey(p)); L.forEach(q => { if (q.pos === '1' && q !== h) q.pos = ''; }); if (h) h.pos = '1'; else L.push({ no: p.no || '', name: p.name || '', pos: '1' }); }
+        return L;
+    }
+    function errEv(o) { return o && o.id ? G.log.find(x => x.id === o.id) : null; }
+    function errOf(o) { const e = errEv(o); return e ? e.ef : null; }
+    function errLabel(f) { return f ? (f.pos && PNM[f.pos] ? PNM[f.pos] + ' ' : '') + (f.no ? '#' + f.no + ' ' : '') + (f.name || '') : ''; }
+    function errRec(d) { const ps = D2P[d] || [], F = fielders(); return ps.map(ps1 => F.find(q => q.pos === ps1) || { no: '', name: '', pos: ps1 }); }
+    function errAsk(o) {
+        if (ERRV === 'A') { ui.errFor = o; ui.panel = 'err'; }
+        else if (ERRV === 'B') ui.eask = Object.assign({ y: 'err' }, o);
+    }
+    function setErr(o, f) {
+        const e = errEv(o);
+        if (e) e.ef = f; else { const x = [...G.log].reverse().find(z => z.y === 'err' && z.i === o.i && !z.no && !z.name && !z.pos); if (x) Object.assign(x, f); else push(Object.assign({ y: 'err', t: 'them', i: o.i }, f)); }
+        ui.msg = '🧤 ' + o.i + '회 실책 · ' + (errLabel(f) || '모름');
+    }
+    function ueAuto(e, g) { if (!e.sc) return false; const pa = (g || G).log.filter(x => x.y === 'pa' && x.t === 'them' && x.i === e.i && x.s === e.sc.s && x.p === e.sc.p && x.id < e.id).pop(); return !!(pa && pa.k === 'E'); }
+    function isUE(e, g) { return e.ue != null ? !!e.ue : ueAuto(e, g); }
+    function innErr(i) { return G.log.some(x => x.t === 'them' && x.i === i && ((x.y === 'pa' && x.k === 'E') || x.y === 'err')) || (adjInn('them', i).E > 0); }
+    function runAsk(e) {
+        if (!e || e.t !== 'them' || !innErr(e.i)) return;
+        if (ERRV === 'A') { ui.ueFor = e.id; ui.panel = 'ue'; }
+        else if (ERRV === 'B') ui.eask = { y: 'ue', id: e.id };
+    }
+    function ueCount(i) { return G.log.filter(x => x.y === 'run' && x.t === 'them' && x.i === i && isUE(x)).length + ((G.ueI || {})[i] || 0); }
+    function fieldBtns(o) {   // 수비 위치 모양 그대로 9칸 (위치 안 정한 선수는 아래)
+        const F = fielders(), rec = (D2P[o.d] || []), cur = errOf(o) || {};
+        const cell = ps1 => { const q = F.find(x => x.pos === ps1) || { no: '', name: '', pos: ps1 }; return `<button type="button" data-a="errpick" data-no="${esc(q.no)}" data-name="${esc(q.name)}" data-pos="${ps1}" class="${rec.indexOf(ps1) !== -1 ? 'rec' : ''}${cur.pos === ps1 ? ' on' : ''}"><i>${ps1}</i><small>${PNM[ps1]}</small><b>${q.name ? esc(q.name) : q.no ? '#' + esc(q.no) : '&nbsp;'}</b></button>`; };
+        const grid = [['7', '8', '9'], ['6', '', '4'], ['5', '1', '3'], ['', '2', '']].map(r => r.map(x => x ? cell(x) : '<span></span>').join('')).join('');
+        const loose = F.filter(q => !q.pos || !PNM[q.pos]);
+        return `<div class="errfld">${grid}</div>${loose.length ? `<div class="lbl">수비 위치 안 정한 선수</div><div class="plist">${loose.map(q => `<button type="button" data-a="errpick" data-no="${esc(q.no)}" data-name="${esc(q.name)}" data-pos=""><b>${esc(q.no)}</b>${esc(q.name)}</button>`).join('')}</div>` : ''}`;
+    }
+    function errPanel() {
+        const o = ui.errFor || {}, e = errEv(o);
+        const who = e ? pName('them', e.s, e.p) : '';
+        return `<div class="sb-over" data-a="panel-x"><div class="sb-panel errp" data-stop="1"><h3>🧤 누가 실책했나요? <small>${o.i}회${who ? ' · ' + esc(who) : ''}${o.d ? ' · ' + esc(o.d) + ' 쪽' : ''}</small></h3>${fieldBtns(o)}
+            <p class="hint">${o.d ? '노란 칸 = 공이 간 쪽 수비수. ' : ''}선수 이름이 없으면 위치만 눌러도 돼요.</p><button type="button" class="big" data-a="errskip">모름 · 건너뛰기</button></div></div>`;
+    }
+    function uePanel() {
+        const e = G.log.find(x => x.id === ui.ueFor); if (!e) return '';
+        const a = ueAuto(e), w = e.sc ? pName('them', e.sc.s, e.sc.p) : '';
+        return `<div class="sb-over" data-a="panel-x"><div class="sb-panel" data-stop="1"><h3>⚾ 방금 점수는? <small>${e.i}회 실책이 있었어요</small></h3><div class="kpick">
+            <button type="button" class="big o${a ? '' : ' rec'}" data-a="uepick" data-v="0"><b>자책점</b>투수가 내준 점수 (실책이 없었어도 들어왔을 점수)</button>
+            <button type="button" class="big h${a ? ' rec' : ''}" data-a="uepick" data-v="1"><b>비자책점</b>실책 때문에 난 점수${a ? ` · ${esc(w)} 실책으로 나간 주자` : ''}</button></div>
+            <p class="hint">모르겠으면 닫으세요. ${a ? '실책으로 나간 주자라 비자책' : '자책'}으로 셀게요.</p><button type="button" class="big" data-a="panel-x">닫기</button></div></div>`;
+    }
+    function errLine() {   // B: 한 줄로 묻기 (안 눌러도 계속 기록)
+        if (ERRV !== 'B' || !ui.eask || G.done) return '';
+        const q = ui.eask;
+        if (q.y === 'err') { const R = errRec(q.d); return `<div class="sb-now ask errask"><span>🧤 <b>${q.i}회 실책</b> 누구?</span>${R.map(x => `<button type="button" class="pri" data-a="errpick" data-no="${esc(x.no)}" data-name="${esc(x.name)}" data-pos="${x.pos}">${esc(errLabel(x))}</button>`).join('')}<button type="button" data-a="errmore">${R.length ? '다른 선수' : '선수 고르기'}</button><button type="button" class="x" data-a="easkx" aria-label="닫기">✕</button></div>`; }
+        const e = G.log.find(x => x.id === q.id); if (!e) return '';
+        const a = isUE(e);
+        return `<div class="sb-now ask errask"><span>⚾ <b>방금 점수</b></span><button type="button" class="${a ? '' : 'pri'}" data-a="uepick" data-v="0">자책</button><button type="button" class="${a ? 'pri' : ''}" data-a="uepick" data-v="1">비자책 (실책 때문)</button><button type="button" class="x" data-a="easkx" aria-label="닫기">✕</button></div>`;
+    }
+    function errFix() {   // 경기 끝: 실책 · 비자책 정리 (C안은 여기서만 · A · B안은 확인 · 고치기)
+        const E = G.log.filter(x => x.t === 'them' && ((x.y === 'pa' && x.k === 'E') || x.y === 'err'));
+        const inns = [...new Set(E.map(x => x.i).concat(Object.keys(((G.adjI || {}).them) || {}).filter(i => adjInn('them', +i).E > 0).map(Number)))].sort((a, b) => a - b);
+        if (!inns.length) return '';
+        const F = fielders(), opt = (cur, d) => { const R = (D2P[d] || []); const sel = cur || (R.length === 1 ? null : null); return `<option value="">모름</option>` + ['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(ps1 => { const q = F.find(x => x.pos === ps1) || { no: '', name: '' }; const v = ps1 + '|' + q.no + '|' + q.name; return `<option value="${esc(v)}"${cur && cur.pos === ps1 ? ' selected' : ''}>${ps1} ${PNM[ps1]}${q.name ? ' ' + esc(q.name) : q.no ? ' #' + esc(q.no) : ''}${R.indexOf(ps1) !== -1 && !cur ? ' ← 공 간 쪽' : ''}</option>`; }).join('') + F.filter(q => !PNM[q.pos]).map(q => `<option value="${esc('|' + q.no + '|' + q.name)}"${cur && !cur.pos && cur.name === q.name && cur.no === q.no ? ' selected' : ''}>${esc(q.no)} ${esc(q.name)}</option>`).join(''); };
+        let todo = 0;
+        const rows = inns.map(i => {
+            const L = E.filter(x => x.i === i), nS = (G.recThem ? 0 : Math.max(0, (adjInn('them', i).E || 0) - L.length));
+            const er = L.map(x => { const f = x.y === 'err' ? (x.pos || x.no || x.name ? x : null) : x.ef; if (!f) todo++; return `<div class="ef"><span>${x.y === 'pa' ? esc(pName('them', x.s, x.p)) + (x.d ? ' · ' + esc(x.d) + ' 쪽' : '') : '실책'}</span><select data-ef="${x.id}">${opt(f, x.d)}</select></div>`; }).join('')
+                + Array.from({ length: nS }, () => { todo++; return `<div class="ef"><span>실책</span><select data-efn="${i}">${opt(null, '')}</select></div>`; }).join('');
+            const R = G.log.filter(x => x.y === 'run' && x.t === 'them' && x.i === i), rest = Math.max(0, runs('them', i) - R.length), uI = (G.ueI || {})[i] || 0;
+            const ru = R.map(x => `<button type="button" class="ue${isUE(x) ? ' on' : ''}" data-a="uetog" data-id="${x.id}">${x.sc ? esc(pName('them', x.sc.s, x.sc.p)) : '득점'} · ${isUE(x) ? '비자책' : '자책'}</button>`).join('');
+            const st = rest ? `<span class="uest">숫자로 넣은 실점 ${rest} 중 비자책 <button type="button" data-a="ueI" data-i="${i}" data-n="-1">−</button><b>${uI}</b><button type="button" data-a="ueI" data-i="${i}" data-n="1">＋</button></span>` : '';
+            return `<div class="efi"><b>${i}회</b><div>${er}${(R.length || rest) ? `<div class="eru">${ru}${st}</div>` : ''}</div></div>`;
+        }).join('');
+        return `<div class="errfix${ERRV === 'C' ? ' pri' : ''}"><div class="lbl">🧤 실책 · 비자책 정리 <small>${todo ? `아직 안 고른 실책 ${todo}개 · 몰라도 보내져요` : '다 골랐어요'}</small></div>${rows}<p class="hint">비자책 = 실책 때문에 난 점수. 처음 값은 「실책으로 나간 주자가 들어온 점수」예요. 누르면 자책 ↔ 비자책이 바뀌어요.</p></div>`;
     }
     // C안: 방금 기록을 낫아웃 · 병살타로 바꾸기
     function convertLast(id, k) {
@@ -330,7 +412,8 @@
         G.runs[t] = G.runs[t] || {}; G.runs[t][i] = runs(t, i) + 1;
         let ref = 0;   // 방금 친 타자의 타점으로 (실책 · 야선 · 삼진은 빼고)
         if (recOn(t)) { const last = [...G.log].reverse().find(x => x.y === 'pa' && x.t === t && x.i === i); if (last && KIND[last.k] && !KIND[last.k].e && !KIND[last.k].kk && last.k !== 'K' && last.k !== 'FC') { last.r = (last.r || 0) + 1; ref = last.id; } }
-        push({ y: 'run', t: t, i: i, ref: ref });
+        const rv = push({ y: 'run', t: t, i: i, ref: ref });
+        if (t === 'them') runAsk(rv);
         ui.msg = '득점 +1 · ' + G.tm[t].name + ' ' + total(t) + '점';
         save(); draw();
     }
@@ -341,7 +424,8 @@
             G.runs[t] = G.runs[t] || {}; G.runs[t][i] = runs(t, i) + 1;
             let ref = 0;
             if (act === 'run') { const last = [...G.log].reverse().find(x => x.y === 'pa' && x.t === t && x.i === i); if (last) { last.r = (last.r || 0) + 1; ref = last.id; } }
-            push({ y: 'run', t: t, i: i, sc: { s: s, p: p }, ref: ref });
+            const rv = push({ y: 'run', t: t, i: i, sc: { s: s, p: p }, ref: ref });
+            if (t === 'them') { ui.panel = ''; runAsk(rv); if (ui.panel === 'ue') { ui.rn = null; ui.msg = '득점 +1 · ' + nm; save(); draw(); return; } }
             ui.msg = '득점 +1 · ' + nm + (ref ? ' (타점 ' + pName(t, G.log.find(x => x.id === ref).s, G.log.find(x => x.id === ref).p) + ')' : ' (타점 없음)') + ' · ' + G.tm[t].name + ' ' + total(t) + '점';
         } else {
             push({ y: act, t: t, i: i, s: s, p: p });
@@ -394,6 +478,7 @@
         G.adjI = G.adjI || {}; G.adjI[t] = G.adjI[t] || {}; const r = G.adjI[t][i] = G.adjI[t][i] || {};
         if (n < 0 && !(r[key] > 0)) { ui.msg = i + '회에 넣은 ' + ({ H: '안타가', B: '4사구가', E: '실책이' })[key] + ' 없어요 · 다른 회 숫자는 점수판에서 고쳐요'; draw(); return; }
         r[key] = (r[key] || 0) + n; adj(t, key, n);
+        if (t === 'them' && key === 'E') { if (n > 0) { errAsk({ i: i }); if (ui.panel === 'err' || ui.eask) draw(); } else { const L = G.log.filter(x => x.y === 'err' && x.i === i); if (L.length > r.E) G.log.splice(G.log.indexOf(L[L.length - 1]), 1); save(); } }   // 🧤 v2.169.0
     }
     function setRun(t, i, n) { G.runs[t] = G.runs[t] || {}; G.runs[t][i] = Math.max(0, runs(t, i) + n); save(); draw(); }
 
@@ -574,7 +659,7 @@
         const st = stat('them');
         const ai = adjInn('them', G.cur.i);
         const c = (lab, key) => `<div class="cnt"><span>이번 회 ${lab}<small>경기 합계 ${st[key]}</small></span><button type="button" data-a="adj" data-k="${key}" data-n="-1">−</button><b>${ai[key] || 0}</b><button type="button" data-a="adj" data-k="${key}" data-n="1">＋</button></div>`;
-        return `<div class="sb-pad simple"><div class="lbl">${esc(G.tm.them.name)} 공격 — 숫자만 올려요</div><div class="cnt"><span>이번 회 득점</span><button type="button" data-a="run-" data-t="them" data-i="${G.cur.i}">−</button><b>${runs('them', G.cur.i)}</b><button type="button" data-a="run+" data-t="them" data-i="${G.cur.i}">＋</button></div>${c('안타', 'H')}${c('4사구', 'B')}${c('실책', 'E')}<button type="button" class="big" data-a="end">${esc(G.tm.them.name)} 공격 끝 ▶</button></div>`;
+        return `<div class="sb-pad simple"><div class="lbl">${esc(G.tm.them.name)} 공격 — 숫자만 올려요</div><div class="cnt"><span>이번 회 득점</span><button type="button" data-a="run-" data-t="them" data-i="${G.cur.i}">−</button><b>${runs('them', G.cur.i)}</b><button type="button" data-a="run+" data-t="them" data-i="${G.cur.i}">＋</button></div>${c('안타', 'H')}${c('4사구', 'B')}${c('실책', 'E')}${ERRV !== 'C' && ai.E > 0 ? `<div class="cnt ue"><span>그중 비자책 실점<small>실책 때문에 난 점수</small></span><button type="button" data-a="ueI" data-i="${G.cur.i}" data-n="-1">−</button><b>${(G.ueI || {})[G.cur.i] || 0}</b><button type="button" data-a="ueI" data-i="${G.cur.i}" data-n="1">＋</button></div>` : ''}<button type="button" class="big" data-a="end">${esc(G.tm.them.name)} 공격 끝 ▶</button></div>`;
     }
     function gameHtml() {
         const m = mode(), t = G.cur.t, on = recOn(t), st = ui.sheetT || t;
@@ -596,8 +681,10 @@
         if (ui.panel === 'askend') { const pi = G.cur.i - 1; over = `<div class="sb-over"><div class="sb-panel" data-stop="1"><h3>🏁 ${pi}회말까지 끝났어요</h3><p class="fin">${esc(G.tm.us.name)} ${total('us')} : ${total('them')} ${esc(G.tm.them.name)}</p><p class="hint">경기가 끝났으면 확인하고 서버에 보내요. 연장이면 계속 기록하세요.</p><button type="button" class="big pri" data-a="finish">🏁 경기 끝 · 확인하고 보내기</button><button type="button" class="big" data-a="panel-x">연장 · 계속 기록</button></div></div>`; }
         if (ui.panel === 'sheet') over = `<div class="sb-over full"><div class="sb-panel full" data-stop="1"><h3>📋 기록표 <small>칸을 누르면 고쳐요</small></h3>${sheet}<button type="button" class="big" data-a="panel-x">닫기</button></div></div>`;
         if (ui.panel === 'pit') over = pitPanel();
+        if (ui.panel === 'err') over = errPanel();
+        if (ui.panel === 'ue') over = uePanel();
         if (on && t === 'us' && emptyBat() && LNV === 'B' && !over) { lnAuto(); if (ui.panel === 'who') over = whoPanel(); }
-        const input = pitBar() + (on ? `${t === 'us' ? lnAsk() : ''}${nowLine()}${baseHtml()}${padHtml(m)}` : simpleThem());
+        const input = pitBar() + errLine() + (on ? `${t === 'us' ? lnAsk() : ''}${nowLine()}${baseHtml()}${padHtml(m)}` : simpleThem());
         return `${topBar((G.title || '경기') + ' · vs ' + G.tm.them.name, `${G.done ? '' : `<button type="button" class="sb-fin" data-a="finish">🏁 경기 끝</button>`}<button type="button" class="sb-mode" data-a="menu" aria-label="설정">${LAY ? '⚙ 설정' : m + '안 ▾'}</button>`)}
         <div class="sb-body m${m}${on ? '' : ' simple'}${LAY ? ' lay' + LAY : ''}${TAB ? ' tab' + TAB : ''}"><div class="sb-main">${G.done ? `<button type="button" class="sb-donebar" data-a="finish">🏁 경기 끝 · 다 고쳤으면 여기를 눌러 보내기</button>` : ''}${statusHtml()}${m === 'B' && on ? sheet : ''}${input}${toolsHtml()}${m !== 'B' || !on ? `<button type="button" class="sb-sheetbtn" data-a="sheet">📋 기록표 보기 · 고치기</button>` : ''}</div><div class="sb-side">${boardHtml(false)}${sheet}</div></div>${over}`;
     }
@@ -624,7 +711,7 @@
     const DIRPOS = { 1: '투수', 2: '포수', 3: '1루수', 4: '2루수', 5: '3루수', 6: '유격수', 7: '좌익수', 8: '중견수', 9: '우익수', DH: '지명' };
     function finishPanel() {
         const us = total('us'), th = total('them'), r = us > th ? '승' : us < th ? '패' : '무';
-        return `<div class="sb-over"><div class="sb-panel" data-stop="1"><h3>🏁 경기 끝</h3><p class="fin"><b>${r === '승' ? '승리' : r === '패' ? '패배' : '무승부'}</b> ${esc(G.tm.us.name)} ${us} : ${th} ${esc(G.tm.them.name)}</p>${boardHtml(false)}${pitTable(false)}<p class="hint">틀린 칸이 있으면 「기록표 고치기」에서 먼저 고친 뒤 보내세요. 보낸 뒤에 다시 고쳐서 또 보내도 돼요(덮어써요).</p><button type="button" class="big" data-a="sheet">📋 기록표 고치기</button><button type="button" class="big" data-a="board">점수판 고치기</button><button type="button" class="big pri" data-a="send">📤 서버에 보내기 (저장)</button><button type="button" class="big" data-a="img">🖼 기록표 이미지 · 인쇄</button>${G.sentAt ? (G.sentSig && G.sentSig !== sig(bodyOf()) ? `<p class="hint warn">보낸 뒤에 고친 내용이 있어요. 한 번 더 보내 주세요.</p>` : `<p class="hint ok">✔ ${G.sentAt > 1 ? new Date(G.sentAt).toLocaleString('ko-KR') + ' 에 ' : '서버에 '}보냈어요</p>`) : ''}<div class="f2"><button type="button" class="big" data-a="resume">경기로 돌아가기</button><button type="button" class="big" data-a="close">닫기</button></div></div></div>`;
+        return `<div class="sb-over"><div class="sb-panel" data-stop="1"><h3>🏁 경기 끝</h3><p class="fin"><b>${r === '승' ? '승리' : r === '패' ? '패배' : '무승부'}</b> ${esc(G.tm.us.name)} ${us} : ${th} ${esc(G.tm.them.name)}</p>${boardHtml(false)}${pitTable(false)}${errFix()}<p class="hint">틀린 칸이 있으면 「기록표 고치기」에서 먼저 고친 뒤 보내세요. 보낸 뒤에 다시 고쳐서 또 보내도 돼요(덮어써요).</p><button type="button" class="big" data-a="sheet">📋 기록표 고치기</button><button type="button" class="big" data-a="board">점수판 고치기</button><button type="button" class="big pri" data-a="send">📤 서버에 보내기 (저장)</button><button type="button" class="big" data-a="img">🖼 기록표 이미지 · 인쇄</button>${G.sentAt ? (G.sentSig && G.sentSig !== sig(bodyOf()) ? `<p class="hint warn">보낸 뒤에 고친 내용이 있어요. 한 번 더 보내 주세요.</p>` : `<p class="hint ok">✔ ${G.sentAt > 1 ? new Date(G.sentAt).toLocaleString('ko-KR') + ' 에 ' : '서버에 '}보냈어요</p>`) : ''}<div class="f2"><button type="button" class="big" data-a="resume">경기로 돌아가기</button><button type="button" class="big" data-a="close">닫기</button></div></div></div>`;
     }
     function setupHtml() {
         const used = {}; G.tm.us.ln.forEach((sl, i) => { used[sl.ps[0].no + '|' + sl.ps[0].name] = i + 1; });
@@ -810,7 +897,7 @@
             if (a === 'imgx' && e.target.closest('[data-stop]') && !e.target.closest('button[data-a="imgx"]')) return;
             act(a, el);
         });
-        r.addEventListener('change', e => { const s = e.target.closest('select[data-pos]'); if (s && G) { G.tm.us.ln[+s.dataset.pos].ps[0].pos = s.value; save(); } });
+        r.addEventListener('change', e => { const ef = e.target.closest('select[data-ef],select[data-efn]'); if (ef && G) { const [ps1, no, name] = (ef.value || '||').split('|'), f = ef.value ? { no: no || '', name: name || '', pos: ps1 || '' } : null; if (ef.dataset.ef) { const x = G.log.find(z => z.id === +ef.dataset.ef); if (x) { if (x.y === 'err') Object.assign(x, f || { no: '', name: '', pos: '' }); else if (f) x.ef = f; else delete x.ef; } } else if (f) push(Object.assign({ y: 'err', t: 'them', i: +ef.dataset.efn }, f)); save(); draw(); return; } const s = e.target.closest('select[data-pos]'); if (s && G) { G.tm.us.ln[+s.dataset.pos].ps[0].pos = s.value; save(); } });
         r.addEventListener('input', e => { const s = e.target.closest('input[data-pc]'); if (!s || !G) return; const v = Math.min(200, parseInt(String(s.value).replace(/[^0-9]/g, ''), 10) || 0); G.pcnt = G.pcnt || {}; if (v) G.pcnt[s.dataset.pc] = v; else delete G.pcnt[s.dataset.pc]; save(); });   // ⚾ 투구 수 (비워도 됨)
         // D안: 누른 채 밀기
         let held = null, wh = null, pick = null;
@@ -871,6 +958,13 @@
         if (a === 'end') { endHalf(false); ui.msg = '공수교대 · ' + halfLabel(G.cur.t, G.cur.i); save(); draw(); return; }
         if (a === 'run+' || a === 'run-') return setRun(d.t, +d.i, a === 'run+' ? 1 : -1);
         if (a === 'adj') return adjI('them', G.cur.i, d.k, +d.n);
+        if (a === 'errpick') { const o = ui.panel === 'err' ? ui.errFor : ui.eask; if (o) setErr(o, { no: d.no || '', name: d.name || '', pos: d.pos || '' }); ui.panel = ''; ui.errFor = null; ui.eask = null; save(); draw(); return; }
+        if (a === 'errskip') { ui.panel = ''; ui.errFor = null; save(); draw(); return; }
+        if (a === 'errmore') { ui.errFor = ui.eask; ui.eask = null; ui.panel = 'err'; draw(); return; }
+        if (a === 'easkx') { ui.eask = null; draw(); return; }
+        if (a === 'uepick') { const id = ui.panel === 'ue' ? ui.ueFor : ui.eask && ui.eask.id, e = G.log.find(x => x.id === id); if (e) { e.ue = +d.v; ui.msg = '⚾ ' + e.i + '회 점수 · ' + (e.ue ? '비자책' : '자책'); } ui.panel = ''; ui.ueFor = null; ui.eask = null; save(); draw(); return; }
+        if (a === 'uetog') { const e = G.log.find(x => x.id === +d.id); if (e) e.ue = isUE(e) ? 0 : 1; save(); draw(); return; }
+        if (a === 'ueI') { G.ueI = G.ueI || {}; const i = +d.i, v = Math.max(0, ((G.ueI[i]) || 0) + (+d.n)); const lim = Math.max(0, runs('them', i) - G.log.filter(x => x.y === 'run' && x.t === 'them' && x.i === i).length); if (v > lim) { ui.msg = i + '회 실점(' + lim + ')보다 많이 넣을 수 없어요'; draw(); return; } G.ueI[i] = v; save(); draw(); return; }
         if (a === 'adj2') return adj(d.t, d.k, +d.n);
         if (a === 'board' || a === 'menu' || a === 'sheet' || a === 'finish') { if (a === 'finish') { G.done = true; save(); } ui.panel = a; draw(); return; }
         if (a === 'mode') { lsSet(LSM, d.m); ui.panel = ''; ui.pick = null; draw(); return; }
@@ -939,7 +1033,7 @@
     function keepSetup() { const t = document.getElementById('sbTitle'), o = document.getElementById('sbOpp'); if (t) G.title = t.value.trim().slice(0, 40); if (o) { const nn = o.value.trim().slice(0, 20) || '상대'; if (nn !== G.tm.them.name) { G.tm.them.name = nn; if (!G.begun) G.tm.them.ln = []; } } }
 
     // ---------- 보내기 ----------
-    function bodyOf() { return JSON.stringify({ v: G.v, id: G.id, ev: G.ev, date: G.date, title: G.title, place: G.place, start: G.start, first: G.first, recThem: G.recThem, tm: G.tm, log: G.log.map(e => { const o = Object.assign({}, e); delete o.pc; return o; }), runs: G.runs, adj: G.adj, adjI: G.adjI || {}, cur: G.cur, nx: G.nx, seq: G.seq, pcnt: G.pcnt || {}, pit: pitStats().map(q => ({ no: q.no, name: q.name, outs: q.outs, bf: q.recBf ? q.bf : null, h: q.recBf || q.hb ? q.h : null, bb: q.recBf || q.hb ? q.bb : null, k: q.recBf ? q.k : null, r: q.r, pc: q.pc || 0, inn: q.inn })), begun: true, done: true }); }
+    function bodyOf() { return JSON.stringify({ v: G.v, id: G.id, ev: G.ev, date: G.date, title: G.title, place: G.place, start: G.start, first: G.first, recThem: G.recThem, tm: G.tm, log: G.log.map(e => { const o = Object.assign({}, e); delete o.pc; return o; }), runs: G.runs, adj: G.adj, adjI: G.adjI || {}, cur: G.cur, nx: G.nx, seq: G.seq, pcnt: G.pcnt || {}, pit: pitStats().map(q => ({ no: q.no, name: q.name, outs: q.outs, bf: q.recBf ? q.bf : null, h: q.recBf || q.hb ? q.h : null, bb: q.recBf || q.hb ? q.bb : null, k: q.recBf ? q.k : null, r: q.r, ue: q.ue || 0, pc: q.pc || 0, inn: q.inn })), ueI: G.ueI || {}, begun: true, done: true }); }
     function sig(b) { let h = 0; for (let k = 0; k < b.length; k++) h = (h * 31 + b.charCodeAt(k)) | 0; return b.length + ':' + h; }
     // 🛡 v2.154.0: 서버에 있는 기록을 다른 기기의 빈 기록으로 덮어쓰지 않게
     function paCount(g) { return g && Array.isArray(g.log) ? g.log.filter(e => e.y === 'pa').length : 0; }
