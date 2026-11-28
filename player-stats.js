@@ -9,7 +9,7 @@
     'use strict';
     const LS = 'daeyeon_ps_cache';
     const HIT = { H1: 1, IH: 1, H2: 2, H3: 3, HR: 4, IHR: 4, BH: 1 }, NOAB = { BB: 1, HP: 1, SF: 1, SH: 1 };
-    const SY = { H1: '안', IH: '내안', H2: '2', H3: '3', HR: '홈', IHR: 'GH', BB: '4구', HP: '사구', K: 'K', GO: '땅', FO: '플', LO: '직', E: '실', SF: '희플', SH: '희번', FC: '야선', FF: '파플', KN: 'K(낫아웃)', KR: 'K(낫아웃 출루)', DP: '병살', BH: '번안', BO: '번아' };
+    const SY = { H1: '안', IH: '내안', H2: '2', H3: '3', HR: '홈', IHR: 'GH', BB: '볼넷', HP: '사구', K: 'K', GO: '땅', FO: '플', LO: '직', E: '실', SF: '희플', SH: '희번', FC: '야선', FF: '파플', KN: 'K(낫아웃)', KR: 'K(낫아웃 출루)', DP: '병살', BH: '번안', BO: '번아' };
     const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
     const f3 = x => x >= 1 ? x.toFixed(3) : x.toFixed(3).slice(1);
     function role() { try { return localStorage.getItem('daeyeon_admin_role') || sessionStorage.getItem('daeyeon_admin_role') || ''; } catch (e) { return ''; } }
@@ -66,7 +66,7 @@
             const den = q.ab + q.bb + q.hp + q.sf; q.obp = den ? (q.h + q.bb + q.hp) / den : 0;
             q.slg = q.ab ? q.tb / q.ab : 0; q.ops = q.obp + q.slg; q.hrAll = q.hr + q.ihr;
             // v2.168.0 프로 지표 (지금 기록만으로 계산)
-            const bip = q.ab - q.k - q.hrAll + q.sf, h1 = q.h - q.h2 - q.h3 - q.hrAll, wd = q.ab + q.bb + q.sf + q.hp;
+            const bip = q.ab - q.k - q.hrAll + q.sf, h1 = q.h - q.h2 - q.h3 - q.hrAll; q.h1 = h1; q.ob = q.h + q.bb + q.hp; const wd = q.ab + q.bb + q.sf + q.hp;
             q.babip = bip > 0 ? (q.h - q.hrAll) / bip : 0; q.iso = q.slg - q.avg; q.xbh = q.h2 + q.h3 + q.hrAll;
             q.kp = q.pa ? q.k / q.pa : 0; q.bbp = q.pa ? (q.bb + q.hp) / q.pa : 0; q.bbk = q.k ? (q.bb + q.hp) / q.k : (q.bb + q.hp);
             q.woba = wd ? (0.69 * q.bb + 0.72 * q.hp + 0.89 * h1 + 1.27 * q.h2 + 1.62 * q.h3 + 2.1 * q.hrAll) / wd : 0;
@@ -107,9 +107,9 @@
         const pp = recs ? (q ? pitchers(recs).find(x => String(x.no) === String(q.no) && x.name === q.name) : null) : null;
         if (!q || !q.pa) return `<div class="ps-card"><div class="ps-h">📊 시즌 기록</div><p class="ps-empty">아직 기록된 타석이 없어요. 대표님이 경기 기록을 보내면 여기에 저절로 쌓여요.</p>${pitCard(pp)}</div>`;
         const gl = q.games.slice().reverse().map(g => `<tr><td>${esc(String(g.date).slice(5).replace('-', '.'))}</td><td>${esc(g.opp)}</td><td class="n">${g.ab}-${g.h}</td><td class="n">${g.rbi}</td><td class="rs">${g.res.map(r => `<span class="${r.h ? 'h' : ''}">${esc(r.t)}</span>`).join('')}</td></tr>`).join('');
-        return `<div class="ps-card"><div class="ps-h">📊 시즌 기록 <small>${q.games.length}경기 · ${q.pa}타석</small></div>
+        return `<div class="ps-card"><div class="ps-h">📊 시즌 기록 <small>${q.games.length}경기 · ${q.pa}타석 · ${q.ab}타수 · 출루 ${q.ob}</small></div>
             <div class="ps-big"><div class="m"><span>타율</span><b>${f3(q.avg)}</b></div><div><span>출루율</span><b>${f3(q.obp)}</b></div><div><span>장타율</span><b>${f3(q.slg)}</b></div><div><span>OPS</span><b>${f3(q.ops)}</b></div></div>
-            <div class="ps-cnt"><div><b>${q.h}</b>안타</div><div><b>${q.h2}</b>2루타</div><div><b>${q.h3}</b>3루타</div><div><b>${q.hrAll}</b>홈런${q.ihr ? `<i>GH ${q.ihr}</i>` : ''}</div><div><b>${q.rbi}</b>타점</div><div><b>${q.r}</b>득점</div><div><b>${q.sb}</b>도루</div><div><b>${q.bb + q.hp}</b>4사구</div></div>
+            <div class="ps-cnt"><div><b>${q.h}</b>안타<i>1루타 ${q.h1}</i></div><div><b>${q.h2}</b>2루타</div><div><b>${q.h3}</b>3루타</div><div><b>${q.hrAll}</b>홈런${q.ihr ? `<i>GH ${q.ihr}</i>` : ''}</div><div><b>${q.rbi}</b>타점</div><div><b>${q.r}</b>득점</div><div><b>${q.sb}</b>도루</div><div><b>${q.k}</b>삼진</div><div><b>${q.bb}</b>볼넷</div><div><b>${q.hp}</b>사구<i>몸에 맞는 공</i></div><div><b>${q.sh}</b>희생번트</div><div><b>${q.sf}</b>희생플라이</div></div>
             ${advHtml(q)}${pitCard(pp)}
             <div class="ps-sub">타구 방향</div>${field(q.dirs)}
             <div class="ps-sub">경기별 기록</div><div class="ps-tw"><table class="ps-gl"><tr><th>날짜</th><th>상대</th><th>타수-안타</th><th>타점</th><th>타석 결과</th></tr>${gl}</table></div>
@@ -189,7 +189,7 @@
         const rate = sd[2];
         const L = st.players.slice().sort((a, b) => (rate ? (b.pa >= reg) - (a.pa >= reg) : 0) || b[sd[0]] - a[sd[0]] || b.pa - a.pa);
         let n = 0;
-        const cols = [['avg', '타율', 1], ['g', '경기'], ['pa', '타석'], ['ab', '타수'], ['h', '안타'], ['h2', '2루타'], ['h3', '3루타'], ['hrAll', '홈런'], ['rbi', '타점'], ['r', '득점'], ['sb', '도루'], ['bbhp', '4사구'], ['k', '삼진'], ['obp', '출루율', 1], ['slg', '장타율', 1], ['ops', 'OPS', 1], ['babip', 'BABIP', 1], ['iso', '순수장타율', 1], ['woba', 'wOBA', 1], ['kp', '삼진 비율', 2], ['bbp', '4사구 비율', 2], ['e', '실책']];
+        const cols = [['avg', '타율', 1], ['g', '경기'], ['pa', '타석'], ['ob', '출루'], ['ab', '타수'], ['h', '안타'], ['h1', '1루타'], ['h2', '2루타'], ['h3', '3루타'], ['hrAll', '홈런'], ['rbi', '타점'], ['r', '득점'], ['bb', '볼넷'], ['hp', '사구'], ['sh', '희생번트'], ['sf', '희생플라이'], ['sb', '도루'], ['k', '삼진'], ['obp', '출루율', 1], ['slg', '장타율', 1], ['ops', 'OPS', 1], ['babip', 'BABIP', 1], ['iso', '순수장타율', 1], ['woba', 'wOBA', 1], ['kp', '삼진 비율', 2], ['bbp', '4사구 비율', 2], ['e', '실책']];
         const val = (q, c) => c[0] === 'g' ? q.games.length : c[0] === 'bbhp' ? q.bb + q.hp : c[2] === 2 ? pc(q[c[0]]) : c[2] ? f3(q[c[0]]) : q[c[0]];
         const rows = L.map(q => { const ok = !rate || q.pa >= reg; if (ok) n++; return `<tr class="${ok ? '' : 'low'}" data-ps="${esc(q.no + '|' + q.name)}"><td class="rn">${ok ? n : '-'}</td><td class="st">${esc(q.no)} ${esc(q.name)}</td>${cols.map(c => `<td class="${c[0] === rk.sort ? 'srt' : ''}">${val(q, c)}</td>`).join('')}</tr>`; }).join('');
         const open = rk.open ? st.players.find(q => q.no + '|' + q.name === rk.open) : null;

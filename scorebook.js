@@ -15,7 +15,7 @@
         H2: { s: '2', n: '2루타', d: 1, h: 1, ab: 1, c: 'h' }, H3: { s: '3', n: '3루타', d: 1, h: 1, ab: 1, c: 'h' }, HR: { s: '홈', n: '홈런', d: 1, h: 1, ab: 1, c: 'h' },
         GO: { s: '땅', n: '땅볼', d: 1, ab: 1, o: 1, c: 'o' }, FO: { s: '플', n: '플라이', d: 1, ab: 1, o: 1, c: 'o' }, LO: { s: '직', n: '직선타', d: 1, ab: 1, o: 1, c: 'o' },
         E: { s: '실', n: '실책', d: 1, ab: 1, e: 1, c: 'e' }, SF: { s: '희플', n: '희생플라이', d: 1, o: 1, c: 'o' },
-        BB: { s: '4구', n: '4구', bb: 1, c: 'w' }, HP: { s: '사구', n: '사구', bb: 1, c: 'w' }, K: { s: 'K', n: 'K', ab: 1, o: 1, c: 'k' },
+        BB: { s: '볼넷', n: '볼넷', bb: 1, c: 'w' }, HP: { s: '사구', n: '사구', bb: 1, c: 'w' }, K: { s: 'K', n: 'K', ab: 1, o: 1, c: 'k' },
         SH: { s: '희번', n: '희생번트', o: 1, c: 'o' }, FC: { s: '야선', n: '야수선택', ab: 1, c: 'e' },
         IHR: { s: 'GH', n: '그라운드 홈런', d: 1, h: 1, ab: 1, c: 'h' }, FF: { s: '파플', n: '파울플라이', d: 1, ab: 1, o: 1, c: 'o' },   // v2.154.0 대표님 요청
         // v2.156.0 대표님 요청: 낫아웃 두 가지(둘 다 삼진) · 병살타(타자 아웃 + 주자 1명 아웃 = 2아웃)
@@ -622,8 +622,8 @@
     function padHtml(m) {
         if (m === 'A') return `<div class="sb-pad pa"><div class="lbl">① 결과</div><div class="g3">${kb('H1')}${kb('H2')}${kb('H3')}${kb('BB')}${kb('HP')}${kb('K')}${kb('GO')}${kb('FO')}${kb('LO')}${kb('HR')}${kb('IHR')}${kb('E')}${kb('SF')}${kb('FF')}${kb('SH')}${kb('BH')}${kb('BO')}${kb('IH')}${kb('FC')}${kb('KN')}${kb('KR')}${kb('DP')}</div><div class="lbl">② 공이 간 곳${ui.pick ? ' — ' + KIND[ui.pick].n + ' 어디로?' : ''}</div>${fieldPad()}</div>`;
         if (m === 'D') { const dk = k => `<button type="button" class="kb ${KIND[k].c}" data-drag="${k}">${KIND[k].n}</button>`;
-            if (DLAY === 'A') return `<div class="sb-pad pd da"><div class="g5 tap">${kb('BB')}${kb('HP')}${kb('K')}${kb('SH')}${kb('FC')}${kb('KN')}${kb('KR')}</div><div class="g3 drag">${['IHR', 'FF', 'SF', 'HR', 'E', 'LO', 'GO', 'FO', 'IH', 'H1', 'H2', 'H3', 'DP', 'BH', 'BO'].map(dk).join('')}</div><div class="lbl">↑ 결과를 <b>누른 채</b> 공이 간 쪽으로 밀고 떼기 · 4구 · 사구 · K는 그냥 누르기</div></div>`;
-            return `<div class="sb-pad pd"><div class="lbl">결과를 <b>누른 채</b> 공이 간 쪽으로 밀고 떼기 · 4구 · 사구 · K는 그냥 누르기</div><div class="g3 drag">${['H1', 'H2', 'H3', 'GO', 'FO', 'LO', 'E', 'HR', 'SF', 'IH', 'IHR', 'FF', 'DP', 'BH', 'BO'].map(dk).join('')}${kb('BB')}${kb('HP')}${kb('K')}${kb('SH')}${kb('FC')}${kb('KN')}${kb('KR')}</div></div>`; }
+            if (DLAY === 'A') return `<div class="sb-pad pd da"><div class="g5 tap">${kb('BB')}${kb('HP')}${kb('K')}${kb('SH')}${kb('FC')}${kb('KN')}${kb('KR')}</div><div class="g3 drag">${['IHR', 'FF', 'SF', 'HR', 'E', 'LO', 'GO', 'FO', 'IH', 'H1', 'H2', 'H3', 'DP', 'BH', 'BO'].map(dk).join('')}</div><div class="lbl">↑ 결과를 <b>누른 채</b> 공이 간 쪽으로 밀고 떼기 · 볼넷 · 사구 · K는 그냥 누르기</div></div>`;
+            return `<div class="sb-pad pd"><div class="lbl">결과를 <b>누른 채</b> 공이 간 쪽으로 밀고 떼기 · 볼넷 · 사구 · K는 그냥 누르기</div><div class="g3 drag">${['H1', 'H2', 'H3', 'GO', 'FO', 'LO', 'E', 'HR', 'SF', 'IH', 'IHR', 'FF', 'DP', 'BH', 'BO'].map(dk).join('')}${kb('BB')}${kb('HP')}${kb('K')}${kb('SH')}${kb('FC')}${kb('KN')}${kb('KR')}</div></div>`; }
         if (m === 'E') {
             const cols = ['H1', 'H2', 'GO', 'FO', 'E'];
             return `<div class="sb-pad pe"><div class="q4">${kb('BB')}${kb('HP')}${kb('K')}<button type="button" class="kb o${['SH', 'BH', 'BO'].indexOf(ui.pick) !== -1 ? ' sel' : ''}" data-a="bpick">번트 ▾</button></div>${['BH', 'BO'].indexOf(ui.pick) !== -1 ? `<div class="lbl">${KIND[ui.pick].n} — 어디로?</div>${dirRow()}` : ''}<div class="mx"><span></span>${cols.map(k => `<span class="ch">${KIND[k].n}</span>`).join('')}${['좌', '좌중', '중', '우중', '우', '유', '2', '3', '1', '투', '포'].map(d => `<span class="rh">${DIRNAME[d]}</span>` + cols.map(k => { const dim = (/[좌중우]/.test(d) && k === 'GO') || (/[투포123유]/.test(d) && k === 'H2'); return `<button type="button" class="${KIND[k].c}${dim ? ' dim' : ''}" data-a="kd" data-k="${k}" data-d="${d}">${d}${KIND[k].s}</button>`; }).join('')).join('')}</div><div class="more">${['H3', 'HR', 'IHR', 'LO', 'SF', 'FF', 'IH', 'DP', 'KN', 'KR'].map(k => kb(k, 'sm')).join('')}${kb('FC', 'sm')}</div>${ui.pick ? dirRow() : ''}</div>`;
@@ -637,7 +637,7 @@
         }
         if (LAY === 'C') {   // 방향 먼저 → 그 방향의 결과 고르기 (기호를 쓰는 순서 그대로: 좌 → 좌안)
             if (ui.dir) { const d = ui.dir; return `<div class="sb-pad pb lc"><div class="g5">${['H1', 'H2', 'H3', 'HR', 'IH', 'GO', 'FO', 'LO', 'E', 'SF'].map(k => `<button type="button" class="kb ${KIND[k].c}" data-a="kd" data-k="${k}" data-d="${d}">${d}${KIND[k].s}</button>`).join('')}</div><div class="lcbar"><span>${DIRNAME[d]} 쪽 — 결과를 누르세요</span>${kb('FC', 'sm')}<button type="button" data-a="dirx">✕ 방향 다시</button></div></div>`; }
-            return `<div class="sb-pad pb lc"><div class="lbl">공이 간 곳 먼저 · 4구 · 사구 · K는 바로</div><div class="sb-dirs big">${DIRS.map(d => `<button type="button" data-a="dfirst" data-d="${d}">${d}</button>`).join('')}</div><div class="g5 nod">${kb('BB')}${kb('HP')}${kb('K')}${kb('SH')}${kb('FC')}</div></div>`;
+            return `<div class="sb-pad pb lc"><div class="lbl">공이 간 곳 먼저 · 볼넷 · 사구 · K는 바로</div><div class="sb-dirs big">${DIRS.map(d => `<button type="button" data-a="dfirst" data-d="${d}">${d}</button>`).join('')}</div><div class="g5 nod">${kb('BB')}${kb('HP')}${kb('K')}${kb('SH')}${kb('FC')}</div></div>`;
         }
         return `<div class="sb-pad pb"><div class="g5">${kb('BB')}${kb('HP')}${kb('K')}${kb('H1')}${kb('H2')}${kb('H3')}${kb('HR')}${kb('IH')}${kb('GO')}${kb('FO')}${kb('LO')}${kb('SH')}${kb('SF')}${kb('E')}${kb('FC')}</div>${dirRow()}</div>`;
     }
@@ -890,7 +890,7 @@
         if (im.complete) setTimeout(go, 50); else im.onload = () => setTimeout(go, 50);
     }
     function viewHtml() {
-        return `${topBar('📋 ' + (G.title || '경기') + ' · vs ' + G.tm.them.name)}<div class="sb-view"><p class="hint">${esc(G.date)}${G.place ? ' · ' + esc(G.place) : ''}</p>${boardHtml(false)}<h3>${esc(G.tm.us.name)}</h3>${sheetHtml('us', true)}${G.recThem ? `<h3>${esc(G.tm.them.name)}</h3>${sheetHtml('them', true)}` : ''}${pitTable(true)}<p class="hint">초록 안타 · 파랑 4구·사구 · 빨강 삼진 · 회색 아웃 · // 이닝 끝 · 작은 숫자는 타점 · 홈 = 라인(라바콘) 넘긴 홈런 · GH = 그라운드 홈런 · K(낫아웃) = 낫아웃 아웃 · K(낫아웃 출루) = 낫아웃으로 1루 출루 (둘 다 삼진) · 병살 = 병살타 · 파플 = 파울플라이 · 월 = 외야수 키를 넘긴 타구 (우월2 = 우익수 키 넘긴 2루타) · 선 = 파울 라인 따라 간 타구 (좌선2 = 좌익선상 2루타) · 희번 = 희생번트 · 번안 = 번트 안타 (투번안 = 투수 쪽 번트 안타) · 번아 = 번트 아웃</p><button type="button" class="big pri" data-a="img">🖼 기록표 이미지 · 인쇄</button>${canRecord() && ui.canEdit ? `<button type="button" class="big" data-a="reopen">✏️ 이 기록 고치기</button>` : ''}</div>${ui.img ? imgPanel() : ''}`;
+        return `${topBar('📋 ' + (G.title || '경기') + ' · vs ' + G.tm.them.name)}<div class="sb-view"><p class="hint">${esc(G.date)}${G.place ? ' · ' + esc(G.place) : ''}</p>${boardHtml(false)}<h3>${esc(G.tm.us.name)}</h3>${sheetHtml('us', true)}${G.recThem ? `<h3>${esc(G.tm.them.name)}</h3>${sheetHtml('them', true)}` : ''}${pitTable(true)}<p class="hint">초록 안타 · 파랑 볼넷·사구 · 빨강 삼진 · 회색 아웃 · // 이닝 끝 · 작은 숫자는 타점 · 홈 = 라인(라바콘) 넘긴 홈런 · GH = 그라운드 홈런 · K(낫아웃) = 낫아웃 아웃 · K(낫아웃 출루) = 낫아웃으로 1루 출루 (둘 다 삼진) · 병살 = 병살타 · 파플 = 파울플라이 · 월 = 외야수 키를 넘긴 타구 (우월2 = 우익수 키 넘긴 2루타) · 선 = 파울 라인 따라 간 타구 (좌선2 = 좌익선상 2루타) · 희번 = 희생번트 · 번안 = 번트 안타 (투번안 = 투수 쪽 번트 안타) · 번아 = 번트 아웃</p><button type="button" class="big pri" data-a="img">🖼 기록표 이미지 · 인쇄</button>${canRecord() && ui.canEdit ? `<button type="button" class="big" data-a="reopen">✏️ 이 기록 고치기</button>` : ''}</div>${ui.img ? imgPanel() : ''}`;
     }
 
     // ---------- 누르기 ----------

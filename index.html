@@ -32,7 +32,7 @@
         function setToken(t) { try { if (t) { localStorage.setItem('daeyeon_token', t); sessionStorage.setItem('daeyeon_token', t); } } catch (e) {} }
         function clearToken() { try { localStorage.removeItem('daeyeon_token'); sessionStorage.removeItem('daeyeon_token'); } catch (e) {} }
 
-        const APP_VERSION = "v2.169.0 · 실책 선수 · 자책점 · 진루";
+        const APP_VERSION = "v2.170.0 · 볼넷 · 사구 · 희생 집계";
 
         // 🚪 v2.48.0: 앱을 완전히 닫았다가 새로 켜면 로그아웃 (뒤로가기 두 번 · 최근 앱 목록에서 밀어서 닫기)
         //   sessionStorage 는 앱(탭)이 살아 있는 동안만 남는다 → 새로고침 · 홈 버튼 · 카톡/지도 잠깐 다녀오기는 그대로,
@@ -118,9 +118,9 @@
     <link rel="stylesheet" href="bk-img.css?v=2.98.0">
     <!-- ⚾ v2.153.0: 경기 기록 (대표님 · 개발자) — 경기 중엔 이 기기에만 저장, 끝나고 한 번 보냄 -->
     <link rel="stylesheet" href="scorebook.css?v=2.169.0">
-    <script src="scorebook.js?v=2.169.0" defer></script>
+    <script src="scorebook.js?v=2.170.0" defer></script>
     <link rel="stylesheet" href="player-stats.css?v=2.168.0">
-    <script src="player-stats.js?v=2.169.0" defer></script>   <!-- 📊 v2.155.0: 선수 기록 순위표 (운영진) -->
+    <script src="player-stats.js?v=2.170.0" defer></script>   <!-- 📊 v2.155.0: 선수 기록 순위표 (운영진) -->
     <link rel="stylesheet" href="attend.css?v=2.159.0">
     <script src="attend.js?v=2.159.0" defer></script>   <!-- 🙋 v2.159.0: 일정 참석 체크 · 🚗 카풀 배정 -->
     <link rel="stylesheet" href="meal.css?v=2.162.0">
