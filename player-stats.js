@@ -8,8 +8,8 @@
 (function () {
     'use strict';
     const LS = 'daeyeon_ps_cache';
-    const HIT = { H1: 1, IH: 1, H2: 2, H3: 3, HR: 4, IHR: 4 }, NOAB = { BB: 1, HP: 1, SF: 1, SH: 1 };
-    const SY = { H1: '안', IH: '내안', H2: '2', H3: '3', HR: '홈', IHR: 'GH', BB: '4구', HP: '사구', K: 'K', GO: '땅', FO: '플', LO: '직', E: '실', SF: '희플', SH: '희번', FC: '야선', FF: '파플', KN: 'K(낫아웃)', KR: 'K(낫아웃 출루)', DP: '병살' };
+    const HIT = { H1: 1, IH: 1, H2: 2, H3: 3, HR: 4, IHR: 4, BH: 1 }, NOAB = { BB: 1, HP: 1, SF: 1, SH: 1 };
+    const SY = { H1: '안', IH: '내안', H2: '2', H3: '3', HR: '홈', IHR: 'GH', BB: '4구', HP: '사구', K: 'K', GO: '땅', FO: '플', LO: '직', E: '실', SF: '희플', SH: '희번', FC: '야선', FF: '파플', KN: 'K(낫아웃)', KR: 'K(낫아웃 출루)', DP: '병살', BH: '번안', BO: '번아' };
     const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
     const f3 = x => x >= 1 ? x.toFixed(3) : x.toFixed(3).slice(1);
     function role() { try { return localStorage.getItem('daeyeon_admin_role') || sessionStorage.getItem('daeyeon_admin_role') || ''; } catch (e) { return ''; } }
