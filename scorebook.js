@@ -165,7 +165,7 @@
         const pc = g.pcnt || {};
         return order.map(k => Object.assign(P[k], { pc: pc[k] > 0 ? pc[k] : 0, recBf: !!g.recThem }));
     }
-    const ipTxt = o => Math.floor(o / 3) + (o % 3 ? ' ' + (o % 3) + '/3' : '');
+    const ipTxt = o => Math.floor(o / 3) + (o % 3 ? '.' + (o % 3) : '');   // 하코 11-28: 1.1 · 1.2 이닝 (프로 기록지 방식)
     function pitRest(q) { try { return window.PS && window.PS.pitRest ? window.PS.pitRest(q, G && G.date) : null; } catch (e) { return null; } }
     function pitBadge(q) {
         const today = (G.pcnt || {})[pkey(q)];
@@ -279,7 +279,7 @@
     // ---------- 🧤 v2.169.0 실책 선수 · 비자책 실점 (하코 요청 · 시안 window.SB_ERR) ----------
     //   A 바로 묻기 창 · B 한 줄로 묻기(안 막음) · C 경기 끝에 한 번에 — 넷(A · B · D · E) 입력 방식 모두 같은 record() 를 지나서 똑같이 붙음
     //   실책: 상대 타석 「실책」 기록에 ef {no,name,pos} · 숫자만 화면은 {y:'err'} 기록 · 비자책: 득점 기록에 ue (안 정하면 「실책으로 나간 주자가 들어온 점수」 = 비자책)
-    const ERRV = (typeof window !== 'undefined' && window.SB_ERR) || 'A';
+    const ERRV = (typeof window !== 'undefined' && window.SB_ERR) || 'B';   // 11-28 하코 선택 B안 (한 줄로 묻기)
     const D2P = { 투: ['1'], 포: ['2'], 1: ['3'], 2: ['4'], 3: ['5'], 유: ['6'], 좌: ['7'], 중: ['8'], 우: ['9'], 좌중: ['7', '8'], 우중: ['8', '9'] };
     const PNM = { 1: '투수', 2: '포수', 3: '1루수', 4: '2루수', 5: '3루수', 6: '유격수', 7: '좌익수', 8: '중견수', 9: '우익수' };
     function fielders() {   // 지금 우리 수비: 타순 마지막 선수 + 수비 위치, 지금 투수는 1

@@ -22,7 +22,7 @@
     // 예전 서버: 경기마다 받아서 같은 모양으로
     function slim(id, j) {
         const g = JSON.parse(j);
-        return { id: g.id || id, ev: g.ev, date: g.date, title: g.title, opp: (g.tm && g.tm.them && g.tm.them.name) || '', ln: ((g.tm && g.tm.us && g.tm.us.ln) || []).map(sl => ({ ps: (sl.ps || []).map(q => ({ no: q.no, name: q.name })) })), log: (g.log || []).filter(e => e.t === 'us' && e.y !== 'end'), pit: g.pit || [] };
+        return { id: g.id || id, ev: g.ev, date: g.date, title: g.title, opp: (g.tm && g.tm.them && g.tm.them.name) || '', ln: ((g.tm && g.tm.us && g.tm.us.ln) || []).map(sl => ({ ps: (sl.ps || []).map(q => ({ no: q.no, name: q.name })) })), log: (g.log || []).filter(e => e.t === 'us' && e.y !== 'end'), pit: g.pit || [], fe: (g.log || []).filter(e => e.t === 'them' && ((e.y === 'pa' && e.k === 'E' && e.ef) || e.y === 'err')).map(e => e.y === 'err' ? { no: e.no || '', name: e.name || '', pos: e.pos || '' } : e.ef) };
     }
     let loading = null;
     function load(force) {
@@ -59,7 +59,9 @@
                 else if (e.y === 'sb' || e.y === 'cs') { const q = who(e.s, e.p); if (q) get(q)[e.y]++; }
             });
         });
+        recs.forEach(g => (g.fe || []).forEach(f => { if (!f.no && !f.name) return; const key = String(f.no || '') + '|' + String(f.name || ''); const x = P[key] = P[key] || { no: f.no || '', name: f.name || '', pa: 0, ab: 0, h: 0, h2: 0, h3: 0, hr: 0, ihr: 0, rbi: 0, r: 0, sb: 0, cs: 0, bb: 0, hp: 0, k: 0, sf: 0, sh: 0, tb: 0, dirs: {}, games: [] }; x.e = (x.e || 0) + 1; }));   // 🧤 v2.169.0 수비 실책
         Object.values(P).forEach(q => {
+            q.e = q.e || 0;
             q.avg = q.ab ? q.h / q.ab : 0;
             const den = q.ab + q.bb + q.hp + q.sf; q.obp = den ? (q.h + q.bb + q.hp) / den : 0;
             q.slg = q.ab ? q.tb / q.ab : 0; q.ops = q.obp + q.slg; q.hrAll = q.hr + q.ihr;
@@ -87,7 +89,8 @@
     function advHtml(q) {
         return `<div class="ps-sub">더 깊은 기록 <small>프로야구 지표</small></div>
             <div class="ps-cnt ps-adv">${ad(f3(q.babip), 'BABIP', '앞으로 친 공이 안타 된 비율')}${ad(f3(q.iso), '순수장타율', '장타율 − 타율 · 멀리 치는 힘')}${ad(f3(q.woba), 'wOBA', '출루를 값어치대로 매긴 점수')}${ad(q.k ? q.bbk.toFixed(2) : String(q.bbk), '볼넷/삼진', '1 넘으면 눈이 좋은 타자')}
-            ${ad(pc(q.kp), '삼진 비율', '타석 100번 중 삼진')}${ad(pc(q.bbp), '4사구 비율', '타석 100번 중 4사구')}${ad(q.xbh, '장타', '2루타 + 3루타 + 홈런')}${ad(q.sbp < 0 ? '-' : pc(q.sbp), '도루 성공률', `도루 ${q.sb} · 실패 ${q.cs}`)}</div>`;
+            ${ad(pc(q.kp), '삼진 비율', '타석 100번 중 삼진')}${ad(pc(q.bbp), '4사구 비율', '타석 100번 중 4사구')}${ad(q.xbh, '장타', '2루타 + 3루타 + 홈런')}${ad(q.sbp < 0 ? '-' : pc(q.sbp), '도루 성공률', `도루 ${q.sb} · 실패 ${q.cs}`)}</div>
+            <div class="ps-sub">🧤 수비 실책 <b>${q.e || 0}개</b> <small>11월 28일 기록부터 세요</small></div>`;
     }
     function pitCard(x) {
         if (!x) return '';
@@ -96,7 +99,7 @@
         const oav = x.bfS - x.bfBB > 0 ? f3(x.bfH / (x.bfS - x.bfBB)) : '-', ppa = x.pcBf ? (x.pcN / x.pcBf).toFixed(1) : '-';
         return `<div class="ps-sub">⚾ 투수 기록 <small>${x.apps.length}경기 · ${ipT(x.outs)} 이닝</small></div>
             <div class="ps-big"><div class="m"><span>평균자책</span><b>${era}</b></div><div><span>WHIP</span><b>${whip}</b></div><div><span>피안타율</span><b>${oav}</b></div><div><span>9이닝 삼진</span><b>${k9}</b></div></div>
-            <div class="ps-cnt ps-adv">${ad(ipT(x.outs), '이닝', '아웃 3개 = 1이닝')}${ad(x.pcK ? x.pcK : '-', '투구 수', x.pcK ? '넣은 경기만' : '아직 안 넣음')}${ad(x.bfS || '-', '상대 타자', '마주한 타자 수')}${ad(x.kOuts ? x.kS : '-', '삼진', '잡아낸 삼진')}
+            <div class="ps-cnt ps-adv">${ad(ipT(x.outs), '이닝', '1.1 = 1이닝 + 아웃 1개')}${ad(x.pcK ? x.pcK : '-', '투구 수', x.pcK ? '넣은 경기만' : '아직 안 넣음')}${ad(x.bfS || '-', '상대 타자', '마주한 타자 수')}${ad(x.kOuts ? x.kS : '-', '삼진', '잡아낸 삼진')}
             ${ad(x.hbOuts ? x.bbS : '-', '4사구', '볼넷 + 몸에 맞는 공')}${ad(x.hbOuts ? x.hS : '-', '피안타', '맞은 안타')}${ad(x.r + ' / ' + (x.er || 0), '실점 / 자책', '자책 = 투수 책임 점수')}${ad(bb9, '9이닝 4사구', '적을수록 제구 좋음')}</div>
             <p class="ps-note">평균자책 = 9이닝 동안 내줄 자책점(실책 때문에 난 점수는 뺌). 11월 28일 전 경기는 실책 구분이 없어 모든 실점으로 셌어요. WHIP = 이닝마다 내보낸 주자(안타 + 4사구) · 1.30 아래면 좋은 편. 피안타율 = 상대 타자가 친 타율. 9이닝 삼진 = 9이닝 동안 잡을 삼진 수.${ppa !== '-' ? ` 타자 1명에 평균 ${ppa}구.` : ''}</p>`;
     }
@@ -161,7 +164,7 @@
         const d = String(onDate || today()).slice(0, 10);
         return { last: x.last, n: x.lastN, est: x.lastEst, next: x.next, wait: x.next > d && x.last < d };
     }
-    const ipT = o => Math.floor(o / 3) + (o % 3 ? ' ' + (o % 3) + '/3' : '');
+    const ipT = o => Math.floor(o / 3) + (o % 3 ? '.' + (o % 3) : '');   // 1.1 = 1이닝 + 아웃 1개
     function pitHtml() {
         const L = pitchers(rk.recs || []), R = rule();
         const card = x => `<div class="pt-card ${x.wait ? 'wait' : 'ok'}"><div class="pt-h"><b>${esc(x.no)}</b> ${esc(x.name)}<span class="pt-st">${x.wait ? `${md(x.next)}부터 · ${x.left}일 남음` : '오늘 가능'}</span></div>
@@ -186,7 +189,7 @@
         const rate = sd[2];
         const L = st.players.slice().sort((a, b) => (rate ? (b.pa >= reg) - (a.pa >= reg) : 0) || b[sd[0]] - a[sd[0]] || b.pa - a.pa);
         let n = 0;
-        const cols = [['avg', '타율', 1], ['g', '경기'], ['pa', '타석'], ['ab', '타수'], ['h', '안타'], ['h2', '2루타'], ['h3', '3루타'], ['hrAll', '홈런'], ['rbi', '타점'], ['r', '득점'], ['sb', '도루'], ['bbhp', '4사구'], ['k', '삼진'], ['obp', '출루율', 1], ['slg', '장타율', 1], ['ops', 'OPS', 1], ['babip', 'BABIP', 1], ['iso', '순수장타율', 1], ['woba', 'wOBA', 1], ['kp', '삼진 비율', 2], ['bbp', '4사구 비율', 2]];
+        const cols = [['avg', '타율', 1], ['g', '경기'], ['pa', '타석'], ['ab', '타수'], ['h', '안타'], ['h2', '2루타'], ['h3', '3루타'], ['hrAll', '홈런'], ['rbi', '타점'], ['r', '득점'], ['sb', '도루'], ['bbhp', '4사구'], ['k', '삼진'], ['obp', '출루율', 1], ['slg', '장타율', 1], ['ops', 'OPS', 1], ['babip', 'BABIP', 1], ['iso', '순수장타율', 1], ['woba', 'wOBA', 1], ['kp', '삼진 비율', 2], ['bbp', '4사구 비율', 2], ['e', '실책']];
         const val = (q, c) => c[0] === 'g' ? q.games.length : c[0] === 'bbhp' ? q.bb + q.hp : c[2] === 2 ? pc(q[c[0]]) : c[2] ? f3(q[c[0]]) : q[c[0]];
         const rows = L.map(q => { const ok = !rate || q.pa >= reg; if (ok) n++; return `<tr class="${ok ? '' : 'low'}" data-ps="${esc(q.no + '|' + q.name)}"><td class="rn">${ok ? n : '-'}</td><td class="st">${esc(q.no)} ${esc(q.name)}</td>${cols.map(c => `<td class="${c[0] === rk.sort ? 'srt' : ''}">${val(q, c)}</td>`).join('')}</tr>`; }).join('');
         const open = rk.open ? st.players.find(q => q.no + '|' + q.name === rk.open) : null;

@@ -1,5 +1,5 @@
 // ==========================================================
-// ⚾ 대연초 야구부 관리 시스템 통합 백엔드 API (v2.50.0)
+// ⚾ 대연초 야구부 관리 시스템 통합 백엔드 API (v2.51.0)
 // ==========================================================
 // ★ API_KEY 는 코드에 적지 않고 「프로젝트 설정 → 스크립트 속성」의 API_KEY 에 넣어 둡니다 (v2.36.0~).
 //   값은 index.html / player.html 의 API_KEY 와 "같은 값"이어야 합니다. 속성이 비어 있으면 모든 요청을 거절합니다.
@@ -3469,7 +3469,8 @@ function readGameStats(ss) {
       var ln = ((g.tm && g.tm.us && g.tm.us.ln) || []).map(function (sl) { return { ps: (sl.ps || []).map(function (q) { return { no: String(q.no || ""), name: String(q.name || "") }; }) }; });
       var pit = (g.pit || []).slice(0, 12).map(function (q) { return { no: String(q.no || ""), name: String(q.name || ""), outs: +q.outs || 0, bf: q.bf == null ? null : +q.bf, h: q.h == null ? null : +q.h, bb: q.bb == null ? null : +q.bb, k: q.k == null ? null : +q.k, r: +q.r || 0, ue: +q.ue || 0, pc: +q.pc || 0 }; });   // ⚾ v2.48.0 · v2.51.0 ue = 비자책 실점: 우리 투수 (투구 수는 비어 있을 수 있음)
       var log = (g.log || []).filter(function (e) { return e.t === "us" && e.y !== "end"; }).map(function (e) { var o = { y: e.y, i: e.i, s: e.s, p: e.p, k: e.k, d: e.d, r: e.r, w: e.w, n: e.n }; if (e.sc) o.sc = { s: e.sc.s, p: e.sc.p }; return o; });
-      out.push({ id: String(vals[i][0]), ev: String(vals[i][1]), date: String(vals[i][2]), title: String(vals[i][3]), opp: String(vals[i][4]), us: String(vals[i][5]), them: String(vals[i][6]), ln: ln, log: log, pit: pit });
+      var fe = (g.log || []).filter(function (e) { return e.t === "them" && ((e.y === "pa" && e.k === "E" && e.ef) || e.y === "err"); }).map(function (e) { var f = e.y === "err" ? e : e.ef; return { no: String(f.no || ""), name: String(f.name || ""), pos: String(f.pos || "") }; });   // 🧤 v2.51.0: 우리 수비 실책한 선수
+      out.push({ id: String(vals[i][0]), ev: String(vals[i][1]), date: String(vals[i][2]), title: String(vals[i][3]), opp: String(vals[i][4]), us: String(vals[i][5]), them: String(vals[i][6]), ln: ln, log: log, pit: pit, fe: fe });
     } catch (eS) {}
   }
   return out;
