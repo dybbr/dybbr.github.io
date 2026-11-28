@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="ko" class="vB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>대연초 야구부 신입 선수 모집 · 기본기부터, 함께</title>
+<meta name="description" content="부산 대연초등학교 야구부 2027 신입 선수 모집. 감독님 모토 「바른 인성」, 체계적인 기본기 훈련, 투수 전문 코치, 배수 좋은 인조잔디 운동장. 특별 모집 · 12월까지 선착순.">
+<meta property="og:title" content="대연초 야구부 신입 선수 모집 · 기본기부터, 함께">
+<meta property="og:description" content="바른 인성, 탄탄한 기본기. 특별 모집 · 12월까지 선착순. 방문 문의는 학부모 대표·감독님께.">
+<meta property="og:image" content="https://dybbr.github.io/join/img/bukang-field.webp">
+<meta name="theme-color" content="#0b2240">
+<link rel="icon" href="../icons/favicon-48.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Jua&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700;800;900&family=Noto+Serif+KR:wght@600;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:"Noto Sans KR",-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;word-break:keep-all;line-height:1.6;background:var(--bg);color:var(--fg);overflow-x:hidden}
+img{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+section{padding:72px 0;scroll-margin-top:64px}
+.h{font-family:var(--hf);font-weight:var(--hw);letter-spacing:var(--hls);line-height:1.15}
+.h em{font-style:normal;color:var(--acc)}
+.eye{font-weight:800;font-size:14px;letter-spacing:.04em;color:var(--acc)}
+.lead{color:var(--sub);font-size:17px;max-width:640px}
+.sec-h{font-size:clamp(28px,5vw,44px);margin:8px 0 14px}
+/* 버튼 */
+.btns{display:flex;flex-wrap:wrap;gap:10px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;padding:14px 22px;border-radius:var(--r);font-weight:800;font-size:16px;border:2px solid transparent;cursor:pointer;min-height:52px}
+.btn.p{background:var(--btn);color:var(--btnfg)}
+.btn.s{border-color:var(--line2);color:var(--fg);background:transparent}
+/* 상단 */
+.top{position:sticky;top:0;z-index:20;background:var(--topbg);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:14px;height:60px}
+.top .em{height:38px;width:auto}
+.top .nm{font-weight:900;font-size:16px;white-space:nowrap}
+.top nav{margin-left:auto;display:flex;gap:4px}
+.top nav a{padding:8px 12px;border-radius:10px;font-weight:700;font-size:14px;color:var(--sub)}
+.top nav a:hover{color:var(--fg)}
+.top .app{font-size:13px;font-weight:800;padding:8px 12px;border-radius:10px;border:1px solid var(--line2);white-space:nowrap}
+/* 히어로 */
+.hero{padding:56px 0 64px;position:relative;overflow:hidden}
+.hero .g{display:grid;grid-template-columns:1.15fr .85fr;gap:40px;align-items:center}
+.hero .tag{display:inline-flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.hero .tag i{font-style:normal;font-weight:800;font-size:14px;padding:6px 14px;border-radius:30px;background:var(--chip);color:var(--chipfg)}
+.hero .tag i.hot{background:var(--hot);color:#fff}
+.hero h1{font-size:clamp(46px,9vw,92px);margin-bottom:18px}
+.hero .lead{margin-bottom:26px}
+.hero .note{margin-top:16px;font-size:14px;color:var(--sub)}
+.hero .note b{color:var(--fg)}
+.mas{position:relative;aspect-ratio:1;border-radius:50%;background:url(img/bukang-field.webp) center 20%/cover;max-width:440px;margin:0 auto;width:100%}
+/* 가치 */
+.value .q{font-size:clamp(34px,6vw,60px)}
+.value .three{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:30px}
+.value .three div{padding:20px;border-radius:var(--r);background:var(--card);color:var(--cfg);border:1px solid var(--cline)}
+.value .three b{display:block;font-size:18px;margin-bottom:4px}
+.value .three span{font-size:15px;color:var(--csub)}
+/* 이유 */
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:30px}
+.card{background:var(--card);color:var(--cfg);border-radius:var(--r);padding:22px;display:flex;gap:14px;align-items:flex-start;border:1px solid var(--cline)}
+.card img{width:72px;height:72px;flex:none}
+.card .n{font-weight:900;color:var(--acc);font-size:13px}
+.card b{display:block;font-size:18px;line-height:1.35;margin:2px 0 6px}
+.card div>span{font-size:15px;color:var(--csub);line-height:1.55}
+/* 전통 */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:30px}
+.stat{padding:26px 20px;border-radius:var(--r);background:var(--card);color:var(--cfg);text-align:center;border:1px solid var(--cline)}
+.stat .v{font-family:var(--hf);font-weight:var(--hw);font-size:46px;line-height:1.1;color:var(--acc)}
+.stat .v small{font-size:20px}
+.stat .l{font-weight:700;font-size:15px;color:var(--csub);margin-top:6px}
+.pros{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.pg{background:#fff;border-radius:var(--r);padding:22px;box-shadow:0 6px 0 rgba(11,34,64,.07);border:1px solid var(--cline)}
+.pg h3{font-family:var(--hf);font-weight:400;font-size:24px;margin-bottom:12px}
+.pg h3 small{font-family:"Noto Sans KR";font-size:14px;font-weight:800;color:#e0182d;margin-left:4px}
+.pg ul{list-style:none;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pg li a{display:block;background:#f2f9ff;border-radius:14px;padding:10px 6px;text-align:center}
+.pg li a:active{background:#dceeff}
+.pg li i{display:flex;width:40px;height:40px;margin:0 auto 6px;border-radius:50%;color:#fff;font-style:normal;font-weight:900;font-size:17px;align-items:center;justify-content:center;border:3px solid #fff;box-shadow:0 2px 6px rgba(11,34,64,.2)}
+.pg li b{display:block;font-size:16px}
+.pg li span{display:block;font-size:12px;color:var(--csub);line-height:1.4}
+.pros .src{grid-column:1/-1;font-size:13px;color:var(--sub)}
+/* 즐거움 */
+.fun .g{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:30px}
+.fun .f{border-radius:var(--r);overflow:hidden;background:var(--card);color:var(--cfg);border:1px solid var(--cline)}
+.fun .f .im{aspect-ratio:16/10;background:#dfe9f5 center/cover;display:flex;align-items:center;justify-content:center;font-weight:800;color:#5b6b82;font-size:15px;text-align:center;padding:10px}
+.fun .f .im.drone{background:repeating-linear-gradient(45deg,#e7eef7 0 14px,#dde7f3 14px 28px);border-bottom:1px dashed #a9b8cc}
+.fun .f .tx{padding:18px 20px}
+.fun .f b{font-size:18px;display:block;margin-bottom:4px}
+.fun .f span{font-size:15px;color:var(--csub)}
+/* 훈련 안내 */
+.info{margin-top:28px;border-radius:var(--r);background:var(--card);color:var(--cfg);border:1px solid var(--cline);overflow:hidden}
+.info .row{display:grid;grid-template-columns:150px 1fr;border-top:1px solid var(--cline)}
+.info .row:first-child{border-top:0}
+.info .row>b{padding:16px 20px;background:var(--cth);font-size:15px}
+.info .row>span{padding:16px 20px;font-size:16px}
+.hero .note b{white-space:nowrap}
+.ph{background:#fff3b0;color:#6b5400;border-radius:6px;padding:1px 6px;font-weight:700}
+/* 질문 */
+.faq{margin-top:26px;display:grid;gap:10px}
+.faq details{background:var(--card);color:var(--cfg);border-radius:var(--r);border:1px solid var(--cline)}
+.faq summary{list-style:none;cursor:pointer;padding:18px 52px 18px 20px;font-weight:800;font-size:17px;position:relative}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";position:absolute;right:20px;top:50%;transform:translateY(-50%);font-size:24px;color:var(--acc);font-weight:400}
+.faq details[open] summary::after{content:"−"}
+.faq p{padding:0 20px 18px;color:var(--csub);font-size:16px}
+/* 오시는 길 · 문의 */
+.visit .g{display:grid;grid-template-columns:1.2fr .8fr;gap:18px;margin-top:28px}
+.map{border-radius:var(--r);overflow:hidden;background:#f3f6fa;border:1px solid var(--cline);position:relative}
+.map svg{width:100%;height:auto;display:block}
+.map .lab{position:absolute;background:#fff;color:#0b2240;font-weight:800;font-size:14px;padding:6px 12px;border-radius:10px;box-shadow:0 4px 12px rgba(11,34,64,.15)}
+.map .walk{position:absolute;left:34%;top:30%;background:#c8102e;color:#fff;font-weight:900;font-size:15px;padding:7px 14px;border-radius:30px}
+.contact{border-radius:var(--r);padding:26px;background:var(--ctbg);color:var(--ctfg);display:flex;flex-direction:column;gap:14px}
+.contact .who{font-weight:700;opacity:.85}
+.contact .tel{font-family:var(--hf);font-weight:var(--hw);font-size:34px;letter-spacing:.01em;line-height:1.1}
+.contact .btn{justify-content:center}
+.contact .person{border-top:1px solid rgba(255,255,255,.2);padding-top:14px}
+.contact .person small{font-weight:700;opacity:.8;font-size:14px}
+.contact .tel{margin:2px 0 10px}
+.contact .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.contact .btn.p{background:var(--ctbtn);color:var(--ctbtnfg)}
+.contact .btn.s{border-color:rgba(255,255,255,.4);color:#fff}
+.maplinks{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.maplinks a{font-size:14px;font-weight:800;padding:10px 14px;border-radius:10px;background:var(--chip);color:var(--chipfg)}
+/* 끝 */
+.end{padding:40px 0 110px;border-top:1px solid var(--line);font-size:14px;color:var(--sub)}
+.end .wrap{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between}
+.end .l{display:flex;gap:12px;align-items:center}
+.end .l img{height:44px;width:auto}
+.end a{text-decoration:underline}
+
+/* ================= B안 · 밝은 카드 + 아래 고정 버튼 (포스터 B 밝음) ================= */
+.vB{--bg:#f2f9ff;--fg:#0b2240;--sub:#3d5675;--acc:#e0182d;--hot:#e0182d;--hf:"Jua";--hw:400;--hls:0;--r:24px;--btn:#0b2240;--btnfg:#fff;--line:rgba(11,34,64,.1);--line2:rgba(11,34,64,.25);--chip:#fff;--chipfg:#0b2240;--topbg:rgba(242,249,255,.9);--card:#fff;--cfg:#0b2240;--csub:#4a5870;--cline:rgba(11,34,64,.06);--cth:#eef6ff;--ctbg:#0b2240;--ctfg:#fff;--ctbtn:#ffd23f;--ctbtnfg:#0b2240}
+.vB .hero{background:linear-gradient(180deg,#a6dcff 0%,#e6f6ff 60%,#f2f9ff 100%)}
+.vB .hero h1{text-shadow:4px 4px 0 #fff,-4px 4px 0 #fff,4px -4px 0 #fff,-4px -4px 0 #fff,0 10px 0 rgba(11,34,64,.15)}
+.vB .hero .tag i{box-shadow:0 3px 0 rgba(11,34,64,.1)}
+.vB .mas{border-radius:40px;aspect-ratio:4/5;background:url(img/bukang-hero.webp) center top/cover;box-shadow:0 16px 0 rgba(11,34,64,.12);transform:rotate(2deg);border:8px solid #fff}
+.vB .card,.vB .stat,.vB .f,.vB .value .three div,.vB .info,.vB .faq details{box-shadow:0 6px 0 rgba(11,34,64,.07)}
+.vB .card{flex-direction:column;align-items:center;text-align:center}
+.vB .card img{width:104px;height:104px}
+.vB .value{background:#fff7d6}
+.vB .story{background:#e6f6ff}
+.vB .value .q em{color:#e0182d}
+.vB .dock{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:30;display:flex;gap:8px;max-width:560px;margin:0 auto;background:#0b2240;padding:8px;border-radius:22px;box-shadow:0 12px 30px rgba(11,34,64,.35)}
+.vB .dock a{flex:1;text-align:center;color:#fff;font-weight:800;font-size:15px;padding:12px 6px;border-radius:16px}
+.vB .dock a.p{background:#ffd23f;color:#0b2240;flex:1.2}
+.vB .dock small{display:block;font-size:11px;font-weight:700;opacity:.8}
+.vB .top nav{display:none}
+@media (min-width:761px){.vB .dock{left:auto;right:24px;width:480px}}
+.vB section{padding:56px 0}
+
+/* ================= 화면 크기 ================= */
+@media (max-width:980px){
+ .cards,.fun .g{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:760px){
+ section{padding:52px 0}
+ .top nav{display:none}
+ .hero{padding:36px 0 48px}
+ .hero .g{grid-template-columns:1fr;gap:26px}
+ .vB .mas{max-width:290px;order:-1}
+ .value .three,.stats{grid-template-columns:1fr}
+ .stats{grid-template-columns:repeat(3,1fr);gap:8px}
+ .stat{padding:18px 8px}.stat .v{font-size:30px}.stat .v small{font-size:14px}.stat .l{font-size:13px}
+ .cards,.fun .g,.visit .g,.pros{grid-template-columns:1fr}
+ .pg{padding:18px 14px}.pg ul{gap:6px}
+ .vB .cards{grid-template-columns:1fr 1fr;gap:12px}
+ .vB .card{padding:16px 12px}.vB .card img{width:80px;height:80px}.vB .card b{font-size:16px}.vB .card span{font-size:14px}
+ .info .row{grid-template-columns:96px 1fr}
+ .info .row b,.info .row>span{padding:14px}
+ .hero .btns .btn{flex:1 1 auto;padding:14px 16px;font-size:15px}
+ .top .nm{font-size:15px}
+ .vB .hero .btns,.vB .hero .note{display:none}
+ .lead{font-size:16px}
+}
+</style>
+</head>
+<body>
+
+<header class="top"><div class="wrap">
+ <img class="em" src="../icons/logo/emblem-dark-s.webp" alt="대연초 야구부 엠블럼">
+ <div class="nm">대연초 야구부</div>
+ <nav><a href="#value">바른 인성</a><a href="#why">6가지 이유</a><a href="#train">모집 안내</a><a href="#faq">자주 묻는 질문</a><a href="#visit">문의</a></nav>
+ <a class="app" href="../">팀 앱 로그인</a>
+</div></header>
+
+<main>
+
+<section class="hero"><div class="wrap g">
+ <div>
+  <div class="tag"><i class="hot">특별 모집 · 12월까지 선착순</i><i>2027 신입 선수 모집</i></div>
+  <h1 class="h">기본기부터,<br><em>함께</em></h1>
+  <p class="lead">감독님 모토 「바른 인성」 위에 탄탄한 기본기를 쌓는 곳. 1969년 창단, 레전드 프로야구 선수를 많이 키워 낸 대연초 야구부가 새 친구를 기다려요.</p>
+  <div class="btns"><a class="btn p" href="tel:01028700899">📞 전화로 문의하기</a><a class="btn s" href="#why">왜 대연초일까요?</a></div>
+  <p class="note">방문 문의는 <b>학부모 대표 010-2870-0899</b> · <b>감독님 010-3835-3052</b>로 연락 주세요.</p>
+ </div>
+ <div class="mas" role="img" aria-label="대연초 야구부 캐릭터 부캉이"></div>
+</div></section>
+
+<section class="value" id="value"><div class="wrap">
+ <div class="eye">대연초 야구부 감독님의 모토</div>
+ <h2 class="h q">“바른 <em>인성</em>이<br>먼저입니다”</h2>
+ <p class="lead" style="margin-top:16px">코치진의 교육 방식과 야구부 단체생활 속에서, 시키지 않아도 스스로 하는 자율적이고 자발적인 인성이 자라요.</p>
+ <div class="three">
+  <div><b>🙇 인사와 약속</b><span>먼저 인사하고, 정한 시간과 약속을 지켜요.</span></div>
+  <div><b>🤝 형·동생과 함께</b><span>학년이 달라도 한 팀으로 서로 챙겨요.</span></div>
+  <div><b>🧹 스스로 정리</b><span>내 장비와 운동장은 내가 먼저 정리해요.</span></div>
+ </div>
+</div></section>
+
+<section class="why" id="why"><div class="wrap">
+ <div class="eye">2027 신입 선수 모집</div>
+ <h2 class="h sec-h">대연초 야구부를 고르는 <em>6가지 이유</em></h2>
+ <div class="cards">
+  <div class="card"><img src="../icons/bk/uniform.webp" alt=""><div><div class="n">01</div><b>기본기부터 체계적으로</b><span>던지기·받기·치기·달리기, 단계별 훈련으로 차근차근 실력을 쌓아요.</span></div></div>
+  <div class="card"><img src="../icons/bk/summer.webp" alt=""><div><div class="n">02</div><b>부족한 체력까지 보강</b><span>학교 체육만으로 채우기 어려운 기초 체력을 훈련으로 길러요.</span></div></div>
+  <div class="card"><img src="../icons/bk/megaphone.webp" alt=""><div><div class="n">03</div><b>투수 전문 코치님</b><span>투수 전문 <span class="ph">○○○</span> 코치님이 던지는 법부터 직접 지도해요.</span></div></div>
+  <div class="card"><img src="../icons/bk/surprise.webp" alt=""><div><div class="n">04</div><b>벤치가 아닌 그라운드에서</b><span>경기에 직접 뛰며 실전 경험을 쌓고 자신감을 키워요.</span></div></div>
+  <div class="card"><img src="../icons/bk/calendar.webp" alt=""><div><div class="n">05</div><b>코치진·학부모·선수 소통</b><span>우리 팀 전용 앱으로 일정·공지·경기 기록을 함께 봐요.</span></div></div>
+  <div class="card"><img src="../icons/bk/search.webp" alt=""><div><div class="n">06</div><b>배수 좋은 인조잔디</b><span>비 온 뒤에도 쾌적한 운동장. 2호선 대연역에서 걸어서 약 8분.</span></div></div>
+ </div>
+</div></section>
+
+<section class="story" id="story"><div class="wrap">
+ <div class="eye">명문의 전통</div>
+ <h2 class="h sec-h">선배들이 익힌 그 기본기,<br>이제 <em>우리 아이 차례</em></h2>
+ <p class="lead">대연초 운동장에서 처음 공을 잡은 선배들이 프로야구 무대에서 뛰었고, 지금도 뛰고 있어요. 오랜 시간 이어 온 기본기 훈련이 대연초 야구부의 힘이에요.</p>
+ <div class="stats">
+  <div class="stat"><div class="v">1969</div><div class="l">야구부 창단</div></div>
+  <div class="stat"><div class="v">18<small>명</small></div><div class="l">프로야구 선수 배출</div></div>
+  <div class="stat"><div class="v">8<small>분</small></div><div class="l">대연역에서 걸어서</div></div>
+ </div>
+ <div class="pros">
+  <div class="pg"><h3>⚾ 지금 뛰는 선배 <small>9명</small></h3><ul><li><a href="https://search.naver.com/search.naver?query=%EC%A0%95%ED%98%84%EC%88%98%20%EC%95%BC%EA%B5%AC%EC%84%A0%EC%88%98" target="_blank" rel="noopener"><i style="background:#041e42">정</i><b>정현수</b><span>롯데<br>투수</span></a></li><li><a href="https://search.naver.com/search.naver?query=%EB%B0%95%EC%9E%AC%EC%97%BD%20%EC%95%BC%EA%B5%AC%EC%84%A0%EC%88%98" target="_blank" rel="noopener"><i style="background:#041e42">박</i><b>박재엽</b><span>롯데<br>포수</span></a></li><li><a href="https://search.naver.com/search.naver?query=%ED%95%9C%EB%8F%99%ED%9D%AC%20%EC%95%BC%EA%B5%AC%EC%84%A0%EC%88%98" target="_blank" rel="noopener"><i style="background:#041e42">한</i><b>한동희</b><span>롯데<br>내야수</span></a></li><li><a href="https://search.naver.com/search.naver?query=%EA%B3%A0%EC%98%81%EC%9A%B0%20%EC%95%BC%EA%B5%AC%EC%84%A0%EC%88%98" target="_blank" rel="noopener"><i style="background:#820024">고</i><b>고영우</b><span>키움<br>내야수</span></a></li><li><a href="https://search.naver.com/search.naver?query=%EC%9C%A4%EC%84%9D%EC%9B%90%20%EC%95%BC%EA%B5%AC%EC%84%A0%EC%88%98" target="_blank" rel="noopener"><i style="background:#820024">윤</i><b>윤석원</b><span>키움<br>투수</span></a></li><li><a href="https://search.naver.com/search.naver?query=%EC%A3%BC%EC%84%B1%EC%9B%90%20%EC%95%BC%EA%B5%AC%EC%84%A0%EC%88%98" target="_blank" rel="noopener"><i style="background:#820024">주</i><b>주성원</b><span>키움<br>외야수</span></a></li><li><a href="https://search.naver.com/search.naver?query=%EC%98%A4%EC%84%B8%EB%AF%BC%20%EC%95%BC%EA%B5%AC%EC%84%A0%EC%88%98" target="_blank" rel="noopener"><i style="background:#c30452">오</i><b>오세민</b><span>LG<br>투수</span></a></li><li><a href="https://search.naver.com/search.naver?query=%EA%B9%80%EC%83%81%EB%AF%BC%20%EC%95%BC%EA%B5%AC%EC%84%A0%EC%88%98" target="_blank" rel="noopener"><i style="background:#074ca1">김</i><b>김상민</b><span>삼성<br>외야수</span></a></li><li><a href="https://search.naver.com/search.naver?query=%EB%85%B8%ED%95%99%EC%A4%80%20%EC%95%BC%EA%B5%AC%EC%84%A0%EC%88%98" target="_blank" rel="noopener"><i style="background:#315288">노</i><b>노학준</b><span>NC<br>외야수</span></a></li></ul></div>
+  <div class="pg"><h3>🏆 레전드 선배 <small>9명</small></h3><ul><li><a href="https://search.naver.com/search.naver?query=%EC%96%91%EC%83%81%EB%AC%B8%20%EC%95%BC%EA%B5%AC%EC%84%A0%EC%88%98" target="_blank" rel="noopener"><i style="background:#041e42">양</i><b>양상문</b><span>롯데·청보·태평양<br>투수</span></a></li><li><a href="https://search.naver.com/search.naver?query=%EB%B0%95%EB%8F%99%ED%9D%AC%20%EC%95%BC%EA%B5%AC%EC%84%A0%EC%88%98" target="_blank" rel="noopener"><i style="background:#041e42">박</i><b>박동희</b><span>롯데·삼성<br>투수</span></a></li><li><a href="https://search.naver.com/search.naver?query=%EB%AC%B8%EB%8F%99%ED%99%98%20%EC%95%BC%EA%B5%AC%EC%84%A0%EC%88%98" target="_blank" rel="noopener"><i style="background:#041e42">문</i><b>문동환</b><span>롯데·한화<br>투수</span></a></li><li><a href="https://search.naver.com/search.naver?query=%EB%B0%95%EC%A0%95%ED%83%9C%20%EC%95%BC%EA%B5%AC%EC%84%A0%EC%88%98" target="_blank" rel="noopener"><i style="background:#041e42">박</i><b>박정태</b><span>롯데<br>내야수</span></a></li><li><a href="https://search.naver.com/search.naver?query=%EB%A7%88%ED%95%B4%EC%98%81%20%EC%95%BC%EA%B5%AC%EC%84%A0%EC%88%98" target="_blank" rel="noopener"><i style="background:#041e42">마</i><b>마해영</b><span>롯데·삼성·KIA·LG<br>내야수</span></a></li><li><a href="https://search.naver.com/search.naver?query=%EC%86%90%EB%AF%BC%ED%95%9C%20%EC%95%BC%EA%B5%AC%EC%84%A0%EC%88%98" target="_blank" rel="noopener"><i style="background:#041e42">손</i><b>손민한</b><span>롯데·NC<br>투수</span></a></li><li><a href="https://search.naver.com/search.naver?query=%EC%9D%B4%ED%98%9C%EC%B2%9C%20%EC%95%BC%EA%B5%AC%EC%84%A0%EC%88%98" target="_blank" rel="noopener"><i style="background:#131230">이</i><b>이혜천</b><span>두산·NC<br>투수</span></a></li><li><a href="https://search.naver.com/search.naver?query=%EC%9C%A4%EC%A7%80%EC%9B%85%20%EC%95%BC%EA%B5%AC%EC%84%A0%EC%88%98" target="_blank" rel="noopener"><i style="background:#c30452">윤</i><b>윤지웅</b><span>LG·NC<br>투수</span></a></li><li><a href="https://search.naver.com/search.naver?query=%EC%9E%84%EC%A4%80%EC%84%AD%20%EC%95%BC%EA%B5%AC%EC%84%A0%EC%88%98" target="_blank" rel="noopener"><i style="background:#ea0029">임</i><b>임준섭</b><span>KIA·한화·SSG·롯데<br>투수</span></a></li></ul></div>
+  <p class="src">이름을 누르면 선수 사진과 기록을 볼 수 있어요(네이버 인물 정보). KBO 선수 경력·언론 보도로 대연초 출신이 확인된 선수만 실었어요. (2026년 11월 기준 · 동그라미 색은 주요 소속 구단 색)</p>
+ </div>
+</div></section>
+
+<section class="fun" id="fun"><div class="wrap">
+ <div class="eye">우리 팀만의 즐거움</div>
+ <h2 class="h sec-h">야구가 더 <em>신나는</em> 이유</h2>
+ <div class="g">
+  <div class="f"><div class="im" style="background-image:url(img/bukang-field.webp);background-position:center 25%"></div><div class="tx"><b>🦈 팀 캐릭터 「부캉이」</b><span>우리 팀 마스코트예요. 팀 앱 안에서 말로 물어보면 대답하는 도우미도 해요.</span></div></div>
+  <div class="f"><div class="im" style="background:linear-gradient(135deg,#0b2240,#1d4a8a);color:#ffd23f;font-size:40px">🎵</div><div class="tx"><b>선수마다 나만의 응원가</b><span>선수 한 명 한 명 이름이 들어간 응원가가 있어요. 타석에 설 때 울려 퍼져요.</span></div></div>
+  <div class="f"><div class="im drone">🚁 드론 영상 자리<br>(운동장 전경 · 준비되면 넣어요)</div><div class="tx"><b>하늘에서 본 우리 운동장</b><span>드론으로 찍은 인조잔디 운동장과 훈련 모습을 영상으로 보여 드려요.</span></div></div>
+ </div>
+</div></section>
+
+<section class="train" id="train"><div class="wrap">
+ <div class="eye">모집 안내</div>
+ <h2 class="h sec-h">2027 신입 선수 <em>모집 안내</em></h2>
+ <div class="info">
+  <div class="row"><b>모집 기간</b><span><strong style="color:#c8102e">특별 모집 · 12월까지 선착순</strong></span></div>
+  <div class="row"><b>대상</b><span>대연초 <span class="ph">○~○</span>학년 남학생 · 야구를 처음 해도 괜찮아요</span></div>
+  <div class="row"><b>훈련</b><span><span class="ph">○요일 ○시 ~ ○시</span></span></div>
+  <div class="row"><b>장소</b><span>대연초 인조잔디 운동장 (2호선 대연역 도보 약 8분)</span></div>
+  <div class="row"><b>지도</b><span>감독님 · 투수 전문 코치님 포함 코치진</span></div>
+  <div class="row"><b>비용</b><span>방문 상담 때 자세히 안내해 드려요</span></div>
+  <div class="row"><b>문의</b><span>학부모 대표 <a href="tel:01028700899" style="font-weight:800;text-decoration:underline">010-2870-0899</a><br>감독님 <a href="tel:01038353052" style="font-weight:800;text-decoration:underline">010-3835-3052</a></span></div>
+ </div>
+</div></section>
+
+<section class="faqs" id="faq"><div class="wrap">
+ <div class="eye">부모님이 많이 물어보세요</div>
+ <h2 class="h sec-h">자주 묻는 <em>질문</em></h2>
+ <div class="faq">
+  <details open><summary>야구를 한 번도 안 해 봤어도 되나요?</summary><p>네, 괜찮아요. 공을 던지고 받는 기본기부터 단계별로 차근차근 시작해요.</p></details>
+  <details><summary>공부와 같이 할 수 있나요?</summary><p>정해진 훈련 시간 안에서 운영해요. 학년별 일과는 방문 상담 때 자세히 안내해 드려요.</p></details>
+  <details><summary>다치지 않을까 걱정돼요.</summary><p>코치진이 준비 운동과 기본 동작부터 지도하고, 학년과 체력에 맞춰 훈련해요.</p></details>
+  <details><summary>비용은 얼마인가요?</summary><p>방문 상담 때 자세히 안내해 드려요.</p></details>
+  <details><summary>훈련하는 모습을 보러 가고 싶어요.</summary><p>방문 문의는 학부모 대표(010-2870-0899)나 감독님(010-3835-3052)께 먼저 연락 주세요. 날짜와 시간을 안내해 드려요.</p></details>
+  <details><summary>부모님은 무엇을 하나요?</summary><p>우리 팀 전용 앱으로 일정·공지·경기 기록을 받고, 코치진과 편하게 소통해요.</p></details>
+ </div>
+</div></section>
+
+<section class="visit" id="visit"><div class="wrap">
+ <div class="eye">문의 · 오시는 길</div>
+ <h2 class="h sec-h">대연역에서 걸어서 <em>8분</em></h2>
+ <div class="g">
+  <div>
+   <div class="map"><svg viewBox="0 0 702 380" aria-hidden="true">
+    <rect width="702" height="380" fill="#f3f6fa"/>
+    <g stroke="#dfe6ef" stroke-width="16" fill="none"><path d="M0 110 H702"/><path d="M0 290 H702"/><path d="M180 0 V380"/><path d="M520 0 V380"/></g>
+    <path d="M0 320 C160 320 220 290 360 290 S600 310 702 290" stroke="#81bf48" stroke-width="14" fill="none" stroke-linecap="round"/>
+    <circle cx="150" cy="318" r="18" fill="#fff" stroke="#81bf48" stroke-width="8"/>
+    <path d="M150 300 C170 220 250 180 380 140" stroke="#c8102e" stroke-width="6" stroke-dasharray="4 14" stroke-linecap="round" fill="none"/>
+    <rect x="380" y="70" width="200" height="130" rx="14" fill="#3aa45a"/><path d="M480 85 L555 135 L480 185 L405 135 Z" fill="none" stroke="#fff" stroke-width="5"/>
+    <circle cx="480" cy="135" r="10" fill="#c9915a"/>
+   </svg>
+   <div class="lab" style="left:3%;bottom:6%">🚇 대연역 (2호선)</div>
+   <div class="walk">🚶 약 8분</div>
+   <div class="lab" style="right:3%;top:58%">⚾ 대연초 운동장</div></div>
+   <div class="maplinks"><a href="https://map.kakao.com/link/search/대연초등학교" target="_blank" rel="noopener">카카오맵에서 보기</a><a href="https://map.naver.com/p/search/대연초등학교" target="_blank" rel="noopener">네이버 지도에서 보기</a></div>
+  </div>
+  <div class="contact">
+   <div class="who">방문 문의</div>
+   <p style="opacity:.85;font-size:15px">훈련을 보러 오시려면 먼저 연락 주세요. 방문 날짜와 시간을 안내해 드려요.</p>
+   <div class="person"><small>학부모 대표</small><div class="tel">010-2870-0899</div>
+    <div class="two"><a class="btn p" href="tel:01028700899">📞 전화</a><a class="btn s" href="sms:01028700899?body=%EB%8C%80%EC%97%B0%EC%B4%88%20%EC%95%BC%EA%B5%AC%EB%B6%80%20%EB%B0%A9%EB%AC%B8%20%EB%AC%B8%EC%9D%98%EB%93%9C%EB%A6%BD%EB%8B%88%EB%8B%A4.%20%EC%95%84%EC%9D%B4%20%ED%95%99%EB%85%84%3A%20">💬 문자</a></div></div>
+   <div class="person"><small>대연초 야구부 감독님</small><div class="tel">010-3835-3052</div>
+    <div class="two"><a class="btn p" href="tel:01038353052">📞 전화</a><a class="btn s" href="sms:01038353052?body=%EB%8C%80%EC%97%B0%EC%B4%88%20%EC%95%BC%EA%B5%AC%EB%B6%80%20%EB%B0%A9%EB%AC%B8%20%EB%AC%B8%EC%9D%98%EB%93%9C%EB%A6%BD%EB%8B%88%EB%8B%A4.%20%EC%95%84%EC%9D%B4%20%ED%95%99%EB%85%84%3A%20">💬 문자</a></div></div>
+  </div>
+ </div>
+</div></section>
+
+</main>
+
+<footer class="end"><div class="wrap">
+ <div class="l"><img src="../icons/logo/emblem-dark-s.webp" alt=""><div><b style="color:var(--fg)">부산 대연초등학교 야구부</b><br>기본기부터, 함께 · 감독님 모토 「바른 인성」</div></div>
+ <div><a href="../">팀 앱 로그인 (학부모·선수)</a> · <a href="../privacy.html">개인정보처리방침</a></div>
+</div></footer>
+
+<nav class="dock" aria-label="빠른 문의">
+ <a class="p" href="tel:01028700899">📞 학부모 대표<small>방문 문의</small></a>
+ <a class="p" href="tel:01038353052">📞 감독님<small>방문 문의</small></a>
+ <a href="#visit">📍 오시는 길<small>대연역 8분</small></a>
+</nav>
+</body>
+</html>
