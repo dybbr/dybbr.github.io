@@ -456,8 +456,11 @@ html.sb-open .ui-zoom-ctrl, html.sb-open .bk-upd { display: none !important; }
 .sb .ract .advs button { min-height: 46px; border: 1px solid #cbd5e1; border-radius: 10px; background: #fff; font-weight: 800; font-size: 15px; color: #101a30; }
 .sb .ract .advs button:last-child { grid-column: 1 / -1; }
 .sb .ract .lbl { margin-top: 4px; }
-/* 11-28 상대 명단 한 명씩 빼기 ✕ */
-.sb .plist .oppc { display: flex; gap: 3px; min-width: 0; }
-.sb .plist .oppc > button:first-child { flex: 1; min-width: 0; }
-.sb .plist .oppc > button.x { flex: 0 0 34px; min-height: 46px; padding: 0; text-align: center; font-size: 15px; color: #9b1c1c; border-color: #f1c4c4; background: #fff6f6; }
-.sb .plist.pick:has(.oppc) { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+/* 11-28 상대 명단 한 명씩 빼기 ✕ — 이름 버튼 안 오른쪽 (하코: 따로 있으면 보기 싫음) */
+.sb .plist .oppc { position: relative; min-width: 0; }
+.sb .plist .oppc > button:first-child { width: 100%; padding-right: 40px; }
+.sb .plist .oppc > button:first-child i { position: static; display: inline-flex; margin-right: 6px; vertical-align: middle; }
+.sb .plist .oppc > button:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sb .plist.pick:has(.oppc) { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.sb .plist .oppc > button.x { position: absolute; right: 5px; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; min-height: 0; padding: 0; border: 0; border-radius: 50%; background: #f1f4f9; color: #9b1c1c; font-size: 14px; text-align: center; z-index: 1; }
+.sb .plist .oppc > button.x:active { background: #fde2e2; }
