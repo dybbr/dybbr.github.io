@@ -80,6 +80,13 @@ section{padding:72px 0;scroll-margin-top:64px}
 .pg li b{display:block;font-size:16px}
 .pg li span{display:block;font-size:12px;color:var(--csub);line-height:1.4}
 .pros .src{grid-column:1/-1;font-size:13px;color:var(--sub)}
+/* QR 나누기 */
+.share{background:#fff7d6}
+.sharebox{display:flex;gap:28px;align-items:center;margin-top:24px;background:#fff;border-radius:var(--r);padding:26px;box-shadow:0 6px 0 rgba(11,34,64,.07)}
+.sharebox .qr{width:220px;height:220px;flex:none;border-radius:16px;border:1px solid var(--cline)}
+.sharebox .url{font-weight:900;font-size:22px;margin:10px 0 16px;letter-spacing:.01em}
+.sharebox .done{margin-top:10px;font-weight:700;color:#1a7f37;font-size:15px}
+button.btn{font-family:inherit}
 /* 즐거움 */
 .fun .g{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:30px}
 .fun .f{border-radius:var(--r);overflow:hidden;background:var(--card);color:var(--cfg);border:1px solid var(--cline)}
@@ -163,6 +170,7 @@ section{padding:72px 0;scroll-margin-top:64px}
  .stats{grid-template-columns:repeat(3,1fr);gap:8px}
  .stat{padding:18px 8px}.stat .v{font-size:30px}.stat .v small{font-size:14px}.stat .l{font-size:13px}
  .cards,.fun .g,.visit .g,.pros{grid-template-columns:1fr}
+ .sharebox{flex-direction:column;text-align:center;padding:22px 16px}.sharebox .qr{width:200px;height:200px}.sharebox .btns{justify-content:center}.sharebox .btn{flex:1 1 140px}
  .pg{padding:18px 14px}.pg ul{gap:6px}
  .vB .cards{grid-template-columns:1fr 1fr;gap:12px}
  .vB .card{padding:16px 12px}.vB .card img{width:80px;height:80px}.vB .card b{font-size:16px}.vB .card span{font-size:14px}
@@ -304,6 +312,23 @@ section{padding:72px 0;scroll-margin-top:64px}
  </div>
 </div></section>
 
+<section class="share" id="share"><div class="wrap">
+ <div class="eye">이 페이지 알리기</div>
+ <h2 class="h sec-h">QR로 <em>함께 나눠요</em></h2>
+ <div class="sharebox">
+  <img class="qr" src="img/qr-join.svg" alt="dybbr.github.io/join 으로 가는 QR 코드" width="220" height="220">
+  <div class="st">
+   <p class="lead">휴대폰 카메라로 찍으면 이 페이지가 바로 열려요. 야구에 관심 있는 친구 부모님께 보내 주세요.</p>
+   <div class="url">dybbr.github.io/join</div>
+   <div class="btns">
+    <a class="btn p" href="img/qr-join.png" download="대연초야구부_신입모집_QR.png">⬇ QR 그림 받기</a>
+    <button class="btn s" type="button" id="shareBtn">🔗 주소 보내기</button>
+   </div>
+   <p class="done" id="shareMsg" hidden>주소를 복사했어요. 카톡에 붙여 넣어 보내 주세요.</p>
+  </div>
+ </div>
+</div></section>
+
 </main>
 
 <footer class="end"><div class="wrap">
@@ -316,5 +341,15 @@ section{padding:72px 0;scroll-margin-top:64px}
  <a class="p" href="tel:01038353052">📞 감독님<small>방문 문의</small></a>
  <a href="#visit">📍 오시는 길<small>대연역 8분</small></a>
 </nav>
+<script>
+(function(){var b=document.getElementById('shareBtn'),m=document.getElementById('shareMsg'),u='https://dybbr.github.io/join/';
+if(!b)return;b.addEventListener('click',function(){
+ var d={title:'대연초 야구부 신입 선수 모집',text:'기본기부터, 함께 · 대연초 야구부 신입 선수 모집 (12월까지 선착순)',url:u};
+ if(navigator.share){navigator.share(d).catch(function(){});return;}
+ function ok(){m.hidden=false;setTimeout(function(){m.hidden=true},4000)}
+ if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(u).then(ok,function(){prompt('아래 주소를 복사해 주세요',u)})}
+ else{var t=document.createElement('textarea');t.value=u;document.body.appendChild(t);t.select();try{document.execCommand('copy');ok()}catch(e){}t.remove()}
+});})();
+</script>
 </body>
 </html>
